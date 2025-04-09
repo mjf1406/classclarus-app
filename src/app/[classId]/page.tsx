@@ -1,10 +1,15 @@
-type Params = {
+interface Params {
   classId: string;
   className: string;
-};
+}
 
-export default async function ClassPage({ params }: { params: Params }) {
-  const { classId, className } = params; // need to await in next 16
+export default async function ClassPage({
+  params,
+}: {
+  params: Promise<Params>;
+}) {
+  // Now await the params because it's a promise
+  const { classId } = await params;
 
   return (
     <div className="px-5 py-3">

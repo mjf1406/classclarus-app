@@ -1,12 +1,10 @@
 import {
   ChevronDown,
-  ChevronUp,
   Dices,
   Hammer,
   MonitorIcon,
   School,
   Signpost,
-  User2,
 } from "lucide-react";
 
 import {
@@ -33,6 +31,13 @@ import {
   CollapsibleTrigger,
 } from "./ui/collapsible";
 import { ThemeSelector } from "./theme-selector";
+import {
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  SignUpButton,
+  UserButton,
+} from "@clerk/nextjs";
 
 // Menu items.
 const items = [
@@ -134,8 +139,8 @@ export function AppSidebar() {
         </Collapsible>
       </SidebarContent>
       <SidebarFooter>
-        <div className="flex gap-2">
-          <SidebarMenu>
+        <div className="flex items-center justify-center gap-2">
+          {/* <SidebarMenu>
             <SidebarMenuItem>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -160,7 +165,14 @@ export function AppSidebar() {
                 </DropdownMenuContent>
               </DropdownMenu>
             </SidebarMenuItem>
-          </SidebarMenu>
+          </SidebarMenu> */}
+          <SignedOut>
+            <SignInButton />
+            <SignUpButton />
+          </SignedOut>
+          <SignedIn>
+            <UserButton />
+          </SignedIn>
           <ThemeSelector />
         </div>
       </SidebarFooter>
