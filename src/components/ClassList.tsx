@@ -30,7 +30,7 @@ const ClassList: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="m-auto flex w-full items-center justify-center">
+      <div className="m-auto flex w-3xl items-center justify-center">
         <Loader2 className="h-24 w-24 animate-spin" />
       </div>
     );

@@ -25,16 +25,18 @@ const ClassCard: React.FC<ClassCardProps> = ({ detail }) => {
     );
 
   return (
-    <Card className="pt-0">
-      <CardHeader className="bg-accent flex items-center justify-between rounded-t-xl">
-        <CardTitle className="flex h-12 items-center justify-center gap-2 text-2xl font-bold">
+    <Card className="gap-4 pt-2">
+      <CardHeader className="flex items-center justify-between rounded-t-xl">
+        <CardTitle className="flex h-12 items-center justify-center gap-2 text-3xl font-bold">
           <span>{classInfo.class_name}</span>{" "}
-          <span className="text-lg">({classInfo.class_year})</span>
+          <span className="text-xl">({classInfo.class_year})</span>
         </CardTitle>
       </CardHeader>
       <CardContent>
         <p>
-          <strong>Language:</strong> {classInfo.class_language} |{" "}
+          <strong>Language:</strong> {classInfo.class_language}
+        </p>
+        <p>
           <strong>Grade:</strong> {classInfo.class_grade}
         </p>
         <p>
@@ -53,7 +55,7 @@ const ClassCard: React.FC<ClassCardProps> = ({ detail }) => {
         <Link href={`/${classInfo.class_id}`}>
           <Button
             variant={"outline"}
-            className="bg-background dark:bg-background mx-auto w-full"
+            className="dark:bg-background dark:border-foreground mx-auto w-full dark:border"
           >
             Open
           </Button>
