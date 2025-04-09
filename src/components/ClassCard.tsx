@@ -25,7 +25,7 @@ const ClassCard: React.FC<ClassCardProps> = ({ detail }) => {
     );
 
   return (
-    <Card className="gap-4 pt-2">
+    <Card className="w-full gap-4 pt-2">
       <CardHeader className="flex items-center justify-between rounded-t-xl">
         <CardTitle className="flex h-12 items-center justify-center gap-2 text-3xl font-bold">
           <span>{classInfo.class_name}</span>{" "}
