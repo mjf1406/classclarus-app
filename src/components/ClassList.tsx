@@ -17,9 +17,9 @@ const ClassList: React.FC = () => {
   const { data, isLoading, isError, error } = useQuery<TeacherClassDetail[]>(
     TeacherClassesOptions,
   );
-  const { userId } = useAuth();
+  const { isSignedIn } = useAuth();
 
-  if (!userId) {
+  if (!isSignedIn) {
     return (
       <div className="m-auto flex w-full items-center justify-center">
         <SignInButton />
