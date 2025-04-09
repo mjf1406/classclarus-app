@@ -14,7 +14,12 @@ export function ThemeSelector() {
   }, [theme, setTheme]);
 
   return (
-    <Button variant="outline" size="icon" onClick={toggleTheme}>
+    <Button
+      variant="outline"
+      className="dark:bg-background dark:hover:bg-accent dark:text-white"
+      size="icon"
+      onClick={toggleTheme}
+    >
       {theme === "light" ? (
         <Sun className="h-[1.2rem] w-[1.2rem]" />
       ) : (
