@@ -31,7 +31,8 @@ import {
   CollapsibleTrigger,
 } from "./ui/collapsible";
 import { ThemeSelector } from "./theme-selector";
-import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
+import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+import { SignInButton } from "./SignInButton";
 
 // Menu items.
 const items = [

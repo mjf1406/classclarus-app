@@ -3,8 +3,7 @@ import React from "react";
 import { LogoHeader } from "./brand/logo";
 import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { ThemeSelector } from "./theme-selector";
-import { buttonVariants } from "./ui/button";
-import { Link } from "lucide-react";
+import { SignInButton } from "./SignInButton";
 
 export function Navbar() {
   return (
@@ -13,10 +12,7 @@ export function Navbar() {
         <LogoHeader />
         <div className="flex items-center justify-center gap-2">
           <SignedOut>
-            {/* <SignInButton /> */}
-            <Link className={buttonVariants({ variant: "default" })}>
-              Sign in
-            </Link>
+            <SignInButton />
           </SignedOut>
           <SignedIn>
             <UserButton />

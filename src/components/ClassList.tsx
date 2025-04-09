@@ -11,7 +11,8 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
-import { SignedOut, SignInButton, useAuth } from "@clerk/nextjs";
+import { SignedOut, useAuth } from "@clerk/nextjs";
+import { SignInButton } from "./SignInButton";
 
 const ClassList: React.FC = () => {
   const { data, isLoading, isError, error } = useQuery<TeacherClassDetail[]>(
