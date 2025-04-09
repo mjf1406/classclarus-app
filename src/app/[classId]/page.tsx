@@ -8,7 +8,6 @@ export default async function ClassPage({
 }: {
   params: Promise<Params>;
 }) {
-  // Now await the params because it's a promise
   const { classId } = await params;
 
   return (
