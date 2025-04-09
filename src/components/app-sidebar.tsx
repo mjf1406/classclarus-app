@@ -31,13 +31,7 @@ import {
   CollapsibleTrigger,
 } from "./ui/collapsible";
 import { ThemeSelector } from "./theme-selector";
-import {
-  SignedIn,
-  SignedOut,
-  SignInButton,
-  SignUpButton,
-  UserButton,
-} from "@clerk/nextjs";
+import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 
 // Menu items.
 const items = [
@@ -168,7 +162,6 @@ export function AppSidebar() {
           </SidebarMenu> */}
           <SignedOut>
             <SignInButton />
-            <SignUpButton />
           </SignedOut>
           <SignedIn>
             <UserButton />
