@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { TeacherClassDetail } from "@/app/api/queryOptions";
 import { Crown, User } from "lucide-react";
 import { Button } from "./ui/button";
+import Link from "next/link";
 
 interface ClassCardProps {
   detail: TeacherClassDetail;
@@ -22,10 +23,6 @@ const ClassCard: React.FC<ClassCardProps> = ({ detail }) => {
     ) : (
       <User size={16} className="mr-1 inline-block" />
     );
-
-  const handleOpen = () => {
-    router.push(`/${classInfo.class_id}`);
-  };
 
   return (
     <Card className="pt-0">
@@ -53,13 +50,14 @@ const ClassCard: React.FC<ClassCardProps> = ({ detail }) => {
         </p>
       </CardContent>
       <div className="px-4">
-        <Button
-          variant={"outline"}
-          className="bg-background dark:bg-background mx-auto w-full"
-          onClick={handleOpen}
-        >
-          Open
-        </Button>
+        <Link href={`/${classInfo.class_id}`}>
+          <Button
+            variant={"outline"}
+            className="bg-background dark:bg-background mx-auto w-full"
+          >
+            Open
+          </Button>
+        </Link>
       </div>
     </Card>
   );
