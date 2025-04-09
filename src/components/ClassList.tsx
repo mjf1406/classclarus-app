@@ -11,11 +11,21 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
+import { SignInButton, useAuth } from "@clerk/nextjs";
 
 const ClassList: React.FC = () => {
   const { data, isLoading, isError, error } = useQuery<TeacherClassDetail[]>(
     TeacherClassesOptions,
   );
+  const { userId } = useAuth();
+
+  if (!userId) {
+    return (
+      <div className="m-auto flex w-full items-center justify-center">
+        <SignInButton />
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -25,7 +35,7 @@ const ClassList: React.FC = () => {
     );
   }
 
-  if (isError) {
+  if (isError || error) {
     return (
       <div className="m-auto flex h-auto w-full items-center justify-center">
         <div className="max-w-4xl">
