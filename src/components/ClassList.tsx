@@ -7,7 +7,7 @@ import {
   type TeacherClassDetail,
 } from "@/app/api/queryOptions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2 } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { SignedOut, useAuth } from "@clerk/nextjs";
 import { SignInButton } from "./SignInButton";
 import ClassCard from "./ClassCard";
@@ -16,6 +16,7 @@ const ClassList: React.FC = () => {
   const { data, isLoading, isError, error } = useQuery<TeacherClassDetail[]>(
     TeacherClassesOptions,
   );
+  console.log("🚀 ~ data:", data);
   const { isSignedIn } = useAuth();
 
   if (!isSignedIn) {
@@ -52,11 +53,15 @@ const ClassList: React.FC = () => {
   if (!data || data.length === 0) {
     return (
       <div className="m-auto flex h-auto w-full items-center justify-center">
-        <div className="max-w-4xl">
+        <div className="max-w-5xl">
           <Alert variant="destructive">
             <AlertTitle>No Classes!</AlertTitle>
             <AlertDescription>
-              Please click the <b>Add class</b> button to add a class.
+              Please click the{" "}
+              <b>
+                <Plus /> Add class
+              </b>{" "}
+              button to add a class.
             </AlertDescription>
           </Alert>
         </div>

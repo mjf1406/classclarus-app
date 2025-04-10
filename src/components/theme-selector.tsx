@@ -8,11 +8,21 @@ import { Button } from "@/components/ui/button";
 
 export function ThemeSelector() {
   const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Only render on the client after mounting to avoid hydration mismatch
 
   const toggleTheme = React.useCallback(() => {
     setTheme(theme === "dark" ? "light" : "dark");
   }, [theme, setTheme]);
 
+  if (!mounted) {
+    return null;
+  }
   return (
     <Button
       variant="outline"
