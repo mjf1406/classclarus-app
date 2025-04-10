@@ -7,7 +7,7 @@ import {
   type TeacherClassDetail,
 } from "@/app/api/queryOptions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, AlertTriangle, CircleX } from "lucide-react";
 import { SignedOut, useAuth } from "@clerk/nextjs";
 import { SignInButton } from "./SignInButton";
 import ClassCard from "./ClassCard";
@@ -16,7 +16,6 @@ const ClassList: React.FC = () => {
   const { data, isLoading, isError, error } = useQuery<TeacherClassDetail[]>(
     TeacherClassesOptions,
   );
-  console.log("🚀 ~ data:", data);
   const { isSignedIn } = useAuth();
 
   if (!isSignedIn) {
@@ -40,10 +39,19 @@ const ClassList: React.FC = () => {
   if (isError || error) {
     return (
       <div className="m-auto flex h-auto w-full items-center justify-center">
-        <div className="max-w-4xl">
-          <Alert variant="destructive">
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>{error.message}</AlertDescription>
+        <div className="max-w-5xl px-4">
+          <Alert
+            variant="destructive"
+            className="flex w-full items-center gap-4"
+          >
+            <CircleX
+              className="shrink-0"
+              style={{ width: "36px", height: "36px" }}
+            />
+            <div className="w-full">
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{error.message}</AlertDescription>
+            </div>
           </Alert>
         </div>
       </div>
@@ -53,16 +61,25 @@ const ClassList: React.FC = () => {
   if (!data || data.length === 0) {
     return (
       <div className="m-auto flex h-auto w-full items-center justify-center">
-        <div className="max-w-5xl">
-          <Alert variant="destructive">
-            <AlertTitle>No Classes!</AlertTitle>
-            <AlertDescription>
-              Please click the{" "}
-              <b>
-                <Plus /> Add class
-              </b>{" "}
-              button to add a class.
-            </AlertDescription>
+        <div className="max-w-5xl px-4">
+          <Alert variant="warning" className="flex w-full items-center gap-4">
+            <AlertTriangle
+              className="shrink-0"
+              style={{ width: "36px", height: "36px" }}
+            />
+
+            <div className="w-full">
+              <AlertTitle>No Classes!</AlertTitle>
+              <AlertDescription className="whitespace-nowrap">
+                <p>
+                  Please click the{" "}
+                  <span className="border-destructive rounded-lg border px-2 py-0.5 font-bold">
+                    <span className="text-xl">+</span> Add class
+                  </span>{" "}
+                  button at the top of the page to add a class.
+                </p>
+              </AlertDescription>
+            </div>
           </Alert>
         </div>
       </div>
