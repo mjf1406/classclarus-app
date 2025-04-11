@@ -104,8 +104,24 @@ export default function ClassPage() {
           <TabsTrigger value="tasks">Tasks</TabsTrigger>
         </TabsList>
         <TabsContent value="assigners">
-          <p>This is the assigners content.</p>
+          <Tabs defaultValue={"random"}>
+            <TabsList className="mb-4">
+              <TabsTrigger value="random">Random</TabsTrigger>
+              <TabsTrigger value="round-robin">Round Robin</TabsTrigger>
+              <TabsTrigger value="seats">Seats</TabsTrigger>
+            </TabsList>
+            <TabsContent value="random">
+              <p>This is the random assigner content.</p>
+            </TabsContent>
+            <TabsContent value="round-robin">
+              <p>This is the round robin assigner content.</p>
+            </TabsContent>
+            <TabsContent value="seats">
+              <p>This is the seats assigner content.</p>
+            </TabsContent>
+          </Tabs>
         </TabsContent>
+
         <TabsContent value="dashboard">
           <p>This is the dashboard content.</p>
         </TabsContent>
@@ -126,6 +142,23 @@ export default function ClassPage() {
             Randomly select a group, team, or student for activities or
             assignments.
           </p>
+          <br />
+          <Tabs defaultValue={"group"}>
+            <TabsList className="mb-4">
+              <TabsTrigger value="group">Group</TabsTrigger>
+              <TabsTrigger value="team">Team</TabsTrigger>
+              <TabsTrigger value="student">Student</TabsTrigger>
+            </TabsList>
+            <TabsContent value="group">
+              <p>This is the group randomizer.</p>
+            </TabsContent>
+            <TabsContent value="team">
+              <p>This is the team randomizer.</p>
+            </TabsContent>
+            <TabsContent value="student">
+              <p>This is the student randomizer.</p>
+            </TabsContent>
+          </Tabs>
         </TabsContent>
         <TabsContent value="silent-chat">
           <p>
@@ -138,6 +171,23 @@ export default function ClassPage() {
             Randomly order your groups, teams, or students, ensuring everyone
             gets a chance to be first and last before any repeats.
           </p>
+          <br />
+          <Tabs defaultValue={"group"}>
+            <TabsList className="mb-4">
+              <TabsTrigger value="group">Group</TabsTrigger>
+              <TabsTrigger value="team">Team</TabsTrigger>
+              <TabsTrigger value="student">Student</TabsTrigger>
+            </TabsList>
+            <TabsContent value="group">
+              <p>This is the group shuffler.</p>
+            </TabsContent>
+            <TabsContent value="team">
+              <p>This is the team shuffler.</p>
+            </TabsContent>
+            <TabsContent value="student">
+              <p>This is the student shuffler.</p>
+            </TabsContent>
+          </Tabs>
         </TabsContent>
         <TabsContent value="tasks">
           <p>This is the tasks content.</p>
