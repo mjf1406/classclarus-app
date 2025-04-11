@@ -25,22 +25,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "./ui/collapsible";
 import { ThemeSelector } from "./theme-selector";
 import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { SignInButton } from "./SignInButton";
+import MyClassesSidebar from "@/app/[classId]/components/MyClassesSidebar";
+import { LogoHeader } from "./brand/logo";
 
 // Menu items.
 const items = [
-  {
-    title: "My classes",
-    url: "/",
-    icon: School,
-  },
   {
     title: "Assigners",
     url: "/assigners",
@@ -67,9 +59,9 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader>
-        <SidebarMenu>
+        <SidebarMenu className="items-center justify-center">
           <SidebarMenuItem>
-            <DropdownMenu>
+            {/* <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton>
                   Select Workspace
@@ -84,7 +76,8 @@ export function AppSidebar() {
                   <span>Acme Corp.</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
-            </DropdownMenu>
+            </DropdownMenu> */}
+            <LogoHeader />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
@@ -106,32 +99,7 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        <Collapsible defaultOpen className="group/collapsible">
-          <SidebarGroup>
-            <SidebarGroupLabel asChild>
-              <CollapsibleTrigger>
-                Help
-                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-              </CollapsibleTrigger>
-            </SidebarGroupLabel>
-            <CollapsibleContent>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {items.map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild>
-                        <a href={item.url}>
-                          <item.icon />
-                          <span>{item.title}</span>
-                        </a>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </CollapsibleContent>
-          </SidebarGroup>
-        </Collapsible>
+        <MyClassesSidebar />
       </SidebarContent>
       <SidebarFooter>
         <div className="flex items-center justify-center gap-2">

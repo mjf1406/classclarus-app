@@ -1,5 +1,4 @@
-import { sqliteTable, AnySQLiteColumn, uniqueIndex, text, index, foreignKey, integer } from "drizzle-orm/sqlite-core"
-  import { sql } from "drizzle-orm"
+import { sqliteTable, uniqueIndex, text, index, integer } from "drizzle-orm/sqlite-core"
 
 export const classes = sqliteTable("classes", {
 	classId: text("class_id").primaryKey().notNull(),

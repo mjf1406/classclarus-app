@@ -1,18 +1,16 @@
+import { ClassPageClient } from "./ClassPageClient";
+
 interface Params {
   classId: string;
   className: string;
 }
 
-export default async function ClassPage({
-  params,
-}: {
+interface ClassPageProps {
   params: Promise<Params>;
-}) {
+}
+
+export default async function ClassPage({ params }: ClassPageProps) {
   const { classId } = await params;
 
-  return (
-    <div className="px-5 py-3">
-      <h1 className="text-3xl font-semibold">Class {classId}</h1>
-    </div>
-  );
+  return <ClassPageClient classId={classId} />;
 }

@@ -13,7 +13,6 @@ interface ClassCardProps {
 }
 
 const ClassCard: React.FC<ClassCardProps> = ({ detail }) => {
-  const router = useRouter();
   const { teacherAssignment, classInfo } = detail;
 
   // Choose the icon based on the teacher's role.

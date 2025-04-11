@@ -7,7 +7,7 @@ import {
   type TeacherClassDetail,
 } from "@/app/api/queryOptions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, Plus, AlertTriangle, CircleX } from "lucide-react";
+import { Loader2, AlertTriangle, CircleX } from "lucide-react";
 import { SignedOut, useAuth } from "@clerk/nextjs";
 import { SignInButton } from "./SignInButton";
 import ClassCard from "./ClassCard";
