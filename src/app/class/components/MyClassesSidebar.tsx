@@ -1,9 +1,7 @@
 "use client";
 
-import {
-  TeacherClassesOptions,
-  type TeacherClassDetail,
-} from "@/app/api/queryOptions";
+import React from "react";
+import { useQueryState } from "nuqs";
 import {
   Collapsible,
   CollapsibleContent,
@@ -19,8 +17,10 @@ import {
 } from "@/components/ui/sidebar";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, Loader2, School2 } from "lucide-react";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import {
+  TeacherClassesOptions,
+  type TeacherClassDetail,
+} from "@/app/api/queryOptions";
 
 function MyClassesContent({
   isLoading,
@@ -33,9 +33,8 @@ function MyClassesContent({
   error: unknown;
   data: TeacherClassDetail[] | undefined;
 }) {
-  const searchParams = useSearchParams();
-  const classId = searchParams.get("class_id");
-  const tab = searchParams.get("tab");
+  // Use query state for both class_id and tab.
+  const [currentClassId, setCurrentClassId] = useQueryState("class_id");
 
   let content: React.ReactNode;
 
@@ -66,19 +65,19 @@ function MyClassesContent({
   } else {
     content = data.map((userClass) => {
       const { class_id, class_name, class_year } = userClass.classInfo;
-      const isActive = classId === class_id;
+      const isActive = currentClassId === class_id;
 
       return (
         <SidebarMenuItem key={class_id} className={isActive ? "active" : ""}>
           <SidebarMenuButton asChild>
-            <Link
-              href={`/class?class_id=${class_id}&tab=${tab ?? "points"}`}
+            <button
+              onClick={() => setCurrentClassId(class_id)}
               className={isActive ? "bg-secondary font-bold" : ""}
             >
               <span>
                 {class_name} ({class_year})
               </span>
-            </Link>
+            </button>
           </SidebarMenuButton>
         </SidebarMenuItem>
       );
