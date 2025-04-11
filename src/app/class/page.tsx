@@ -41,7 +41,6 @@ export default function ClassPage() {
 
   const { data, error, isLoading } = useQuery(ClassByIdOptions(classId));
 
-  // Update document title after data loads or tab changes
   React.useEffect(() => {
     if (data) {
       const newTitle = `${
@@ -90,11 +89,9 @@ export default function ClassPage() {
 
   return (
     <div className="px-5 py-3">
-      {/* The title tag is removed here and updated via document.title */}
       <h1 className="mb-2 text-3xl font-bold">
         {data?.classInfo.class_name} ({data?.classInfo.class_year})
       </h1>
-      {/* Shadcn Tabs as a controlled component */}
       <Tabs value={tabParam} onValueChange={setTab}>
         <TabsList className="mb-4">
           <TabsTrigger value="assigners">Assigners</TabsTrigger>
