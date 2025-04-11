@@ -19,7 +19,8 @@ import {
 } from "@/components/ui/sidebar";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, Loader2, School2 } from "lucide-react";
-import { usePathname } from "next/navigation";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 function MyClassesContent({
   isLoading,
@@ -32,7 +33,9 @@ function MyClassesContent({
   error: unknown;
   data: TeacherClassDetail[] | undefined;
 }) {
-  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const classId = searchParams.get("class_id");
+  const tab = searchParams.get("tab");
 
   let content: React.ReactNode;
 
@@ -63,20 +66,19 @@ function MyClassesContent({
   } else {
     content = data.map((userClass) => {
       const { class_id, class_name, class_year } = userClass.classInfo;
-      const classPath = `/${class_id}`;
-      const isActive = pathname === classPath;
+      const isActive = classId === class_id;
 
       return (
         <SidebarMenuItem key={class_id} className={isActive ? "active" : ""}>
           <SidebarMenuButton asChild>
-            <a
-              href={classPath}
+            <Link
+              href={`/class?class_id=${class_id}&tab=${tab ?? "points"}`}
               className={isActive ? "bg-secondary font-bold" : ""}
             >
               <span>
                 {class_name} ({class_year})
               </span>
-            </a>
+            </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
       );

@@ -198,6 +198,10 @@
   --sidebar-accent-foreground: oklch(0.98 0 0);
   --sidebar-border: oklch(0.85 0.005 50);
   --sidebar-ring: oklch(0.75 0.09 50);
+
+  /* Muted styles */
+  --muted: oklch(0.93 0.005 45);
+  --muted-foreground: oklch(0.35 0.01 240);
 }
 
 .dark {
@@ -247,6 +251,10 @@
   --sidebar-accent-foreground: oklch(0.98 0 0);
   --sidebar-border: oklch(0.2 0.005 50 / 10%);
   --sidebar-ring: oklch(0.65 0.09 50);
+
+  /* Muted styles for dark mode */
+  --muted: oklch(0.25 0.005 45);
+  --muted-foreground: oklch(0.85 0 0);
 }
 
 @theme inline {
@@ -296,4 +304,37 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+.text-2xs {
+  font-size: 0.6rem; /* 10px */
+  line-height: 0.9rem; /* 14px */
+}
+.text-3xs {
+  font-size: 0.5rem; /* 8px */
+  line-height: 0.9rem; /* 10px */
+}
+.text-4xs {
+  font-size: 0.4rem; /* px */
+  line-height: 0.8rem; /* px */
+}
+.text-5xs {
+  font-size: 0.3rem; /* px */
+  line-height: 0.7rem; /* px */
+}
+.text-10xl {
+  font-size: 10rem; /* 160px */
+  line-height: 1; /* 16px */
+}
+.text-11xl {
+  font-size: 12rem; /* 192px */
+  line-height: 1; /* 16px */
+}
+.text-12xl {
+  font-size: 14rem; /* 224px */
+  line-height: 1; /* 16px */
+}
+.text-13xl {
+  font-size: 16rem; /* 256px */
+  line-height: 1; /* 16px */
 }

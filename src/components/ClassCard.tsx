@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { TeacherClassDetail } from "@/app/api/queryOptions";
 import { Crown, User } from "lucide-react";
@@ -51,7 +50,7 @@ const ClassCard: React.FC<ClassCardProps> = ({ detail }) => {
         </p>
       </CardContent>
       <div className="px-4">
-        <Link href={`/${classInfo.class_id}`}>
+        <Link href={`/class?class_id=${classInfo.class_id}&tab=points`}>
           <Button
             variant={"outline"}
             className="dark:bg-background dark:border-foreground mx-auto w-full dark:border"

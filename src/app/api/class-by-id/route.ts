@@ -1,5 +1,5 @@
 // src/app/api/class-by-id/[classId]/route.ts
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { eq, and } from "drizzle-orm";
 import {
@@ -22,12 +22,18 @@ export const revalidate = 360;
 export const dynamic = "force-dynamic";
 export const runtime = "edge";
 
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ classId: string }> }
-) {
-  const { classId } = await params;
+export async function GET(request: NextRequest) {
+  const searchParams = request.nextUrl.searchParams;
+  const classId = searchParams.get("class_id")
   const { userId } = await auth();
+
+  if (!classId) {
+    return NextResponse.json(
+      { error: "Missing 'class_id' search parameter." },
+      { status: 400 }
+    );
+  }
+  
 
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

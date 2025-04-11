@@ -15,12 +15,12 @@ export const TeacherClassesOptions = queryOptions<TeacherClassDetail[]>({
   staleTime: 1000 * 60 * 5, // 5 minutes
 });
 
-export const ClassByIdOptions = (classId: string) =>
+export const ClassByIdOptions = (classId: string | null) =>
   queryOptions<ClassDetail>({
     queryKey: ["classes", classId],
     queryFn: async () => {
       // Make sure to use the dynamic route if needed:
-      const response = await fetch(`/api/class-by-id/${classId}`);
+      const response = await fetch(`/api/class-by-id?class_id=${classId}`);
       if (!response.ok) {
         throw new Error(
           "Failed to load this class's data. Please refresh the page.",

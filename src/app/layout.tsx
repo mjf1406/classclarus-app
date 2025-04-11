@@ -4,6 +4,7 @@ import { type Metadata } from "next";
 import { Nunito } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import QueryProvider from "@/components/QueryProvider";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 export const metadata: Metadata = {
   title: `ClassClarus - App`,
@@ -30,7 +31,9 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <QueryProvider>{children}</QueryProvider>
+            <QueryProvider>
+              <NuqsAdapter>{children}</NuqsAdapter>
+            </QueryProvider>
           </ThemeProvider>
         </body>
       </html>

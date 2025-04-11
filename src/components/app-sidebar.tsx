@@ -1,11 +1,4 @@
-import {
-  ChevronDown,
-  Dices,
-  Hammer,
-  MonitorIcon,
-  School,
-  Signpost,
-} from "lucide-react";
+import { Dices, Hammer, MonitorIcon, Signpost } from "lucide-react";
 
 import {
   Sidebar,
@@ -28,10 +21,11 @@ import {
 import { ThemeSelector } from "./theme-selector";
 import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { SignInButton } from "./SignInButton";
-import MyClassesSidebar from "@/app/[classId]/components/MyClassesSidebar";
+import MyClassesSidebar from "@/app/class/components/MyClassesSidebar";
 import { LogoHeader } from "./brand/logo";
+import { currentUser } from "@clerk/nextjs/server";
+import type { PrivateMetaData } from "@/server/db/types/clerk-types";
 
-// Menu items.
 const items = [
   {
     title: "Assigners",
@@ -55,28 +49,26 @@ const items = [
   },
 ];
 
-export function AppSidebar() {
+export async function AppSidebar() {
+  const user = await currentUser();
+
+  // Compute the display name:
+  // If firstName and lastName exist, display them together.
+  // Otherwise, fallback to username (or "User" if even username is not available).
+  const displayName =
+    (user?.firstName && user?.lastName
+      ? `${user.firstName} ${user.lastName}`
+      : user?.username) ?? "User";
+
+  // Compute plan from private metadata using ?? for fallback.
+  const plan = (user?.privateMetadata?.plan as string) ?? "Free";
+  const capitalizedPlan = plan.charAt(0).toUpperCase() + plan.slice(1);
+
   return (
     <Sidebar>
       <SidebarHeader>
         <SidebarMenu className="items-center justify-center">
           <SidebarMenuItem>
-            {/* <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuButton>
-                  Select Workspace
-                  <ChevronDown className="ml-auto" />
-                </SidebarMenuButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-[--radix-popper-anchor-width]">
-                <DropdownMenuItem>
-                  <span>Acme Inc</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <span>Acme Corp.</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu> */}
             <LogoHeader />
           </SidebarMenuItem>
         </SidebarMenu>
@@ -99,41 +91,22 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        {/* Class List */}
         <MyClassesSidebar />
       </SidebarContent>
       <SidebarFooter>
         <div className="flex items-center justify-center gap-2">
-          {/* <SidebarMenu>
-            <SidebarMenuItem>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <SidebarMenuButton>
-                    <User2 /> Username
-                    <ChevronUp className="ml-auto" />
-                  </SidebarMenuButton>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  side="top"
-                  className="w-[--radix-popper-anchor-width]"
-                >
-                  <DropdownMenuItem>
-                    <span>Account</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <span>Billing</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <span>Sign out</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </SidebarMenuItem>
-          </SidebarMenu> */}
           <SignedOut>
             <SignInButton />
           </SignedOut>
           <SignedIn>
-            <UserButton />
+            <div className="flex gap-2">
+              <UserButton />
+              <div className="flex flex-col">
+                <div className="text-sm font-bold">{displayName}</div>
+                <div className="text-xs font-semibold">{capitalizedPlan}</div>
+              </div>
+            </div>
           </SignedIn>
           <ThemeSelector />
         </div>
