@@ -1,4 +1,5 @@
-import { Dices, Hammer, MonitorIcon, Signpost } from "lucide-react";
+import { ArrowRight, Dices, MonitorIcon } from "lucide-react";
+import "src/lib/string.extensions.ts";
 
 import {
   Sidebar,
@@ -12,57 +13,39 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
 import { ThemeSelector } from "./theme-selector";
 import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { SignInButton } from "./SignInButton";
 import MyClassesSidebar from "@/app/class/components/MyClassesSidebar";
 import { LogoHeader } from "./brand/logo";
 import { currentUser } from "@clerk/nextjs/server";
-import type { PrivateMetaData } from "@/server/db/types/clerk-types";
+import Link from "next/link";
 
-const items = [
-  {
-    title: "Assigners",
-    url: "/assigners",
-    icon: Signpost,
-  },
+export const itemsCunt = [
   {
     title: "Generators",
-    url: "/generators",
+    url: "/tools/generators",
     icon: Dices,
+    icon_suffix: ArrowRight,
   },
   {
     title: "Screens",
-    url: "/screens",
+    url: "/tools/screens",
     icon: MonitorIcon,
-  },
-  {
-    title: "Tools",
-    url: "/tools",
-    icon: Hammer,
+    icon_suffix: ArrowRight,
   },
 ];
 
 export async function AppSidebar() {
   const user = await currentUser();
 
-  // Compute the display name:
-  // If firstName and lastName exist, display them together.
-  // Otherwise, fallback to username (or "User" if even username is not available).
   const displayName =
     (user?.firstName && user?.lastName
       ? `${user.firstName} ${user.lastName}`
       : user?.username) ?? "User";
 
-  // Compute plan from private metadata using ?? for fallback.
   const plan = (user?.privateMetadata?.plan as string) ?? "Free";
-  const capitalizedPlan = plan.charAt(0).toUpperCase() + plan.slice(1);
+  const capitalizedPlan = plan.toTitleCase();
 
   return (
     <Sidebar>
@@ -78,13 +61,18 @@ export async function AppSidebar() {
           <SidebarGroupLabel>Application</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => (
+              {itemsCunt.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <a href={item.url}>
+                    <Link
+                      href={item.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       <item.icon />
                       <span>{item.title}</span>
-                    </a>
+                      <item.icon_suffix />
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}

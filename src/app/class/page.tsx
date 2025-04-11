@@ -5,11 +5,11 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { ClassByIdOptions } from "../api/queryOptions";
 import { CircleX, Loader2 } from "lucide-react";
-// Import shadcn Tabs components (adjust the path as needed)
+// Import shadcn Tabs components
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useQueryState } from "nuqs";
+import "src/lib/string.extensions.ts";
 
-// Custom hook to determine if the screen width is >= 768px (md)
 function useIsMdUp() {
   const [isMdUp, setIsMdUp] = React.useState(
     typeof window !== "undefined" ? window.innerWidth >= 768 : true,
@@ -31,7 +31,6 @@ export default function ClassPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const classId = searchParams.get("class_id");
-  // Get the "tab" parameter from the URL, falling back to "points" if not provided
   const tabParam = searchParams.get("tab") ?? "points";
   const [tab, setTab] = useQueryState("tab");
   const isMdUp = useIsMdUp();
@@ -42,7 +41,16 @@ export default function ClassPage() {
 
   const { data, error, isLoading } = useQuery(ClassByIdOptions(classId));
 
-  // If no classId, show the error message
+  // Update document title after data loads or tab changes
+  React.useEffect(() => {
+    if (data) {
+      const newTitle = `${
+        data?.classInfo.class_name
+      } | ${tab?.toTitleCase() ?? tabParam.toTitleCase()}`;
+      document.title = newTitle;
+    }
+  }, [data, tab, tabParam]);
+
   if (!classId) {
     return (
       <div
@@ -82,28 +90,61 @@ export default function ClassPage() {
 
   return (
     <div className="px-5 py-3">
+      {/* The title tag is removed here and updated via document.title */}
       <h1 className="mb-2 text-3xl font-bold">
         {data?.classInfo.class_name} ({data?.classInfo.class_year})
       </h1>
       {/* Shadcn Tabs as a controlled component */}
       <Tabs value={tabParam} onValueChange={setTab}>
         <TabsList className="mb-4">
-          <TabsTrigger value="points">Points</TabsTrigger>
+          <TabsTrigger value="assigners">Assigners</TabsTrigger>
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-          <TabsTrigger value="tasks">Tasks</TabsTrigger>
           <TabsTrigger value="expectations">Expectations</TabsTrigger>
+          <TabsTrigger value="points">Points</TabsTrigger>
+          <TabsTrigger value="random-event">Random Event</TabsTrigger>
+          <TabsTrigger value="randomizer">Randomizer</TabsTrigger>
+          <TabsTrigger value="silent-chat">Silent Chat</TabsTrigger>
+          <TabsTrigger value="shuffler">Shuffler</TabsTrigger>
+          <TabsTrigger value="tasks">Tasks</TabsTrigger>
         </TabsList>
-        <TabsContent value="points">
-          <p>This is the points content.</p>
+        <TabsContent value="assigners">
+          <p>This is the assigners content.</p>
         </TabsContent>
         <TabsContent value="dashboard">
           <p>This is the dashboard content.</p>
         </TabsContent>
-        <TabsContent value="tasks">
-          <p>This is the tasks content.</p>
-        </TabsContent>
         <TabsContent value="expectations">
           <p>This is the expectations content.</p>
+        </TabsContent>
+        <TabsContent value="points">
+          <p>This is the points content.</p>
+        </TabsContent>
+        <TabsContent value="random-event">
+          <p>
+            Randomly choose a daily event from default options or ones
+            you&apos;ve added.
+          </p>
+        </TabsContent>
+        <TabsContent value="randomizer">
+          <p>
+            Randomly select a group, team, or student for activities or
+            assignments.
+          </p>
+        </TabsContent>
+        <TabsContent value="silent-chat">
+          <p>
+            Communicate silently with a student by passing your phone between
+            each other.
+          </p>
+        </TabsContent>
+        <TabsContent value="shuffler">
+          <p>
+            Randomly order your groups, teams, or students, ensuring everyone
+            gets a chance to be first and last before any repeats.
+          </p>
+        </TabsContent>
+        <TabsContent value="tasks">
+          <p>This is the tasks content.</p>
         </TabsContent>
       </Tabs>
     </div>

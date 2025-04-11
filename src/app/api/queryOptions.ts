@@ -12,7 +12,7 @@ export const TeacherClassesOptions = queryOptions<TeacherClassDetail[]>({
     const response = await fetch("/api/teacher-classes");
     return response.json() as unknown as TeacherClassDetail[];
   },
-  staleTime: 1000 * 60 * 5, // 5 minutes
+  staleTime: 1000 * 60 * 30, // 30 minutes
 });
 
 export const ClassByIdOptions = (classId: string | null) =>
@@ -28,5 +28,5 @@ export const ClassByIdOptions = (classId: string | null) =>
       }
       return (await response.json()) as ClassDetail;
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 30, // 30 minutes
   });
