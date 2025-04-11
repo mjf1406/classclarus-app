@@ -29,7 +29,6 @@ function useIsMdUp() {
 
 export default function ClassPage() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const classId = searchParams.get("class_id");
   const tabParam = searchParams.get("tab") ?? "points";
   const [tab, setTab] = useQueryState("tab");
