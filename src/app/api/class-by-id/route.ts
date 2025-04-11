@@ -42,27 +42,27 @@ export async function GET(request: NextRequest) {
   try {
     // 1. Get teacher assignment and class details using the new classes schema.
     // Note that we now use classes.classId instead of classes.class_id.
-    const teacherAssignment = await db
-      .select({
-        teacherAssignment: teacher_classes,
-        classInfo: classes,
-      })
-      .from(teacher_classes)
-      .innerJoin(classes, eq(teacher_classes.class_id, classes.class_id))
-      .where(
-        and(
-          eq(teacher_classes.user_id, userId),
-          eq(teacher_classes.class_id, classId)
-        )
-      )
-      .then((res) => res[0]);
+    // const teacherAssignment = await db
+    //   .select({
+    //     teacherAssignment: teacher_classes,
+    //     classInfo: classes,
+    //   })
+    //   .from(teacher_classes)
+    //   .innerJoin(classes, eq(teacher_classes.class_id, classes.class_id))
+    //   .where(
+    //     and(
+    //       eq(teacher_classes.user_id, userId),
+    //       eq(teacher_classes.class_id, classId)
+    //     )
+    //   )
+    //   .then((res) => res[0]);
 
-    if (!teacherAssignment) {
-      return NextResponse.json(
-        { error: "Class not found or unauthorized" },
-        { status: 404 }
-      );
-    }
+    // if (!teacherAssignment) {
+    //   return NextResponse.json(
+    //     { error: "Class not found or unauthorized" },
+    //     { status: 404 }
+    //   );
+    // }
 
     // 2. Launch all related queries in parallel filtered by classId.
     const studentClassesPromise = db
@@ -95,10 +95,10 @@ export async function GET(request: NextRequest) {
       .from(absent_dates)
       .where(eq(absent_dates.class_id, classId));
 
-    const pointsPromise = db
-      .select()
-      .from(points)
-      .where(eq(points.class_id, classId));
+    // const pointsPromise = db
+    //   .select()
+    //   .from(points)
+    //   .where(eq(points.class_id, classId));
 
     // For student_groups, check if we have any groups before constructing its query.
     const studentGroupsPromise = groupsPromise.then((groupsData: Group[]) => {
@@ -133,7 +133,7 @@ export async function GET(request: NextRequest) {
       rewardItems,
       behaviorsData,
       absentDates,
-      pointsData,
+      // pointsData,
       studentGroups,
       studentSubGroups,
     ] = await Promise.all([
@@ -143,7 +143,7 @@ export async function GET(request: NextRequest) {
       rewardItemsPromise,
       behaviorsPromise,
       absentDatesPromise,
-      pointsPromise,
+      // pointsPromise,
       studentGroupsPromise,
       studentSubGroupsPromise,
     ]);
@@ -151,15 +151,15 @@ export async function GET(request: NextRequest) {
     // 3. Build the final response structure.
     // The class details now come from teacherAssignment.classInfo which reflects the new schema.
     const classDetail = {
-      teacherAssignment,
-      classInfo: teacherAssignment.classInfo,
+      // teacherAssignment,
+      // classInfo: teacherAssignment.classInfo,
       studentClasses,
       groups: groupsData,
       subGroups: subGroupsData,
       rewardItems,
       behaviors: behaviorsData,
       absentDates,
-      points: pointsData,
+      // points: pointsData,
       studentGroups,
       studentSubGroups,
     };

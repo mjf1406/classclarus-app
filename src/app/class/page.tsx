@@ -3,7 +3,11 @@
 import React from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { ClassByIdOptions } from "../api/queryOptions";
+import {
+  ClassByIdOptions,
+  TeacherClassesOptions,
+  type TeacherClassDetail,
+} from "../api/queryOptions";
 import { CircleX, Loader2 } from "lucide-react";
 // Import shadcn Tabs components
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -38,16 +42,25 @@ export default function ClassPage() {
     ? "calc(100dvw - var(--sidebar-width) - 20px)"
     : "calc(100dvw - 15px)";
 
+  const {
+    data: teacherClassesData,
+    isLoading: teacherClassesDataLoading,
+    isError: teacherClassesDataIsError,
+    error: teacherClassesDataError,
+  } = useQuery<TeacherClassDetail[]>(TeacherClassesOptions);
+  const teacherClassData = teacherClassesData?.find(
+    (i) => i.classInfo.class_id === classId,
+  );
   const { data, error, isLoading } = useQuery(ClassByIdOptions(classId));
 
   React.useEffect(() => {
-    if (data) {
+    if (teacherClassData) {
       const newTitle = `${
-        data?.classInfo.class_name
+        teacherClassData?.classInfo.class_name
       } | ${tab?.toTitleCase() ?? tabParam.toTitleCase()}`;
       document.title = newTitle;
     }
-  }, [data, tab, tabParam]);
+  }, [teacherClassData, tab, tabParam]);
 
   if (!classId) {
     return (
@@ -70,7 +83,7 @@ export default function ClassPage() {
     );
   }
 
-  if (isLoading) {
+  if (isLoading || teacherClassesDataLoading) {
     return (
       <div className="fixed inset-0 flex items-center justify-center">
         <Loader2 className="h-24 w-24 animate-spin" />
@@ -78,7 +91,7 @@ export default function ClassPage() {
     );
   }
 
-  if (error) {
+  if (error || teacherClassesDataError || teacherClassesDataIsError) {
     return (
       <div className="px-5 py-3 text-red-500">
         {error instanceof Error ? error.message : "An error occurred"}
@@ -89,7 +102,8 @@ export default function ClassPage() {
   return (
     <div className="px-5 py-3">
       <h1 className="mb-2 text-3xl font-bold">
-        {data?.classInfo.class_name} ({data?.classInfo.class_year})
+        {teacherClassData?.classInfo?.class_name} (
+        {teacherClassData?.classInfo?.class_year})
       </h1>
       <Tabs value={tabParam} onValueChange={setTab}>
         <TabsList className="mb-4">
