@@ -25,7 +25,6 @@ export default function LoaderSmallInline() {
       <style jsx>{`
         .loading-text {
           position: relative;
-          /* Ensure the text is not clipped so the shimmer looks good */
         }
         .loading-text::before {
           content: "";
@@ -40,7 +39,6 @@ export default function LoaderSmallInline() {
             rgba(255, 255, 255, 0.7),
             transparent
           );
-          /* The shimmer overlay will be semi-transparent */
           animation: shimmer 2s infinite;
         }
         @keyframes shimmer {
@@ -50,6 +48,16 @@ export default function LoaderSmallInline() {
           100% {
             left: 100%;
           }
+        }
+        /* Dark mode styles */
+        :global(.dark) .loading-text::before {
+          /* Use a subtler highlight for dark mode */
+          background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.3),
+            transparent
+          );
         }
       `}</style>
     </>

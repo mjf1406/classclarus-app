@@ -259,6 +259,7 @@ function SidebarTrigger({
   ...props
 }: React.ComponentProps<typeof Button>) {
   const { toggleSidebar } = useSidebar();
+  const isMobile = useIsMobile();
 
   return (
     <Button
@@ -273,7 +274,7 @@ function SidebarTrigger({
       }}
       {...props}
     >
-      <PanelLeftIcon />
+      <PanelLeftIcon size={isMobile ? 16 : 12} />
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   );
@@ -502,6 +503,7 @@ function SidebarMenuButton({
   size = "default",
   tooltip,
   className,
+  onClick, // receive any extra onClick
   ...props
 }: React.ComponentProps<"button"> & {
   asChild?: boolean;
@@ -509,7 +511,20 @@ function SidebarMenuButton({
   tooltip?: string | React.ComponentProps<typeof TooltipContent>;
 } & VariantProps<typeof sidebarMenuButtonVariants>) {
   const Comp = asChild ? Slot : "button";
-  const { isMobile, state } = useSidebar();
+  const { isMobile, state, setOpenMobile } = useSidebar();
+
+  // Wrap the onClick handler to collapse the sidebar if on mobile.
+  const handleClick = React.useCallback(
+    (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+      // Call the original onClick if provided.
+      onClick?.(event);
+      if (isMobile) {
+        // Collapse the mobile sidebar.
+        setOpenMobile(false);
+      }
+    },
+    [onClick, isMobile, setOpenMobile],
+  );
 
   const button = (
     <Comp
@@ -518,6 +533,7 @@ function SidebarMenuButton({
       data-size={size}
       data-active={isActive}
       className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
+      onClick={handleClick} // use the wrapped handler here
       {...props}
     />
   );

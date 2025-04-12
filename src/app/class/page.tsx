@@ -188,6 +188,9 @@ export default function ClassPage() {
         {/* Tab Content */}
         <div className="px-5">
           <TabsContent value="assigners">
+            <h2 className="mb-2 block text-xl font-semibold md:hidden">
+              Assigners
+            </h2>
             <Tabs defaultValue={"random"}>
               <TabsList className="mb-4">
                 <TabsTrigger value="random">Random</TabsTrigger>
@@ -207,23 +210,34 @@ export default function ClassPage() {
           </TabsContent>
 
           <TabsContent value="dashboard">
-            <p>This is the dashboard content.</p>
-            <br />
+            <h2 className="mb-2 block text-xl font-semibold md:hidden">
+              Dashboard
+            </h2>
             <PointsTab classId={classId} />
           </TabsContent>
           <TabsContent value="expectations">
-            <p>This is the expectations content.</p>
+            <h2 className="mb-2 block text-xl font-semibold md:hidden">
+              Expectations
+            </h2>
           </TabsContent>
           <TabsContent value="points">
-            <p>This is the points content.</p>
+            <h2 className="mb-2 block text-xl font-semibold md:hidden">
+              Points
+            </h2>
           </TabsContent>
           <TabsContent value="random-event">
+            <h2 className="mb-2 block text-xl font-semibold md:hidden">
+              Random Event
+            </h2>
             <p>
               Randomly choose a daily event from default options or ones
               you&apos;ve added.
             </p>
           </TabsContent>
           <TabsContent value="randomizer">
+            <h2 className="mb-2 block text-xl font-semibold md:hidden">
+              Randomizer
+            </h2>
             <p>
               Randomly select a group, team, or student for activities or
               assignments.
@@ -247,12 +261,18 @@ export default function ClassPage() {
             </Tabs>
           </TabsContent>
           <TabsContent value="silent-chat">
+            <h2 className="mb-2 block text-xl font-semibold md:hidden">
+              Silent Chat
+            </h2>
             <p>
               Communicate silently with a student by passing your phone between
               each other.
             </p>
           </TabsContent>
           <TabsContent value="shuffler">
+            <h2 className="mb-2 block text-xl font-semibold md:hidden">
+              Shuffler
+            </h2>
             <p>
               Randomly order your groups, teams, or students, ensuring everyone
               gets a chance to be first and last before any repeats.
@@ -276,6 +296,9 @@ export default function ClassPage() {
             </Tabs>
           </TabsContent>
           <TabsContent value="tasks">
+            <h2 className="mb-2 block text-xl font-semibold md:hidden">
+              Tasks
+            </h2>
             <p>This is the tasks content.</p>
           </TabsContent>
         </div>
