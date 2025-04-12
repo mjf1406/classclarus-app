@@ -139,28 +139,8 @@ export default function ClassPage() {
 
         <TabsContent value="dashboard">
           <p>This is the dashboard content.</p>
-          <PointsTab classId={classId} />
           <br />
-          <Tabs defaultValue={"class"}>
-            <TabsList className="mb-4">
-              <TabsTrigger value="class">Class</TabsTrigger>
-              <TabsTrigger value="groups">Groups</TabsTrigger>
-              <TabsTrigger value="teams">Teams</TabsTrigger>
-              <TabsTrigger value="students">Students</TabsTrigger>
-            </TabsList>
-            <TabsContent value="class">
-              <p>This is the class dashboard.</p>
-            </TabsContent>
-            <TabsContent value="groups">
-              <p>This is the groups dashboard.</p>
-            </TabsContent>
-            <TabsContent value="teams">
-              <p>This is the teams dashboard.</p>
-            </TabsContent>
-            <TabsContent value="students">
-              <p>This is the students dashboard.</p>
-            </TabsContent>
-          </Tabs>
+          <PointsTab classId={classId} />
         </TabsContent>
         <TabsContent value="expectations">
           <p>This is the expectations content.</p>
