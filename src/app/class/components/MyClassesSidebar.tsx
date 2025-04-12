@@ -50,7 +50,9 @@ function MyClassesContent({
     content = (
       <SidebarMenuItem>
         <SidebarMenuButton asChild>
-          Error loading classes. Please refresh the page.
+          <span className="text-destructive">
+            Error loading classes. Please refresh the page.
+          </span>
         </SidebarMenuButton>
       </SidebarMenuItem>
     );
