@@ -34,7 +34,6 @@ export async function GET(request: NextRequest) {
     );
   }
   
-
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

@@ -1,4 +1,4 @@
-import type { Class, ClassDetail, TeacherClass } from "@/server/db/types";
+import type { Class, ClassDetail, Point, TeacherClass } from "@/server/db/types";
 import { queryOptions } from "@tanstack/react-query";
 
 export type TeacherClassDetail = {
@@ -27,6 +27,21 @@ export const ClassByIdOptions = (classId: string | null) =>
         );
       }
       return (await response.json()) as ClassDetail;
+    },
+    staleTime: 1000 * 60 * 30, // 30 minutes
+  });
+
+export const PointsByClassIdOptions = (classId: string | null) =>
+  queryOptions<Point[]>({
+    queryKey: ["points", classId],
+    queryFn: async () => {
+      const response = await fetch(
+        `/api/points-by-class-id?class_id=${classId}`,
+      );
+      if (!response.ok) {
+        throw new Error("Failed to load points data. Please refresh the page.");
+      }
+      return (await response.json()) as Point[];
     },
     staleTime: 1000 * 60 * 30, // 30 minutes
   });
