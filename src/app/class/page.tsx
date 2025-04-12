@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
   ClassByIdOptions,
