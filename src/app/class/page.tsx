@@ -299,7 +299,6 @@ export default function ClassPage() {
             <h2 className="mb-2 block text-xl font-semibold md:hidden">
               Tasks
             </h2>
-            <p>This is the tasks content.</p>
           </TabsContent>
         </div>
       </Tabs>
