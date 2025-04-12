@@ -10,15 +10,14 @@ import {
 } from "../api/queryOptions";
 import {
   CircleX,
+  Coins,
   Dice5,
   Goal,
   LayoutDashboard,
   ListChecks,
   Loader2,
   MapPin,
-  MessageCircle,
   Shuffle,
-  Sigma,
   Signpost,
 } from "lucide-react";
 // Import shadcn Tabs components
@@ -145,7 +144,7 @@ export default function ClassPage() {
             className="border-b-none rounded-b-none data-[state=active]:shadow-none"
             value="points"
           >
-            <Sigma />
+            <Coins />
             <span className="hidden md:inline">Points</span>
           </TabsTrigger>
           <TabsTrigger
