@@ -8,7 +8,19 @@ import {
   TeacherClassesOptions,
   type TeacherClassDetail,
 } from "../api/queryOptions";
-import { CircleX, Loader2 } from "lucide-react";
+import {
+  CircleX,
+  Dice5,
+  Goal,
+  LayoutDashboard,
+  ListChecks,
+  Loader2,
+  MapPin,
+  MessageCircle,
+  Shuffle,
+  Sigma,
+  Signpost,
+} from "lucide-react";
 // Import shadcn Tabs components
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useQueryState } from "nuqs";
@@ -101,114 +113,172 @@ export default function ClassPage() {
   }
 
   return (
-    <div className="px-5 py-3">
-      <h1 className="mb-2 text-3xl font-bold">
+    <div className="w-full">
+      <h1 className="bg-muted -mt-7 mb-2 pt-8 pb-3 pl-3 text-3xl font-bold md:pt-5 md:pl-10">
         {teacherClassData?.classInfo?.class_name} (
         {teacherClassData?.classInfo?.class_year})
       </h1>
       <Tabs value={tabParam} onValueChange={setTab}>
-        <TabsList className="mb-4">
-          <TabsTrigger value="assigners">Assigners</TabsTrigger>
-          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-          <TabsTrigger value="expectations">Expectations</TabsTrigger>
-          <TabsTrigger value="points">Points</TabsTrigger>
-          <TabsTrigger value="random-event">Random Event</TabsTrigger>
-          <TabsTrigger value="randomizer">Randomizer</TabsTrigger>
-          <TabsTrigger value="silent-chat">Silent Chat</TabsTrigger>
-          <TabsTrigger value="shuffler">Shuffler</TabsTrigger>
-          <TabsTrigger value="tasks">Tasks</TabsTrigger>
+        <TabsList className="-mt-2 mb-3 w-full grow-0 rounded-none pb-0 pl-2 md:pl-10">
+          <TabsTrigger
+            className="border-b-none rounded-b-none data-[state=active]:shadow-none"
+            value="assigners"
+          >
+            <Signpost />
+            <span className="hidden md:inline">Assigners</span>
+          </TabsTrigger>
+          <TabsTrigger
+            className="border-b-none rounded-b-none data-[state=active]:shadow-none"
+            value="dashboard"
+          >
+            <LayoutDashboard />
+            <span className="hidden md:inline">Dashboard</span>
+          </TabsTrigger>
+          <TabsTrigger
+            className="border-b-none rounded-b-none data-[state=active]:shadow-none"
+            value="expectations"
+          >
+            <Goal />
+            <span className="hidden md:inline">Expectations</span>
+          </TabsTrigger>
+          <TabsTrigger
+            className="border-b-none rounded-b-none data-[state=active]:shadow-none"
+            value="points"
+          >
+            <Sigma />
+            <span className="hidden md:inline">Points</span>
+          </TabsTrigger>
+          <TabsTrigger
+            className="border-b-none rounded-b-none data-[state=active]:shadow-none"
+            value="random-event"
+          >
+            <MapPin />
+            <span className="hidden md:inline">Random Event</span>
+          </TabsTrigger>
+          <TabsTrigger
+            className="border-b-none rounded-b-none data-[state=active]:shadow-none"
+            value="randomizer"
+          >
+            <Dice5 />
+            <span className="hidden md:inline">Randomizer</span>
+          </TabsTrigger>
+          {/* <TabsTrigger
+            className="border-b-none rounded-b-none data-[state=active]:shadow-none"
+            value="silent-chat"
+          >
+            <MessageCircle />
+            <span className="hidden md:inline">Silent Chat</span>
+          </TabsTrigger> */}
+          <TabsTrigger
+            className="border-b-none rounded-b-none data-[state=active]:shadow-none"
+            value="shuffler"
+          >
+            <Shuffle />
+            <span className="hidden md:inline">Shuffler</span>
+          </TabsTrigger>
+          <TabsTrigger
+            className="border-b-none rounded-b-none data-[state=active]:shadow-none sm:px-0 md:px-2"
+            value="tasks"
+          >
+            <ListChecks />
+            <span className="hidden md:inline">Tasks</span>
+          </TabsTrigger>
         </TabsList>
-        <TabsContent value="assigners">
-          <Tabs defaultValue={"random"}>
-            <TabsList className="mb-4">
-              <TabsTrigger value="random">Random</TabsTrigger>
-              <TabsTrigger value="round-robin">Round Robin</TabsTrigger>
-              <TabsTrigger value="seats">Seats</TabsTrigger>
-            </TabsList>
-            <TabsContent value="random">
-              <p>This is the random assigner content.</p>
-            </TabsContent>
-            <TabsContent value="round-robin">
-              <p>This is the round robin assigner content.</p>
-            </TabsContent>
-            <TabsContent value="seats">
-              <p>This is the seats assigner content.</p>
-            </TabsContent>
-          </Tabs>
-        </TabsContent>
 
-        <TabsContent value="dashboard">
-          <p>This is the dashboard content.</p>
-          <br />
-          <PointsTab classId={classId} />
-        </TabsContent>
-        <TabsContent value="expectations">
-          <p>This is the expectations content.</p>
-        </TabsContent>
-        <TabsContent value="points">
-          <p>This is the points content.</p>
-        </TabsContent>
-        <TabsContent value="random-event">
-          <p>
-            Randomly choose a daily event from default options or ones
-            you&apos;ve added.
-          </p>
-        </TabsContent>
-        <TabsContent value="randomizer">
-          <p>
-            Randomly select a group, team, or student for activities or
-            assignments.
-          </p>
-          <br />
-          <Tabs defaultValue={"group"}>
-            <TabsList className="mb-4">
-              <TabsTrigger value="group">Group</TabsTrigger>
-              <TabsTrigger value="team">Team</TabsTrigger>
-              <TabsTrigger value="student">Student</TabsTrigger>
-            </TabsList>
-            <TabsContent value="group">
-              <p>This is the group randomizer.</p>
-            </TabsContent>
-            <TabsContent value="team">
-              <p>This is the team randomizer.</p>
-            </TabsContent>
-            <TabsContent value="student">
-              <p>This is the student randomizer.</p>
-            </TabsContent>
-          </Tabs>
-        </TabsContent>
-        <TabsContent value="silent-chat">
-          <p>
-            Communicate silently with a student by passing your phone between
-            each other.
-          </p>
-        </TabsContent>
-        <TabsContent value="shuffler">
-          <p>
-            Randomly order your groups, teams, or students, ensuring everyone
-            gets a chance to be first and last before any repeats.
-          </p>
-          <br />
-          <Tabs defaultValue={"group"}>
-            <TabsList className="mb-4">
-              <TabsTrigger value="group">Group</TabsTrigger>
-              <TabsTrigger value="team">Team</TabsTrigger>
-              <TabsTrigger value="student">Student</TabsTrigger>
-            </TabsList>
-            <TabsContent value="group">
-              <p>This is the group shuffler.</p>
-            </TabsContent>
-            <TabsContent value="team">
-              <p>This is the team shuffler.</p>
-            </TabsContent>
-            <TabsContent value="student">
-              <p>This is the student shuffler.</p>
-            </TabsContent>
-          </Tabs>
-        </TabsContent>
-        <TabsContent value="tasks">
-          <p>This is the tasks content.</p>
-        </TabsContent>
+        {/* Tab Content */}
+        <div className="px-5">
+          <TabsContent value="assigners">
+            <Tabs defaultValue={"random"}>
+              <TabsList className="mb-4">
+                <TabsTrigger value="random">Random</TabsTrigger>
+                <TabsTrigger value="round-robin">Round Robin</TabsTrigger>
+                <TabsTrigger value="seats">Seats</TabsTrigger>
+              </TabsList>
+              <TabsContent value="random">
+                <p>This is the random assigner content.</p>
+              </TabsContent>
+              <TabsContent value="round-robin">
+                <p>This is the round robin assigner content.</p>
+              </TabsContent>
+              <TabsContent value="seats">
+                <p>This is the seats assigner content.</p>
+              </TabsContent>
+            </Tabs>
+          </TabsContent>
+
+          <TabsContent value="dashboard">
+            <p>This is the dashboard content.</p>
+            <br />
+            <PointsTab classId={classId} />
+          </TabsContent>
+          <TabsContent value="expectations">
+            <p>This is the expectations content.</p>
+          </TabsContent>
+          <TabsContent value="points">
+            <p>This is the points content.</p>
+          </TabsContent>
+          <TabsContent value="random-event">
+            <p>
+              Randomly choose a daily event from default options or ones
+              you&apos;ve added.
+            </p>
+          </TabsContent>
+          <TabsContent value="randomizer">
+            <p>
+              Randomly select a group, team, or student for activities or
+              assignments.
+            </p>
+            <br />
+            <Tabs defaultValue={"group"}>
+              <TabsList className="mb-4">
+                <TabsTrigger value="group">Group</TabsTrigger>
+                <TabsTrigger value="team">Team</TabsTrigger>
+                <TabsTrigger value="student">Student</TabsTrigger>
+              </TabsList>
+              <TabsContent value="group">
+                <p>This is the group randomizer.</p>
+              </TabsContent>
+              <TabsContent value="team">
+                <p>This is the team randomizer.</p>
+              </TabsContent>
+              <TabsContent value="student">
+                <p>This is the student randomizer.</p>
+              </TabsContent>
+            </Tabs>
+          </TabsContent>
+          <TabsContent value="silent-chat">
+            <p>
+              Communicate silently with a student by passing your phone between
+              each other.
+            </p>
+          </TabsContent>
+          <TabsContent value="shuffler">
+            <p>
+              Randomly order your groups, teams, or students, ensuring everyone
+              gets a chance to be first and last before any repeats.
+            </p>
+            <br />
+            <Tabs defaultValue={"group"}>
+              <TabsList className="mb-4">
+                <TabsTrigger value="group">Group</TabsTrigger>
+                <TabsTrigger value="team">Team</TabsTrigger>
+                <TabsTrigger value="student">Student</TabsTrigger>
+              </TabsList>
+              <TabsContent value="group">
+                <p>This is the group shuffler.</p>
+              </TabsContent>
+              <TabsContent value="team">
+                <p>This is the team shuffler.</p>
+              </TabsContent>
+              <TabsContent value="student">
+                <p>This is the student shuffler.</p>
+              </TabsContent>
+            </Tabs>
+          </TabsContent>
+          <TabsContent value="tasks">
+            <p>This is the tasks content.</p>
+          </TabsContent>
+        </div>
       </Tabs>
     </div>
   );
