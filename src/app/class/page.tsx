@@ -117,7 +117,7 @@ export default function ClassPage() {
       <h1 className="bg-muted -mt-7 mb-2 flex items-center justify-between pt-8 pr-4 pb-3 pl-3 text-3xl font-bold md:pt-5 md:pl-10">
         <div>
           {teacherClassData?.classInfo?.class_name} (
-          {teacherClassData?.classInfo?.class_year})f
+          {teacherClassData?.classInfo?.class_year})
         </div>
         <ClassActionMenu
           classId={teacherClassData?.classInfo.class_id ?? ""}
