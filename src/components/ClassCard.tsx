@@ -6,6 +6,7 @@ import type { TeacherClassDetail } from "@/app/api/queryOptions";
 import { Crown, User } from "lucide-react";
 import { Button } from "./ui/button";
 import Link from "next/link";
+import ClassActionMenu from "@/app/class/components/ClassActionMenu";
 
 interface ClassCardProps {
   detail: TeacherClassDetail;
@@ -25,9 +26,15 @@ const ClassCard: React.FC<ClassCardProps> = ({ detail }) => {
   return (
     <Card className="w-full gap-4 pt-2">
       <CardHeader className="flex items-center justify-between rounded-t-xl">
-        <CardTitle className="flex h-12 items-center justify-center gap-2 text-3xl font-bold">
-          <span>{classInfo.class_name}</span>{" "}
-          <span className="text-xl">({classInfo.class_year})</span>
+        <CardTitle className="mx-auto flex h-12 w-full items-center justify-between gap-2 text-3xl font-bold">
+          <div>
+            <span>{classInfo.class_name}</span>{" "}
+            <span className="text-xl">({classInfo.class_year})</span>
+          </div>
+          <ClassActionMenu
+            classId={classInfo.class_id}
+            className="dark:bg-background dark:hover:bg-accent dark:text-white"
+          />
         </CardTitle>
       </CardHeader>
       <CardContent>
