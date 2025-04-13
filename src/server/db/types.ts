@@ -35,11 +35,13 @@ export interface TeacherClass {
   assigned_date: string;
 }
 
+export interface StudentClassWithStudent extends StudentClass {
+  student: Student;
+}
+
 // Define a comprehensive type for the API response.
 export interface ClassDetail {
-  teacherAssignment: TeacherClass;
-  classInfo: Class;
-  studentClasses: StudentClass[];
+  studentInfo: StudentClassWithStudent[];
   groups: Group[];
   subGroups: SubGroup[];
   rewardItems: RewardItem[];

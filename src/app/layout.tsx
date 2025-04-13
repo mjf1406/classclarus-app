@@ -5,6 +5,7 @@ import { Nunito } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import QueryProvider from "@/components/QueryProvider";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: `ClassClarus - App`,
@@ -34,6 +35,7 @@ export default function RootLayout({
             <QueryProvider>
               <NuqsAdapter>{children}</NuqsAdapter>
             </QueryProvider>
+            <Toaster richColors />
           </ThemeProvider>
         </body>
       </html>

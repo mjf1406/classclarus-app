@@ -24,7 +24,7 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useQueryState } from "nuqs";
 import "src/lib/string.extensions.ts";
-import PointsTab from "./components/TabPoints";
+import PointsTab from "./components/dashboard/TabPoints";
 
 function useIsMdUp() {
   const [isMdUp, setIsMdUp] = React.useState(

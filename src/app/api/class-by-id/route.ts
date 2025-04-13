@@ -3,7 +3,6 @@ import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { eq, and } from "drizzle-orm";
 import {
-  classes,
   teacher_classes,
   student_classes,
   student_groups,
@@ -13,7 +12,7 @@ import {
   reward_items,
   behaviors,
   absent_dates,
-  points,
+  students,
 } from "@/server/db/schema";
 import { db } from "@/server/db";
 import type { Group, SubGroup } from "@/server/db/types";
@@ -24,49 +23,59 @@ export const runtime = "edge";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
-  const classId = searchParams.get("class_id")
+  const classId = searchParams.get("class_id");
   const { userId } = await auth();
 
   if (!classId) {
     return NextResponse.json(
       { error: "Missing 'class_id' search parameter." },
-      { status: 400 }
+      { status: 400 },
     );
   }
-  
+
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    // 1. Get teacher assignment and class details using the new classes schema.
-    // Note that we now use classes.classId instead of classes.class_id.
-    // const teacherAssignment = await db
-    //   .select({
-    //     teacherAssignment: teacher_classes,
-    //     classInfo: classes,
-    //   })
-    //   .from(teacher_classes)
-    //   .innerJoin(classes, eq(teacher_classes.class_id, classes.class_id))
-    //   .where(
-    //     and(
-    //       eq(teacher_classes.user_id, userId),
-    //       eq(teacher_classes.class_id, classId)
-    //     )
-    //   )
-    //   .then((res) => res[0]);
+    const isTeacher = await db
+      .select()
+      .from(teacher_classes)
+      .where(
+        and(
+          eq(teacher_classes.class_id, classId),
+          eq(teacher_classes.user_id, userId),
+        ),
+      );
 
-    // if (!teacherAssignment) {
-    //   return NextResponse.json(
-    //     { error: "Class not found or unauthorized" },
-    //     { status: 404 }
-    //   );
-    // }
+    if (!isTeacher) {
+      return NextResponse.json(
+        { error: "Class not found or forbidden" },
+        { status: 404 },
+      );
+    }
 
     // 2. Launch all related queries in parallel filtered by classId.
     const studentClassesPromise = db
-      .select()
+      .select({
+        class_id: student_classes.class_id,
+        student_id: student_classes.student_id,
+        points: student_classes.points,
+        minus_points: student_classes.minus_points,
+        redemption_points: student_classes.redemption_points,
+        absent_dates: student_classes.absent_dates,
+        enrollment_date: student_classes.enrollment_date,
+        student_name_first_en: students.student_name_first_en,
+        student_name_last_en: students.student_name_last_en,
+        student_name_alt: students.student_name_alt,
+        student_reading_level: students.student_reading_level,
+        student_grade: students.student_grade,
+        student_sex: students.student_sex,
+        student_number: students.student_number,
+        student_email: students.student_email,
+      })
       .from(student_classes)
+      .leftJoin(students, eq(student_classes.student_id, students.student_id))
       .where(eq(student_classes.class_id, classId));
 
     const groupsPromise = db
@@ -94,11 +103,6 @@ export async function GET(request: NextRequest) {
       .from(absent_dates)
       .where(eq(absent_dates.class_id, classId));
 
-    // const pointsPromise = db
-    //   .select()
-    //   .from(points)
-    //   .where(eq(points.class_id, classId));
-
     // For student_groups, check if we have any groups before constructing its query.
     const studentGroupsPromise = groupsPromise.then((groupsData: Group[]) => {
       if (!groupsData || groupsData.length === 0 || !groupsData[0]) {
@@ -122,7 +126,7 @@ export async function GET(request: NextRequest) {
           .select()
           .from(student_sub_groups)
           .where(eq(student_sub_groups.sub_group_id, subGroupId));
-      }
+      },
     );
 
     const [
@@ -132,7 +136,6 @@ export async function GET(request: NextRequest) {
       rewardItems,
       behaviorsData,
       absentDates,
-      // pointsData,
       studentGroups,
       studentSubGroups,
     ] = await Promise.all([
@@ -142,23 +145,18 @@ export async function GET(request: NextRequest) {
       rewardItemsPromise,
       behaviorsPromise,
       absentDatesPromise,
-      // pointsPromise,
       studentGroupsPromise,
       studentSubGroupsPromise,
     ]);
 
     // 3. Build the final response structure.
-    // The class details now come from teacherAssignment.classInfo which reflects the new schema.
     const classDetail = {
-      // teacherAssignment,
-      // classInfo: teacherAssignment.classInfo,
-      studentClasses,
+      studentInfo: studentClasses,
       groups: groupsData,
       subGroups: subGroupsData,
       rewardItems,
       behaviors: behaviorsData,
       absentDates,
-      // points: pointsData,
       studentGroups,
       studentSubGroups,
     };

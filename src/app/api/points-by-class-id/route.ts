@@ -1,7 +1,7 @@
 // src/app/api/points-by-class-id/[classId]/route.ts
 import { type NextRequest, NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
-import { points } from "@/server/db/schema";
+import { eq, and } from "drizzle-orm";
+import { points, teacher_classes } from "@/server/db/schema";
 import { db } from "@/server/db";
 import { auth } from "@clerk/nextjs/server";
 
@@ -17,12 +17,29 @@ export async function GET(request: NextRequest) {
   if (!classId) {
     return NextResponse.json(
       { error: "Missing 'class_id' search parameter." },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const isTeacher = await db
+    .select()
+    .from(teacher_classes)
+    .where(
+      and(
+        eq(teacher_classes.class_id, classId),
+        eq(teacher_classes.user_id, userId),
+      ),
+    );
+
+  if (!isTeacher) {
+    return NextResponse.json(
+      { error: "Class not found or forbidden" },
+      { status: 404 },
+    );
   }
 
   try {
