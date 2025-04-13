@@ -60,7 +60,7 @@ const ClassCard: React.FC<ClassCardProps> = ({ detail }) => {
         <Link href={`/class?class_id=${classInfo.class_id}&tab=points`}>
           <Button
             variant={"outline"}
-            className="dark:bg-background dark:border-foreground mx-auto w-full dark:border"
+            className="dark:bg-background dark:border-foreground hover:dark:bg-card mx-auto w-full dark:border"
           >
             Open
           </Button>
