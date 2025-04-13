@@ -25,6 +25,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useQueryState } from "nuqs";
 import "src/lib/string.extensions.ts";
 import PointsTab from "./components/dashboard/TabPoints";
+import ClassActionMenu from "./components/ClassActionMenu";
 
 function useIsMdUp() {
   const [isMdUp, setIsMdUp] = React.useState(
@@ -113,9 +114,15 @@ export default function ClassPage() {
 
   return (
     <div className="w-full">
-      <h1 className="bg-muted -mt-7 mb-2 pt-8 pb-3 pl-3 text-3xl font-bold md:pt-5 md:pl-10">
-        {teacherClassData?.classInfo?.class_name} (
-        {teacherClassData?.classInfo?.class_year})
+      <h1 className="bg-muted -mt-7 mb-2 flex items-center justify-between pt-8 pr-4 pb-3 pl-3 text-3xl font-bold md:pt-5 md:pl-10">
+        <div>
+          {teacherClassData?.classInfo?.class_name} (
+          {teacherClassData?.classInfo?.class_year})f
+        </div>
+        <ClassActionMenu
+          classId={teacherClassData?.classInfo.class_id ?? ""}
+          className="dark:bg-background dark:hover:bg-accent dark:text-white"
+        />
       </h1>
       <Tabs value={tabParam} onValueChange={setTab}>
         <TabsList className="-mt-2 mb-3 w-full grow-0 rounded-none pb-0 pl-2 md:pl-10">
