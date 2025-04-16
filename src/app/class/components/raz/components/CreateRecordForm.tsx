@@ -7,19 +7,6 @@ import React, { useTransition } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Plus } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -27,14 +14,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
-import { createRazRecord } from "./actions/createTestRecord";
-import { useQuery } from "@tanstack/react-query";
-import { ClassByIdOptions } from "@/app/api/queryOptions";
+import { createRazRecord } from "../actions/createTestRecord";
 import type { StudentClassWithStudent } from "@/server/db/types";
 
-// Update the Zod schema to use z.coerce.number() so that each numeric field
-// is coercively converted into a number.
+// Define the Zod schema with coercive number conversion.
 const newTestRecordSchema = z.object({
   class_id: z.string().nonempty("Class ID is required"),
   student_id: z.string().nonempty("Student is required"),
@@ -52,18 +40,17 @@ const newTestRecordSchema = z.object({
     message: "Retelling score must be at least 0",
   }),
   note: z.string().optional(),
-  // Convert the string input to a Date (storing as string in the form)
   date: z.string(),
 });
 
 export type NewTestRecordFormData = z.infer<typeof newTestRecordSchema>;
 
-interface NewRazRecordFormProps {
+interface CreateRecordFormProps {
   defaultClassId?: string;
   studentInfo: StudentClassWithStudent[];
 }
 
-// Define the list of RAZ Kids levels as the English alphabet plus "AA", "Z1", and "Z2"
+// Define the list of RAZ Kids levels.
 const razLevels: string[] = [
   "aa",
   ...Array.from({ length: 26 }, (_, i) => String.fromCharCode(i + 65)),
@@ -71,11 +58,11 @@ const razLevels: string[] = [
   "Z2",
 ];
 
-const NewRazRecordForm: React.FC<NewRazRecordFormProps> = ({
+const CreateRecordForm: React.FC<CreateRecordFormProps> = ({
   defaultClassId,
   studentInfo,
 }) => {
-  // Helper: get the current date/time in "datetime-local" format.
+  // Helper: get the current datetime in "datetime-local" format.
   const getCurrentDateTimeLocal = () => {
     const now = new Date();
     const timezoneOffset = now.getTimezoneOffset() * 60000;
@@ -94,7 +81,7 @@ const NewRazRecordForm: React.FC<NewRazRecordFormProps> = ({
       class_id: defaultClassId ?? "",
       student_id: "",
       result: "stay",
-      level: "", // now expecting a select value
+      level: "",
       accuracy: 0,
       quiz_score: 0,
       retelling_score: 0,
@@ -103,7 +90,6 @@ const NewRazRecordForm: React.FC<NewRazRecordFormProps> = ({
     },
   });
 
-  // useTransition allows us to trigger the server action without blocking the UI.
   const [isPending, startTransition] = useTransition();
   const [serverError, setServerError] = React.useState<string | null>(null);
 
@@ -114,7 +100,7 @@ const NewRazRecordForm: React.FC<NewRazRecordFormProps> = ({
         if (result.success) {
           reset();
           setServerError(null);
-          // Optionally, you can close the dialog or show a success message.
+          // Optionally, close the dialog or show a success message.
         } else {
           setServerError(result.message ?? "An error occurred.");
         }
@@ -129,7 +115,6 @@ const NewRazRecordForm: React.FC<NewRazRecordFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      {/* If a default class ID exists, render it as a hidden field. */}
       {defaultClassId && <input type="hidden" {...register("class_id")} />}
 
       {/* Student Selector */}
@@ -292,45 +277,4 @@ const NewRazRecordForm: React.FC<NewRazRecordFormProps> = ({
   );
 };
 
-interface RazTableProps {
-  classId: string | null;
-}
-
-const RazTable: React.FC<RazTableProps> = ({ classId }) => {
-  // Fetch class data using the provided classId.
-  const { data, error, isLoading } = useQuery(ClassByIdOptions(classId));
-
-  if (isLoading) {
-    return <p>Loading class data...</p>;
-  }
-
-  if (error || !data) {
-    return <p>Error loading class data.</p>;
-  }
-
-  const { studentInfo } = data;
-
-  return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus /> Create Record
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Create New Test Record</DialogTitle>
-          <DialogDescription>
-            Fill out the form below to create a new test record.
-          </DialogDescription>
-        </DialogHeader>
-        <NewRazRecordForm
-          defaultClassId={classId ?? undefined}
-          studentInfo={studentInfo}
-        />
-      </DialogContent>
-    </Dialog>
-  );
-};
-
-export default RazTable;
+export default CreateRecordForm;

@@ -9,7 +9,6 @@ import {
   type TeacherClassDetail,
 } from "../api/queryOptions";
 import {
-  Book,
   BookOpenText,
   CircleX,
   Coins,
@@ -29,7 +28,7 @@ import { useQueryState } from "nuqs";
 import "src/lib/string.extensions.ts";
 import PointsTab from "./components/dashboard/TabPoints";
 import ClassActionMenu from "./components/ClassActionMenu";
-import RazTable from "./components/raz/RazTable";
+import RazTab from "./components/raz/RazTab";
 
 function useIsMdUp() {
   const [isMdUp, setIsMdUp] = React.useState(
@@ -292,7 +291,7 @@ export default function ClassPage() {
               reminders all in accordance with RAZ Plus&apos; guidelines.
             </p>
             <br />
-            <RazTable classId={classId} />
+            <RazTab classId={classId} />
           </TabsContent>
           <TabsContent value="silent-chat">
             <h2 className="mb-2 block text-xl font-semibold lg:hidden">

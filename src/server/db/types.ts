@@ -48,6 +48,7 @@ export interface ClassDetail {
   points: Point[];
   studentGroups: StudentGroup[];
   studentSubGroups: StudentSubGroup[];
+  raz: RazRecord[];
 }
 
 // Assuming these types are defined elsewhere
@@ -169,4 +170,16 @@ export interface Point {
   number_of_points: number;
   created_date: string;
   updated_date: string;
+}
+
+export interface RazRecord {
+  class_id: string;
+  student_id: string;
+  result: "level up" | "stay" | "level down";
+  level: string;
+  accuracy: number;
+  quiz_score: number;
+  retelling_score: number;
+  note: string;
+  date: string,
 }
