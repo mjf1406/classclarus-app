@@ -13,6 +13,7 @@ import {
   behaviors,
   absent_dates,
   students,
+  raz, // Imported the new raz table
 } from "@/server/db/schema";
 import { db } from "@/server/db";
 import type { Group, SubGroup } from "@/server/db/types";
@@ -44,8 +45,8 @@ export async function GET(request: NextRequest) {
       .where(
         and(
           eq(teacher_classes.class_id, classId),
-          eq(teacher_classes.user_id, userId),
-        ),
+          eq(teacher_classes.user_id, userId)
+        )
       );
 
     if (!isTeacher) {
@@ -55,7 +56,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 2. Launch all related queries in parallel filtered by classId.
+    // Launch all related queries in parallel filtered by classId.
     const studentClassesPromise = db
       .select({
         class_id: student_classes.class_id,
@@ -129,6 +130,12 @@ export async function GET(request: NextRequest) {
       },
     );
 
+    // New: Query for raz records filtered by classId.
+    const razPromise = db
+      .select()
+      .from(raz)
+      .where(eq(raz.class_id, classId));
+
     const [
       studentClasses,
       groupsData,
@@ -138,6 +145,7 @@ export async function GET(request: NextRequest) {
       absentDates,
       studentGroups,
       studentSubGroups,
+      razData,
     ] = await Promise.all([
       studentClassesPromise,
       groupsPromise,
@@ -147,9 +155,10 @@ export async function GET(request: NextRequest) {
       absentDatesPromise,
       studentGroupsPromise,
       studentSubGroupsPromise,
+      razPromise,
     ]);
 
-    // 3. Build the final response structure.
+    // Build the final response structure.
     const classDetail = {
       studentInfo: studentClasses,
       groups: groupsData,
@@ -159,6 +168,7 @@ export async function GET(request: NextRequest) {
       absentDates,
       studentGroups,
       studentSubGroups,
+      raz: razData, // Added raz records to the output.
     };
 
     return NextResponse.json(classDetail, { status: 200 });
