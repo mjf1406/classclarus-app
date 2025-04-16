@@ -3,8 +3,14 @@
 ## To-do List
 
 - DB: fix delete class in class action menu: need to add missing tables to the schema
+- UI: create the table
 
 ## Change Log
+
+### 2025/04/16
+
+- UI: added raz tab
+- UX: on the raz tab, can create a test record
 
 ### 2025/04/13
 

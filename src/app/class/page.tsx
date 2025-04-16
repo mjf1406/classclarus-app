@@ -9,6 +9,8 @@ import {
   type TeacherClassDetail,
 } from "../api/queryOptions";
 import {
+  Book,
+  BookOpenText,
   CircleX,
   Coins,
   Dice5,
@@ -17,6 +19,7 @@ import {
   ListChecks,
   Loader2,
   MapPin,
+  NotebookText,
   Shuffle,
   Signpost,
 } from "lucide-react";
@@ -26,6 +29,7 @@ import { useQueryState } from "nuqs";
 import "src/lib/string.extensions.ts";
 import PointsTab from "./components/dashboard/TabPoints";
 import ClassActionMenu from "./components/ClassActionMenu";
+import RazTable from "./components/raz/RazTable";
 
 function useIsMdUp() {
   const [isMdUp, setIsMdUp] = React.useState(
@@ -74,7 +78,6 @@ export default function ClassPage() {
       document.title = newTitle;
     }
   }, [teacherClassData, tab, tabParam]);
-
   if (!classId) {
     return (
       <div
@@ -131,70 +134,84 @@ export default function ClassPage() {
             value="assigners"
           >
             <Signpost />
-            <span className="hidden md:inline">Assigners</span>
+            <span className="hidden lg:inline">Assigners</span>
           </TabsTrigger>
           <TabsTrigger
             className="border-b-none rounded-b-none data-[state=active]:shadow-none"
             value="dashboard"
           >
             <LayoutDashboard />
-            <span className="hidden md:inline">Dashboard</span>
+            <span className="hidden lg:inline">Dashboard</span>
           </TabsTrigger>
           <TabsTrigger
             className="border-b-none rounded-b-none data-[state=active]:shadow-none"
             value="expectations"
           >
             <Goal />
-            <span className="hidden md:inline">Expectations</span>
+            <span className="hidden lg:inline">Expectations</span>
           </TabsTrigger>
           <TabsTrigger
             className="border-b-none rounded-b-none data-[state=active]:shadow-none"
             value="points"
           >
             <Coins />
-            <span className="hidden md:inline">Points</span>
+            <span className="hidden lg:inline">Points</span>
           </TabsTrigger>
           <TabsTrigger
             className="border-b-none rounded-b-none data-[state=active]:shadow-none"
             value="random-event"
           >
             <MapPin />
-            <span className="hidden md:inline">Random Event</span>
+            <span className="hidden lg:inline">Random Event</span>
           </TabsTrigger>
           <TabsTrigger
             className="border-b-none rounded-b-none data-[state=active]:shadow-none"
             value="randomizer"
           >
             <Dice5 />
-            <span className="hidden md:inline">Randomizer</span>
+            <span className="hidden lg:inline">Randomizer</span>
+          </TabsTrigger>
+          <TabsTrigger
+            className="border-b-none rounded-b-none data-[state=active]:shadow-none"
+            value="raz"
+          >
+            <BookOpenText />
+            <span className="hidden lg:inline">RAZ Plus</span>
           </TabsTrigger>
           {/* <TabsTrigger
             className="border-b-none rounded-b-none data-[state=active]:shadow-none"
             value="silent-chat"
           >
             <MessageCircle />
-            <span className="hidden md:inline">Silent Chat</span>
+            <span className="hidden lg:inline">Silent Chat</span>
           </TabsTrigger> */}
           <TabsTrigger
             className="border-b-none rounded-b-none data-[state=active]:shadow-none"
             value="shuffler"
           >
             <Shuffle />
-            <span className="hidden md:inline">Shuffler</span>
+            <span className="hidden lg:inline">Shuffler</span>
           </TabsTrigger>
           <TabsTrigger
             className="border-b-none rounded-b-none data-[state=active]:shadow-none sm:px-0 md:px-2"
             value="tasks"
           >
             <ListChecks />
-            <span className="hidden md:inline">Tasks</span>
+            <span className="hidden lg:inline">Tasks</span>
+          </TabsTrigger>
+          <TabsTrigger
+            className="border-b-none rounded-b-none data-[state=active]:shadow-none sm:px-0 md:px-2"
+            value="ufli"
+          >
+            <NotebookText />
+            <span className="hidden lg:inline">UFLI</span>
           </TabsTrigger>
         </TabsList>
 
         {/* Tab Content */}
         <div className="px-5">
           <TabsContent value="assigners">
-            <h2 className="mb-2 block text-xl font-semibold md:hidden">
+            <h2 className="mb-2 block text-xl font-semibold lg:hidden">
               Assigners
             </h2>
             <Tabs defaultValue={"random"}>
@@ -216,23 +233,23 @@ export default function ClassPage() {
           </TabsContent>
 
           <TabsContent value="dashboard">
-            <h2 className="mb-2 block text-xl font-semibold md:hidden">
+            <h2 className="mb-2 block text-xl font-semibold lg:hidden">
               Dashboard
             </h2>
             <PointsTab classId={classId} />
           </TabsContent>
           <TabsContent value="expectations">
-            <h2 className="mb-2 block text-xl font-semibold md:hidden">
+            <h2 className="mb-2 block text-xl font-semibold lg:hidden">
               Expectations
             </h2>
           </TabsContent>
           <TabsContent value="points">
-            <h2 className="mb-2 block text-xl font-semibold md:hidden">
+            <h2 className="mb-2 block text-xl font-semibold lg:hidden">
               Points
             </h2>
           </TabsContent>
           <TabsContent value="random-event">
-            <h2 className="mb-2 block text-xl font-semibold md:hidden">
+            <h2 className="mb-2 block text-xl font-semibold lg:hidden">
               Random Event
             </h2>
             <p>
@@ -241,7 +258,7 @@ export default function ClassPage() {
             </p>
           </TabsContent>
           <TabsContent value="randomizer">
-            <h2 className="mb-2 block text-xl font-semibold md:hidden">
+            <h2 className="mb-2 block text-xl font-semibold lg:hidden">
               Randomizer
             </h2>
             <p>
@@ -266,8 +283,19 @@ export default function ClassPage() {
               </TabsContent>
             </Tabs>
           </TabsContent>
+          <TabsContent value="raz">
+            <h2 className="mb-2 block text-xl font-semibold lg:hidden">
+              RAZ Plus
+            </h2>
+            <p>
+              Track your student progress through RAZ Kids with frequency
+              reminders all in accordance with RAZ Plus&apos; guidelines.
+            </p>
+            <br />
+            <RazTable classId={classId} />
+          </TabsContent>
           <TabsContent value="silent-chat">
-            <h2 className="mb-2 block text-xl font-semibold md:hidden">
+            <h2 className="mb-2 block text-xl font-semibold lg:hidden">
               Silent Chat
             </h2>
             <p>
@@ -276,7 +304,7 @@ export default function ClassPage() {
             </p>
           </TabsContent>
           <TabsContent value="shuffler">
-            <h2 className="mb-2 block text-xl font-semibold md:hidden">
+            <h2 className="mb-2 block text-xl font-semibold lg:hidden">
               Shuffler
             </h2>
             <p>
@@ -302,9 +330,13 @@ export default function ClassPage() {
             </Tabs>
           </TabsContent>
           <TabsContent value="tasks">
-            <h2 className="mb-2 block text-xl font-semibold md:hidden">
+            <h2 className="mb-2 block text-xl font-semibold lg:hidden">
               Tasks
             </h2>
+          </TabsContent>
+          <TabsContent value="ufli">
+            <h2 className="mb-2 block text-xl font-semibold lg:hidden">UFLI</h2>
+            <p>Track your students reading speed using UFLI assessments.</p>
           </TabsContent>
         </div>
       </Tabs>

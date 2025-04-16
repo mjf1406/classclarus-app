@@ -226,3 +226,30 @@ export const points = sqliteTable('points',
       }
   }
 )
+
+export const raz = sqliteTable('raz', 
+  {
+    id: text('id').notNull().primaryKey(),
+    user_id: text('user_id').notNull().references(() => users.user_id),
+    class_id: text('class_id').notNull().references(() => classes.class_id),
+    student_id: text('student_id').notNull().references(() => students.student_id),
+    result: text('result', { enum: ["level up", "stay", "level down"] }).notNull(),
+    level: text('level').notNull(),
+    accuracy: integer('accuracy', { mode: 'number' }),
+    quiz_score: integer('quiz_score', { mode: 'number' }),
+    retelling_score: integer('retelling_score', { mode: 'number' }),
+    note: text('note'),
+    date: text('date').default(sql`CURRENT_TIMESTAMP`).notNull(),
+    updated_date: text('updated_date').default(sql`CURRENT_TIMESTAMP`).notNull(),
+  },
+  (table) => {
+      return {
+          raz_by_class_id_idx: index("raz_by_class_id_idx").on(table.class_id),
+          raz_by_student_id_idx: index("raz_by_student_id_idx").on(table.student_id),
+          raz_by_user_id_idx: index("raz_by_user_id_idx").on(table.user_id)
+      }
+  }
+)
+
+// prod: class_2bc9b0d1-e043-4c50-9fe3-17ba06e26bf3
+// dev: class_baeac0da-8fe6-4f3d-b968-8488fee902a8
