@@ -20,7 +20,7 @@ const RazTab: React.FC<RazTabProps> = ({ classId }) => {
 
   if (error || !data) {
     return <p>Error loading class data.</p>;
-  }
+  } 
 
   const { studentInfo, raz } = data;
 

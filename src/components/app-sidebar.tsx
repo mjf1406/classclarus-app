@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/sidebar";
 import { ThemeSelector } from "./theme-selector";
 import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
-import { SignInButton } from "./SignInButton";
 import MyClassesSidebar from "@/app/class/components/MyClassesSidebar";
 import { LogoHeader } from "./brand/logo";
 import { currentUser } from "@clerk/nextjs/server";
@@ -84,9 +83,6 @@ export async function AppSidebar() {
       </SidebarContent>
       <SidebarFooter>
         <div className="flex items-center justify-center gap-2">
-          <SignedOut>
-            <SignInButton />
-          </SignedOut>
           <SignedIn>
             <div className="flex gap-2">
               <UserButton />

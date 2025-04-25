@@ -1,9 +1,8 @@
 /** @format */
 import React from "react";
 import { LogoHeader } from "./brand/logo";
-import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+import { SignedIn, UserButton } from "@clerk/nextjs";
 import { ThemeSelector } from "./theme-selector";
-import { SignInButton } from "./SignInButton";
 import { itemsCunt as navItems } from "./app-sidebar"; // renamed to navItems
 import Link from "next/link";
 
@@ -40,9 +39,6 @@ export function Navbar() {
               </li>
             ))}
           </ul>
-          <SignedOut>
-            <SignInButton />
-          </SignedOut>
           <SignedIn>
             <UserButton />
           </SignedIn>

@@ -7,6 +7,10 @@
 
 ## Change Log
 
+### 2025/04/26
+
+- protected whole site and removed signin button
+
 ### 2025/04/16
 
 - UI: added raz tab

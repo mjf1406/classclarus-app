@@ -8,25 +8,12 @@ import {
 } from "@/app/api/queryOptions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2, AlertTriangle, CircleX } from "lucide-react";
-import { SignedOut, useAuth } from "@clerk/nextjs";
-import { SignInButton } from "./SignInButton";
 import ClassCard from "./ClassCard";
 
 const ClassList: React.FC = () => {
   const { data, isLoading, isError, error } = useQuery<TeacherClassDetail[]>(
     TeacherClassesOptions,
   );
-  const { isSignedIn } = useAuth();
-
-  if (!isSignedIn) {
-    return (
-      <div className="m-auto flex w-full items-center justify-center">
-        <SignedOut>
-          <SignInButton />
-        </SignedOut>
-      </div>
-    );
-  }
 
   if (isLoading) {
     return (
