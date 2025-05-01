@@ -3,7 +3,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 "use client";
 
-import React, { useTransition } from "react";
+import React, { useEffect } from "react";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -18,9 +19,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-
 import { createRazRecord } from "../actions/createTestRecord";
-import type { StudentClassWithStudent } from "@/server/db/types";
+import type { StudentClassWithStudent, ClassDetail } from "@/server/db/types";
 
 // Define the Zod schema with coercive number conversion.
 const newTestRecordSchema = z.object({
@@ -48,9 +48,12 @@ export type NewTestRecordFormData = z.infer<typeof newTestRecordSchema>;
 interface CreateRecordFormProps {
   defaultClassId?: string;
   studentInfo: StudentClassWithStudent[];
+  selectedStudent?: StudentClassWithStudent;
+  onSuccess?: () => void; // callback to close the dialog on success
 }
 
-// Define the list of RAZ Kids levels.
+// Define the list of RAZ levels as specified:
+// ["aa", "A", "B", ..., "Z", "Z1", "Z2"].
 const razLevels: string[] = [
   "aa",
   ...Array.from({ length: 26 }, (_, i) => String.fromCharCode(i + 65)),
@@ -61,27 +64,34 @@ const razLevels: string[] = [
 const CreateRecordForm: React.FC<CreateRecordFormProps> = ({
   defaultClassId,
   studentInfo,
+  selectedStudent,
+  onSuccess,
 }) => {
-  // Helper: get the current datetime in "datetime-local" format.
   const getCurrentDateTimeLocal = () => {
     const now = new Date();
     const timezoneOffset = now.getTimezoneOffset() * 60000;
     return new Date(now.getTime() - timezoneOffset).toISOString().slice(0, 16);
   };
 
+  const queryClient = useQueryClient();
+
   const {
     register,
     control,
     handleSubmit,
-    formState: { errors },
+    watch,
+    formState: { errors, dirtyFields },
     reset,
+    setValue,
   } = useForm<NewTestRecordFormData>({
     resolver: zodResolver(newTestRecordSchema),
     defaultValues: {
       class_id: defaultClassId ?? "",
-      student_id: "",
+      // Auto‑select the provided student if available.
+      student_id: selectedStudent?.student_id ?? "",
       result: "stay",
-      level: "",
+      // Use the student's reading level as default if available.
+      level: selectedStudent?.student_reading_level ?? "",
       accuracy: 0,
       quiz_score: 0,
       retelling_score: 0,
@@ -90,28 +100,143 @@ const CreateRecordForm: React.FC<CreateRecordFormProps> = ({
     },
   });
 
-  const [isPending, startTransition] = useTransition();
-  const [serverError, setServerError] = React.useState<string | null>(null);
+  const watchAccuracy = watch("accuracy");
+  const watchQuizScore = watch("quiz_score");
 
-  const onSubmit = (data: NewTestRecordFormData) => {
-    startTransition(async () => {
-      try {
-        const result = await createRazRecord(data);
-        if (result.success) {
-          reset();
-          setServerError(null);
-          // Optionally, close the dialog or show a success message.
-        } else {
-          setServerError(result.message ?? "An error occurred.");
-        }
-      } catch (error: unknown) {
-        console.error(error);
-        setServerError(
-          error instanceof Error ? error.message : "An unknown error occurred.",
+  const [recommendationMsg, setRecommendationMsg] = React.useState<string>("");
+
+  // When the elected student prop changes, update the student_id field.
+  useEffect(() => {
+    if (selectedStudent) {
+      setValue("student_id", selectedStudent.student_id);
+    }
+  }, [selectedStudent, setValue]);
+
+  // Compute recommendations based on accuracy and quiz score.
+  useEffect(() => {
+    const quizPercentage =
+      typeof watchQuizScore === "number" ? (watchQuizScore / 5) * 100 : 0;
+    let recResult: "level up" | "stay" | "level down" = "stay";
+
+    if (watchAccuracy >= 95) {
+      if (Math.round(quizPercentage) === 100) {
+        recResult = "level up";
+      } else if (quizPercentage >= 80) {
+        recResult = "stay";
+      } else {
+        recResult = "level down";
+      }
+    } else if (watchAccuracy >= 90) {
+      if (quizPercentage >= 80) {
+        recResult = "stay";
+      } else {
+        recResult = "level down";
+      }
+    } else {
+      recResult = "level down";
+    }
+
+    const baselineLevel =
+      selectedStudent?.student_reading_level?.toUpperCase() ?? "";
+    let recLevel = baselineLevel;
+
+    if (baselineLevel && razLevels.includes(baselineLevel)) {
+      const idx = razLevels.indexOf(baselineLevel);
+      if (recResult === "level up" && idx < razLevels.length - 1) {
+        recLevel = razLevels[idx + 1] ?? "";
+      } else if (recResult === "level down" && idx > 0) {
+        recLevel = razLevels[idx - 1] ?? "";
+      }
+    }
+
+    setValue("result", recResult);
+    setValue("level", recLevel);
+
+    // Prepare the banner message.
+    const actionText =
+      recResult === "level up"
+        ? "Advance Student a Level"
+        : recResult === "stay"
+          ? "Instruct at this Level"
+          : "Lower a Level, Assess Again";
+
+    setRecommendationMsg(
+      `With an accuracy of ${watchAccuracy}% and a quiz score of ${Math.round(
+        quizPercentage,
+      )}%, RAZ recommends <b>${actionText}</b>.`,
+    );
+  }, [watchAccuracy, watchQuizScore, selectedStudent, setValue]);
+
+  const mutation = useMutation<
+    unknown,
+    Error,
+    NewTestRecordFormData,
+    { previousData: ClassDetail | undefined }
+  >({
+    mutationFn: createRazRecord,
+    onMutate: async (newRecord: NewTestRecordFormData) => {
+      if (defaultClassId) {
+        await queryClient.cancelQueries({
+          queryKey: ["classes", defaultClassId],
+        });
+      }
+      const previousData = defaultClassId
+        ? queryClient.getQueryData(["classes", defaultClassId])
+        : undefined;
+      if (defaultClassId) {
+        queryClient.setQueryData<ClassDetail>(
+          ["classes", defaultClassId],
+          (oldData) => {
+            return {
+              ...oldData,
+              raz: [
+                ...(oldData?.raz ?? []),
+                { ...newRecord, date: new Date().toISOString() },
+              ],
+              // this verbosity is annoying... how to fix it?
+              studentInfo: oldData?.studentInfo ?? [],
+              groups: oldData?.groups ?? [],
+              subGroups: oldData?.subGroups ?? [],
+              rewardItems: oldData?.rewardItems ?? [],
+              behaviors: oldData?.behaviors ?? [],
+              absentDates: oldData?.absentDates ?? [],
+              points: oldData?.points ?? [],
+              studentGroups: oldData?.studentGroups ?? [],
+              studentSubGroups: oldData?.studentSubGroups ?? [],
+            };
+          },
         );
       }
+      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+      onSuccess && onSuccess();
+      return { previousData: previousData as ClassDetail | undefined };
+    },
+    onError: (error, newRecord, context) => {
+      if (defaultClassId && context?.previousData) {
+        queryClient.setQueryData(
+          ["classes", defaultClassId],
+          context.previousData,
+        );
+      }
+    },
+    onSettled: () => {
+      if (defaultClassId) {
+        void queryClient.invalidateQueries({
+          queryKey: ["classes", defaultClassId],
+        });
+      }
+    },
+  });
+
+  const onSubmit = (data: NewTestRecordFormData) => {
+    mutation.mutate(data, {
+      onError: (error: Error) => {
+        setServerError(error.message);
+      },
     });
   };
+
+  const [serverError, setServerError] = React.useState<string | null>(null);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -146,66 +271,17 @@ const CreateRecordForm: React.FC<CreateRecordFormProps> = ({
         )}
       </div>
 
-      {/* Result Selector */}
-      <div className="flex flex-col space-y-1">
-        <Label htmlFor="result">Result</Label>
-        <Controller
-          control={control}
-          name="result"
-          render={({ field }) => (
-            <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a result" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="level up">Level Up</SelectItem>
-                <SelectItem value="stay">Stay</SelectItem>
-                <SelectItem value="level down">Level Down</SelectItem>
-              </SelectContent>
-            </Select>
-          )}
-        />
-        {errors.result && (
-          <span className="text-destructive text-sm">
-            {errors.result.message}
-          </span>
-        )}
-      </div>
-
-      {/* Level Selector */}
-      <div className="flex flex-col space-y-1">
-        <Label htmlFor="level">Level</Label>
-        <Controller
-          control={control}
-          name="level"
-          render={({ field }) => (
-            <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a level" />
-              </SelectTrigger>
-              <SelectContent>
-                {razLevels.map((level) => (
-                  <SelectItem key={level} value={level}>
-                    {level}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        />
-        {errors.level && (
-          <span className="text-destructive text-sm">
-            {errors.level.message}
-          </span>
-        )}
-      </div>
-
       {/* Accuracy Input */}
       <div className="flex flex-col space-y-1">
-        <Label htmlFor="accuracy">Accuracy</Label>
+        <Label htmlFor="accuracy">Running Record Accuracy Rate (%)</Label>
+        <div className="text-xs text-gray-500">
+          Input the accuracy percentage without the % symbol.
+        </div>
         <Input
           id="accuracy"
           type="number"
+          min={0}
+          max={100}
           {...register("accuracy", { valueAsNumber: true })}
         />
         {errors.accuracy && (
@@ -217,10 +293,17 @@ const CreateRecordForm: React.FC<CreateRecordFormProps> = ({
 
       {/* Quiz Score Input */}
       <div className="flex flex-col space-y-1">
-        <Label htmlFor="quiz_score">Quiz Score</Label>
+        <Label htmlFor="quiz_score">
+          Quick Check Comprehension Quiz Score (0-5)
+        </Label>
+        <div className="text-xs text-gray-500">
+          Input the number of questions answered correctly.
+        </div>
         <Input
           id="quiz_score"
           type="number"
+          min={0}
+          max={5}
           {...register("quiz_score", { valueAsNumber: true })}
         />
         {errors.quiz_score && (
@@ -245,6 +328,70 @@ const CreateRecordForm: React.FC<CreateRecordFormProps> = ({
         )}
       </div>
 
+      <div className="flex gap-10">
+        {/* Level Selector */}
+        <div className="flex flex-col space-y-1">
+          <Label htmlFor="level">Level</Label>
+          <Controller
+            control={control}
+            name="level"
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a level" />
+                </SelectTrigger>
+                <SelectContent>
+                  {razLevels.map((level) => (
+                    <SelectItem key={level} value={level}>
+                      {level}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+          {errors.level && (
+            <span className="text-destructive text-sm">
+              {errors.level.message}
+            </span>
+          )}
+        </div>
+        {/* Result Selector */}
+        <div className="flex flex-col space-y-1">
+          <Label htmlFor="result">Result</Label>
+          <Controller
+            control={control}
+            name="result"
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a result" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="level up">Level Up</SelectItem>
+                  <SelectItem value="stay">Stay</SelectItem>
+                  <SelectItem value="level down">Level Down</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          />
+          {errors.result && (
+            <span className="text-destructive text-sm">
+              {errors.result.message}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing */}
+      {(dirtyFields.accuracy || dirtyFields.quiz_score) &&
+        recommendationMsg && (
+          <div
+            className="rounded border border-blue-300 bg-blue-100 p-2 text-sm text-blue-700"
+            dangerouslySetInnerHTML={{ __html: recommendationMsg }}
+          />
+        )}
+
       {/* Note Field */}
       <div className="flex flex-col space-y-1">
         <Label htmlFor="note">Note</Label>
@@ -267,8 +414,8 @@ const CreateRecordForm: React.FC<CreateRecordFormProps> = ({
         )}
       </div>
 
-      <Button type="submit" disabled={isPending}>
-        {isPending ? "Creating..." : "Create Record"}
+      <Button type="submit" disabled={mutation.isPending}>
+        {mutation.isPending ? "Creating..." : "Create Record"}
       </Button>
       {serverError && (
         <span className="text-destructive text-sm">{serverError}</span>

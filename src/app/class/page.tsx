@@ -13,6 +13,7 @@ import {
   CircleX,
   Coins,
   Dice5,
+  ExternalLink,
   Goal,
   LayoutDashboard,
   ListChecks,
@@ -29,6 +30,7 @@ import "src/lib/string.extensions.ts";
 import PointsTab from "./components/dashboard/TabPoints";
 import ClassActionMenu from "./components/ClassActionMenu";
 import RazTab from "./components/raz/RazTab";
+import Link from "next/link";
 
 function useIsMdUp() {
   const [isMdUp, setIsMdUp] = React.useState(
@@ -286,9 +288,24 @@ export default function ClassPage() {
             <h2 className="mb-2 block text-xl font-semibold lg:hidden">
               RAZ Plus
             </h2>
-            <p>
-              Track your student progress through RAZ Kids with frequency
-              reminders all in accordance with RAZ Plus&apos; guidelines.
+            <p className="max-w-3xl">
+              Track your students&apos; progress through RAZ Kids with frequency
+              reminders all in accordance with{" "}
+              <Link
+                href="https://www.raz-plus.com/learninga-z-levels/assessing-a-students-level/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center space-x-1 underline"
+              >
+                <span>RAZ Plus&apos; guidelines</span>
+                <ExternalLink size={16} />
+              </Link>
+              . Currently, we do not determine whether a student is{" "}
+              <span className="italic">
+                &quot;...not progressing at the expected rate...&quot;
+              </span>
+              , so we make no recommendations about testing frequency based on
+              whether a student is falling behind their grade level.
             </p>
             <br />
             <RazTab classId={classId} />

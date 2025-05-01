@@ -3,9 +3,12 @@
 ## To-do List
 
 - DB: fix delete class in class action menu: need to add missing tables to the schema
-- UI: create the table
 
 ## Change Log
+
+### 2025/05/01
+
+- Added a new tab under RAZ Plus that orders students by assessment need and gives a reason why they need to be assessed.
 
 ### 2025/04/26
 

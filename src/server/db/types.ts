@@ -180,6 +180,6 @@ export interface RazRecord {
   accuracy: number;
   quiz_score: number;
   retelling_score: number;
-  note: string;
+  note?: string;
   date: string,
 }

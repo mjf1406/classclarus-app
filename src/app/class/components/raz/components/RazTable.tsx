@@ -43,7 +43,7 @@ const RazTable: React.FC<RazTableProps> = ({ raz, studentInfo }) => {
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Student Number</TableHead>
+          <TableHead>Number</TableHead>
           <TableHead>Name</TableHead>
           <TableHead>Days Since Test</TableHead>
           <TableHead>Result</TableHead>
