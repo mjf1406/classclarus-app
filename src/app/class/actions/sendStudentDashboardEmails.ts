@@ -9,7 +9,7 @@ import { student_classes, students } from "@/server/db/schema";
 import pLimit from "p-limit";
 import { retry } from "@/lib/utils";
 
-// Removed the unused GoogleTokens interface
+export const maxDuration = 60; // This function can run for a maximum of 5 seconds
 
 export async function sendEmails(input: { classId: string }) {
   const { classId } = input;
