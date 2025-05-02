@@ -1,26 +1,27 @@
-// app/[classId]/[studentId]/@assignments/page.tsx
-import { db } from "~/server/db";
-import { assignments, student_assignments } from "~/server/db/schema";
+import React from "react";
+import { db } from "@/server/db";
+import { assignments, student_assignments } from "@/server/db/schema";
 import { eq, and } from "drizzle-orm";
-import AssignmentTable from "../components/StudentAssignmentsTable";
+import TasksTableClient, {
+  type Assignment,
+} from "../components/TasksTableClient";
 
-export const dynamic = "force-dynamic"; // if needed
-
-export default async function AssignmentsPage({
+export default async function TasksCard({
   params,
 }: {
-  params: { classId: string; studentId: string };
+  params: Promise<{ classId: string; studentId: string }>;
 }) {
-  const { classId, studentId } = params;
+  const { classId, studentId } = await params;
 
-  const rawStudentAssignments = await db
+  // Drizzle query joins student_assignments and assignments, filtering by class and student.
+  const data: Assignment[] = await db
     .select({
       sa_id: student_assignments.id,
       sa_user_id: student_assignments.user_id,
       sa_class_id: student_assignments.class_id,
       sa_student_id: student_assignments.student_id,
       sa_assignment_id: student_assignments.assignment_id,
-      sa_complete: student_assignments.complete,
+      sa_complete: student_assignments?.complete ?? false,
       sa_completed_ts: student_assignments.completed_ts,
       assignment_name: assignments.name,
       assignment_description: assignments.description,
@@ -43,14 +44,5 @@ export default async function AssignmentsPage({
       ),
     );
 
-  const studentAssignments = rawStudentAssignments.map((assignment) => ({
-    ...assignment,
-    sa_complete: assignment.sa_complete ?? false,
-  }));
-
-  return (
-    <div className="md:col-span-1">
-      <AssignmentTable assignments={studentAssignments} />
-    </div>
-  );
+  return <TasksTableClient assignments={data} />;
 }

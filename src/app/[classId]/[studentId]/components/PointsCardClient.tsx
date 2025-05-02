@@ -14,9 +14,9 @@ import {
   CardContent,
   CardTitle,
   CardDescription,
-} from "~/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "~/components/ui/tabs";
-import { Button } from "~/components/ui/button";
+} from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -24,21 +24,31 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "~/components/ui/dialog";
+} from "@/components/ui/dialog";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "~/components/ui/tooltip";
+} from "@/components/ui/tooltip";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { DialogPortal } from "@radix-ui/react-dialog";
 
+// This type represents a point record as passed from the server.
 export type PointClient = {
   id: string;
   type: "positive" | "negative" | "redemption";
   number_of_points: number;
-  behavior_name: string | null | undefined;
-  reward_item_name: string | null | undefined;
   created_date: string;
+  behavior_name: string | null;
+  reward_item_name: string | null;
 };
 
 type PointsCardProps = {
@@ -60,11 +70,13 @@ const aggregatePoints = (points: PointClient[]): PointClient[] => {
   const map = new Map<string, PointClient>();
 
   points.forEach((point) => {
+    // Use behavior name for non-redemption records, and reward_item_name for redemptions
     const name =
       point.type === "redemption"
         ? point.reward_item_name
         : point.behavior_name;
 
+    // Round the date to the minute
     const date = new Date(point.created_date);
     const roundedDate = new Date(
       date.getFullYear(),
@@ -89,7 +101,7 @@ const aggregatePoints = (points: PointClient[]): PointClient[] => {
   return Array.from(map.values());
 };
 
-const PointsCard: React.FC<PointsCardProps> = ({ pointsData }) => {
+const PointsCardClient: React.FC<PointsCardProps> = ({ pointsData }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const sortPoints = (a: PointClient, b: PointClient) =>
@@ -127,50 +139,42 @@ const PointsCard: React.FC<PointsCardProps> = ({ pointsData }) => {
     totalPositivePoints + totalNegativePoints + totalRedemptionPoints;
 
   const renderRows = (points: PointClient[], type: string) => (
-    <div className="h-full overflow-auto">
-      <table className="w-full table-auto">
-        <thead className="sticky top-0 bg-inherit">
-          <tr>
-            <th className="px-4 py-2 text-left text-gray-700 dark:text-gray-300">
-              {type === "redemption" ? "Reward" : "Activity"}
-            </th>
-            <th className="px-4 py-2 text-center text-gray-700 dark:text-gray-300">
-              Points
-            </th>
-            <th className="px-4 py-2 text-right text-gray-700 dark:text-gray-300">
-              Date
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {points.map((point) => (
-            <tr
-              key={point.id}
-              className="text-sm transition-colors duration-200 hover:bg-blue-100 dark:hover:bg-gray-700"
-            >
-              <td className="px-4 py-2">
-                {type === "redemption"
-                  ? point.reward_item_name
-                  : point.behavior_name}
-              </td>
-              <td className="px-4 py-2 text-center">
-                {type === "positive"
-                  ? `+${point.number_of_points}`
-                  : point.number_of_points}
-              </td>
-              <td className="px-4 py-2 text-right text-sm text-gray-600 dark:text-gray-400">
-                {formatDateTime(point.created_date)}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>{type === "redemption" ? "Reward" : "Activity"}</TableHead>
+          <TableHead className="text-center">Points</TableHead>
+          <TableHead className="text-right">Date</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {points.map((point) => (
+          <TableRow
+            key={point.id}
+            className="transition-colors duration-200 hover:bg-blue-100 dark:hover:bg-gray-700"
+          >
+            <TableCell>
+              {type === "redemption"
+                ? point.reward_item_name
+                : point.behavior_name}
+            </TableCell>
+            <TableCell className="text-center">
+              {type === "positive"
+                ? `+${point.number_of_points}`
+                : point.number_of_points}
+            </TableCell>
+            <TableCell className="text-right text-gray-600 dark:text-gray-400">
+              {formatDateTime(point.created_date)}
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 
   return (
     <>
-      <Card className="mx-auto h-[600px] w-full max-w-2xl">
+      <Card className="mx-auto h-[600px] w-full">
         <CardHeader className="flex-none">
           <CardTitle>Points</CardTitle>
           <CardDescription>
@@ -251,19 +255,19 @@ const PointsCard: React.FC<PointsCardProps> = ({ pointsData }) => {
             className="flex min-h-0 flex-1 flex-col"
             defaultValue="positive"
           >
-            <TabsList className="grid flex-none grid-cols-3">
-              <TabsTrigger value="positive" className="text-background">
+            <TabsList className="bg-primary grid w-full flex-none grid-cols-3">
+              <TabsTrigger value="positive">
                 <FontAwesomeIcon icon={faAward} className="mr-2" /> Positive
               </TabsTrigger>
-              <TabsTrigger value="negative" className="text-background">
+              <TabsTrigger value="negative">
                 <FontAwesomeIcon icon={faFlag} className="mr-2" /> Negative
               </TabsTrigger>
-              <TabsTrigger value="redemptions" className="text-background">
+              <TabsTrigger value="redemptions">
                 <FontAwesomeIcon icon={faGift} className="mr-2" /> Redemptions
               </TabsTrigger>
             </TabsList>
 
-            <div className="min-h-0 flex-1">
+            <div className="h-full min-h-0 flex-1">
               <TabsContent
                 value="positive"
                 className="h-full bg-green-50 p-4 dark:bg-gray-800"
@@ -287,72 +291,74 @@ const PointsCard: React.FC<PointsCardProps> = ({ pointsData }) => {
         </CardContent>
       </Card>
 
-      {/* Full history dialog */}
+      {/* Full History Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="flex h-full w-full flex-col rounded-lg bg-white p-6 shadow-xl dark:bg-gray-800">
-          <DialogHeader>
-            <DialogTitle className="text-2xl text-blue-700 dark:text-blue-300">
-              📖 Points History
-            </DialogTitle>
-            <DialogDescription className="text-gray-600 dark:text-gray-400">
-              View the complete history of points for the student.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="mt-4 flex flex-1 flex-col">
-            <Tabs className="flex h-full flex-col" defaultValue="positive">
-              <TabsList className="grid flex-shrink-0 grid-cols-3 rounded-t-md bg-blue-100 dark:bg-gray-600">
-                <TabsTrigger
+        <DialogPortal>
+          <DialogContent className="max-h-[80vh] !w-[90vw] !max-w-[90vw] overflow-auto">
+            <DialogHeader>
+              <DialogTitle className="text-2xl text-blue-700 dark:text-blue-300">
+                📖 Points History
+              </DialogTitle>
+              <DialogDescription className="text-gray-600 dark:text-gray-400">
+                View the complete history of points for the student.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="mt-4 flex flex-1 flex-col">
+              <Tabs className="flex h-full flex-col" defaultValue="positive">
+                <TabsList className="grid flex-shrink-0 grid-cols-3 rounded-t-md bg-blue-100 dark:bg-gray-600">
+                  <TabsTrigger
+                    value="positive"
+                    className="font-semibold text-blue-700 dark:text-blue-300"
+                  >
+                    😊 Positive
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="negative"
+                    className="font-semibold text-red-700 dark:text-red-300"
+                  >
+                    😞 Negative
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="redemptions"
+                    className="font-semibold text-blue-700 dark:text-blue-300"
+                  >
+                    🎁 Redemptions
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent
                   value="positive"
-                  className="font-semibold text-blue-700 dark:text-blue-300"
+                  className="max-h-[70vh] flex-1 overflow-y-scroll bg-green-50 p-4 dark:bg-gray-800"
                 >
-                  😊 Positive
-                </TabsTrigger>
-                <TabsTrigger
+                  {renderRows(positivePoints, "positive")}
+                </TabsContent>
+                <TabsContent
                   value="negative"
-                  className="font-semibold text-red-700 dark:text-red-300"
+                  className="flex-1 overflow-auto bg-red-50 p-4 dark:bg-gray-800"
                 >
-                  😞 Negative
-                </TabsTrigger>
-                <TabsTrigger
+                  {renderRows(negativePoints, "negative")}
+                </TabsContent>
+                <TabsContent
                   value="redemptions"
-                  className="font-semibold text-blue-700 dark:text-blue-300"
+                  className="flex-1 overflow-auto bg-blue-50 p-4 dark:bg-gray-800"
                 >
-                  🎁 Redemptions
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent
-                value="positive"
-                className="max-h-[70vh] flex-1 overflow-y-scroll bg-green-50 p-4 dark:bg-gray-800"
+                  {renderRows(redemptionPoints, "redemption")}
+                </TabsContent>
+              </Tabs>
+            </div>
+            <DialogFooter className="mt-4">
+              <Button
+                variant="secondary"
+                onClick={() => setIsDialogOpen(false)}
+                className="rounded-md bg-blue-500 px-6 py-2 text-white transition-colors duration-200 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700"
               >
-                {renderRows(positivePoints, "positive")}
-              </TabsContent>
-              <TabsContent
-                value="negative"
-                className="flex-1 overflow-auto bg-red-50 p-4 dark:bg-gray-800"
-              >
-                {renderRows(negativePoints, "negative")}
-              </TabsContent>
-              <TabsContent
-                value="redemptions"
-                className="flex-1 overflow-auto bg-blue-50 p-4 dark:bg-gray-800"
-              >
-                {renderRows(redemptionPoints, "redemption")}
-              </TabsContent>
-            </Tabs>
-          </div>
-          <DialogFooter className="mt-4">
-            <Button
-              variant="secondary"
-              onClick={() => setIsDialogOpen(false)}
-              className="rounded-md bg-blue-500 px-6 py-2 text-white transition-colors duration-200 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700"
-            >
-              Close
-            </Button>
-          </DialogFooter>
-        </DialogContent>
+                Close
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </DialogPortal>
       </Dialog>
     </>
   );
 };
 
-export default PointsCard;
+export default PointsCardClient;

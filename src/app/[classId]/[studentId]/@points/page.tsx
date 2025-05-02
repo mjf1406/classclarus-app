@@ -1,16 +1,18 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import React from "react";
 import { db } from "@/server/db";
-import { behaviors, points, reward_items } from "@/server/db/schema"; // Import students schema
-import { eq } from "drizzle-orm";
+import { behaviors, points, reward_items } from "@/server/db/schema";
+import { eq, and } from "drizzle-orm";
+import type { PointClient } from "../components/PointsCardClient";
+import PointsCardClient from "../components/PointsCardClient";
 
-export default async function GreetingCard({
+export default async function PointsCard({
   params,
 }: {
   params: Promise<{ classId: string; studentId: string }>;
 }) {
   const { classId, studentId } = await params;
 
-  const pointsData = await db
+  const data = await db
     .select({
       id: points.id,
       student_id: points.student_id,
@@ -26,23 +28,17 @@ export default async function GreetingCard({
     .from(points)
     .leftJoin(behaviors, eq(behaviors.behavior_id, points.behavior_id))
     .leftJoin(reward_items, eq(reward_items.item_id, points.reward_item_id))
-    .where(eq(points.class_id, classId));
+    .where(and(eq(points.class_id, classId), eq(points.student_id, studentId)));
 
-  return (
-    <Card className="w-full">
-      {" "}
-      {/* Added w-full for better layout */}
-      <CardHeader>
-        <CardTitle>Points Data</CardTitle> {/* Updated title */}
-      </CardHeader>
-      <CardContent>
-        {/* Display the pointsData JSON in a preformatted block */}
-        <pre className="bg-muted max-h-96 overflow-auto rounded-md p-4">
-          {" "}
-          {/* Added styling for readability */}
-          {JSON.stringify(pointsData.slice(0, 10), null, 2)}
-        </pre>
-      </CardContent>
-    </Card>
-  );
+  // Map/transform the fetched data to the type expected by the client component.
+  const pointsData: PointClient[] = data.map((point) => ({
+    id: point.id,
+    type: point.type,
+    number_of_points: point.number_of_points,
+    created_date: point.created_date,
+    behavior_name: point.behavior_name ?? point.behavior_title ?? null,
+    reward_item_name: point.reward_item_name ?? point.reward_title ?? null,
+  }));
+
+  return <PointsCardClient pointsData={pointsData} />;
 }

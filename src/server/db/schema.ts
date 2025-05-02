@@ -253,3 +253,121 @@ export const raz = sqliteTable('raz',
 
 // prod: class_2bc9b0d1-e043-4c50-9fe3-17ba06e26bf3
 // dev: class_baeac0da-8fe6-4f3d-b968-8488fee902a8
+
+export const student_assignments = sqliteTable('student_assignments',
+  {
+      id: text('id').notNull().primaryKey(),
+      user_id: text('user_id').notNull().references(() => users.user_id),
+      class_id: text('class_id').notNull().references(() => classes.class_id),
+      student_id: text('student_id').notNull().references(() => students.student_id),
+      assignment_id: text('assignment_id').notNull().references(() => assignments.id),
+      complete: integer('complete', { mode: 'boolean' }),
+      excused: integer('excused', { mode: 'boolean' }),
+      completed_ts: text('completed_ts'),
+  },
+  (table) => {
+      return {
+          student_assignments_user_id_idx: index("student_assignments_user_id_idx").on(table.user_id),
+          student_assignments_class_id_idx: index("student_assignments_class_id_idx").on(table.class_id),
+          student_assignments_student_id_idx: index("student_assignments_student_id_idx").on(table.student_id),
+          student_assignments_assignment_id_idx: index("student_assignments_assignment_id_idx").on(table.assignment_id)
+      }
+  }
+)
+
+export const assignments = sqliteTable('assignments',
+  {
+      id: text('id').notNull().primaryKey(),
+      user_id: text('user_id').notNull().references(() => users.user_id),
+      class_id: text('class_id').notNull().references(() => classes.class_id),
+      name: text('name').notNull(),
+      description: text('description'),
+      data: text('data'),
+      due_date: text('due_date'),
+      topic: text('topic').references(() => topics.id),
+      working_date:  text('working_date'),
+      created_date: text('created_date').default(sql`CURRENT_TIMESTAMP`).notNull(),
+      updated_date: text('updated_date').default(sql`CURRENT_TIMESTAMP`).notNull(),
+  },
+  (table) => {
+      return {
+          assignments_by_class_id_idx: index("assignments_by_class_id_idx").on(table.class_id),
+          assignments_by_user_id_idx: index("assignments_by_user_id_idx").on(table.user_id)
+      }
+  }
+)
+
+export const topics = sqliteTable('topics', 
+  {
+      id: text('id').notNull().primaryKey(),
+      user_id: text('user_id').notNull().references(() => users.user_id),
+      class_id: text('class_id').notNull().references(() => classes.class_id),
+      name: text('name').notNull(),
+      created_date: text('created_date').default(sql`CURRENT_TIMESTAMP`).notNull(),
+      updated_date: text('updated_date').default(sql`CURRENT_TIMESTAMP`).notNull(),
+  },
+  (table) => {
+      return {
+          topics_by_class_id_idx: index("topics_by_class_id_idx").on(table.class_id),
+          topics_by_user_id_idx: index("topics_by_user_id_idx").on(table.user_id)
+      }
+  }
+)
+
+export const expectations = sqliteTable('expectations',
+  {
+      id: text('id').notNull().primaryKey(),
+      user_id: text('user_id').notNull().references(() => users.user_id),
+      class_id: text('class_id').notNull().references(() => classes.class_id),
+      name: text('name').notNull(),
+      description: text('description'),
+      created_date: text('created_date').default(sql`CURRENT_TIMESTAMP`).notNull(),
+      updated_date: text('updated_date').default(sql`CURRENT_TIMESTAMP`).notNull(),
+  },
+  (table) => {
+      return {
+          expectations_by_class_id_idx: index("expectations_by_class_id_idx").on(table.class_id),
+          expectations_by_user_id_idx: index("expectations_by_user_id_idx").on(table.user_id)
+      }
+  }
+)
+
+export const student_expectations = sqliteTable('student_expectations',
+  {
+      id: text('id').notNull().primaryKey(),
+      expectation_id: text('expectation_id').notNull().references(() => expectations.id),
+      student_id: text('student_id').notNull().references(() => students.student_id),
+      user_id: text('user_id').notNull().references(() => users.user_id),
+      class_id: text('class_id').notNull().references(() => classes.class_id),
+      value: text('value'), // This or the below must not be null
+      number: integer('number'), // This or the above must not be null
+      created_date: text('created_date').default(sql`CURRENT_TIMESTAMP`).notNull(),
+      updated_date: text('updated_date').default(sql`CURRENT_TIMESTAMP`).notNull(),
+  },
+  (table) => {
+      return {
+          student_expectations_by_class_id_idx: index("student_expectations_by_class_id_idx").on(table.class_id),
+          student_expectations_by_user_id_idx: index("student_expectations_by_user_id_idx").on(table.user_id),
+          student_expectations_by_student_id_idx: index("student_expectations_by_student_id_idx").on(table.student_id)
+      }
+  }
+)
+
+export const achievements = sqliteTable('achievements',
+  {
+    id: text('id').notNull().primaryKey(),
+    behavior_id: text('behavior_id').references(() => behaviors.behavior_id),
+    reward_item_id: text('reward_item_id').references(() => reward_items.item_id),
+    class_id: text('class_id').notNull().references(() => classes.class_id),
+    user_id: text('user_id').notNull().references(() => users.user_id),
+    threshold: integer('threshold').notNull(),
+    name: text('name').notNull(),
+    created_date: text('created_date').default(sql`CURRENT_TIMESTAMP`).notNull(),
+    updated_date: text('updated_date').default(sql`CURRENT_TIMESTAMP`).notNull(),
+  },
+  (table) => ({
+    behaviorIdIdx: index('idx_achievements_behavior_id').on(table.behavior_id),
+    classIdIdx: index('idx_achievements_class_id').on(table.class_id),
+    userIdIdx: index('idx_achievements_user_id').on(table.user_id),
+  })
+);

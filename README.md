@@ -6,6 +6,10 @@
 
 ## Change Log
 
+### 2025/05/02
+
+- UX: new student dashboard with parallel routes is up!
+
 ### 2025/05/01
 
 - Added a new tab under RAZ Plus that orders students by assessment need and gives a reason why they need to be assessed.

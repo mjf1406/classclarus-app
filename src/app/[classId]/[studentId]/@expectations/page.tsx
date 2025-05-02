@@ -1,5 +1,8 @@
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { db } from "@/server/db";
+import { expectations, student_expectations } from "@/server/db/schema";
+import { eq, and } from "drizzle-orm";
 import {
   Dialog,
   DialogContent,
@@ -7,9 +10,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "~/components/ui/dialog";
-import { Button } from "~/components/ui/button";
-import { ScrollArea } from "~/components/ui/scroll-area";
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ExpectationData {
   id: string;
@@ -22,14 +25,37 @@ interface ExpectationData {
   expectation_class_id: string;
 }
 
-interface ExpectationsCardProps {
-  expectations: ExpectationData[];
-}
+export default async function ExpectationsCard({
+  params,
+}: {
+  params: Promise<{ classId: string; studentId: string }>;
+}) {
+  const { classId, studentId } = await params;
 
-export const ExpectationsCard: React.FC<ExpectationsCardProps> = ({
-  expectations,
-}) => {
-  if (expectations.length === 0) {
+  const data: ExpectationData[] = await db
+    .select({
+      id: student_expectations.id,
+      student_id: student_expectations.student_id,
+      class_id: student_expectations.class_id,
+      value: student_expectations.value,
+      number: student_expectations.number,
+      expectation_name: expectations.name,
+      expectation_description: expectations.description,
+      expectation_class_id: expectations.class_id,
+    })
+    .from(student_expectations)
+    .innerJoin(
+      expectations,
+      eq(student_expectations.expectation_id, expectations.id),
+    )
+    .where(
+      and(
+        eq(student_expectations.student_id, studentId),
+        eq(student_expectations.class_id, classId),
+      ),
+    );
+
+  if (data.length === 0) {
     return (
       <Card>
         <CardHeader>
@@ -43,7 +69,7 @@ export const ExpectationsCard: React.FC<ExpectationsCardProps> = ({
   }
 
   return (
-    <Card className="mx-auto w-full max-w-2xl">
+    <Card className="mx-auto w-full">
       <CardHeader>
         <CardTitle>Expectations</CardTitle>
       </CardHeader>
@@ -64,12 +90,12 @@ export const ExpectationsCard: React.FC<ExpectationsCardProps> = ({
               </DialogHeader>
               <ScrollArea className="max-h-[60vh]">
                 <div className="space-y-6 pr-4">
-                  {expectations.map((exp) => (
+                  {data.map((exp) => (
                     <div key={exp.id} className="rounded-lg border p-4">
                       <h3 className="mb-2 text-lg font-semibold">
                         {exp.expectation_name}:{" "}
                         <span className="text-primary">
-                          {exp.value ? exp.value : exp.number}
+                          {exp.value ?? exp.number}
                         </span>
                       </h3>
                       {exp.expectation_description && (
@@ -81,13 +107,11 @@ export const ExpectationsCard: React.FC<ExpectationsCardProps> = ({
               </ScrollArea>
             </DialogContent>
           </Dialog>
-          {expectations.map((exp) => (
-            <div key={exp.id} className="rounded-lg border p-3">
+          {data.map((exp) => (
+            <div key={exp.id} className="bg-background rounded-lg border p-3">
               <h4 className="font-medium">
                 {exp.expectation_name}:{" "}
-                <span className="text-primary">
-                  {exp.value ? exp.value : exp.number}
-                </span>
+                <span className="text-primary">{exp.value ?? exp.number}</span>
               </h4>
             </div>
           ))}
@@ -95,6 +119,4 @@ export const ExpectationsCard: React.FC<ExpectationsCardProps> = ({
       </CardContent>
     </Card>
   );
-};
-
-export default ExpectationsCard;
+}

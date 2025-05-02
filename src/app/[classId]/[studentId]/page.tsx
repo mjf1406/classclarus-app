@@ -20,12 +20,12 @@ export default async function StudentDashboard({
   return (
     <div>
       <title>{`${student?.student_name_first_en}'s Dashboard`}</title>
-      <div className="flex gap-2 pt-5">
+      {/* <div className="flex gap-2 pt-5">
         <Button>Default</Button>
         <Button variant="secondary">Secondary</Button>
         <Button variant="destructive">Destructive</Button>
         <Button variant="outline">Outline</Button>
-      </div>
+      </div> */}
     </div>
   );
 }

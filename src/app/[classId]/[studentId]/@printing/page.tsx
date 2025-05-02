@@ -8,10 +8,11 @@ import {
   CardDescription,
   CardContent,
   CardFooter,
-} from "~/components/ui/card";
-import { Button } from "~/components/ui/button";
-import { Alert, AlertDescription } from "~/components/ui/alert";
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircleIcon } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 const FILAMENT_PRICE_PER_KG = 31000; // KRW
 const MATERIAL_EFFICIENCY_FACTOR = 1.1; // percent - Accounts for filament waste
@@ -96,14 +97,14 @@ const PrintCostCalculator = () => {
             >
               Printing Time (hours)
             </label>
-            <input
+            <Input
               id="printingTime"
               type="number"
               step="0.01"
               value={printingTime}
               onChange={(e) => setPrintingTime(e.target.value)}
               placeholder="e.g. 1.2"
-              className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 sm:text-sm"
+              className="bg-background"
             />
             {timeError && (
               <Alert className="border-none">
@@ -120,14 +121,14 @@ const PrintCostCalculator = () => {
             >
               Filament Weight (grams)
             </label>
-            <input
+            <Input
               id="filamentWeight"
               type="number"
               step="0.01"
               value={filamentWeight}
               onChange={(e) => setFilamentWeight(e.target.value)}
               placeholder="e.g. 150"
-              className="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 sm:text-sm"
+              className="bg-background"
             />
             {weightError && (
               <Alert className="border-none">

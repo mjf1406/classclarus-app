@@ -1,12 +1,21 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import type { NextRequest } from 'next/server';
 
-const isPublicRoute = createRouteMatcher(['/auth/sign-in(.*)', '/auth/sign-up(.*)'])
+const studentDashboardRegex = /^\/class_[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}\/student_[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}(?:\/.*)?$/;
 
-export default clerkMiddleware(async (auth, req) => {
+const isPublicRoute = createRouteMatcher([
+  /^\/auth\/sign-in(?:\/.*)?$/,   // Public: /auth/sign-in and any subpaths
+  /^\/auth\/sign-up(?:\/.*)?$/,   // Public: /auth/sign-up and any subpaths
+  /^\/api\/webhooks(?:\/.*)?$/,   // Public: /api/webhooks and any subpaths
+  studentDashboardRegex            // Public: /class_<GUID>/student_<GUID> and any subpaths
+]);
+
+export default clerkMiddleware(async (auth, req: NextRequest) => {
+  // Pass the entire request object to isPublicRoute.
   if (!isPublicRoute(req)) {
-    await auth.protect()
+    await auth.protect();
   }
-})
+});
 
 export const config = {
   matcher: [
@@ -15,4 +24,4 @@ export const config = {
     // Always run for API routes
     '/(api|trpc)(.*)',
   ],
-}
+};

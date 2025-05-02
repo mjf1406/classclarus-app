@@ -3,6 +3,7 @@ import React from "react";
 import { LogoHeader } from "@/components/brand/logo";
 import { ThemeSelector } from "@/components/theme-selector";
 import ThemeColorSelector from "./ThemeColorSelector";
+import StudentIconPicker from "./StudentIconPicker";
 
 export function StudentDashboardNavbar() {
   return (
@@ -11,6 +12,7 @@ export function StudentDashboardNavbar() {
         <LogoHeader />
         <div className="flex items-center gap-2">
           <ThemeColorSelector />
+          <StudentIconPicker />
           <ThemeSelector />
         </div>
       </div>

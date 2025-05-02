@@ -5,8 +5,10 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
-  CardFooter,
-} from "~/components/ui/card";
+} from "@/components/ui/card";
+import { db } from "@/server/db";
+import { reward_items } from "@/server/db/schema";
+import { eq } from "drizzle-orm";
 import {
   Dialog,
   DialogContent,
@@ -14,12 +16,13 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "~/components/ui/dialog";
-import { Button } from "~/components/ui/button";
-import { ScrollArea } from "~/components/ui/scroll-area";
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Coins } from "lucide-react";
-import { FontAwesomeIconClient } from "~/components/FontAwesomeIconClient";
-import { APP_NAME } from "~/lib/constants";
+import { FontAwesomeIconClient } from "@/components/FontAwesomeIconClient";
+import { APP_NAME } from "@/lib/constants";
+import { DialogPortal } from "@radix-ui/react-dialog";
 
 interface RewardItem {
   price: number;
@@ -28,26 +31,38 @@ interface RewardItem {
   icon?: string | null;
 }
 
-interface RewardItemsDashboardProps {
-  rewardItems: RewardItem[];
-}
+export default async function RewardItemsCard({
+  params,
+}: {
+  params: Promise<{ classId: string; studentId: string }>;
+}) {
+  const { classId, studentId } = await params;
 
-const RewardItemsDashboard = ({ rewardItems }: RewardItemsDashboardProps) => {
-  // Get top 5 reward items (assuming they're sorted by popularity)
-  const topRewardItems = rewardItems.slice(0, 5);
+  const data: RewardItem[] = await db
+    .select({
+      price: reward_items.price,
+      name: reward_items.name,
+      description: reward_items.description,
+      icon: reward_items.icon,
+    })
+    .from(reward_items)
+    .where(eq(reward_items.class_id, classId));
+
+  // Get top 5 reward items (assuming they're already ordered by popularity)
+  const topRewardItems = data.slice(0, 5);
 
   const RewardItemsGrid = () => (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {rewardItems.map((item, index) => (
+      {data.map((item, index) => (
         <Card key={index} className="flex flex-col">
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg font-semibold">
                 {item.name}
               </CardTitle>
-              <div className="flex items-center gap-1 text-amber-500">
-                <Coins size={20} />
-                <span className="font-bold">{item.price}</span>
+              <div className="text-secondary flex items-center gap-1">
+                <Coins size={30} />
+                <span className="text-2xl font-bold">{item.price}</span>
               </div>
             </div>
             <CardDescription className="text-base text-gray-500">
@@ -71,7 +86,7 @@ const RewardItemsDashboard = ({ rewardItems }: RewardItemsDashboardProps) => {
   );
 
   return (
-    <Card className="mx-auto w-full max-w-2xl">
+    <Card className="mx-auto w-full">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
@@ -91,22 +106,24 @@ const RewardItemsDashboard = ({ rewardItems }: RewardItemsDashboardProps) => {
                 View all reward items
               </Button>
             </DialogTrigger>
-            <DialogContent className="h-[80vh] max-w-4xl">
-              <DialogHeader>
-                <DialogTitle>Reward Items</DialogTitle>
-                <DialogDescription>
-                  Browse all available reward items for redemption
-                </DialogDescription>
-              </DialogHeader>
-              <ScrollArea className="mt-4 h-full">
-                <RewardItemsGrid />
-              </ScrollArea>
-            </DialogContent>
+            <DialogPortal>
+              <DialogContent className="max-h-[80vh] !w-[90vw] !max-w-[90vw] overflow-auto">
+                <DialogHeader>
+                  <DialogTitle>Reward Items</DialogTitle>
+                  <DialogDescription>
+                    Browse all available reward items for redemption
+                  </DialogDescription>
+                </DialogHeader>
+                <ScrollArea className="mt-4 h-full">
+                  <RewardItemsGrid />
+                </ScrollArea>
+              </DialogContent>
+            </DialogPortal>
           </Dialog>
           {topRewardItems.map((item, index) => (
             <div
               key={index}
-              className="flex items-center justify-between rounded-lg border p-3"
+              className="bg-background flex items-center justify-between rounded-lg border p-3"
             >
               <div className="flex items-center gap-3">
                 {item.icon && (
@@ -119,7 +136,7 @@ const RewardItemsDashboard = ({ rewardItems }: RewardItemsDashboardProps) => {
                 <div>
                   <div className="font-medium">{item.name}</div>
                   {item.description && (
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-muted-foreground text-sm">
                       {item.description}
                     </div>
                   )}
@@ -135,6 +152,4 @@ const RewardItemsDashboard = ({ rewardItems }: RewardItemsDashboardProps) => {
       </CardContent>
     </Card>
   );
-};
-
-export default RewardItemsDashboard;
+}

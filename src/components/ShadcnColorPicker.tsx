@@ -3,7 +3,6 @@
 import { forwardRef, useMemo, useState } from "react";
 import { HexColorPicker } from "react-colorful";
 import { cn } from "@/lib/utils";
-import type { ButtonProps } from "@/components/ui/button";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -19,20 +18,26 @@ interface ColorPickerProps {
   onBlur?: () => void;
 }
 
-const ShadcnColorPicker = forwardRef<
-  HTMLInputElement,
-  Omit<ButtonProps, "value" | "onChange" | "onBlur"> & ColorPickerProps
->(
+type ShadcnColorPickerProps = Omit<
+  React.ComponentPropsWithoutRef<typeof Button>,
+  "value" | "onChange" | "onBlur"
+> &
+  ColorPickerProps;
+
+const ShadcnColorPicker = forwardRef<HTMLInputElement, ShadcnColorPickerProps>(
   (
     { disabled, value, onChange, onBlur, name, className, ...props },
     forwardedRef,
   ) => {
-    const ref = useForwardedRef(forwardedRef);
+    // Ensure that the forwarded ref is typed as an HTMLInputElement.
+    const ref = useForwardedRef<HTMLInputElement>(forwardedRef);
     const [open, setOpen] = useState(false);
 
-    const parsedValue = useMemo(() => {
-      return value || "#FFFFFF";
-    }, [value]);
+    // Annotate parsedValue explicitly as a string.
+    const parsedValue: string = useMemo(
+      (): string => value ?? "#FFFFFF",
+      [value],
+    );
 
     return (
       <Popover onOpenChange={setOpen} open={open}>
@@ -41,7 +46,9 @@ const ShadcnColorPicker = forwardRef<
             {...props}
             className={cn("block", className)}
             name={name}
-            onClick={() => setOpen(true)}
+            onClick={() => {
+              setOpen(true);
+            }}
             size="icon"
             style={{
               backgroundColor: parsedValue,
@@ -52,7 +59,7 @@ const ShadcnColorPicker = forwardRef<
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          align={"end"}
+          align="end"
           className="border-muted w-full dark:border-2"
         >
           <HexColorPicker color={parsedValue} onChange={onChange} />
