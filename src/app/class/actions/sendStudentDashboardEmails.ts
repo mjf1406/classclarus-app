@@ -73,7 +73,7 @@ export async function sendEmails(input: { classId: string }) {
     classId: string,
     studentId: string,
   ): string => {
-    const dashboardUrl = `https://app.classclarus.com/classes/${classId}/students/${studentId}`;
+    const dashboardUrl = `https://beta.classclarus.com/${classId}/${studentId}`;
     const emailContent = [
       `To: ${to}`,
       "Content-Type: text/html; charset=UTF-8",
