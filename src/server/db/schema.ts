@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
-import type { PointRecord, RedemptionRecord } from "./types";
+import type { AssignerItemStatuses, PointRecord, RedemptionRecord } from "./types";
 
 export const users = sqliteTable('users',
   {
@@ -371,3 +371,22 @@ export const achievements = sqliteTable('achievements',
     userIdIdx: index('idx_achievements_user_id').on(table.user_id),
   })
 );
+
+export const assigners = sqliteTable('assigners',
+  {
+      assigner_id: text('assigner_id').notNull().primaryKey(),
+      name: text('name').notNull(),
+      user_id: text('user_id').notNull().references(() => users.user_id),
+      assigner_type: text('assigner_type', { enum: ["random", "round-robin", "seats"] }),
+      groups: text('groups', { mode: 'json' }).$type<{ name: string; items: string[] }[]>(),
+      items: text('items', { mode: 'json' }),
+      student_item_status: text('student_item_status', { mode: 'json' }).$type<AssignerItemStatuses>(),
+      created_date: text('created_date').default(sql`CURRENT_TIMESTAMP`).notNull(),
+      updated_date: text('updated_date').default(sql`CURRENT_TIMESTAMP`).notNull(),
+  },
+  (table) => {
+      return {
+          assigner_by_user_id_idx: index("assigner_by_user_id_idx").on(table.user_id)
+      }
+  }
+)

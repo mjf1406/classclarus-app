@@ -232,7 +232,8 @@
 
   /* Utility elements with a bit of opacity */
   --border: oklch(0.2 0.005 50 / 10%);
-  --input: oklch(0.2 0.005 50 / 15%);
+  /* --input: oklch(0.2 0.005 50 / 15%); */
+  --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.65 0.09 50);
 
   /* Playful pastel chart colors for dark mode */

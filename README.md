@@ -6,6 +6,11 @@
 
 ## Change Log
 
+### 2025/05/03
+
+- UX: added random assigner **this took a lot longer than I expected...**
+- UX: added create assigner dialog
+
 ### 2025/05/02
 
 - UX: new student dashboard with parallel routes is up!

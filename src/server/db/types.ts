@@ -183,3 +183,95 @@ export interface RazRecord {
   note?: string;
   date: string,
 }
+
+export type Course = {
+  class_id: string | undefined;
+  class_name: string | undefined;
+  class_language: string | undefined;
+  class_year: string | undefined;
+  class_grade: string | undefined;
+  updated_date: string | undefined;
+  created_date: string | undefined;
+  students: Student[];
+  teachers?: Teacher[];
+  complete: {
+      s1: boolean,
+      s2: boolean
+  };
+  groups?: Group[]
+}
+
+export type Teacher = {
+  assigned_date: string | undefined;
+  assignment_id: string | undefined;
+  role: string | undefined;
+  user_id: string | undefined;
+  user_name: string | undefined;
+  user_email: string | undefined;
+  joined_date: string | undefined;
+  updated_date: string | undefined;
+}
+
+export type StudentField = {
+  field_id: string;
+  student_id: string;
+  collaboration: { s1: string, s2: string };
+  communication: { s1: string, s2: string };
+  inquiry: { s1: string, s2: string };
+  listening: { s1: string, s1_comment: string, s2: string, s2_comment: string };
+  mathematics: { s1: string, s1_comment: string, s2: string, s2_comment: string };
+  open_minded: { s1: string, s2: string };
+  organization: { s1: string, s2: string };
+  reading: { s1: string, s1_comment: string, s2: string, s2_comment: string };
+  responsibility: { s1: string, s2: string };
+  risk_taking: { s1: string, s2: string };
+  science: { s1: string, s1_comment: string, s2: string, s2_comment: string };
+  social_studies: { s1: string, s1_comment: string, s2: string, s2_comment: string };
+  speaking: { s1: string, s1_comment: string, s2: string, s2_comment: string };
+  thinking: { s1: string, s2: string };
+  use_of_english: { s1: string, s1_comment: string, s2: string, s2_comment: string };
+  writing: { s1: string, s1_comment: string, s2: string, s2_comment: string };
+  comment: { s1: string, s2: string };
+  // [key: string]: string | { s1: string; s2: string }; // Index signature
+}
+
+export type Assigner = {
+  assigner_id: string,
+  name: string,
+  user_id: string,
+  assigner_type: "random" | "round-robin",
+  items: string,
+  student_item_status: AssignerItemStatuses,
+  created_date: string,
+  updated_date: string,
+  groups?: SeatGroup[]
+}
+
+export type AssignerItemStatusesStudent = number
+export type AssignerItemStatusesItem = Record<string, AssignerItemStatusesStudent>;
+export type AssignerItemStatusesAssigner = Record<string, AssignerItemStatusesItem>;
+export type AssignerItemStatusesClass = Record<string, AssignerItemStatusesAssigner>;
+export type AssignerItemStatuses = Record<string, AssignerItemStatusesClass>
+
+export type AssignerItemStatusesAssignerSeats = SeatingHistory;
+export type AssignerItemStatusesClassSeats = Record<string, AssignerItemStatusesAssignerSeats>;
+export type AssignerItemStatusesSeats = Record<string, AssignerItemStatusesClassSeats>
+
+export type SeatingHistory = Record<
+  string,
+  {
+    neighbors: string[]; // Array of student IDs
+    seats: number[]; // Array of seat numbers
+  }
+>;
+
+// Seat type representing a seat and its group
+type Seat = {
+  number: number;
+  group: string;
+};
+
+export type SeatGroup = {
+    name: string,
+    items: string[],
+}

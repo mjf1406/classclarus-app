@@ -31,6 +31,8 @@ import PointsTab from "./components/dashboard/TabPoints";
 import ClassActionMenu from "./components/ClassActionMenu";
 import RazTab from "./components/raz/RazTab";
 import Link from "next/link";
+import AssignersTab from "./components/assigners/AssignersTabs";
+import CreateAssignerDialog from "./components/assigners/CreateAssignerDialog";
 
 function useIsMdUp() {
   const [isMdUp, setIsMdUp] = React.useState(
@@ -212,25 +214,13 @@ export default function ClassPage() {
         {/* Tab Content */}
         <div className="px-5">
           <TabsContent value="assigners">
-            <h2 className="mb-2 block text-xl font-semibold lg:hidden">
-              Assigners
-            </h2>
-            <Tabs defaultValue={"random"}>
-              <TabsList className="mb-4">
-                <TabsTrigger value="random">Random</TabsTrigger>
-                <TabsTrigger value="round-robin">Round Robin</TabsTrigger>
-                <TabsTrigger value="seats">Seats</TabsTrigger>
-              </TabsList>
-              <TabsContent value="random">
-                <p>This is the random assigner content.</p>
-              </TabsContent>
-              <TabsContent value="round-robin">
-                <p>This is the round robin assigner content.</p>
-              </TabsContent>
-              <TabsContent value="seats">
-                <p>This is the seats assigner content.</p>
-              </TabsContent>
-            </Tabs>
+            <div className="flex items-center justify-between">
+              <h2 className="mb-2 block text-xl font-semibold lg:hidden">
+                Assigners
+              </h2>
+              <CreateAssignerDialog />
+            </div>
+            <AssignersTab classId={classId} />
           </TabsContent>
 
           <TabsContent value="dashboard">

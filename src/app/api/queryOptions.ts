@@ -1,4 +1,10 @@
-import type { Class, ClassDetail, Point, TeacherClass } from "@/server/db/types";
+import type {
+  Assigner,
+  Class,
+  ClassDetail,
+  Point,
+  TeacherClass,
+} from "@/server/db/types";
 import { queryOptions } from "@tanstack/react-query";
 
 export type TeacherClassDetail = {
@@ -42,6 +48,23 @@ export const PointsByClassIdOptions = (classId: string | null) =>
         throw new Error("Failed to load points data. Please refresh the page.");
       }
       return (await response.json()) as Point[];
+    },
+    staleTime: 1000 * 60 * 30, // 30 minutes
+  });
+
+export const AssignersOptions = (classId: string | null) =>
+  queryOptions<Assigner[]>({
+    queryKey: ["assigners", classId],
+    queryFn: async () => {
+      const response = await fetch(
+        `/api/assigners-by-class-id?class_id=${classId}`,
+      );
+      if (!response.ok) {
+        throw new Error(
+          "Failed to load assigners data. Please refresh the page.",
+        );
+      }
+      return (await response.json()) as Assigner[];
     },
     staleTime: 1000 * 60 * 30, // 30 minutes
   });
