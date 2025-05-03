@@ -33,6 +33,7 @@ import RazTab from "./components/raz/RazTab";
 import Link from "next/link";
 import AssignersTab from "./components/assigners/AssignersTabs";
 import CreateAssignerDialog from "./components/assigners/CreateAssignerDialog";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 function useIsMdUp() {
   const [isMdUp, setIsMdUp] = React.useState(
@@ -120,10 +121,13 @@ export default function ClassPage() {
 
   return (
     <div className="w-full">
-      <h1 className="bg-muted -mt-7 mb-2 flex items-center justify-between pt-8 pr-4 pb-3 pl-3 text-3xl font-bold md:pt-5 md:pl-10">
-        <div>
-          {teacherClassData?.classInfo?.class_name} (
-          {teacherClassData?.classInfo?.class_year})
+      <h1 className="bg-muted flex items-center justify-between pt-4 pr-4 pb-3 text-3xl font-bold">
+        <div className="flex items-center justify-center gap-10">
+          <SidebarTrigger className="pl-5" />
+          <div>
+            {teacherClassData?.classInfo?.class_name} (
+            {teacherClassData?.classInfo?.class_year})
+          </div>
         </div>
         <ClassActionMenu
           classId={teacherClassData?.classInfo.class_id ?? ""}
