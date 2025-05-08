@@ -8,6 +8,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import GroupsSelect from "@/components/selects/GroupSelect";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  FormControl,
+  FormDescription,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 
 interface RandomizersTabProps {
   classId: string | null;
@@ -52,6 +61,16 @@ const RandomizersTab: React.FC<RandomizersTabProps> = ({ classId }) => {
           placeholder="Name this randomization"
           className="max-w-lg"
         />
+        <RadioGroup defaultValue="one-by-one" className="flex flex-row gap-2">
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="one-by-one" id="one-by-one" />
+            <Label htmlFor="one-by-one">One by one</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="all-at-once" id="all-at-once" />
+            <Label htmlFor="all-at-once">All at once</Label>
+          </div>
+        </RadioGroup>
         <div className="flex items-center space-x-2">
           <Checkbox id="auto-remove" />
           <label
@@ -63,12 +82,41 @@ const RandomizersTab: React.FC<RandomizersTabProps> = ({ classId }) => {
         </div>
         {/* Only needs to randomly pick a group from classData.group */}
       </TabsContent>
-      <TabsContent value="team" className="space-y-2">
-        <Input
-          type="text"
-          placeholder="Name this randomization"
-          className="max-w-lg"
-        />
+      <TabsContent value="team" className="space-y-6">
+        <div className="max-w-lg space-y-2">
+          <Label>Name</Label>
+          <Input type="text" placeholder="Name this randomization" />
+          <p className="text-muted-foreground ml-2 text-sm">
+            Leaving the name blank means it will not be saved. Saving allows you
+            to resume it at a later date and/or reference it later, along with
+            checking off students who have done something.
+          </p>
+        </div>
+        {/* <FormItem>
+          <FormLabel>Name</FormLabel>
+          <FormControl>
+          <Input placeholder="shadcn" {...field} />
+          </FormControl>
+          <FormDescription>
+          Leaving the name blank means it will not be saved. Saving allows you
+          to resume it at a later date and/or reference it later, along with
+            checking off students who have done something.
+          </FormDescription>
+          <FormMessage />
+          </FormItem> */}
+        <div className="space-y-2">
+          <Label>Selection Mode</Label>
+          <RadioGroup defaultValue="one-by-one" className="flex flex-row gap-2">
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="one-by-one" id="one-by-one" />
+              <Label htmlFor="one-by-one">One by one</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="all-at-once" id="all-at-once" />
+              <Label htmlFor="all-at-once">All at once</Label>
+            </div>
+          </RadioGroup>
+        </div>
         <div className="flex items-center space-x-2">
           <Checkbox id="auto-remove" />
           <label
@@ -87,6 +135,16 @@ const RandomizersTab: React.FC<RandomizersTabProps> = ({ classId }) => {
           placeholder="Name this randomization"
           className="max-w-lg"
         />
+        <RadioGroup defaultValue="one-by-one" className="flex flex-row gap-2">
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="one-by-one" id="one-by-one" />
+            <Label htmlFor="one-by-one">One by one</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="all-at-once" id="all-at-once" />
+            <Label htmlFor="all-at-once">All at once</Label>
+          </div>
+        </RadioGroup>
         <div className="flex items-center space-x-2">
           <Checkbox id="auto-remove" />
           <label
