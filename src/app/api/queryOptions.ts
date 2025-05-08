@@ -68,3 +68,20 @@ export const AssignersOptions = (classId: string | null) =>
     },
     staleTime: 1000 * 60 * 30, // 30 minutes
   });
+
+export const RandomizersOptions = (classId: string | null) =>
+  queryOptions<Assigner[]>({
+    queryKey: ["randomizer", classId],
+    queryFn: async () => {
+      const response = await fetch(
+        `/api/randomizer-by-class-id?class_id=${classId}`,
+      );
+      if (!response.ok) {
+        throw new Error(
+          "Failed to load randomizer data. Please refresh the page.",
+        );
+      }
+      return (await response.json()) as Assigner[];
+    },
+    staleTime: 1000 * 60 * 30, // 30 minutes
+  });

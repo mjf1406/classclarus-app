@@ -34,6 +34,8 @@ import Link from "next/link";
 import AssignersTab from "./components/assigners/AssignersTabs";
 import CreateAssignerDialog from "./components/assigners/CreateAssignerDialog";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import RandomizersTab from "./components/randomizers/RandomizerTabs";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 function useIsMdUp() {
   const [isMdUp, setIsMdUp] = React.useState(
@@ -134,222 +136,178 @@ export default function ClassPage() {
           className="dark:bg-background dark:hover:bg-accent dark:text-white"
         />
       </h1>
-      <Tabs value={tabParam} onValueChange={setTab}>
-        <TabsList className="-mt-2 mb-3 w-full grow-0 rounded-none pb-0 pl-2 md:pl-10">
-          <TabsTrigger
-            className="border-b-none rounded-b-none data-[state=active]:shadow-none"
-            value="assigners"
-          >
-            <Signpost />
-            <span className="hidden lg:inline">Assigners</span>
-          </TabsTrigger>
-          <TabsTrigger
-            className="border-b-none rounded-b-none data-[state=active]:shadow-none"
-            value="dashboard"
-          >
-            <LayoutDashboard />
-            <span className="hidden lg:inline">Dashboard</span>
-          </TabsTrigger>
-          <TabsTrigger
-            className="border-b-none rounded-b-none data-[state=active]:shadow-none"
-            value="expectations"
-          >
-            <Goal />
-            <span className="hidden lg:inline">Expectations</span>
-          </TabsTrigger>
-          <TabsTrigger
-            className="border-b-none rounded-b-none data-[state=active]:shadow-none"
-            value="points"
-          >
-            <Coins />
-            <span className="hidden lg:inline">Points</span>
-          </TabsTrigger>
-          <TabsTrigger
-            className="border-b-none rounded-b-none data-[state=active]:shadow-none"
-            value="random-event"
-          >
-            <MapPin />
-            <span className="hidden lg:inline">Random Event</span>
-          </TabsTrigger>
-          <TabsTrigger
-            className="border-b-none rounded-b-none data-[state=active]:shadow-none"
-            value="randomizer"
-          >
-            <Dice5 />
-            <span className="hidden lg:inline">Randomizer</span>
-          </TabsTrigger>
-          <TabsTrigger
-            className="border-b-none rounded-b-none data-[state=active]:shadow-none"
-            value="raz"
-          >
-            <BookOpenText />
-            <span className="hidden lg:inline">RAZ Plus</span>
-          </TabsTrigger>
-          {/* <TabsTrigger
+      <TooltipProvider>
+        <Tabs value={tabParam} onValueChange={setTab}>
+          <TabsList className="-mt-2 mb-3 w-full grow-0 rounded-none pb-0 pl-2 md:pl-10">
+            <TabsTrigger
+              className="border-b-none rounded-b-none data-[state=active]:shadow-none"
+              value="assigners"
+            >
+              <Signpost />
+              <span className="hidden lg:inline">Assigners</span>
+            </TabsTrigger>
+            <TabsTrigger
+              className="border-b-none rounded-b-none data-[state=active]:shadow-none"
+              value="dashboard"
+            >
+              <LayoutDashboard />
+              <span className="hidden lg:inline">Dashboard</span>
+            </TabsTrigger>
+            <TabsTrigger
+              className="border-b-none rounded-b-none data-[state=active]:shadow-none"
+              value="expectations"
+            >
+              <Goal />
+              <span className="hidden lg:inline">Expectations</span>
+            </TabsTrigger>
+            <TabsTrigger
+              className="border-b-none rounded-b-none data-[state=active]:shadow-none"
+              value="points"
+            >
+              <Coins />
+              <span className="hidden lg:inline">Points</span>
+            </TabsTrigger>
+            <TabsTrigger
+              className="border-b-none rounded-b-none data-[state=active]:shadow-none"
+              value="random-event"
+            >
+              <MapPin />
+              <span className="hidden lg:inline">Random Event</span>
+            </TabsTrigger>
+            <TabsTrigger
+              className="border-b-none rounded-b-none data-[state=active]:shadow-none"
+              value="randomizer"
+            >
+              <Dice5 />
+              <span className="hidden lg:inline">Randomizer</span>
+            </TabsTrigger>
+            <TabsTrigger
+              className="border-b-none rounded-b-none data-[state=active]:shadow-none"
+              value="raz"
+            >
+              <BookOpenText />
+              <span className="hidden lg:inline">RAZ Plus</span>
+            </TabsTrigger>
+            {/* <TabsTrigger
             className="border-b-none rounded-b-none data-[state=active]:shadow-none"
             value="silent-chat"
           >
             <MessageCircle />
             <span className="hidden lg:inline">Silent Chat</span>
           </TabsTrigger> */}
-          <TabsTrigger
-            className="border-b-none rounded-b-none data-[state=active]:shadow-none"
-            value="shuffler"
-          >
-            <Shuffle />
-            <span className="hidden lg:inline">Shuffler</span>
-          </TabsTrigger>
-          <TabsTrigger
-            className="border-b-none rounded-b-none data-[state=active]:shadow-none sm:px-0 md:px-2"
-            value="tasks"
-          >
-            <ListChecks />
-            <span className="hidden lg:inline">Tasks</span>
-          </TabsTrigger>
-          <TabsTrigger
-            className="border-b-none rounded-b-none data-[state=active]:shadow-none sm:px-0 md:px-2"
-            value="ufli"
-          >
-            <NotebookText />
-            <span className="hidden lg:inline">UFLI</span>
-          </TabsTrigger>
-        </TabsList>
+            <TabsTrigger
+              className="border-b-none rounded-b-none data-[state=active]:shadow-none sm:px-0 md:px-2"
+              value="tasks"
+            >
+              <ListChecks />
+              <span className="hidden lg:inline">Tasks</span>
+            </TabsTrigger>
+            <TabsTrigger
+              className="border-b-none rounded-b-none data-[state=active]:shadow-none sm:px-0 md:px-2"
+              value="ufli"
+            >
+              <NotebookText />
+              <span className="hidden lg:inline">UFLI</span>
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Tab Content */}
-        <div className="px-5">
-          <TabsContent value="assigners">
-            <div className="flex items-center justify-between">
+          {/* Tab Content */}
+          <div className="px-5">
+            <TabsContent value="assigners">
+              <div className="flex items-center justify-between">
+                <h2 className="mb-2 block text-xl font-semibold lg:hidden">
+                  Assigners
+                </h2>
+                <CreateAssignerDialog />
+              </div>
+              <AssignersTab classId={classId} />
+            </TabsContent>
+
+            <TabsContent value="dashboard">
               <h2 className="mb-2 block text-xl font-semibold lg:hidden">
-                Assigners
+                Dashboard
               </h2>
-              <CreateAssignerDialog />
-            </div>
-            <AssignersTab classId={classId} />
-          </TabsContent>
-
-          <TabsContent value="dashboard">
-            <h2 className="mb-2 block text-xl font-semibold lg:hidden">
-              Dashboard
-            </h2>
-            <PointsTab classId={classId} />
-          </TabsContent>
-          <TabsContent value="expectations">
-            <h2 className="mb-2 block text-xl font-semibold lg:hidden">
-              Expectations
-            </h2>
-          </TabsContent>
-          <TabsContent value="points">
-            <h2 className="mb-2 block text-xl font-semibold lg:hidden">
-              Points
-            </h2>
-          </TabsContent>
-          <TabsContent value="random-event">
-            <h2 className="mb-2 block text-xl font-semibold lg:hidden">
-              Random Event
-            </h2>
-            <p>
-              Randomly choose a daily event from default options or ones
-              you&apos;ve added.
-            </p>
-          </TabsContent>
-          <TabsContent value="randomizer">
-            <h2 className="mb-2 block text-xl font-semibold lg:hidden">
-              Randomizer
-            </h2>
-            <p>
-              Randomly select a group, team, or student for activities or
-              assignments.
-            </p>
-            <br />
-            <Tabs defaultValue={"group"}>
-              <TabsList className="mb-4">
-                <TabsTrigger value="group">Group</TabsTrigger>
-                <TabsTrigger value="team">Team</TabsTrigger>
-                <TabsTrigger value="student">Student</TabsTrigger>
-              </TabsList>
-              <TabsContent value="group">
-                <p>This is the group randomizer.</p>
-              </TabsContent>
-              <TabsContent value="team">
-                <p>This is the team randomizer.</p>
-              </TabsContent>
-              <TabsContent value="student">
-                <p>This is the student randomizer.</p>
-              </TabsContent>
-            </Tabs>
-          </TabsContent>
-          <TabsContent value="raz">
-            <h2 className="mb-2 block text-xl font-semibold lg:hidden">
-              RAZ Plus
-            </h2>
-            <p className="max-w-3xl">
-              Track your students&apos; progress through RAZ Kids with frequency
-              reminders all in accordance with{" "}
-              <Link
-                href="https://www.raz-plus.com/learninga-z-levels/assessing-a-students-level/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center space-x-1 underline"
-              >
-                <span>RAZ Plus&apos; guidelines</span>
-                <ExternalLink size={16} />
-              </Link>
-              . Currently, we do not determine whether a student is{" "}
-              <span className="italic">
-                &quot;...not progressing at the expected rate...&quot;
-              </span>
-              , so we make no recommendations about testing frequency based on
-              whether a student is falling behind their grade level.
-            </p>
-            <br />
-            <RazTab classId={classId} />
-          </TabsContent>
-          <TabsContent value="silent-chat">
-            <h2 className="mb-2 block text-xl font-semibold lg:hidden">
-              Silent Chat
-            </h2>
-            <p>
-              Communicate silently with a student by passing your phone between
-              each other.
-            </p>
-          </TabsContent>
-          <TabsContent value="shuffler">
-            <h2 className="mb-2 block text-xl font-semibold lg:hidden">
-              Shuffler
-            </h2>
-            <p>
-              Randomly order your groups, teams, or students, ensuring everyone
-              gets a chance to be first and last before any repeats.
-            </p>
-            <br />
-            <Tabs defaultValue={"group"}>
-              <TabsList className="mb-4">
-                <TabsTrigger value="group">Group</TabsTrigger>
-                <TabsTrigger value="team">Team</TabsTrigger>
-                <TabsTrigger value="student">Student</TabsTrigger>
-              </TabsList>
-              <TabsContent value="group">
-                <p>This is the group shuffler.</p>
-              </TabsContent>
-              <TabsContent value="team">
-                <p>This is the team shuffler.</p>
-              </TabsContent>
-              <TabsContent value="student">
-                <p>This is the student shuffler.</p>
-              </TabsContent>
-            </Tabs>
-          </TabsContent>
-          <TabsContent value="tasks">
-            <h2 className="mb-2 block text-xl font-semibold lg:hidden">
-              Tasks
-            </h2>
-          </TabsContent>
-          <TabsContent value="ufli">
-            <h2 className="mb-2 block text-xl font-semibold lg:hidden">UFLI</h2>
-            <p>Track your students reading speed using UFLI assessments.</p>
-          </TabsContent>
-        </div>
-      </Tabs>
+              <PointsTab classId={classId} />
+            </TabsContent>
+            <TabsContent value="expectations">
+              <h2 className="mb-2 block text-xl font-semibold lg:hidden">
+                Expectations
+              </h2>
+            </TabsContent>
+            <TabsContent value="points">
+              <h2 className="mb-2 block text-xl font-semibold lg:hidden">
+                Points
+              </h2>
+            </TabsContent>
+            <TabsContent value="random-event">
+              <h2 className="mb-2 block text-xl font-semibold lg:hidden">
+                Random Event
+              </h2>
+              <p>
+                Randomly choose a daily event from default options or ones
+                you&apos;ve added.
+              </p>
+            </TabsContent>
+            <TabsContent value="randomizer">
+              <h2 className="mb-2 block text-xl font-semibold lg:hidden">
+                Randomizer
+              </h2>
+              <p>
+                Randomly select from groups, teams, or students with or without
+                replacement.
+              </p>
+              <br />
+              <RandomizersTab classId={classId} />
+            </TabsContent>
+            <TabsContent value="raz">
+              <h2 className="mb-2 block text-xl font-semibold lg:hidden">
+                RAZ Plus
+              </h2>
+              <p className="max-w-3xl">
+                Track your students&apos; progress through RAZ Kids with
+                frequency reminders all in accordance with{" "}
+                <Link
+                  href="https://www.raz-plus.com/learninga-z-levels/assessing-a-students-level/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center space-x-1 underline"
+                >
+                  <span>RAZ Plus&apos; guidelines</span>
+                  <ExternalLink size={16} />
+                </Link>
+                . Currently, we do not determine whether a student is{" "}
+                <span className="italic">
+                  &quot;...not progressing at the expected rate...&quot;
+                </span>
+                , so we make no recommendations about testing frequency based on
+                whether a student is falling behind their grade level.
+              </p>
+              <br />
+              <RazTab classId={classId} />
+            </TabsContent>
+            <TabsContent value="silent-chat">
+              <h2 className="mb-2 block text-xl font-semibold lg:hidden">
+                Silent Chat
+              </h2>
+              <p>
+                Communicate silently with a student by passing your phone
+                between each other.
+              </p>
+            </TabsContent>
+            <TabsContent value="tasks">
+              <h2 className="mb-2 block text-xl font-semibold lg:hidden">
+                Tasks
+              </h2>
+            </TabsContent>
+            <TabsContent value="ufli">
+              <h2 className="mb-2 block text-xl font-semibold lg:hidden">
+                UFLI
+              </h2>
+              <p>Track your students reading speed using UFLI assessments.</p>
+            </TabsContent>
+          </div>
+        </Tabs>
+      </TooltipProvider>
     </div>
   );
 }

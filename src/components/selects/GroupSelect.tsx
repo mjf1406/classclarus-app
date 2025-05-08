@@ -3,8 +3,6 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ClassByIdOptions } from "@/app/api/queryOptions";
-
-// Import ShadCN–styled checkbox and label (adjust the paths as needed)
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 
