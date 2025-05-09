@@ -15,6 +15,7 @@ import {
   // achievements,
   points,
   absent_dates,
+  raz,
   // topics,
 } from "@/server/db/schema";
 import { revalidatePath } from "next/cache";
@@ -51,6 +52,7 @@ export default async function deleteClass(classId: string, role: string) {
       await db.delete(behaviors).where(eq(behaviors.class_id, classId));
       await db.delete(student_classes).where(eq(student_classes.class_id, classId));
       await db.delete(teacher_classes).where(eq(teacher_classes.class_id, classId));
+      await db.delete(raz).where(eq(raz.class_id, classId));
       await db.delete(classes).where(eq(classes.class_id, classId));
       await deleteStudentsByClassId(classId);
     } else if (role === "assistant") {

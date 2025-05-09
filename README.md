@@ -2,9 +2,20 @@
 
 ## To-do List
 
-- DB: fix delete class in class action menu: need to add missing tables to the schema
+- UX: alert the user to instances of "...not progressing at the expected rate..." according to RAZ Plus. This means that if the student does not level up after 2 assessments, they get added to the RTI list.
+- DB: add Teams
 
 ## Change Log
+
+### 2025/05/09
+
+- BUG: fixed a bug when opening the delete class dialog makes all other elements on the page not clickable. Added `@apply pointer-events-auto;` to \* in @layer base -- **this is really stupid and should not be required**
+- DB: fix delete class in class action menu: need to add missing tables to the schema
+- UX: add a way to add a class with the Google Sheet template
+- UX: add a way to archive and unarchive a class,
+- UI: only unarchived classes show in the sidebar
+- UI: added an archived classes section on the homepage
+- UX: users can join classes as assistant teachers now
 
 ### 2025/05/03
 

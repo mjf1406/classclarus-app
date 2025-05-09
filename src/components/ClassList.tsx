@@ -54,7 +54,6 @@ const ClassList: React.FC = () => {
               className="shrink-0"
               style={{ width: "36px", height: "36px" }}
             />
-
             <div className="w-full">
               <AlertTitle>No Classes!</AlertTitle>
               <AlertDescription className="whitespace-nowrap">
@@ -73,9 +72,12 @@ const ClassList: React.FC = () => {
     );
   }
 
+  // Filter the classes that are active (not archived)
+  const activeClasses = data.filter((cls) => cls.classInfo.archived === false);
+
   return (
     <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-      {data.map((item) => (
+      {activeClasses.map((item) => (
         <ClassCard key={item.teacherAssignment.assignment_id} detail={item} />
       ))}
     </div>

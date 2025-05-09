@@ -1,8 +1,11 @@
 // MyClassesPage.tsx (server component)
+import ArchiveClassList from "@/components/ArchivedClassesList";
 import ClassList from "@/components/ClassList";
+import CreateClassDialog from "@/components/CreateClassDialog";
+import JoinClassDialog from "@/components/JoinClassDialog";
 import { Navbar } from "@/components/NavBar";
 import { Button } from "@/components/ui/button";
-import { Handshake, Plus, PlusSquare } from "lucide-react";
+import { PlusSquare } from "lucide-react";
 
 export default async function MyClassesPage() {
   return (
@@ -13,16 +16,12 @@ export default async function MyClassesPage() {
           <div className="flex w-full flex-row items-center justify-between gap-2 self-start">
             <h1 className="text-3xl font-semibold">My Classes</h1>
             <div className="flex flex-row gap-2">
-              <Button className="text-foreground">
-                <Plus /> <span className="hidden sm:block">Add class</span>
-              </Button>
-              <Button variant={"secondary"} className="text-foreground">
-                <Handshake />{" "}
-                <span className="hidden sm:block">Join class</span>
-              </Button>
+              <CreateClassDialog />
+              <JoinClassDialog />
               <Button
                 variant={"outline"}
-                className="text-foreground dark:bg-card"
+                className="text-foreground dark:bg-card !cursor-not-allowed"
+                disabled
               >
                 <PlusSquare />{" "}
                 <span className="hidden sm:block">Add demo class</span>
@@ -30,6 +29,8 @@ export default async function MyClassesPage() {
             </div>
           </div>
           <ClassList />
+          <h2 className="self-start text-xl font-semibold">Archived Classes</h2>
+          <ArchiveClassList />
         </div>
       </div>
     </>

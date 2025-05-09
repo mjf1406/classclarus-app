@@ -10,7 +10,7 @@ import {
   Loader2,
   Copy,
   HelpCircle,
-  CircleX,
+  Archive,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -29,12 +29,13 @@ import {
 } from "@/components/ui/tooltip";
 import {
   Dialog,
-  DialogClose,
+  DialogTrigger,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogClose,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,6 +49,7 @@ import { cn } from "@/lib/utils";
 import { sendEmails } from "../actions/sendStudentDashboardEmails";
 import deleteClass from "../actions/deleteClass";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { archiveClassById } from "../actions/archiveClassById";
 
 interface ClassActionMenuProps {
   classId: string;
@@ -59,33 +61,14 @@ const ClassActionMenu: React.FC<ClassActionMenuProps> = ({
   className,
 }) => {
   const queryClient = useQueryClient();
-  const [courseToDelete, setCourseToDelete] = useState<{
-    id: string;
-    name: string;
-  } | null>(null);
   const [deleteCourseText, setDeleteCourseText] = useState("");
+  // Use a controlled state for the deletion dialog
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [isSendingEmails, startTransition] = useTransition();
 
   const { data, isLoading, isError, error } = useQuery<TeacherClassDetail[]>(
     TeacherClassesOptions,
   );
-
-  const deleteMutation = useMutation({
-    mutationFn: (classId: string) =>
-      deleteClass(classId, course?.teacherAssignment.role ?? ""),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["classes", classId] });
-      toast.success(
-        `Class "${course?.classInfo.class_name}" has been successfully deleted.`,
-      );
-      // Reset dialog state upon successful deletion
-      setCourseToDelete(null);
-      setDeleteCourseText("");
-    },
-    onError: () => {
-      toast.error("Failed to delete class! Please try again in a moment.");
-    },
-  });
 
   if (isLoading) {
     return (
@@ -94,7 +77,6 @@ const ClassActionMenu: React.FC<ClassActionMenuProps> = ({
       </div>
     );
   }
-
   if (isError || error) {
     return (
       <div className="m-auto flex h-auto w-full items-center justify-center">
@@ -103,14 +85,8 @@ const ClassActionMenu: React.FC<ClassActionMenuProps> = ({
             variant="destructive"
             className="flex w-full items-center gap-4"
           >
-            <CircleX
-              className="shrink-0"
-              style={{ width: "36px", height: "36px" }}
-            />
-            <div className="w-full">
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>{error.message}</AlertDescription>
-            </div>
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error.message}</AlertDescription>
           </Alert>
         </div>
       </div>
@@ -118,6 +94,66 @@ const ClassActionMenu: React.FC<ClassActionMenuProps> = ({
   }
 
   const course = data?.find((i) => i.classInfo.class_id === classId);
+
+  // Delete mutation
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const deleteMutation = useMutation({
+    mutationFn: (classId: string) =>
+      deleteClass(classId, course?.teacherAssignment.role ?? ""),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: TeacherClassesOptions.queryKey,
+      });
+      toast.success(
+        `Class "${course?.classInfo.class_name}" has been successfully deleted.`,
+      );
+      setOpenDeleteDialog(false);
+      setDeleteCourseText("");
+    },
+    onError: () => {
+      toast.error("Failed to delete class! Please try again in a moment.");
+    },
+  });
+
+  // Archive mutation with optimistic update
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const archiveMutation = useMutation({
+    mutationFn: (classId: string) =>
+      archiveClassById(classId, course?.teacherAssignment.role ?? ""),
+    onMutate: async (classId: string) => {
+      await queryClient.cancelQueries({ queryKey: ["teacher-classes"] });
+      const previousData = queryClient.getQueryData<TeacherClassDetail[]>([
+        "teacher-classes",
+      ]);
+      queryClient.setQueryData<TeacherClassDetail[]>(
+        ["teacher-classes"],
+        (old) =>
+          old?.map((cls) =>
+            cls.classInfo.class_id === classId
+              ? {
+                  ...cls,
+                  classInfo: { ...cls.classInfo, archived: true },
+                }
+              : cls,
+          ) ?? [],
+      );
+      return { previousData };
+    },
+    onError: (error, classId, context) => {
+      queryClient.setQueryData(["teacher-classes"], context?.previousData);
+      toast.error("Failed to archive class! Please try again in a moment.");
+    },
+    onSuccess: () => {
+      toast.success(
+        `${course?.classInfo.class_name} has been successfully archived.`,
+      );
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({
+        queryKey: ["teacher-classes"],
+      });
+    },
+  });
 
   const copyToClipboard = () => {
     navigator.clipboard
@@ -173,32 +209,32 @@ const ClassActionMenu: React.FC<ClassActionMenuProps> = ({
       );
   };
 
-  // Function to handle class deletion
-  const handleDeleteClass = () => {
-    if (!courseToDelete) return;
+  const handleArchiveClass = () => {
+    archiveMutation.mutate(classId);
+  };
 
-    if (courseToDelete.name !== deleteCourseText) {
+  const handleDeleteClass = () => {
+    if (course?.classInfo.class_name !== deleteCourseText) {
       toast.warning(
-        "Class names do not match! This is case-sensitive. Please double check what you typed and try again.",
+        "Class names do not match! This is case-sensitive. Please check your input.",
       );
       return;
     }
-
-    deleteMutation.mutate(courseToDelete.id);
-    // We do NOT reset the state here; we do that in onSuccess or onError
+    deleteMutation.mutate(classId);
   };
 
   return (
-    <>
-      {/* Action Dropdown Menu */}
+    <Dialog
+      open={openDeleteDialog}
+      onOpenChange={(open) => setOpenDeleteDialog(open)}
+      modal={openDeleteDialog}
+      // onOpenChange={() => {
+      //   setTimeout(() => (document.body.style.pointerEvents = ""), 100);
+      // }}
+    >
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button
-            variant="outline"
-            size={"icon"}
-            className={cn(className)}
-            disabled={isSendingEmails}
-          >
+          <Button variant="outline" size={"icon"} className={cn(className)}>
             <MoreVertical className="h-5 w-5" />
             <span className="sr-only">Open menu</span>
           </Button>
@@ -212,7 +248,8 @@ const ClassActionMenu: React.FC<ClassActionMenuProps> = ({
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem onClick={copyToClipboard}>
-            <Copy className="mr-2 h-4 w-4" /> Share behaviors/rewards
+            <Copy className="mr-2 h-4 w-4" />
+            Share behaviors/rewards
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={handleSendEmails}
@@ -228,8 +265,7 @@ const ClassActionMenu: React.FC<ClassActionMenuProps> = ({
                 <TooltipContent className="max-w-sm">
                   <p>
                     It may take up to several hours for the emails to arrive. In
-                    testing, they never took more than 10 minutes to arrive.
-                    Nonetheless, please plan accordingly.
+                    testing, they never took more than 10 minutes.
                   </p>
                 </TooltipContent>
               </Tooltip>
@@ -249,110 +285,96 @@ const ClassActionMenu: React.FC<ClassActionMenuProps> = ({
                 <TooltipContent className="max-w-sm">
                   <p>
                     This will copy your class code. Send it to other teachers so
-                    they can join as assistant teachers.{" "}
+                    they can join as assistant teachers.
                     <strong>
-                      Assistant teachers can only apply behaviors and
-                      mark/unmark tasks complete.
+                      {" "}
+                      (Assistant teachers can only apply behaviors and
+                      mark/unmark tasks complete.)
                     </strong>
                   </p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </DropdownMenuItem>
-          <DropdownMenuSeparator />
           <DropdownMenuItem
-            className="text-destructive hover:!bg-destructive hover:text-foreground flex cursor-pointer items-center font-bold"
-            onSelect={() =>
-              setCourseToDelete({
-                id: classId,
-                name: course?.classInfo.class_name ?? "",
-              })
-            }
-            disabled={isSendingEmails || deleteMutation.isPending}
+            onClick={handleArchiveClass}
+            disabled={isSendingEmails || archiveMutation.isPending}
           >
-            {deleteMutation.isPending ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Trash2 className="mr-2 h-4 w-4" />
-            )}
-            Delete
+            <Archive className="mr-2 h-4 w-4" />
+            Archive class
           </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          {/* When the delete item is clicked, open the dialog */}
+          <DialogTrigger asChild>
+            <DropdownMenuItem
+              onSelect={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              className="text-destructive hover:!bg-destructive hover:text-foreground flex cursor-pointer items-center font-bold"
+            >
+              {deleteMutation.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="mr-2 h-4 w-4" />
+              )}
+              Delete
+            </DropdownMenuItem>
+          </DialogTrigger>
         </DropdownMenuContent>
       </DropdownMenu>
 
       {/* Delete Confirmation Dialog */}
-      {courseToDelete && (
-        <Dialog
-          // Keep the dialog open if deletion is pending
-          open={!!courseToDelete}
-          onOpenChange={(open) => {
-            // Only allow closing if we're not deleting
-            if (!open && !deleteMutation.isPending) {
-              setCourseToDelete(null);
-              setDeleteCourseText("");
-            }
-          }}
-        >
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Delete class</DialogTitle>
-              <DialogDescription>
-                Please type the class name,{" "}
-                <span className="font-bold">{courseToDelete.name}</span>, below
-                to confirm deletion. Deleting a class is <b>IRREVERSIBLE</b>.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="flex items-center space-x-2">
-              <div className="grid flex-1 gap-2">
-                <Label htmlFor="class-to-delete" className="sr-only">
-                  Class to delete
-                </Label>
-                <Input
-                  id="class-to-delete"
-                  placeholder="Type class name"
-                  value={deleteCourseText}
-                  onChange={(e) => setDeleteCourseText(e.target.value)}
-                  disabled={isSendingEmails || deleteMutation.isPending}
-                />
-              </div>
-            </div>
-            <DialogFooter className="sm:justify-start">
-              <DialogClose asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={isSendingEmails || deleteMutation.isPending}
-                >
-                  Cancel
-                </Button>
-              </DialogClose>
-              <Button
-                onClick={handleDeleteClass}
-                variant="destructive"
-                disabled={deleteMutation.isPending || isSendingEmails}
-              >
-                {deleteMutation.isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-                    Deleting...
-                  </>
-                ) : (
-                  "Delete class"
-                )}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
-
-      {/* Global Loading Overlay for Sending Emails */}
-      {isSendingEmails && (
-        <div className="bg-opacity-50 fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-black">
-          <Loader2 className="h-24 w-24 animate-spin" />
-          <div className="text-3xl font-bold">Letting the email owls fly!</div>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Delete class</DialogTitle>
+          <DialogDescription>
+            Please type the class name{" "}
+            <span className="font-bold">{course?.classInfo.class_name}</span>{" "}
+            below to confirm deletion. This action is <b>IRREVERSIBLE</b>.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex items-center space-x-2">
+          <div className="grid flex-1 gap-2">
+            <Label htmlFor="class-to-delete" className="sr-only">
+              Class to delete
+            </Label>
+            <Input
+              id="class-to-delete"
+              placeholder="Type class name"
+              value={deleteCourseText}
+              onChange={(e) => setDeleteCourseText(e.target.value)}
+              disabled={isSendingEmails || deleteMutation.isPending}
+            />
+          </div>
         </div>
-      )}
-    </>
+        <DialogFooter className="sm:justify-start">
+          <DialogClose asChild>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isSendingEmails || deleteMutation.isPending}
+            >
+              Cancel
+            </Button>
+          </DialogClose>
+          <Button
+            onClick={handleDeleteClass}
+            variant="destructive"
+            disabled={deleteMutation.isPending || isSendingEmails}
+          >
+            {deleteMutation.isPending ? (
+              <>
+                <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+                Deleting...
+              </>
+            ) : (
+              "Delete class"
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 

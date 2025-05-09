@@ -6,6 +6,8 @@ import { raz } from "@/server/db/schema";
 import { auth } from "@clerk/nextjs/server";
 
 export interface NewRazRecordData {
+  id?: string | null;
+  user_id?: string | null;
   class_id: string;
   student_id: string;
   result: "level up" | "stay" | "level down";

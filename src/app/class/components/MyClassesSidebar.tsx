@@ -65,7 +65,8 @@ function MyClassesContent({
       </SidebarMenuItem>
     );
   } else {
-    content = data.map((userClass) => {
+    const activeClasses = data.filter((i) => i.classInfo.archived === false);
+    content = activeClasses.map((userClass) => {
       const { class_id, class_name, class_year } = userClass.classInfo;
       const isActive = currentClassId === class_id;
 

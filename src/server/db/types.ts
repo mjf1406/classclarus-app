@@ -14,13 +14,14 @@ export interface Class {
   class_id: string;
   class_name: string;
   class_language: string;
-  class_grade?: "1" | "2" | "3" | "4" | "5" | "6"; // Optional enum value representing grade as string
-  class_year?: string;
+  class_grade?: "1" | "2" | "3" | "4" | "5" | "6" | null; // Optional enum value representing grade as string
+  class_year?: string | null;
   class_code: string;
+  archived: boolean | null,
   complete: {
     s1: boolean;
     s2: boolean;
-  };
+  } | null;
   created_date: string;
   updated_date: string;
 }
