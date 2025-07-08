@@ -9,14 +9,6 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableHeader,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
-} from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import EditGradedAssignmentDialog from "./EditGradedAssignmentDialog";
@@ -32,6 +24,16 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { useDeleteGradedAssignment } from "./hooks/useDeleteGradedAssignment";
+import { CreateGradedAssignmentDialog } from "./CreateGradedAssignmentDIalog";
+import { Copy, Edit, Trash2 } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export interface Section {
   id: string;
@@ -83,6 +85,17 @@ function AssignmentCard({ assignment: a }: { assignment: Assignment }) {
     deleteMutation.mutate(a.id);
   };
 
+  // prepare initialData for duplication
+  const initialData = {
+    name: a.name,
+    sections: a.sections.map((s) => ({
+      name: s.name,
+      points: s.points,
+    })),
+    // only if no sections do we supply totalPoints
+    totalPoints: a.sections.length ? undefined : (a.total_points ?? undefined),
+  };
+
   return (
     <Card className="border">
       <CardContent className="space-y-4">
@@ -100,15 +113,25 @@ function AssignmentCard({ assignment: a }: { assignment: Assignment }) {
               assignment={a}
               trigger={
                 <Button variant="outline" size="sm">
-                  Edit
+                  <Edit /> <span className="hidden md:block">Edit</span>
                 </Button>
               }
+            />
+
+            <CreateGradedAssignmentDialog
+              classId={a.class_id}
+              trigger={
+                <Button variant="outline" size="sm">
+                  <Copy /> <span className="hidden md:block">Duplicate</span>
+                </Button>
+              }
+              initialData={initialData}
             />
 
             <AlertDialog open={alertOpen} onOpenChange={setAlertOpen}>
               <AlertDialogTrigger asChild>
                 <Button variant="destructive" size="sm">
-                  Delete
+                  <Trash2 /> <span className="hidden md:block">Delete</span>
                 </Button>
               </AlertDialogTrigger>
 
@@ -139,19 +162,14 @@ function AssignmentCard({ assignment: a }: { assignment: Assignment }) {
         </CardHeader>
 
         <Separator />
-
-        <dl className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
+        <dl className="grid grid-cols-2 gap-4 text-sm">
           <div>
             <dt className="font-medium">Created</dt>
-            <dd className="text-gray-700">
-              {new Date(a.created_date).toLocaleString()}
-            </dd>
+            <dd className="">{new Date(a.created_date).toLocaleString()}</dd>
           </div>
           <div>
             <dt className="font-medium">Updated</dt>
-            <dd className="text-gray-700">
-              {new Date(a.updated_date).toLocaleString()}
-            </dd>
+            <dd className="">{new Date(a.updated_date).toLocaleString()}</dd>
           </div>
         </dl>
 

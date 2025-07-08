@@ -9,7 +9,10 @@
 
 ### 2025/07/08
 
+### 2025/07/08
+
 - UX: Graded Assignment basic CRUD is now complete, can move onto adding scores to each assignment
+- UX: added a button to duplicate an assignment which opens a creation dialog with everything filled out and name highlighted so the user can quickly change its name
 - UX: updated_date is properly set on update now
 - UX: deleting a graded assignment is now optimistic
 - UX: creating a graded assignment is now optimistic

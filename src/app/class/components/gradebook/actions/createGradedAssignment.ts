@@ -1,6 +1,7 @@
 // app/_actions/gradedAssignment.ts
 "use server";
 
+import { formatDateTime } from "@/lib/utils";
 import { db } from "@/server/db/index";
 import { graded_assignments, assignment_sections } from "@/server/db/schema";
 import { auth } from "@clerk/nextjs/server";
@@ -36,6 +37,8 @@ export async function createGradedAssignment(args: CreateGradedAssignmentArgs) {
       class_id: args.class_id,
       name: args.name,
       total_points: args.total_points ?? null,
+      created_date: formatDateTime(new Date()),
+      updated_date: formatDateTime(new Date()),
     });
 
     // 2) Insert each section

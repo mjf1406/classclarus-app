@@ -32,15 +32,31 @@ interface FormValues {
 interface Props {
   classId: string;
   trigger?: React.ReactNode;
+  initialData?: {
+    name: string;
+    sections: SectionForm[];
+    totalPoints?: number;
+  };
 }
 
-export function CreateGradedAssignmentDialog({ classId, trigger }: Props) {
+export function CreateGradedAssignmentDialog({
+  classId,
+  trigger,
+  initialData,
+}: Props) {
   const [open, setOpen] = React.useState(false);
   const ctrlRef = React.useRef(false);
 
-  const form = useForm<FormValues>({
-    defaultValues: { name: "", sections: [], totalPoints: undefined },
-  });
+  // set up defaultValues based on initialData if provided
+  const defaultValues: FormValues = initialData
+    ? {
+        name: initialData.name,
+        sections: initialData.sections,
+        totalPoints: initialData.totalPoints,
+      }
+    : { name: "", sections: [], totalPoints: undefined };
+
+  const form = useForm<FormValues>({ defaultValues });
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "sections",
@@ -50,11 +66,11 @@ export function CreateGradedAssignmentDialog({ classId, trigger }: Props) {
   const computedTotal = sections.reduce((sum, s) => sum + (s.points || 0), 0);
   const hasSections = sections.length > 0;
 
-  // Ctrl+Enter
+  // record Ctrl+Enter
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && e.ctrlKey) ctrlRef.current = true;
   };
-  // Ctrl+Click
+  // record Ctrl+Click
   const onClick = (e: React.MouseEvent) => {
     ctrlRef.current = e.ctrlKey;
   };
@@ -75,17 +91,16 @@ export function CreateGradedAssignmentDialog({ classId, trigger }: Props) {
       ),
     };
 
-    // close immediately so you see the list update
+    // close dialog immediately so the list updates optimistically
     if (!keepOpen) setOpen(false);
 
     createMutation.mutate(payload, {
-      onError: (err) => {
+      onError(err) {
         console.error("Failed to create", err);
       },
       onSettled: () => {
-        // reset form whether success or error
+        // reset back to defaultValues (which are initialData or blank)
         form.reset();
-        // if keeping open, leave it open; else ensure closed
         if (keepOpen) setOpen(true);
       },
     });
@@ -103,9 +118,15 @@ export function CreateGradedAssignmentDialog({ classId, trigger }: Props) {
 
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Create Graded Assignment</DialogTitle>
+          <DialogTitle>
+            {initialData
+              ? "Duplicate Graded Assignment"
+              : "Create Graded Assignment"}
+          </DialogTitle>
           <DialogDescription>
-            Define name, sections, total points.
+            {initialData
+              ? "Adjust and save your duplicated assignment."
+              : "Define name, sections, total points."}
           </DialogDescription>
           <p className="mt-1 text-sm text-gray-500">
             Ctrl+Enter or Ctrl+Click to submit without closing.
@@ -113,7 +134,6 @@ export function CreateGradedAssignmentDialog({ classId, trigger }: Props) {
         </DialogHeader>
 
         <form onSubmit={onSubmit} onKeyDown={onKeyDown} className="grid gap-6">
-          {/* Assignment Name */}
           <div className="grid gap-1">
             <Label htmlFor="name">Assignment Name</Label>
             <Input
@@ -206,7 +226,11 @@ export function CreateGradedAssignmentDialog({ classId, trigger }: Props) {
 
           <DialogFooter>
             <Button type="submit" onClick={onClick} disabled={isPending}>
-              {isPending ? "Creating..." : "Create Graded Assignment"}
+              {isPending
+                ? "Creating..."
+                : initialData
+                  ? "Duplicate Assignment"
+                  : "Create Graded Assignment"}
             </Button>
           </DialogFooter>
         </form>
