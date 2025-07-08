@@ -3,9 +3,24 @@
 ## To-do List
 
 - UX: alert the user to instances of "...not progressing at the expected rate..." according to RAZ Plus. This means that if the student does not level up after 2 assessments, they get added to the RTI list.
-- DB: add Teams
+- DB: added Teams
 
 ## Change Log
+
+### 2025/07/08
+
+- UX: Graded Assignment basic CRUD is now complete, can move onto adding scores to each assignment
+- UX: updated_date is properly set on update now
+- UX: deleting a graded assignment is now optimistic
+- UX: creating a graded assignment is now optimistic
+- UX: editing a graded assignment is now optimistic
+
+### 2025/07/07
+
+- UI: added a way to create a graded assignment
+- UX: can keep the create graded assignment dialog open if you ctrl+enter or ctrl+click the submit button, otherwise will auto close on creation
+- UI: added a list of graded assignments on the gradebook page
+- UI: added delete and edit buttons that open the proper dialog, but currently do not function
 
 ### 2025/05/09
 

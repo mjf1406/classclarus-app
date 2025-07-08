@@ -36,6 +36,7 @@ import CreateAssignerDialog from "./components/assigners/CreateAssignerDialog";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import RandomizersTab from "./components/randomizers/RandomizerTabs";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import GradebookTab from "./components/gradebook/GradebookTab";
 
 function useIsMdUp() {
   const [isMdUp, setIsMdUp] = React.useState(
@@ -204,10 +205,10 @@ export default function ClassPage() {
             </TabsTrigger>
             <TabsTrigger
               className="border-b-none rounded-b-none data-[state=active]:shadow-none sm:px-0 md:px-2"
-              value="ufli"
+              value="gradebook"
             >
               <NotebookText />
-              <span className="hidden lg:inline">UFLI</span>
+              <span className="hidden lg:inline">Gradebook</span>
             </TabsTrigger>
           </TabsList>
 
@@ -299,11 +300,8 @@ export default function ClassPage() {
                 Tasks
               </h2>
             </TabsContent>
-            <TabsContent value="ufli">
-              <h2 className="mb-2 block text-xl font-semibold lg:hidden">
-                UFLI
-              </h2>
-              <p>Track your students reading speed using UFLI assessments.</p>
+            <TabsContent value="gradebook">
+              <GradebookTab classId={classId} />
             </TabsContent>
           </div>
         </Tabs>

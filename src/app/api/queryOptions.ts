@@ -6,6 +6,7 @@ import type {
   TeacherClass,
 } from "@/server/db/types";
 import { queryOptions } from "@tanstack/react-query";
+import type { Assignment } from "../class/components/gradebook/GradedAssignmentsList";
 
 export type TeacherClassDetail = {
   teacherAssignment: TeacherClass;
@@ -82,6 +83,23 @@ export const RandomizersOptions = (classId: string | null) =>
         );
       }
       return (await response.json()) as Assigner[];
+    },
+    staleTime: 1000 * 60 * 30, // 30 minutes
+  });
+
+export const GradedAssignmentOptions = (classId: string | null) =>
+  queryOptions<Assignment[]>({
+    queryKey: ["graded_assignments", classId],
+    queryFn: async () => {
+      const response = await fetch(
+        `/api/graded-assignments-by-class-id?class_id=${classId}`,
+      );
+      if (!response.ok) {
+        throw new Error(
+          "Failed to load graded assignments data. Please refresh the page.",
+        );
+      }
+      return (await response.json()) as Assignment[];
     },
     staleTime: 1000 * 60 * 30, // 30 minutes
   });
