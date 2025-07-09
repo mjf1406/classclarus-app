@@ -1,4 +1,4 @@
-// app/components/CreateGradedAssignmentDialog.tsx
+// src\app\class\components\gradebook\CreateGradedAssignmentDialog.tsx
 "use client";
 
 import * as React from "react";
