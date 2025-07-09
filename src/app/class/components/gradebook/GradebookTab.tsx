@@ -8,7 +8,7 @@ import LoaderSmallInline from "@/components/loaders/LoaderSmall";
 import { Button } from "@/components/ui/button";
 import type { Assignment } from "./GradedAssignmentsList";
 import GradedAssignmentsList from "./GradedAssignmentsList";
-import { CreateGradedAssignmentDialog } from "./CreateGradedAssignmentDialog";
+import { CreateGradedAssignmentDialog } from "./CreateGradedAssignmentDialogFuck";
 
 interface GradebookTabProps {
   classId: string | null;

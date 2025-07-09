@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/table";
 import ScoreModal from "./ScoresModal";
 import type { AssignmentScore } from "@/server/db/types";
-import { CreateGradedAssignmentDialog } from "./CreateGradedAssignmentDialog";
+import { CreateGradedAssignmentDialog } from "./CreateGradedAssignmentDialogFuck";
 
 export interface Section {
   id: string;
