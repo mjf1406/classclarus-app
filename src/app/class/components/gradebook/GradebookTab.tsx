@@ -5,10 +5,10 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { GradedAssignmentOptions } from "@/app/api/queryOptions";
 import LoaderSmallInline from "@/components/loaders/LoaderSmall";
-import { CreateGradedAssignmentDialog } from "./CreateGradedAssignmentDialog";
 import { Button } from "@/components/ui/button";
 import type { Assignment } from "./GradedAssignmentsList";
 import GradedAssignmentsList from "./GradedAssignmentsList";
+import { CreateGradedAssignmentDialog } from "./CreateGradedAssignmentDialog";
 
 interface GradebookTabProps {
   classId: string | null;
