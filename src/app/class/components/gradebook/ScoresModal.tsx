@@ -161,6 +161,9 @@ export default function ScoresModal({
       )
     ) : null;
 
+  // number of columns containing NumberInputWithStepper
+  const cols = sections.length;
+
   return (
     <Dialog>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
@@ -226,32 +229,37 @@ export default function ScoresModal({
                   </TableHeader>
 
                   <TableBody>
-                    {sorted.map((stu) => (
+                    {sorted.map((stu, rowIdx) => (
                       <TableRow key={stu.student_id}>
                         <TableCell>{stu.student_number ?? ""}</TableCell>
                         <TableCell>{stu.student_name_first_en}</TableCell>
                         <TableCell>{stu.student_name_last_en}</TableCell>
 
-                        {sections.map((sec, i) => (
-                          <TableCell key={sec.id} className="py-1">
-                            <NumberInputWithStepper
-                              value={scoreMap[stu.student_id]?.[i] ?? 0}
-                              min={0}
-                              max={sec.points}
-                              onChange={(val) => {
-                                onChange(stu.student_id, i, val);
-                                updateScore.mutate({
-                                  student_id: stu.student_id,
-                                  class_id: classId!,
-                                  graded_assignment_id: assignment.id,
-                                  section_id: sec.id,
-                                  score: val,
-                                  excused: excused[stu.student_id] ?? false,
-                                });
-                              }}
-                            />
-                          </TableCell>
-                        ))}
+                        {sections.map((sec, colIdx) => {
+                          const tabIndex = rowIdx * cols + colIdx + 1;
+                          return (
+                            <TableCell key={sec.id} className="py-1">
+                              <NumberInputWithStepper
+                                value={scoreMap[stu.student_id]?.[colIdx] ?? 0}
+                                min={0}
+                                max={sec.points}
+                                step={0.1}
+                                tabIndex={tabIndex}
+                                onChange={(val) => {
+                                  onChange(stu.student_id, colIdx, val);
+                                  updateScore.mutate({
+                                    student_id: stu.student_id,
+                                    class_id: classId!,
+                                    graded_assignment_id: assignment.id,
+                                    section_id: sec.id,
+                                    score: val,
+                                    excused: excused[stu.student_id] ?? false,
+                                  });
+                                }}
+                              />
+                            </TableCell>
+                          );
+                        })}
 
                         <TableCell className="font-semibold">
                           {totalOf(stu.student_id)}

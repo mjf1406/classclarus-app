@@ -10,6 +10,8 @@
 
 ### 2025/07/09
 
+- UX: number inputs are tab-navigable, skipping buttons in the Scores Modal
+- UX: added 0.1 step to the number inputs in the Scores Modal
 - UI: made a sexy number input with stepper buttons
 - UI: added the scores modal so the user can input a total score or scores by section for the assignments.
 - BE: scores save to DB and can be updated too
