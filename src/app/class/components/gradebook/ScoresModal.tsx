@@ -168,7 +168,9 @@ export default function ScoresModal({
         <DialogHeader>
           <DialogTitle>{assignment.name} Scores</DialogTitle>
           <DialogDescription>
-            Enter each student’s scores below and mark excused if needed.
+            Enter each student’s scores below and mark excused if needed. Ctrl +
+            Click the plus (+) and minus (-) buttons to increment by 5 or Shift
+            + Click to increment by 10.
           </DialogDescription>
           <DialogClose className="absolute top-4 right-4" />
         </DialogHeader>
