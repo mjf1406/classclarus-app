@@ -684,3 +684,44 @@ export const assignment_sections = sqliteTable("assignment_sections", {
   name: text("name").notNull(),
   points: integer("points").notNull(),
 });
+
+export const assignment_scores = sqliteTable(
+  "assignment_scores",
+  {
+    id: text("id").notNull().primaryKey(),
+    student_id: text("student_id")
+      .notNull()
+      .references(() => students.student_id),
+    user_id: text("user_id")
+      .notNull()
+      .references(() => users.user_id),
+    class_id: text("class_id")
+      .notNull()
+      .references(() => classes.class_id),
+    graded_assignment_id: text("graded_assignment_id")
+      .notNull()
+      .references(() => graded_assignments.id),
+    section_id: text("section_id").references(() => assignment_sections.id),
+    score: integer("score"),
+    excused: integer("excused", { mode: "boolean" }),
+  },
+  (table) => {
+    return {
+      assignment_scores_by_student_id_idx: index(
+        "assignment_scores_by_student_id_idx",
+      ).on(table.student_id),
+      assignment_scores_by_user_id_idx: index(
+        "assignment_scores_by_user_id_idx",
+      ).on(table.user_id),
+      assignment_scores_by_class_id_idx: index(
+        "assignment_scores_by_class_id_idx",
+      ).on(table.class_id),
+      assignment_scores_by_graded_assignment_id_idx: index(
+        "assignment_scores_by_graded_assignment_id_idx",
+      ).on(table.graded_assignment_id),
+      assignment_scores_by_section_id_idx: index(
+        "assignment_scores_by_section_id_idx",
+      ).on(table.section_id),
+    };
+  },
+);

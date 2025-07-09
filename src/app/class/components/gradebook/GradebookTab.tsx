@@ -5,7 +5,7 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { GradedAssignmentOptions } from "@/app/api/queryOptions";
 import LoaderSmallInline from "@/components/loaders/LoaderSmall";
-import { CreateGradedAssignmentDialog } from "./CreateGradedAssignmentDIalog";
+import { CreateGradedAssignmentDialog } from "./CreateGradedAssignmentDialog";
 import { Button } from "@/components/ui/button";
 import type { Assignment } from "./GradedAssignmentsList";
 import GradedAssignmentsList from "./GradedAssignmentsList";
@@ -36,7 +36,7 @@ const GradebookTab: React.FC<GradebookTabProps> = ({ classId }) => {
         />
       </div>
 
-      {data && <GradedAssignmentsList assignments={data} />}
+      {data && <GradedAssignmentsList assignments={data} classId={classId} />}
     </div>
   );
 };

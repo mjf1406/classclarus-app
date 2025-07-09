@@ -47,10 +47,12 @@ export function useUpdateGradedAssignment(classId: string) {
           previous.find((a) => a.id === args.id)?.created_date ??
           new Date().toISOString(),
         updated_date: new Date().toISOString(),
+        scores: args.scores ?? [],
         sections: args.sections.map((s) => ({
           id: genId(),
           name: s.name,
           points: s.points,
+          scores: s.scores ?? [],
         })),
       };
 

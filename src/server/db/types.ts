@@ -327,3 +327,14 @@ export type Section = {
   name: string;
   points: number;
 };
+
+export type AssignmentScore = {
+  id: string;
+  student_id: string;
+  user_id: string;
+  class_id: string;
+  graded_assignment_id: string;
+  section_id: string;
+  score: number;
+  excused: boolean;
+};

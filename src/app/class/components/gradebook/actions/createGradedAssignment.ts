@@ -4,12 +4,14 @@
 import { formatDateTime } from "@/lib/utils";
 import { db } from "@/server/db/index";
 import { graded_assignments, assignment_sections } from "@/server/db/schema";
+import type { AssignmentScore } from "@/server/db/types";
 import { auth } from "@clerk/nextjs/server";
 import { randomUUID } from "crypto";
 
 export type SectionInput = {
   name: string;
   points: number;
+  scores?: AssignmentScore[];
 };
 
 export type CreateGradedAssignmentArgs = {

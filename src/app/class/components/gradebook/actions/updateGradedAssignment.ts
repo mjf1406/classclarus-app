@@ -8,6 +8,7 @@ import { and, eq } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { auth } from "@clerk/nextjs/server";
 import { formatDateTime } from "@/lib/utils";
+import type { AssignmentScore } from "@/server/db/types";
 
 export type UpdateGradedAssignmentArgs = {
   id: string;
@@ -15,6 +16,7 @@ export type UpdateGradedAssignmentArgs = {
   name?: string;
   total_points?: number | null;
   sections: SectionInput[];
+  scores?: AssignmentScore[];
 };
 
 export async function updateGradedAssignment(

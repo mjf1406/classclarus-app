@@ -7,8 +7,6 @@ import {
   type CreateGradedAssignmentArgs,
 } from "../actions/createGradedAssignment";
 import type { Assignment } from "../GradedAssignmentsList";
-// Use the browser’s built-in crypto.randomUUID
-// (or import from 'uuid' if you prefer)
 import { useAuth } from "@clerk/nextjs";
 
 interface Context {
@@ -48,10 +46,12 @@ export function useCreateGradedAssignment(classId: string) {
         total_points: payload.total_points ?? 0,
         created_date: new Date().toISOString(),
         updated_date: new Date().toISOString(),
+        scores: [],
         sections: payload.sections.map((s) => ({
           id: crypto.randomUUID(),
           name: s.name,
           points: s.points,
+          scores: [],
         })),
       };
 

@@ -1,0 +1,14 @@
+/* NumberInputWithStepper.module.css */
+
+/* only inputs inside `.noSpin` will lose their native arrows */
+.noSpin input[type="number"]::-webkit-outer-spin-button,
+.noSpin input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+.noSpin input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}

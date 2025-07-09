@@ -17,16 +17,19 @@ import {
 import { useUpdateGradedAssignment } from "@/app/class/components/gradebook/hooks/useUpdateGradedAssignment";
 import { type UpdateGradedAssignmentArgs } from "./actions/updateGradedAssignment";
 import type { SectionInput } from "./actions/createGradedAssignment";
+import type { AssignmentScore } from "@/server/db/types";
 
 interface SectionForm {
   name: string;
   points: number;
+  // scores: AssignmentScore[];
 }
 
 interface FormValues {
   name: string;
   sections: SectionForm[];
   totalPoints?: number;
+  // scores: AssignmentScore[];
 }
 
 interface EditGradedAssignmentDialogProps {
@@ -37,7 +40,13 @@ interface EditGradedAssignmentDialogProps {
     total_points: number | null;
     created_date: string;
     updated_date: string;
-    sections: { id: string; name: string; points: number }[];
+    scores: AssignmentScore[];
+    sections: {
+      id: string;
+      name: string;
+      points: number;
+      scores: AssignmentScore[];
+    }[];
   };
   trigger?: React.ReactNode;
 }
@@ -85,9 +94,11 @@ export default function EditGradedAssignmentDialog({
       class_id: classId,
       name: data.name,
       total_points: hasSections ? computedTotal : (data.totalPoints ?? null),
+      // scores: data.scores,
       sections: data.sections.map<SectionInput>((s) => ({
         name: s.name,
         points: s.points,
+        // scores: s.scores,
       })),
     };
 

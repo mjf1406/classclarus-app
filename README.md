@@ -4,10 +4,16 @@
 
 - UX: alert the user to instances of "...not progressing at the expected rate..." according to RAZ Plus. This means that if the student does not level up after 2 assessments, they get added to the RTI list.
 - DB: added Teams
+- Added Report Tab to the Scores Modal
 
 ## Change Log
 
-### 2025/07/08
+### 2025/07/09
+
+- UI: made a sexy number input with stepper buttons
+- UI: added the scores modal so the user can input a total score or scores by section for the assignments.
+- BE: scores save to DB and can be updated too
+- BE: scores load correctly on reload and populate the modal
 
 ### 2025/07/08
 

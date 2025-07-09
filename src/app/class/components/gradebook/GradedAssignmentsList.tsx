@@ -24,8 +24,7 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { useDeleteGradedAssignment } from "./hooks/useDeleteGradedAssignment";
-import { CreateGradedAssignmentDialog } from "./CreateGradedAssignmentDIalog";
-import { Copy, Edit, Trash2 } from "lucide-react";
+import { Copy, Edit, Sigma, Trash2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -34,11 +33,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import ScoreModal from "./ScoresModal";
+import type { AssignmentScore } from "@/server/db/types";
+import { CreateGradedAssignmentDialog } from "./CreateGradedAssignmentDialog";
 
 export interface Section {
   id: string;
   name: string;
   points: number;
+  scores: AssignmentScore[];
 }
 
 export interface Assignment {
@@ -50,14 +53,17 @@ export interface Assignment {
   created_date: string;
   updated_date: string;
   sections: Section[];
+  scores: AssignmentScore[];
 }
 
 interface GradedAssignmentsListProps {
   assignments: Assignment[];
+  classId: string | null;
 }
 
 export default function GradedAssignmentsList({
   assignments,
+  classId,
 }: GradedAssignmentsListProps) {
   if (assignments.length === 0) {
     return (
@@ -69,13 +75,19 @@ export default function GradedAssignmentsList({
   return (
     <div className="space-y-6">
       {assignments.map((a) => (
-        <AssignmentCard key={a.id} assignment={a} />
+        <AssignmentCard key={a.id} assignment={a} classId={classId} />
       ))}
     </div>
   );
 }
 
-function AssignmentCard({ assignment: a }: { assignment: Assignment }) {
+function AssignmentCard({
+  assignment: a,
+  classId,
+}: {
+  assignment: Assignment;
+  classId: string | null;
+}) {
   const [alertOpen, setAlertOpen] = useState(false);
   const deleteMutation = useDeleteGradedAssignment(a.class_id);
   const isDeleting = deleteMutation.isPending;
@@ -108,6 +120,15 @@ function AssignmentCard({ assignment: a }: { assignment: Assignment }) {
             </CardDescription>
           </div>
           <div className="flex space-x-2">
+            <ScoreModal
+              classId={classId}
+              assignment={a}
+              trigger={
+                <Button variant="outline" size="sm">
+                  <Sigma /> Scores
+                </Button>
+              }
+            />
             <EditGradedAssignmentDialog
               classId={a.class_id}
               assignment={a}
