@@ -265,7 +265,7 @@ export default function ScoresModal({
                           {totalOf(stu.student_id)}
                         </TableCell>
                         <TableCell>
-                          {pctOf(stu.student_id).toFixed(2)}%
+                          {Math.floor(pctOf(stu.student_id))}%
                         </TableCell>
                         <TableCell className="text-center">
                           <Checkbox
