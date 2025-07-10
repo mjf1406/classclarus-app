@@ -24,7 +24,7 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { useDeleteGradedAssignment } from "./hooks/useDeleteGradedAssignment";
-import { Copy, Edit, Sigma, Trash2 } from "lucide-react";
+import { ChevronUp, Copy, Edit, Sigma, Trash2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -33,9 +33,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from "@/components/ui/collapsible";
+
 import ScoreModal from "./ScoresModal";
 import type { AssignmentScore } from "@/server/db/types";
 import { CreateGradedAssignmentDialog } from "./CreateGradedAssignmentDialogFuck";
+import { useQuery } from "@tanstack/react-query";
+import { ClassByIdOptions } from "@/app/api/queryOptions";
 
 export interface Section {
   id: string;
@@ -67,7 +75,7 @@ export default function GradedAssignmentsList({
 }: GradedAssignmentsListProps) {
   if (assignments.length === 0) {
     return (
-      <div className="py-16 text-center text-sm text-gray-500">
+      <div className="text-muted-foreground py-16 text-center text-sm">
         No graded assignments found.
       </div>
     );
@@ -89,22 +97,31 @@ function AssignmentCard({
   classId: string | null;
 }) {
   const [alertOpen, setAlertOpen] = useState(false);
+  const [sectionsOpen, setSectionsOpen] = useState(false);
   const deleteMutation = useDeleteGradedAssignment(a.class_id);
   const isDeleting = deleteMutation.isPending;
+  const { data: classDetail } = useQuery(ClassByIdOptions(classId));
+
+  // total number of enrolled students
+  const totalStudents = classDetail?.studentInfo.length ?? 0;
+
+  // number of unique students who have at least one score recorded
+  const gradedStudents = React.useMemo(() => {
+    return new Set(a.scores.map((s) => s.student_id)).size;
+  }, [a.scores]);
 
   const onConfirmDelete = () => {
     setAlertOpen(false);
     deleteMutation.mutate(a.id);
   };
 
-  // prepare initialData for duplication
+  // prepare initial data for duplication
   const initialData = {
     name: a.name,
     sections: a.sections.map((s) => ({
       name: s.name,
       points: s.points,
     })),
-    // only if no sections do we supply totalPoints
     totalPoints: a.sections.length ? undefined : (a.total_points ?? undefined),
   };
 
@@ -115,17 +132,25 @@ function AssignmentCard({
           <div>
             <CardTitle>{a.name}</CardTitle>
             <CardDescription>
-              Total Points:{" "}
-              <span className="font-semibold">{a.total_points ?? "—"}</span>
+              {/* <div>
+                Total Points:{" "}
+                <span className="font-semibold">{a.total_points ?? "—"}</span>
+              </div> */}
+              <div>
+                Graded:{" "}
+                <span className="font-semibold">
+                  {gradedStudents} / {totalStudents}
+                </span>
+              </div>
             </CardDescription>
           </div>
-          <div className="flex space-x-2">
+          <div className="flex items-center space-x-2">
             <ScoreModal
               classId={classId}
               assignment={a}
               trigger={
                 <Button variant="outline" size="sm">
-                  <Sigma /> Scores
+                  <Sigma /> <span className="hidden sm:block">Scores</span>
                 </Button>
               }
             />
@@ -138,7 +163,6 @@ function AssignmentCard({
                 </Button>
               }
             />
-
             <CreateGradedAssignmentDialog
               classId={a.class_id}
               trigger={
@@ -148,19 +172,22 @@ function AssignmentCard({
               }
               initialData={initialData}
             />
-
             <AlertDialog open={alertOpen} onOpenChange={setAlertOpen}>
               <AlertDialogTrigger asChild>
                 <Button variant="destructive" size="sm">
                   <Trash2 /> <span className="hidden md:block">Delete</span>
                 </Button>
               </AlertDialogTrigger>
-
               <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>Delete Assignment?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Are you sure you want to delete “{a.name}”?
+                    All data associated with this assignment, including sections
+                    and student scores will be deleted permanently from our
+                    servers. Graded Subjects that took this assignment into
+                    account will no longer do so. This action is irreversible.
+                    Are you sure you want to delete the graded assignment{" "}
+                    <span className="font-bold">{a.name}</span>?
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter className="flex justify-end space-x-2">
@@ -183,40 +210,56 @@ function AssignmentCard({
         </CardHeader>
 
         <Separator />
+
         <dl className="grid grid-cols-2 gap-4 text-sm">
           <div>
             <dt className="font-medium">Created</dt>
-            <dd className="">{new Date(a.created_date).toLocaleString()}</dd>
+            <dd>{new Date(a.created_date).toLocaleString()}</dd>
           </div>
           <div>
             <dt className="font-medium">Updated</dt>
-            <dd className="">{new Date(a.updated_date).toLocaleString()}</dd>
+            <dd>{new Date(a.updated_date).toLocaleString()}</dd>
           </div>
         </dl>
 
-        {a.sections.length > 0 && (
-          <div>
-            <h4 className="mb-2 font-medium">Sections</h4>
-            <div className="overflow-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead className="text-right">Points</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {a.sections.map((s) => (
-                    <TableRow key={s.id}>
-                      <TableCell>{s.name}</TableCell>
-                      <TableCell className="text-right">{s.points}</TableCell>
+        <Collapsible open={sectionsOpen} onOpenChange={setSectionsOpen}>
+          <CollapsibleTrigger asChild>
+            <Button variant="ghost" size="sm" className="justify-between">
+              <span>Sections</span>
+              <ChevronUp
+                className={`h-4 w-4 transition-transform duration-200 ${
+                  sectionsOpen ? "rotate-180" : "rotate-0"
+                }`}
+              />
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-2 pt-2">
+            {a.sections.length > 0 ? (
+              <div className="overflow-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead className="text-right">Points</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
-        )}
+                  </TableHeader>
+                  <TableBody>
+                    {a.sections.map((s) => (
+                      <TableRow key={s.id}>
+                        <TableCell>{s.name}</TableCell>
+                        <TableCell className="text-right">{s.points}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <div className="text-muted-foreground text-sm">
+                There are no sections in this assignment.
+              </div>
+            )}
+          </CollapsibleContent>
+        </Collapsible>
       </CardContent>
     </Card>
   );

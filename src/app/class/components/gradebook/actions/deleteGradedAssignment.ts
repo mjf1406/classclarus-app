@@ -1,7 +1,11 @@
 "use server";
 
 import { db } from "@/server/db/index";
-import { graded_assignments, assignment_sections } from "@/server/db/schema";
+import {
+  graded_assignments,
+  assignment_sections,
+  assignment_scores,
+} from "@/server/db/schema";
 import { and, eq } from "drizzle-orm";
 import { auth } from "@clerk/nextjs/server";
 
@@ -29,9 +33,17 @@ export async function deleteGradedAssignment(
   }
 
   await db.transaction(async (tx) => {
+    // 1) delete all scores for this graded assignment
+    await tx
+      .delete(assignment_scores)
+      .where(eq(assignment_scores.graded_assignment_id, assignmentId));
+
+    // 2) delete all sections for this graded assignment
     await tx
       .delete(assignment_sections)
       .where(eq(assignment_sections.graded_assignment_id, assignmentId));
+
+    // 3) delete the graded assignment itself
     await tx
       .delete(graded_assignments)
       .where(eq(graded_assignments.id, assignmentId));

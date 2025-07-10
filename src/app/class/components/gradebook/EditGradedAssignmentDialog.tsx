@@ -20,6 +20,7 @@ import type { SectionInput } from "./actions/createGradedAssignment";
 import type { AssignmentScore } from "@/server/db/types";
 
 interface SectionForm {
+  id: string;
   name: string;
   points: number;
   // scores: AssignmentScore[];
@@ -60,17 +61,16 @@ export default function EditGradedAssignmentDialog({
   const updateMutation = useUpdateGradedAssignment(classId);
   const isUpdating = updateMutation.isPending;
 
-  const defaultSections = assignment.sections.map((s) => ({
-    name: s.name,
-    points: s.points,
-  }));
-
   const form = useForm<FormValues>({
     defaultValues: {
       name: assignment.name,
-      sections: defaultSections,
+      sections: assignment.sections.map((s) => ({
+        id: s.id, // ← carry the real DB id
+        name: s.name,
+        points: s.points,
+      })),
       totalPoints:
-        defaultSections.length === 0
+        assignment.sections.length === 0
           ? (assignment.total_points ?? undefined)
           : undefined,
     },
@@ -98,6 +98,7 @@ export default function EditGradedAssignmentDialog({
       sections: data.sections.map<SectionInput>((s) => ({
         name: s.name,
         points: s.points,
+        id: s.id,
         // scores: s.scores,
       })),
     };
@@ -125,7 +126,11 @@ export default function EditGradedAssignmentDialog({
         <DialogHeader>
           <DialogTitle>Edit Graded Assignment</DialogTitle>
           <DialogDescription>
-            Update the name, sections, and total points.
+            Update the name, sections, and total points. <br />
+            <br /> Note that adjusting total points for the assignment or
+            sections here does not modify or change in any way the scores that
+            you have input already. It will, however, result in the grade (%)
+            being changed.
           </DialogDescription>
         </DialogHeader>
 
@@ -144,6 +149,10 @@ export default function EditGradedAssignmentDialog({
               <Label>Sections</Label>
               {fields.map((field, idx) => (
                 <div key={field.id} className="flex items-end gap-2">
+                  <input
+                    type="hidden"
+                    {...form.register(`sections.${idx}.id` as const)}
+                  />
                   <div className="grid flex-1 gap-1">
                     <Label htmlFor={`sections.${idx}.name`}>Section Name</Label>
                     <Input
@@ -181,7 +190,9 @@ export default function EditGradedAssignmentDialog({
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => append({ name: "", points: 0 })}
+                onClick={() =>
+                  append({ name: "", points: 0, id: crypto.randomUUID() })
+                }
                 disabled={isUpdating}
               >
                 Add Section
@@ -207,7 +218,9 @@ export default function EditGradedAssignmentDialog({
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => append({ name: "", points: 0 })}
+                onClick={() =>
+                  append({ name: "", points: 0, id: crypto.randomUUID() })
+                }
                 disabled={isUpdating}
               >
                 Add Sections Instead

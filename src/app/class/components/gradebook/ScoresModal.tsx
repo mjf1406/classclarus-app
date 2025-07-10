@@ -52,6 +52,7 @@ export default function ScoresModal({
     () => classDetail?.studentInfo ?? [],
     [classDetail],
   );
+
   const sections = useMemo(
     () =>
       assignment.sections.length > 0
@@ -79,8 +80,13 @@ export default function ScoresModal({
       );
       initExc[stu.student_id] = rows.some((r) => r.excused);
       initScores[stu.student_id] = sections.map((sec) => {
-        const row = rows.find((r) => r.section_id === sec.id);
-        return row?.score ?? 0;
+        // if it’s our fake “total” section, match against section_id === null
+        const row = rows.find((r) =>
+          sec.id === "__total"
+            ? r.section_id === null
+            : r.section_id === sec.id,
+        );
+        return row?.score ?? -1;
       });
     }
 
@@ -167,24 +173,26 @@ export default function ScoresModal({
   return (
     <Dialog>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="h-full max-h-[calc(100dvh)] w-full min-w-[calc(100dvw)] overflow-auto p-6">
+      <DialogContent className="h-full max-h-[calc(100dvh)] w-full min-w-[calc(100dvw)] content-start overflow-auto p-6">
         <DialogHeader>
           <DialogTitle>{assignment.name} Scores</DialogTitle>
-          <DialogDescription>
-            Enter each student’s scores below and mark excused if needed. Ctrl +
-            Click the plus (+) and minus (-) buttons to increment by 5 or Shift
-            + Click to increment by 10.
-          </DialogDescription>
           <DialogClose className="absolute top-4 right-4" />
         </DialogHeader>
 
-        <Tabs defaultValue="scores" className="mt-4">
-          <TabsList>
+        <Tabs defaultValue="scores" className="mt-4 flex flex-col">
+          <TabsList className="justify-start">
             <TabsTrigger value="scores">Scores</TabsTrigger>
             <TabsTrigger value="reports">Reports</TabsTrigger>
           </TabsList>
 
           <TabsContent value="scores" className="mt-4">
+            <div className="mb-5 text-sm">
+              Ctrl + Click the plus (+) and minus (-) buttons to increment by
+              0.5. Shift + Click to increment by 1. Ctrl + Shift + Click to
+              increment by 5. Ctrl + Shift + Alt + Click to increment by 10 .
+              <br />A score of -1 indicates the student has not completed the
+              assignment yet.
+            </div>
             {isLoading ? (
               <p>Loading students…</p>
             ) : (
@@ -229,64 +237,81 @@ export default function ScoresModal({
                   </TableHeader>
 
                   <TableBody>
-                    {sorted.map((stu, rowIdx) => (
-                      <TableRow key={stu.student_id}>
-                        <TableCell>{stu.student_number ?? ""}</TableCell>
-                        <TableCell>{stu.student_name_first_en}</TableCell>
-                        <TableCell>{stu.student_name_last_en}</TableCell>
+                    {sorted.map((stu, rowIdx) => {
+                      const isExcused = excused[stu.student_id] ?? false;
+                      return (
+                        <TableRow
+                          key={stu.student_id}
+                          className={isExcused ? "opacity-30" : ""}
+                        >
+                          <TableCell>{stu.student_number ?? ""}</TableCell>
+                          <TableCell
+                            className={isExcused ? "line-through" : ""}
+                          >
+                            {stu.student_name_first_en}
+                          </TableCell>
+                          <TableCell
+                            className={isExcused ? "line-through" : ""}
+                          >
+                            {stu.student_name_last_en}
+                          </TableCell>
 
-                        {sections.map((sec, colIdx) => {
-                          const tabIndex = rowIdx * cols + colIdx + 1;
-                          return (
-                            <TableCell key={sec.id} className="py-1">
-                              <NumberInputWithStepper
-                                value={scoreMap[stu.student_id]?.[colIdx] ?? 0}
-                                min={0}
-                                max={sec.points}
-                                step={0.1}
-                                tabIndex={tabIndex}
-                                onChange={(val) => {
-                                  onChange(stu.student_id, colIdx, val);
-                                  updateScore.mutate({
-                                    student_id: stu.student_id,
-                                    class_id: classId!,
-                                    graded_assignment_id: assignment.id,
-                                    section_id: sec.id,
-                                    score: val,
-                                    excused: excused[stu.student_id] ?? false,
-                                  });
-                                }}
-                              />
-                            </TableCell>
-                          );
-                        })}
+                          {sections.map((sec, colIdx) => {
+                            const tabIndex = rowIdx * cols + colIdx + 1;
+                            return (
+                              <TableCell key={sec.id} className="py-1">
+                                <NumberInputWithStepper
+                                  value={
+                                    scoreMap[stu.student_id]?.[colIdx] ?? -1
+                                  }
+                                  min={-1}
+                                  max={sec.points}
+                                  step={0.1}
+                                  disabled={isExcused}
+                                  tabIndex={isExcused ? -1 : tabIndex}
+                                  onChange={(val) => {
+                                    onChange(stu.student_id, colIdx, val);
+                                    updateScore.mutate({
+                                      student_id: stu.student_id,
+                                      class_id: classId!,
+                                      graded_assignment_id: assignment.id,
+                                      section_id: sec.id,
+                                      score: val,
+                                      excused: isExcused,
+                                    });
+                                  }}
+                                />
+                              </TableCell>
+                            );
+                          })}
 
-                        <TableCell className="font-semibold">
-                          {totalOf(stu.student_id)}
-                        </TableCell>
-                        <TableCell>
-                          {Math.floor(pctOf(stu.student_id))}%
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Checkbox
-                            checked={excused[stu.student_id] ?? false}
-                            onCheckedChange={(checked) => {
-                              const ch = checked === true;
-                              onToggleExcused(stu.student_id, ch);
-                              updateScore.mutate({
-                                student_id: stu.student_id,
-                                class_id: classId!,
-                                graded_assignment_id: assignment.id,
-                                section_id: null,
-                                score: totalOf(stu.student_id),
-                                excused: ch,
-                              });
-                            }}
-                            aria-label={`Excuse ${stu.student_name_first_en} ${stu.student_name_last_en}`}
-                          />
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                          <TableCell className="font-semibold">
+                            {totalOf(stu.student_id)}
+                          </TableCell>
+                          <TableCell>
+                            {Math.floor(pctOf(stu.student_id))}%
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Checkbox
+                              checked={isExcused}
+                              onCheckedChange={(checked) => {
+                                const ch = checked === true;
+                                onToggleExcused(stu.student_id, ch);
+                                updateScore.mutate({
+                                  student_id: stu.student_id,
+                                  class_id: classId!,
+                                  graded_assignment_id: assignment.id,
+                                  section_id: null,
+                                  score: totalOf(stu.student_id),
+                                  excused: ch,
+                                });
+                              }}
+                              aria-label={`Excuse ${stu.student_name_first_en} ${stu.student_name_last_en}`}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>

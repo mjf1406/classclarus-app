@@ -4,6 +4,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteGradedAssignment } from "../actions/deleteGradedAssignment";
 import type { Assignment } from "../GradedAssignmentsList";
+import { toast } from "sonner";
 
 interface Context {
   previous?: Assignment[];
@@ -32,6 +33,10 @@ export function useDeleteGradedAssignment(classId: string) {
     },
 
     onError: (_err, _id, ctx) => {
+      toast.error(
+        "Error deleting Graded Assignment. Please try again in a moment.",
+      );
+      console.error(_err);
       if (ctx?.previous) {
         queryClient.setQueryData(qKey, ctx.previous);
       }

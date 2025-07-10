@@ -6,7 +6,34 @@
 - DB: added Teams
 - Added Report Tab to the Scores Modal
 
+- UI: Output Report Cards - when selecting a scale to apply to a subject, show the class grade distribution so the teacher can easily see if there are too many of the highest grade to maybe switch to a new scale that uses smaller range for the highest grade.
+
+- DB: create a GradedSubjectsOptions
+- DB: create the graded_subjects table in Turso
+- DB: create the grade_scales table in Turso
+- API: create graded-subjects-by-class-id
+- API: create grade-scales-by-user-id
+- DB: create server actions for GradedSubjects
+  - [ ] create
+  - [ ] update
+  - [ ] delete
+- DB: create server actions for GradeScales
+  - [ ] create
+  - [ ] update
+  - [ ] delete
+- BE: hook in server actions to UI for GradedSubjects
+- BE: hook in server actions to UI for GradeScales
+
 ## Change Log
+
+### 2025/07/10
+
+- UI: GradedAssigmentCard - added an indicator showing how many have been graded
+- UI: GradedAssigmentCard - moved the edit, duplicate, and delete buttons into an action menu
+- UX: GradedAssigmentCard - made the Sections section a collapsible
+- UI: Scores Modal - excused students have their rows with 30% opacity and disabled inputs/buttons
+- UX: Scores Modal - added Ctrl + Shift + Click as a x50 modifier
+- UI: Scores Modal - tab list now stays at the top of the modal when switching
 
 ### 2025/07/09
 

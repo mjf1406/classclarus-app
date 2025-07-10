@@ -9,6 +9,7 @@ import { auth } from "@clerk/nextjs/server";
 import { randomUUID } from "crypto";
 
 export type SectionInput = {
+  id?: string;
   name: string;
   points: number;
   scores?: AssignmentScore[];

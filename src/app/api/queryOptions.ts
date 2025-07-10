@@ -2,6 +2,7 @@ import type {
   Assigner,
   Class,
   ClassDetail,
+  GradeScale,
   Point,
   TeacherClass,
 } from "@/server/db/types";
@@ -100,6 +101,21 @@ export const GradedAssignmentOptions = (classId: string | null) =>
         );
       }
       return (await response.json()) as Assignment[];
+    },
+    staleTime: 1000 * 60 * 30, // 30 minutes
+  });
+
+export const GradeScaleOptions = () =>
+  queryOptions<GradeScale[]>({
+    queryKey: ["grade_scales"],
+    queryFn: async () => {
+      const response = await fetch(`/api/grade-scales-by-user-id`);
+      if (!response.ok) {
+        throw new Error(
+          "Failed to load grade scales data. Please refresh the page.",
+        );
+      }
+      return (await response.json()) as GradeScale[];
     },
     staleTime: 1000 * 60 * 30, // 30 minutes
   });

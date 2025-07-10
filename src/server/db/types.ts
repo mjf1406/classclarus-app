@@ -334,7 +334,20 @@ export type AssignmentScore = {
   user_id: string;
   class_id: string;
   graded_assignment_id: string;
-  section_id: string;
+  section_id: string | null | undefined;
   score: number;
   excused: boolean;
+};
+
+export type Grade = {
+  id: string;
+  name: string;
+  minPercentage: number;
+  maxPercentage: number;
+};
+
+export type GradeScale = {
+  name: string;
+  user_id: string;
+  grades: Grade[];
 };

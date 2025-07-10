@@ -8,6 +8,7 @@ import {
 } from "../actions/createGradedAssignment";
 import type { Assignment } from "../GradedAssignmentsList";
 import { useAuth } from "@clerk/nextjs";
+import { toast } from "sonner";
 
 interface Context {
   previous?: Assignment[];
@@ -65,7 +66,10 @@ export function useCreateGradedAssignment(classId: string) {
     },
 
     onError: (_err, _payload, ctx) => {
-      // rollback
+      toast.error(
+        "Error creating Graded Assignment. Please try again in a moment.",
+      );
+      console.error(_err);
       if (ctx?.previous) {
         queryClient.setQueryData(qKey, ctx.previous);
       }

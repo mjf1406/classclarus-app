@@ -7,6 +7,7 @@ import {
   type UpdateGradedAssignmentArgs,
 } from "../actions/updateGradedAssignment";
 import type { Assignment } from "../GradedAssignmentsList";
+import { toast } from "sonner";
 
 const genId = () => crypto.randomUUID();
 
@@ -66,6 +67,10 @@ export function useUpdateGradedAssignment(classId: string) {
 
     // 3) rollback on error
     onError: (_err, _args, ctx) => {
+      toast.error(
+        "Error updating Graded Assignment. Please try again in a moment.",
+      );
+      console.error(_err);
       if (ctx?.previous) {
         queryClient.setQueryData(qKey, ctx.previous);
       }

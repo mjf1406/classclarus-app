@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import type { AssignmentScore } from "@/server/db/types";
 import { useAuth } from "@clerk/nextjs";
 import {
@@ -23,7 +24,11 @@ export function useUpdateStudentScore(
   const queryKey = ["assignment_scores", classId, gradedAssignmentId] as const;
 
   return useMutation<string, unknown, UpdateStudentScoreArgs, Context>({
-    mutationFn: (args) => updateStudentScore(args),
+    mutationFn: (args) =>
+      updateStudentScore({
+        ...args,
+        section_id: args.section_id === "__total" ? null : args.section_id,
+      }),
 
     onMutate: async (args) => {
       // Cancel any outgoing refetches
@@ -41,7 +46,7 @@ export function useUpdateStudentScore(
         user_id: userId,
         class_id: args.class_id,
         graded_assignment_id: gradedAssignmentId,
-        section_id: args.section_id ?? "",
+        section_id: args.section_id === "__total" ? null : args.section_id,
         score: args.score,
         excused: args.excused,
       };
@@ -61,7 +66,8 @@ export function useUpdateStudentScore(
     },
 
     onError: (_err, _args, ctx) => {
-      // rollback
+      toast.error("Error saving change. Please try again in a moment.");
+      console.error(_err);
       if (ctx?.previous) {
         queryClient.setQueryData(queryKey, ctx.previous);
       }

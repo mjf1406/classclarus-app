@@ -1,9 +1,10 @@
 import { sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
-import type {
-  AssignerItemStatuses,
-  PointRecord,
-  RedemptionRecord,
+import {
+  type Grade,
+  type AssignerItemStatuses,
+  type PointRecord,
+  type RedemptionRecord,
 } from "./types";
 
 export const users = sqliteTable("users", {
@@ -724,4 +725,51 @@ export const assignment_scores = sqliteTable(
       ).on(table.section_id),
     };
   },
+);
+
+export const graded_subjects = sqliteTable(
+  "graded_subjects",
+  {
+    id: text("id").notNull().primaryKey(),
+    user_id: text("user_id")
+      .notNull()
+      .references(() => users.user_id),
+    class_id: text("class_id")
+      .notNull()
+      .references(() => classes.class_id),
+    graded_assignment_ids: text("graded_assignment_ids", { mode: "json" })
+      .$type<string[]>()
+      .default(sql`'[]'`),
+    section_ids: text("section_ids", { mode: "json" })
+      .$type<string[]>()
+      .default(sql`'[]'`),
+    grade_scale: text("grade_scale")
+      .notNull()
+      .references(() => grade_scale.id),
+  },
+  (table) => ({
+    graded_subjects_user_id_idx: index("graded_subjects_user_id_idx").on(
+      table.user_id,
+    ),
+    graded_subjects_class_id_idx: index("graded_subjects_class_id_idx").on(
+      table.class_id,
+    ),
+  }),
+);
+
+export const grade_scale = sqliteTable(
+  "grade_scale",
+  {
+    id: text("id").notNull().primaryKey(),
+    user_id: text("user_id")
+      .notNull()
+      .references(() => users.user_id),
+    grades: text("grades", { mode: "json" })
+      .notNull()
+      .$type<Grade[]>()
+      .default(sql`'[]'`),
+  },
+  (table) => ({
+    grade_scale_user_id_idx: index("grade_scale_user_id_idx").on(table.user_id),
+  }),
 );
