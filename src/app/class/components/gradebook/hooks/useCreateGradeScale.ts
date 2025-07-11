@@ -8,6 +8,7 @@ import {
   createGradeScale,
   type CreateGradeScaleArgs,
 } from "../actions/createGradeScale";
+import { v4 as uuidV4 } from "uuid";
 
 interface Context {
   previous?: GradeScale[];
@@ -30,7 +31,7 @@ export function useCreateGradeScale() {
       const previous = queryClient.getQueryData<GradeScale[]>(qKey) ?? [];
 
       const optimistic: GradeScale = {
-        id: crypto.randomUUID(),
+        id: uuidV4(),
         user_id: userId,
         name: payload.name,
         grades: payload.grades,

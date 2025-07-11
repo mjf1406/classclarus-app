@@ -23,6 +23,7 @@ import { HelpCircle, Trash2, X } from "lucide-react";
 import type { Grade } from "@/server/db/types";
 import { useUpdateGradeScale } from "./hooks/useUpdateGradeScale";
 import type { UpdateGradeScaleArgs } from "./actions/updateGradeScale";
+import { v4 as uuidV4 } from "uuid";
 
 interface EditGradeScaleDialogProps {
   trigger: React.ReactNode;
@@ -54,7 +55,7 @@ export const EditGradeScaleDialog: React.FC<EditGradeScaleDialogProps> = ({
   const addGrade = () =>
     setGrades((g) => [
       ...g,
-      { id: crypto.randomUUID(), name: "", minPercentage: 0, maxPercentage: 0 },
+      { id: uuidV4(), name: "", minPercentage: 0, maxPercentage: 0 },
     ]);
 
   const removeGrade = (idx: number) =>

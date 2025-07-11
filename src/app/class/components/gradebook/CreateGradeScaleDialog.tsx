@@ -23,6 +23,7 @@ import { HelpCircle, Trash2 } from "lucide-react";
 import { useCreateGradeScale } from "./hooks/useCreateGradeScale";
 import type { CreateGradeScaleArgs } from "./actions/createGradeScale";
 import type { Grade } from "@/server/db/types";
+import { v4 as uuidV4 } from "uuid";
 
 interface CreateGradeScaleDialogProps {
   trigger: React.ReactNode;
@@ -34,7 +35,7 @@ export const CreateGradeScaleDialog: React.FC<CreateGradeScaleDialogProps> = ({
   const [open, setOpen] = React.useState(false);
   const [scaleName, setScaleName] = React.useState("");
   const [grades, setGrades] = React.useState<Grade[]>([
-    { id: crypto.randomUUID(), name: "", minPercentage: 0, maxPercentage: 100 },
+    { id: uuidV4(), name: "", minPercentage: 0, maxPercentage: 100 },
   ]);
 
   const createMutation = useCreateGradeScale();
@@ -43,7 +44,7 @@ export const CreateGradeScaleDialog: React.FC<CreateGradeScaleDialogProps> = ({
   const addGrade = () =>
     setGrades((g) => [
       ...g,
-      { id: crypto.randomUUID(), name: "", minPercentage: 0, maxPercentage: 0 },
+      { id: uuidV4(), name: "", minPercentage: 0, maxPercentage: 0 },
     ]);
 
   const removeGrade = (idx: number) =>
@@ -69,7 +70,7 @@ export const CreateGradeScaleDialog: React.FC<CreateGradeScaleDialogProps> = ({
     setScaleName("");
     setGrades([
       {
-        id: crypto.randomUUID(),
+        id: uuidV4(),
         name: "",
         minPercentage: 0,
         maxPercentage: 100,

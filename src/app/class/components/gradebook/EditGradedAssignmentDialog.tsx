@@ -18,6 +18,7 @@ import { useUpdateGradedAssignment } from "@/app/class/components/gradebook/hook
 import { type UpdateGradedAssignmentArgs } from "./actions/updateGradedAssignment";
 import type { SectionInput } from "./actions/createGradedAssignment";
 import type { AssignmentScore } from "@/server/db/types";
+import { v4 as uuidV4 } from "uuid";
 
 interface SectionForm {
   id: string;
@@ -190,9 +191,7 @@ export default function EditGradedAssignmentDialog({
               <Button
                 type="button"
                 variant="outline"
-                onClick={() =>
-                  append({ name: "", points: 0, id: crypto.randomUUID() })
-                }
+                onClick={() => append({ name: "", points: 0, id: uuidV4() })}
                 disabled={isUpdating}
               >
                 Add Section
@@ -218,9 +217,7 @@ export default function EditGradedAssignmentDialog({
               <Button
                 type="button"
                 variant="outline"
-                onClick={() =>
-                  append({ name: "", points: 0, id: crypto.randomUUID() })
-                }
+                onClick={() => append({ name: "", points: 0, id: uuidV4() })}
                 disabled={isUpdating}
               >
                 Add Sections Instead

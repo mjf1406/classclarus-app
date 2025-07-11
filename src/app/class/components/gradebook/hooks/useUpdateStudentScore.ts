@@ -8,6 +8,7 @@ import {
   updateStudentScore,
   type UpdateStudentScoreArgs,
 } from "../actions/updateStudentScore";
+import { v4 as uuidV4 } from "uuid";
 
 interface Context {
   previous?: AssignmentScore[];
@@ -39,7 +40,7 @@ export function useUpdateStudentScore(
         queryClient.getQueryData<AssignmentScore[]>(queryKey) ?? [];
 
       // Build optimistic row
-      const newId = args.id ?? crypto.randomUUID();
+      const newId = args.id ?? uuidV4();
       const optimistic: AssignmentScore = {
         id: newId,
         student_id: args.student_id,

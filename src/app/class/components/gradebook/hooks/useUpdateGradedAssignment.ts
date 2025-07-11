@@ -8,8 +8,9 @@ import {
 } from "../actions/updateGradedAssignment";
 import type { Assignment } from "../GradedAssignmentsList";
 import { toast } from "sonner";
+import { v4 as uuidV4 } from "uuid";
 
-const genId = () => crypto.randomUUID();
+const genId = () => uuidV4();
 
 interface Context {
   previous?: Assignment[];

@@ -8,6 +8,7 @@ import {
   type CreateGradedSubjectArgs,
 } from "../actions/createGradedSubject";
 import type { GradedSubject } from "@/server/db/types";
+import { v4 as uuidV4 } from "uuid";
 
 // Mirror your API’s GradedSubject shape:
 interface Context {
@@ -29,7 +30,7 @@ export function useCreateGradedSubject(classId: string) {
       const previous = queryClient.getQueryData<GradedSubject[]>(qKey);
 
       const optimistic: GradedSubject = {
-        id: crypto.randomUUID(),
+        id: uuidV4(),
         user_id: userId,
         class_id: args.class_id,
         name: args.name,

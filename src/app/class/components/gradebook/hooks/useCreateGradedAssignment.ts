@@ -9,6 +9,7 @@ import {
 import type { Assignment } from "../GradedAssignmentsList";
 import { useAuth } from "@clerk/nextjs";
 import { toast } from "sonner";
+import { v4 as uuidV4 } from "uuid";
 
 interface Context {
   previous?: Assignment[];
@@ -40,7 +41,7 @@ export function useCreateGradedAssignment(classId: string) {
 
       // build optimistic placeholder
       const optimistic: Assignment = {
-        id: crypto.randomUUID(),
+        id: uuidV4(),
         user_id: userId,
         class_id: payload.class_id,
         name: payload.name,
@@ -49,7 +50,7 @@ export function useCreateGradedAssignment(classId: string) {
         updated_date: new Date().toISOString(),
         scores: [],
         sections: payload.sections.map((s) => ({
-          id: crypto.randomUUID(),
+          id: uuidV4(),
           name: s.name,
           points: s.points,
           scores: [],
