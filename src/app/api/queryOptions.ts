@@ -2,6 +2,7 @@ import type {
   Assigner,
   Class,
   ClassDetail,
+  GradedSubject,
   GradeScale,
   Point,
   TeacherClass,
@@ -116,6 +117,23 @@ export const GradeScaleOptions = () =>
         );
       }
       return (await response.json()) as GradeScale[];
+    },
+    staleTime: 1000 * 60 * 30, // 30 minutes
+  });
+
+export const GradedSubjectsOptions = (classId: string | null) =>
+  queryOptions<GradedSubject[]>({
+    queryKey: ["graded_subjects", classId],
+    queryFn: async () => {
+      const response = await fetch(
+        `/api/graded-subjects-by-class-id?class_id=${classId}`,
+      );
+      if (!response.ok) {
+        throw new Error(
+          "Failed to load graded subjects data. Please refresh the page.",
+        );
+      }
+      return (await response.json()) as GradedSubject[];
     },
     staleTime: 1000 * 60 * 30, // 30 minutes
   });

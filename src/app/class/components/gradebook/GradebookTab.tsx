@@ -11,7 +11,8 @@ import GradedAssignmentsList from "./GradedAssignmentsList";
 import { CreateGradedAssignmentDialog } from "./CreateGradedAssignmentDialogFuck";
 import { NotepadText, Scale, Tag } from "lucide-react";
 import { CreateGradedSubjectDialog } from "./CreateGradedSubjectDialog";
-import { CreateGradeScaleDialog } from "./CreateGradeScaleDialog";
+import { GradeScaleManagerDialog } from "./GradeScaleManager";
+import { GradedSubjectManagerDialog } from "./GradedSubjectManager";
 
 interface GradebookTabProps {
   classId: string | null;
@@ -32,21 +33,21 @@ const GradebookTab: React.FC<GradebookTabProps> = ({ classId }) => {
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-semibold">Gradebook</h2>
         <div className="space-x-2">
-          <CreateGradeScaleDialog
+          <GradeScaleManagerDialog
             trigger={
-              <Button variant="secondary">
-                <Scale />{" "}
-                <span className="hidden sm:block">Create Grade Scale</span>
+              <Button variant="outline">
+                <Scale />
+                <span className="hidden sm:block">Grade Scales</span>
               </Button>
             }
           />
-          <CreateGradedSubjectDialog
+
+          <GradedSubjectManagerDialog
             classId={classId ?? ""}
             assignments={data ?? []}
             trigger={
-              <Button variant="secondary">
-                <Tag />{" "}
-                <span className="hidden sm:block">Create Graded Subject</span>
+              <Button variant="outline">
+                <Tag /> <span className="hidden sm:block">Graded Subjects</span>
               </Button>
             }
           />

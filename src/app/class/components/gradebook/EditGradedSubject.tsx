@@ -1,4 +1,3 @@
-// src/app/class/components/gradebook/CreateGradedSubjectDialog.tsx
 "use client";
 
 import * as React from "react";
@@ -33,87 +32,97 @@ import {
 
 import type { Assignment } from "./GradedAssignmentsList";
 import { GradeScaleOptions } from "@/app/api/queryOptions";
-import { useCreateGradedSubject } from "./hooks/useCreateGradedSubject";
+import { useUpdateGradedSubject } from "./hooks/useUpdateGradedSubject";
+import type { GradedSubject } from "@/server/db/types";
 
-interface CreateGradedSubjectDialogProps {
-  classId: string;
-  trigger: React.ReactNode;
+interface EditGradedSubjectDialogProps {
+  subject: GradedSubject;
   assignments: Assignment[];
+  trigger: React.ReactNode;
 }
 
 type GradeScale = { id: string; name: string };
 
-export const CreateGradedSubjectDialog: React.FC<
-  CreateGradedSubjectDialogProps
-> = ({ classId, trigger, assignments }) => {
-  // control open/close
+export function EditGradedSubjectDialog({
+  subject,
+  assignments,
+  trigger,
+}: EditGradedSubjectDialogProps) {
   const [open, setOpen] = React.useState(false);
 
   // form state
-  const [subjectName, setSubjectName] = React.useState("");
-  const [selectedGradeScaleId, setSelectedGradeScaleId] =
-    React.useState<string>();
+  const [name, setName] = React.useState("");
+  const [selectedScale, setSelectedScale] = React.useState<string>();
   const [expanded, setExpanded] = React.useState<Set<string>>(new Set());
-  const [selAIds, setSelAIds] = React.useState<Set<string>>(new Set());
-  const [selSIds, setSelSIds] = React.useState<Set<string>>(new Set());
+  const [selA, setSelA] = React.useState<Set<string>>(new Set());
+  const [selS, setSelS] = React.useState<Set<string>>(new Set());
 
-  // fetch scales
-  const { data: gradeScales = [] } = useQuery(GradeScaleOptions());
+  // fetch grade scales
+  const { data: scales = [] } = useQuery(GradeScaleOptions());
 
-  // mutation hook
-  const { mutate: createSubject, isPending } = useCreateGradedSubject(classId);
+  // mutation
+  const { mutate: update, isPending } = useUpdateGradedSubject(
+    subject.class_id,
+  );
 
-  // toggles (same as before) …
-  const toggleExpand = (aid: string) => {
-    const next = new Set(expanded);
-    if (next.has(aid)) next.delete(aid);
-    else next.add(aid);
-    setExpanded(next);
-  };
-
-  const handleToggleAssignment = (a: Assignment) => {
-    const nextA = new Set(selAIds);
-    const nextS = new Set(selSIds);
-    if (nextA.has(a.id)) {
-      nextA.delete(a.id);
-      a.sections?.forEach((s) => nextS.delete(s.id));
-    } else {
-      nextA.add(a.id);
-      a.sections?.forEach((s) => nextS.add(s.id));
+  // reset form each time we open
+  React.useEffect(() => {
+    if (open) {
+      setName(subject.name);
+      setSelectedScale(subject.default_grade_scale ?? "");
+      setSelA(new Set(subject.graded_assignment_ids));
+      setSelS(new Set(subject.section_ids));
+      setExpanded(new Set(subject.graded_assignment_ids));
     }
-    setSelAIds(nextA);
-    setSelSIds(nextS);
+  }, [open, subject]);
+
+  const toggleExpand = (aid: string) => {
+    const nxt = new Set(expanded);
+    if (nxt.has(aid)) nxt.delete(aid);
+    else nxt.add(aid);
+    setExpanded(nxt);
   };
 
-  const handleToggleSection = (a: Assignment, sid: string) => {
-    const nextS = new Set(selSIds);
-    if (nextS.has(sid)) nextS.delete(sid);
-    else nextS.add(sid);
-
-    const allChild = a.sections?.map((s) => s.id) ?? [];
-    const parentChecked = allChild.every((id) => nextS.has(id));
-    const nextA = new Set(selAIds);
-    if (parentChecked) nextA.add(a.id);
-    else nextA.delete(a.id);
-
-    setSelSIds(nextS);
-    setSelAIds(nextA);
+  const toggleAssignment = (a: Assignment) => {
+    const aSet = new Set(selA);
+    const sSet = new Set(selS);
+    if (aSet.has(a.id)) {
+      aSet.delete(a.id);
+      a.sections?.forEach((s) => sSet.delete(s.id));
+    } else {
+      aSet.add(a.id);
+      a.sections?.forEach((s) => sSet.add(s.id));
+    }
+    setSelA(aSet);
+    setSelS(sSet);
   };
 
-  // onSubmit: optimistic update + close dialog
+  const toggleSection = (a: Assignment, sid: string) => {
+    const sSet = new Set(selS);
+    if (sSet.has(sid)) sSet.delete(sid);
+    else sSet.add(sid);
+
+    const allIds = a.sections?.map((s) => s.id) ?? [];
+    const parentChecked = allIds.every((id) => sSet.has(id));
+    const aSet = new Set(selA);
+    if (parentChecked) aSet.add(a.id);
+    else aSet.delete(a.id);
+
+    setSelS(sSet);
+    setSelA(aSet);
+  };
+
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedGradeScaleId) return;
-
-    createSubject({
-      class_id: classId,
-      name: subjectName,
-      default_grade_scale: selectedGradeScaleId,
-      graded_assignment_ids: Array.from(selAIds),
-      section_ids: Array.from(selSIds),
+    if (!selectedScale) return;
+    update({
+      id: subject.id,
+      class_id: subject.class_id,
+      name,
+      default_grade_scale: selectedScale,
+      graded_assignment_ids: Array.from(selA),
+      section_ids: Array.from(selS),
     });
-
-    // close immediately on optimistic update
     setOpen(false);
   };
 
@@ -122,38 +131,31 @@ export const CreateGradedSubjectDialog: React.FC<
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Create Graded Subject</DialogTitle>
+          <DialogTitle>Edit Graded Subject</DialogTitle>
           <DialogDescription>
-            Name your subject, pick a grade scale, and assign
-            assignments/sections.
+            Update name, grade scale, or assigned assignments/sections.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={onSubmit} className="space-y-6">
-          {/* Subject Name */}
           <div>
-            <Label htmlFor="subjectName">Subject Name</Label>
+            <Label htmlFor="editSubjectName">Subject Name</Label>
             <Input
-              id="subjectName"
-              value={subjectName}
-              onChange={(e) => setSubjectName(e.target.value)}
-              placeholder="e.g. Grammar"
+              id="editSubjectName"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               required
             />
           </div>
 
-          {/* Grade Scale */}
           <div>
-            <Label htmlFor="gradeScaleTrigger">Grade Scale</Label>
-            <Select
-              value={selectedGradeScaleId}
-              onValueChange={setSelectedGradeScaleId}
-            >
-              <SelectTrigger id="gradeScaleTrigger" className="w-full">
+            <Label htmlFor="editScaleTrigger">Grade Scale</Label>
+            <Select value={selectedScale} onValueChange={setSelectedScale}>
+              <SelectTrigger id="editScaleTrigger" className="w-full">
                 <SelectValue placeholder="Select grade scale…" />
               </SelectTrigger>
               <SelectContent>
-                {gradeScales.map((gs: GradeScale) => (
+                {scales.map((gs: GradeScale) => (
                   <SelectItem key={gs.id} value={gs.id}>
                     {gs.name}
                   </SelectItem>
@@ -162,7 +164,6 @@ export const CreateGradedSubjectDialog: React.FC<
             </Select>
           </div>
 
-          {/* Assignments & Sections */}
           <div>
             <Label>Assignments & Sections</Label>
             <div className="max-h-60 space-y-2 overflow-y-auto rounded border p-2">
@@ -173,19 +174,17 @@ export const CreateGradedSubjectDialog: React.FC<
                   onOpenChange={() => toggleExpand(a.id)}
                 >
                   <div className="flex items-center">
-                    <div className="flex items-center">
-                      <Checkbox
-                        id={`assignment-${a.id}`}
-                        checked={selAIds.has(a.id)}
-                        onCheckedChange={() => handleToggleAssignment(a)}
-                      />
-                      <Label
-                        htmlFor={`assignment-${a.id}`}
-                        className="ml-2 cursor-pointer font-medium"
-                      >
-                        {a.name}
-                      </Label>
-                    </div>
+                    <Checkbox
+                      id={`edit-assn-${a.id}`}
+                      checked={selA.has(a.id)}
+                      onCheckedChange={() => toggleAssignment(a)}
+                    />
+                    <Label
+                      htmlFor={`edit-assn-${a.id}`}
+                      className="ml-2 cursor-pointer font-medium"
+                    >
+                      {a.name}
+                    </Label>
                     {a.sections?.length ? (
                       <CollapsibleTrigger asChild>
                         <Button variant="ghost" size="icon">
@@ -196,20 +195,21 @@ export const CreateGradedSubjectDialog: React.FC<
                           )}
                         </Button>
                       </CollapsibleTrigger>
-                    ) : null}
+                    ) : (
+                      ""
+                    )}
                   </div>
-
                   {a.sections?.length ? (
                     <CollapsibleContent className="mt-2 ml-6 space-y-2">
                       {a.sections.map((s) => (
                         <div key={s.id} className="flex items-center">
                           <Checkbox
-                            id={`section-${s.id}`}
-                            checked={selSIds.has(s.id)}
-                            onCheckedChange={() => handleToggleSection(a, s.id)}
+                            id={`edit-sec-${s.id}`}
+                            checked={selS.has(s.id)}
+                            onCheckedChange={() => toggleSection(a, s.id)}
                           />
                           <Label
-                            htmlFor={`section-${s.id}`}
+                            htmlFor={`edit-sec-${s.id}`}
                             className="ml-2 cursor-pointer"
                           >
                             {s.name}
@@ -217,7 +217,9 @@ export const CreateGradedSubjectDialog: React.FC<
                         </div>
                       ))}
                     </CollapsibleContent>
-                  ) : null}
+                  ) : (
+                    ""
+                  )}
                 </Collapsible>
               ))}
             </div>
@@ -228,11 +230,11 @@ export const CreateGradedSubjectDialog: React.FC<
               <Button variant="outline">Cancel</Button>
             </DialogClose>
             <Button type="submit" disabled={isPending}>
-              {isPending ? "Creating…" : "Create Graded Subject"}
+              {isPending ? "Saving…" : "Save Changes"}
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
   );
-};
+}

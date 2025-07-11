@@ -8,23 +8,12 @@
 
 - UI: Output Report Cards - when selecting a scale to apply to a subject, show the class grade distribution so the teacher can easily see if there are too many of the highest grade to maybe switch to a new scale that uses smaller range for the highest grade.
 
-- DB: create a GradedSubjectsOptions
-- DB: create the graded_subjects table in Turso
-- DB: create the grade_scales table in Turso
-- API: create graded-subjects-by-class-id
-- API: create grade-scales-by-user-id
-- DB: create server actions for GradedSubjects
-  - [ ] create
-  - [ ] update
-  - [ ] delete
-- DB: create server actions for GradeScales
-  - [ ] create
-  - [ ] update
-  - [ ] delete
-- BE: hook in server actions to UI for GradedSubjects
-- BE: hook in server actions to UI for GradeScales
-
 ## Change Log
+
+### 2025/07/11
+
+- Feature: Graded Subjects - user can now CRUD interact with graded subjects
+- Feature: Grade Scales - user can now CRUD interact with grade scales
 
 ### 2025/07/10
 

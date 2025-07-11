@@ -347,7 +347,18 @@ export type Grade = {
 };
 
 export type GradeScale = {
+  id: string;
   name: string;
   user_id: string;
   grades: Grade[];
+};
+
+export type GradedSubject = {
+  id: string;
+  name: string;
+  user_id: string;
+  class_id: string;
+  graded_assignment_ids: string[];
+  section_ids: string[];
+  default_grade_scale: string | null;
 };

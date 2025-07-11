@@ -731,6 +731,7 @@ export const graded_subjects = sqliteTable(
   "graded_subjects",
   {
     id: text("id").notNull().primaryKey(),
+    name: text("name").notNull(),
     user_id: text("user_id")
       .notNull()
       .references(() => users.user_id),
@@ -743,9 +744,9 @@ export const graded_subjects = sqliteTable(
     section_ids: text("section_ids", { mode: "json" })
       .$type<string[]>()
       .default(sql`'[]'`),
-    grade_scale: text("grade_scale")
-      .notNull()
-      .references(() => grade_scale.id),
+    default_grade_scale: text("default_grade_scale").references(
+      () => grade_scales.id,
+    ), // this is the default, but can be changed when exporting grades
   },
   (table) => ({
     graded_subjects_user_id_idx: index("graded_subjects_user_id_idx").on(
@@ -757,10 +758,11 @@ export const graded_subjects = sqliteTable(
   }),
 );
 
-export const grade_scale = sqliteTable(
-  "grade_scale",
+export const grade_scales = sqliteTable(
+  "grade_scales",
   {
     id: text("id").notNull().primaryKey(),
+    name: text("name").notNull(),
     user_id: text("user_id")
       .notNull()
       .references(() => users.user_id),
@@ -770,6 +772,8 @@ export const grade_scale = sqliteTable(
       .default(sql`'[]'`),
   },
   (table) => ({
-    grade_scale_user_id_idx: index("grade_scale_user_id_idx").on(table.user_id),
+    grade_scales_user_id_idx: index("grade_scales_user_id_idx").on(
+      table.user_id,
+    ),
   }),
 );
