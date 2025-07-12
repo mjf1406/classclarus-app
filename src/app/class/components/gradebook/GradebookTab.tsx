@@ -93,6 +93,16 @@ const GradebookTab: React.FC<GradebookTabProps> = ({ classId }) => {
                 </Button>
               }
             />
+            <GradedSubjectManagerDialog
+              classId={classId ?? ""}
+              assignments={data ?? []}
+              trigger={
+                <Button variant="outline">
+                  <Tag />{" "}
+                  <span className="hidden md:block">Graded Subjects</span>
+                </Button>
+              }
+            />
             <CreateReportDialog
               classId={classId ?? ""}
               trigger={

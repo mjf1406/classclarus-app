@@ -30,12 +30,37 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import { ChevronUp, Edit, Trash2 } from "lucide-react";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogClose,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import { Calculator, ChevronUp, Download, Edit, Trash2 } from "lucide-react";
 
-import type { Report } from "@/server/db/types";
+import type {
+  Report,
+  ClassDetail,
+  StudentClassWithStudent,
+} from "@/server/db/types";
 import EditReportDialog from "./EditReportDialog";
 import { useDeleteReport } from "./hooks/useDeleteReportHook";
-import { ReportOptions, GradedSubjectsOptions } from "@/app/api/queryOptions";
+import {
+  ReportOptions,
+  GradedSubjectsOptions,
+  GradeScaleOptions,
+  ClassByIdOptions,
+} from "@/app/api/queryOptions";
+import ExportGradesDialog from "./ExportGradesDialog";
 
 interface ReportsListProps {
   classId: string | null;
@@ -78,6 +103,8 @@ export default function ReportsList({ classId }: ReportsListProps) {
 function ReportCard({ report, classId }: { report: Report; classId: string }) {
   const [sectionsOpen, setSectionsOpen] = React.useState(false);
   const [alertOpen, setAlertOpen] = React.useState(false);
+  const [exportOpen, setExportOpen] = React.useState(false);
+
   const deleteReport = useDeleteReport(classId);
   const isDeleting = deleteReport.isPending;
 
@@ -86,6 +113,42 @@ function ReportCard({ report, classId }: { report: Report; classId: string }) {
     isLoading: subjectsLoading,
     isError: subjectsError,
   } = useQuery(GradedSubjectsOptions(classId));
+
+  const {
+    data: classDetail,
+    isLoading: studentsLoading,
+    isError: studentsError,
+  } = useQuery<ClassDetail, Error>({ ...ClassByIdOptions(classId) });
+  const students = classDetail?.studentInfo ?? [];
+
+  const {
+    data: gradeScales,
+    isLoading: scalesLoading,
+    isError: scalesError,
+  } = useQuery(GradeScaleOptions());
+
+  const [selectedScales, setSelectedScales] = React.useState<
+    Record<string, string>
+  >({});
+
+  React.useEffect(() => {
+    if (allSubjects && gradeScales) {
+      const init: Record<string, string> = {};
+      report.graded_subjects.forEach((sid) => {
+        init[sid] = gradeScales[0]?.id ?? "";
+      });
+      setSelectedScales(init);
+    }
+  }, [allSubjects, gradeScales, report.graded_subjects]);
+
+  const onScaleChange = (subjectId: string, scaleId: string) => {
+    setSelectedScales((prev) => ({ ...prev, [subjectId]: scaleId }));
+  };
+
+  function getGradeLabel(student: StudentClassWithStudent, subjectId: string) {
+    // Placeholder for computed grade label
+    return "N/A";
+  }
 
   const onConfirmDelete = () => {
     setAlertOpen(false);
@@ -98,6 +161,17 @@ function ReportCard({ report, classId }: { report: Report; classId: string }) {
         <CardHeader className="flex items-start justify-between p-0">
           <CardTitle>{report.name}</CardTitle>
           <div className="flex items-center space-x-2">
+            {/* Export Dialog */}
+            <ExportGradesDialog
+              classId={classId}
+              report={report}
+              trigger={
+                <Button variant="secondary" size="sm">
+                  <Calculator />
+                  <span>Compute Grades</span>
+                </Button>
+              }
+            />
             <EditReportDialog
               classId={classId}
               report={report}
@@ -146,7 +220,8 @@ function ReportCard({ report, classId }: { report: Report; classId: string }) {
           <CollapsibleTrigger asChild>
             <Button variant="ghost" size="sm">
               <span>
-                Graded Subject{report.graded_subjects.length !== 1 ? "s" : ""}:
+                Graded Subject
+                {report.graded_subjects.length !== 1 ? "s" : ""}:
               </span>
               <span className="font-semibold">
                 {report.graded_subjects.length}
