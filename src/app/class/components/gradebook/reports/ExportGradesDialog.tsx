@@ -229,7 +229,11 @@ export default function ExportGradesDialog({
         // compute %
         const earnedTotal = earnedSecs + earnedAsg;
         const possibleTotal = possibleSecs + possibleAsg;
-        const pct = possibleTotal > 0 ? (earnedTotal / possibleTotal) * 100 : 0;
+
+        // compute raw % and then floor it
+        const rawPct =
+          possibleTotal > 0 ? (earnedTotal / possibleTotal) * 100 : 0;
+        const pct = Math.floor(rawPct);
 
         // determine label + reason
         let cell: GradeCell;
@@ -252,9 +256,9 @@ export default function ExportGradesDialog({
             if (!bucket) {
               cell = {
                 label: "N/A",
-                reason: `Your % (${pct.toFixed(
+                reason: `Rounded down ${rawPct.toFixed(
                   1,
-                )}%) falls outside the "${scale.name}" ranges.`,
+                )}% → ${pct}%, which is outside the "${scale.name}" ranges.`,
               };
             } else {
               cell = { label: bucket.name };
