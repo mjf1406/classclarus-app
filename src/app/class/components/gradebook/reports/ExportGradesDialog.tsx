@@ -42,6 +42,11 @@ interface ExportGradesDialogProps {
   trigger: React.ReactNode;
 }
 
+type GradeCell = {
+  label: string;
+  reason?: string;
+};
+
 export default function ExportGradesDialog({
   classId,
   report,
@@ -58,14 +63,14 @@ export default function ExportGradesDialog({
     [classDetail?.studentInfo],
   );
 
-  // 2) subjects
+  // 2) graded subjects
   const {
     data: allSubjects,
     isLoading: subjectsLoading,
     isError: subjectsError,
   } = useQuery(GradedSubjectsOptions(classId));
 
-  // 3) scales
+  // 3) grade scales
   const {
     data: gradeScales,
     isLoading: scalesLoading,
@@ -79,7 +84,7 @@ export default function ExportGradesDialog({
     isError: assignmentsError,
   } = useQuery<Assignment[]>(GradedAssignmentOptions(classId));
 
-  // per-subject selected scale
+  // per‐subject selected scales
   const [selectedScales, setSelectedScales] = useState<Record<string, string>>(
     {},
   );
@@ -102,10 +107,16 @@ export default function ExportGradesDialog({
     return assignments.flatMap((a) => a.scores ?? []);
   }, [assignments]);
 
-  // compute gradeLabels + missing issues
-  const { gradeLabels, subjectIssues } = useMemo(() => {
-    if (!allSubjects || !gradeScales || !assignments || students.length === 0) {
-      return { gradeLabels: {}, subjectIssues: {} };
+  // compute grades + missing‐score issues + reasons for N/A
+  const { gradeInfo, subjectIssues } = useMemo(() => {
+    if (!allSubjects || !gradeScales || !assignments) {
+      return {
+        gradeInfo: {} as Record<string, Record<string, GradeCell>>,
+        subjectIssues: {} as Record<
+          string,
+          { itemName: string; studentNames: string[] }[]
+        >,
+      };
     }
 
     // build lookups
@@ -122,7 +133,7 @@ export default function ExportGradesDialog({
       });
     });
 
-    const gradeLabels: Record<string, Record<string, string>> = {};
+    const gradeInfo: Record<string, Record<string, GradeCell>> = {};
     const subjectIssues: Record<
       string,
       { itemName: string; studentNames: string[] }[]
@@ -131,9 +142,13 @@ export default function ExportGradesDialog({
     report.graded_subjects.forEach((sid) => {
       const subj = allSubjects.find((s) => s.id === sid)!;
 
-      // sections for this subject
+      // init per‐subject containers
+      gradeInfo[sid] = {};
+      subjectIssues[sid] = [];
+
+      // sections included in this subject
       const relevantSecs = subj.section_ids
-        .map((secId) => sectionMap[secId])
+        .map((id) => sectionMap[id])
         .filter(
           (
             sec,
@@ -161,9 +176,7 @@ export default function ExportGradesDialog({
         0,
       );
 
-      gradeLabels[sid] = {};
-      subjectIssues[sid] = [];
-
+      // per‐student
       students.forEach((stu) => {
         const stuScores = allScores.filter(
           (sc) => sc.student_id === stu.student_id,
@@ -213,44 +226,76 @@ export default function ExportGradesDialog({
           }
         });
 
+        // compute %
         const earnedTotal = earnedSecs + earnedAsg;
         const possibleTotal = possibleSecs + possibleAsg;
         const pct = possibleTotal > 0 ? (earnedTotal / possibleTotal) * 100 : 0;
 
-        // find grade label
-        const scale = gradeScales.find((gs) => gs.id === selectedScales[sid]);
-        let gradeName = "N/A";
-        if (scale) {
-          const g = scale.grades.find(
-            (g) => pct >= g.minPercentage && pct <= g.maxPercentage,
-          );
-          gradeName = g?.name ?? "N/A";
+        // determine label + reason
+        let cell: GradeCell;
+        if (possibleTotal === 0) {
+          cell = {
+            label: "N/A",
+            reason: "No graded items (all were excused or none exist).",
+          };
+        } else {
+          const scale = gradeScales.find((gs) => gs.id === selectedScales[sid]);
+          if (!scale) {
+            cell = {
+              label: "N/A",
+              reason: "No grade scale selected for this subject.",
+            };
+          } else {
+            const bucket = scale.grades.find(
+              (g) => pct >= g.minPercentage && pct <= g.maxPercentage,
+            );
+            if (!bucket) {
+              cell = {
+                label: "N/A",
+                reason: `Your % (${pct.toFixed(
+                  1,
+                )}%) falls outside the "${scale.name}" ranges.`,
+              };
+            } else {
+              cell = { label: bucket.name };
+            }
+          }
         }
-        gradeLabels[sid]![stu.student_id] = gradeName;
 
-        // record missing sections
+        // write into gradeInfo
+        gradeInfo[sid]![stu.student_id] = cell;
+
+        // record missing‐sections
         missingSecs.forEach((itemName) => {
           const entry = subjectIssues[sid]?.find(
             (x) => x.itemName === itemName,
           );
           const nm = `${stu.student_name_first_en} ${stu.student_name_last_en}`;
           if (entry) entry.studentNames.push(nm);
-          else subjectIssues[sid]?.push({ itemName, studentNames: [nm] });
+          else
+            subjectIssues[sid]?.push({
+              itemName,
+              studentNames: [nm],
+            });
         });
 
-        // record missing assignments
+        // record missing‐assignments
         missingAssignments.forEach((itemName) => {
           const entry = subjectIssues[sid]?.find(
             (x) => x.itemName === itemName,
           );
           const nm = `${stu.student_name_first_en} ${stu.student_name_last_en}`;
           if (entry) entry.studentNames.push(nm);
-          else subjectIssues[sid]?.push({ itemName, studentNames: [nm] });
+          else
+            subjectIssues[sid]?.push({
+              itemName,
+              studentNames: [nm],
+            });
         });
       });
     });
 
-    return { gradeLabels, subjectIssues };
+    return { gradeInfo, subjectIssues };
   }, [
     allSubjects,
     gradeScales,
@@ -320,11 +365,23 @@ export default function ExportGradesDialog({
                     <TableCell>{stu.student_number}</TableCell>
                     <TableCell>{stu.student_name_first_en}</TableCell>
                     <TableCell>{stu.student_name_last_en}</TableCell>
-                    {report.graded_subjects.map((sid) => (
-                      <TableCell key={sid}>
-                        {gradeLabels[sid]?.[stu.student_id] ?? "N/A"}
-                      </TableCell>
-                    ))}
+                    {report.graded_subjects.map((sid) => {
+                      const cell = gradeInfo[sid]![stu.student_id];
+                      return (
+                        <TableCell key={sid}>
+                          <span
+                            title={cell?.reason}
+                            className={
+                              cell?.label === "N/A"
+                                ? "cursor-help underline"
+                                : ""
+                            }
+                          >
+                            {cell?.label}
+                          </span>
+                        </TableCell>
+                      );
+                    })}
                   </TableRow>
                 ))}
               </TableBody>
