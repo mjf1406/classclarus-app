@@ -45,6 +45,7 @@ interface ExportGradesDialogProps {
 type GradeCell = {
   label: string;
   reason?: string;
+  rawPct: number;
 };
 
 export default function ExportGradesDialog({
@@ -107,11 +108,12 @@ export default function ExportGradesDialog({
     return assignments.flatMap((a) => a.scores ?? []);
   }, [assignments]);
 
-  // compute grades + missing‐score issues + reasons for N/A
-  const { gradeInfo, subjectIssues } = useMemo(() => {
+  // compute gradeInfo, gradeCounts, and subjectIssues
+  const { gradeInfo, gradeCounts, subjectIssues } = useMemo(() => {
     if (!allSubjects || !gradeScales || !assignments) {
       return {
         gradeInfo: {} as Record<string, Record<string, GradeCell>>,
+        gradeCounts: {} as Record<string, Record<string, number>>,
         subjectIssues: {} as Record<
           string,
           { itemName: string; studentNames: string[] }[]
@@ -125,7 +127,6 @@ export default function ExportGradesDialog({
       { id: string; name: string; points: number; assignmentId: string }
     > = {};
     const assignmentMap: Record<string, Assignment> = {};
-
     assignments.forEach((a) => {
       assignmentMap[a.id] = a;
       a.sections.forEach((sec) => {
@@ -134,6 +135,7 @@ export default function ExportGradesDialog({
     });
 
     const gradeInfo: Record<string, Record<string, GradeCell>> = {};
+    const gradeCounts: Record<string, Record<string, number>> = {};
     const subjectIssues: Record<
       string,
       { itemName: string; studentNames: string[] }[]
@@ -142,11 +144,12 @@ export default function ExportGradesDialog({
     report.graded_subjects.forEach((sid) => {
       const subj = allSubjects.find((s) => s.id === sid)!;
 
-      // init per‐subject containers
+      // init
       gradeInfo[sid] = {};
+      gradeCounts[sid] = {};
       subjectIssues[sid] = [];
 
-      // sections included in this subject
+      // sections
       const relevantSecs = subj.section_ids
         .map((id) => sectionMap[id])
         .filter(
@@ -182,11 +185,10 @@ export default function ExportGradesDialog({
           (sc) => sc.student_id === stu.student_id,
         );
 
-        // --- sections pass ---
+        // sections pass
         let earnedSecs = 0;
         let possibleSecs = totalSecPts;
         const missingSecs: string[] = [];
-
         relevantSecs.forEach((sec) => {
           const recSec = stuScores.find((sc) => sc.section_id === sec.id);
           const recAsg = stuScores.find(
@@ -194,7 +196,6 @@ export default function ExportGradesDialog({
               sc.graded_assignment_id === sec.assignmentId &&
               (sc.section_id === null || sc.section_id === undefined),
           );
-
           if (recSec) {
             if (recSec.excused) possibleSecs -= sec.points;
             else earnedSecs += recSec.score;
@@ -206,11 +207,10 @@ export default function ExportGradesDialog({
           }
         });
 
-        // --- assignments without sections ---
+        // assignments without sections
         let earnedAsg = 0;
         let possibleAsg = totalAsgPts;
         const missingAssignments: string[] = [];
-
         assignmentsWithoutSections.forEach((a) => {
           const rec = stuScores.find(
             (sc) =>
@@ -226,21 +226,22 @@ export default function ExportGradesDialog({
           }
         });
 
-        // compute %
+        // compute totals
         const earnedTotal = earnedSecs + earnedAsg;
         const possibleTotal = possibleSecs + possibleAsg;
 
-        // compute raw % and then floor it
+        // raw % & floored %
         const rawPct =
           possibleTotal > 0 ? (earnedTotal / possibleTotal) * 100 : 0;
         const pct = Math.floor(rawPct);
 
-        // determine label + reason
+        // determine cell
         let cell: GradeCell;
         if (possibleTotal === 0) {
           cell = {
             label: "N/A",
             reason: "No graded items (all were excused or none exist).",
+            rawPct,
           };
         } else {
           const scale = gradeScales.find((gs) => gs.id === selectedScales[sid]);
@@ -248,6 +249,7 @@ export default function ExportGradesDialog({
             cell = {
               label: "N/A",
               reason: "No grade scale selected for this subject.",
+              rawPct,
             };
           } else {
             const bucket = scale.grades.find(
@@ -258,18 +260,22 @@ export default function ExportGradesDialog({
                 label: "N/A",
                 reason: `Rounded down ${rawPct.toFixed(
                   1,
-                )}% → ${pct}%, which is outside the "${scale.name}" ranges.`,
+                )}% → ${pct}%, outside "${scale.name}" ranges.`,
+                rawPct,
               };
             } else {
-              cell = { label: bucket.name };
+              cell = { label: bucket.name, rawPct };
             }
           }
         }
 
-        // write into gradeInfo
         gradeInfo[sid]![stu.student_id] = cell;
 
-        // record missing‐sections
+        // count this label
+        gradeCounts[sid]![cell.label] =
+          (gradeCounts[sid]![cell.label] ?? 0) + 1;
+
+        // missing‐sections
         missingSecs.forEach((itemName) => {
           const entry = subjectIssues[sid]?.find(
             (x) => x.itemName === itemName,
@@ -283,7 +289,7 @@ export default function ExportGradesDialog({
             });
         });
 
-        // record missing‐assignments
+        // missing‐assignments
         missingAssignments.forEach((itemName) => {
           const entry = subjectIssues[sid]?.find(
             (x) => x.itemName === itemName,
@@ -299,7 +305,7 @@ export default function ExportGradesDialog({
       });
     });
 
-    return { gradeInfo, subjectIssues };
+    return { gradeInfo, gradeCounts, subjectIssues };
   }, [
     allSubjects,
     gradeScales,
@@ -338,6 +344,7 @@ export default function ExportGradesDialog({
                   <TableHead>Last Name</TableHead>
                   {report.graded_subjects.map((sid) => {
                     const subj = allSubjects!.find((s) => s.id === sid)!;
+                    const counts = gradeCounts[sid] ?? {};
                     return (
                       <TableHead key={sid}>
                         <div className="flex flex-col items-start space-y-1">
@@ -357,6 +364,16 @@ export default function ExportGradesDialog({
                               ))}
                             </SelectContent>
                           </Select>
+                          <table className="mt-1 text-xs">
+                            <tbody>
+                              {Object.entries(counts).map(([label, cnt]) => (
+                                <tr key={label}>
+                                  <td className="pr-2">{label}:</td>
+                                  <td>{cnt}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
                         </div>
                       </TableHead>
                     );
@@ -381,7 +398,7 @@ export default function ExportGradesDialog({
                                 : ""
                             }
                           >
-                            {cell?.label}
+                            {cell?.label} ({Math.floor(cell?.rawPct ?? 0)}%)
                           </span>
                         </TableCell>
                       );
