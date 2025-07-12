@@ -146,7 +146,7 @@ function AssignmentCard({
               classId={classId}
               assignment={a}
               trigger={
-                <Button variant="outline" size="sm">
+                <Button variant="secondary" size="sm">
                   <Sigma /> <span className="hidden sm:block">Scores</span>
                 </Button>
               }

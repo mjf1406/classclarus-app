@@ -168,7 +168,7 @@ function ReportCard({ report, classId }: { report: Report; classId: string }) {
               trigger={
                 <Button variant="secondary" size="sm">
                   <Calculator />
-                  <span>Compute Grades</span>
+                  <span className="hidden sm:block">Calculate Grades</span>
                 </Button>
               }
             />

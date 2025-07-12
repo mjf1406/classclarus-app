@@ -52,22 +52,20 @@ export default function ExportGradesDialog({
     data: classDetail,
     isLoading: studentsLoading,
     isError: studentsError,
-  } = useQuery<ClassDetail, Error>({
-    ...ClassByIdOptions(classId),
-  });
+  } = useQuery<ClassDetail, Error>({ ...ClassByIdOptions(classId) });
   const students = useMemo(
     () => classDetail?.studentInfo ?? [],
     [classDetail?.studentInfo],
   );
 
-  // 2) graded subjects
+  // 2) subjects
   const {
     data: allSubjects,
     isLoading: subjectsLoading,
     isError: subjectsError,
   } = useQuery(GradedSubjectsOptions(classId));
 
-  // 3) grade scales
+  // 3) scales
   const {
     data: gradeScales,
     isLoading: scalesLoading,
@@ -81,11 +79,10 @@ export default function ExportGradesDialog({
     isError: assignmentsError,
   } = useQuery<Assignment[]>(GradedAssignmentOptions(classId));
 
-  // Per‐subject selected scale
+  // per-subject selected scale
   const [selectedScales, setSelectedScales] = useState<Record<string, string>>(
     {},
   );
-
   useEffect(() => {
     if (!allSubjects || !gradeScales) return;
     const init: Record<string, string> = {};
@@ -96,12 +93,8 @@ export default function ExportGradesDialog({
     setSelectedScales(init);
   }, [allSubjects, gradeScales, report.graded_subjects]);
 
-  const onScaleChange = (subjectId: string, scaleId: string) => {
-    setSelectedScales((prev) => ({
-      ...prev,
-      [subjectId]: scaleId,
-    }));
-  };
+  const onScaleChange = (subjectId: string, scaleId: string) =>
+    setSelectedScales((prev) => ({ ...prev, [subjectId]: scaleId }));
 
   // flatten all scores
   const allScores = useMemo<AssignmentScore[]>(() => {
@@ -109,28 +102,23 @@ export default function ExportGradesDialog({
     return assignments.flatMap((a) => a.scores ?? []);
   }, [assignments]);
 
-  // compute grade labels + missing‐score issues
+  // compute gradeLabels + missing issues
   const { gradeLabels, subjectIssues } = useMemo(() => {
-    if (
-      !allSubjects ||
-      !gradeScales ||
-      !assignments ||
-      allScores.length === 0 ||
-      students.length === 0
-    ) {
+    if (!allSubjects || !gradeScales || !assignments || students.length === 0) {
       return { gradeLabels: {}, subjectIssues: {} };
     }
 
+    // build lookups
     const sectionMap: Record<
       string,
-      { id: string; name: string; points: number }
+      { id: string; name: string; points: number; assignmentId: string }
     > = {};
     const assignmentMap: Record<string, Assignment> = {};
 
     assignments.forEach((a) => {
       assignmentMap[a.id] = a;
       a.sections.forEach((sec) => {
-        sectionMap[sec.id] = sec;
+        sectionMap[sec.id] = { ...sec, assignmentId: a.id };
       });
     });
 
@@ -143,24 +131,32 @@ export default function ExportGradesDialog({
     report.graded_subjects.forEach((sid) => {
       const subj = allSubjects.find((s) => s.id === sid)!;
 
-      // narrow out undefined sections
+      // sections for this subject
       const relevantSecs = subj.section_ids
-        .map((id) => sectionMap[id])
+        .map((secId) => sectionMap[secId])
         .filter(
-          (sec): sec is { id: string; name: string; points: number } =>
-            sec !== undefined,
+          (
+            sec,
+          ): sec is {
+            id: string;
+            name: string;
+            points: number;
+            assignmentId: string;
+          } => sec !== undefined,
         );
       const totalSecPts = relevantSecs.reduce(
         (sum, sec) => sum + sec.points,
         0,
       );
 
-      // narrow out undefined assignments
-      const subjAsgs = subj.graded_assignment_ids
+      // assignments without sections
+      const subjectAssignments = subj.graded_assignment_ids
         .map((aid) => assignmentMap[aid])
         .filter((a): a is Assignment => a !== undefined);
-      const asgsNoSecs = subjAsgs.filter((a) => a.sections.length === 0);
-      const totalAsgPts = asgsNoSecs.reduce(
+      const assignmentsWithoutSections = subjectAssignments.filter(
+        (a) => a.sections.length === 0,
+      );
+      const totalAsgPts = assignmentsWithoutSections.reduce(
         (sum, a) => sum + (a.total_points ?? 0),
         0,
       );
@@ -173,28 +169,36 @@ export default function ExportGradesDialog({
           (sc) => sc.student_id === stu.student_id,
         );
 
-        // sections
+        // --- sections pass ---
         let earnedSecs = 0;
         let possibleSecs = totalSecPts;
         const missingSecs: string[] = [];
 
         relevantSecs.forEach((sec) => {
-          const rec = stuScores.find((sc) => sc.section_id === sec.id);
-          if (rec) {
-            if (rec.excused) possibleSecs -= sec.points;
-            else earnedSecs += rec.score;
+          const recSec = stuScores.find((sc) => sc.section_id === sec.id);
+          const recAsg = stuScores.find(
+            (sc) =>
+              sc.graded_assignment_id === sec.assignmentId &&
+              (sc.section_id === null || sc.section_id === undefined),
+          );
+
+          if (recSec) {
+            if (recSec.excused) possibleSecs -= sec.points;
+            else earnedSecs += recSec.score;
+          } else if (recAsg?.excused) {
+            possibleSecs -= sec.points;
           } else {
             missingSecs.push(sec.name);
             possibleSecs -= sec.points;
           }
         });
 
-        // assignments w/o sections
+        // --- assignments without sections ---
         let earnedAsg = 0;
         let possibleAsg = totalAsgPts;
-        const missingAsg: string[] = [];
+        const missingAssignments: string[] = [];
 
-        asgsNoSecs.forEach((a) => {
+        assignmentsWithoutSections.forEach((a) => {
           const rec = stuScores.find(
             (sc) =>
               sc.graded_assignment_id === a.id &&
@@ -204,7 +208,7 @@ export default function ExportGradesDialog({
             if (rec.excused) possibleAsg -= a.total_points ?? 0;
             else earnedAsg += rec.score;
           } else {
-            missingAsg.push(a.name);
+            missingAssignments.push(a.name);
             possibleAsg -= a.total_points ?? 0;
           }
         });
@@ -213,7 +217,7 @@ export default function ExportGradesDialog({
         const possibleTotal = possibleSecs + possibleAsg;
         const pct = possibleTotal > 0 ? (earnedTotal / possibleTotal) * 100 : 0;
 
-        // pick label from chosen scale
+        // find grade label
         const scale = gradeScales.find((gs) => gs.id === selectedScales[sid]);
         let gradeName = "N/A";
         if (scale) {
@@ -224,32 +228,24 @@ export default function ExportGradesDialog({
         }
         gradeLabels[sid]![stu.student_id] = gradeName;
 
-        // record missing‐sections
+        // record missing sections
         missingSecs.forEach((itemName) => {
           const entry = subjectIssues[sid]?.find(
             (x) => x.itemName === itemName,
           );
           const nm = `${stu.student_name_first_en} ${stu.student_name_last_en}`;
           if (entry) entry.studentNames.push(nm);
-          else
-            subjectIssues[sid]?.push({
-              itemName,
-              studentNames: [nm],
-            });
+          else subjectIssues[sid]?.push({ itemName, studentNames: [nm] });
         });
 
-        // record missing‐assignments
-        missingAsg.forEach((itemName) => {
+        // record missing assignments
+        missingAssignments.forEach((itemName) => {
           const entry = subjectIssues[sid]?.find(
             (x) => x.itemName === itemName,
           );
           const nm = `${stu.student_name_first_en} ${stu.student_name_last_en}`;
           if (entry) entry.studentNames.push(nm);
-          else
-            subjectIssues[sid]?.push({
-              itemName,
-              studentNames: [nm],
-            });
+          else subjectIssues[sid]?.push({ itemName, studentNames: [nm] });
         });
       });
     });
@@ -273,12 +269,7 @@ export default function ExportGradesDialog({
   return (
     <Dialog>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent
-        className={
-          "h-full max-h-[calc(100dvh)] w-full min-w-[calc(100dvw)] " +
-          "overflow-auto p-6"
-        }
-      >
+      <DialogContent className="h-full max-h-[calc(100dvh)] w-full min-w-[calc(100dvw)] overflow-auto p-6">
         <DialogHeader>
           <DialogTitle>Export Grades — {report.name}</DialogTitle>
           <DialogClose className="absolute top-4 right-4" />
@@ -344,12 +335,12 @@ export default function ExportGradesDialog({
               {report.graded_subjects.map((sid) => {
                 const subj = allSubjects!.find((s) => s.id === sid)!;
                 const issues = subjectIssues[sid];
-                if (issues?.length === 0) return null;
+                if (!issues?.length) return null;
                 return (
                   <div key={sid} className="mt-4">
                     <h4 className="font-semibold">{subj.name}</h4>
                     <ul className="ml-4 list-disc">
-                      {issues?.map((it) => (
+                      {issues.map((it) => (
                         <li key={it.itemName}>
                           <span className="font-medium">{it.itemName}:</span>
                           <ul className="ml-4 list-disc">
