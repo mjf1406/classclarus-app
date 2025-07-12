@@ -4,13 +4,19 @@
 
 - UX: alert the user to instances of "...not progressing at the expected rate..." according to RAZ Plus. This means that if the student does not level up after 2 assessments, they get added to the RTI list.
 - DB: added Teams
-- Added Report Tab to the Scores Modal
 
-- UI: Output Report Cards - when selecting a scale to apply to a subject, show the class grade distribution so the teacher can easily see if there are too many of the highest grade to maybe switch to a new scale that uses smaller range for the highest grade.
-
-- BE: a document parser for the subject comments. Can use a dialog to upload them.
+- Feature: Download Student Reports - downloads a PDF that has 2 students per page and lists out all the assignments for that student and their scores by section and total and grade. Has student name and number at the top.
 
 ## Change Log
+
+### 2025/07/13
+
+- Feature: Export Grades CSV - the user can now export the calculated grades as a CSV with an empty column between each subject and students as the rows.
+- Feature: Export Grades CSV - on export, first is the above CSV, then a CSV with the grade label and then the comment from s1-comments.json in the next cell to the right.
+
+### 2025/07/12
+
+- Feature: Calculate Grades - a modal pops up with their grades calculated
 
 ### 2025/07/11
 

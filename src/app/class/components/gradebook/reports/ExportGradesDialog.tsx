@@ -33,8 +33,16 @@ import {
   GradeScaleOptions,
   ClassByIdOptions,
   GradedAssignmentOptions,
+  type TeacherClassDetail,
+  TeacherClassesOptions,
 } from "@/app/api/queryOptions";
 import type { Assignment } from "../graded-assignments/GradedAssignmentsList";
+
+// JSON‐module support
+import commentsData from "@/app/class/components/gradebook/subject-acheivement-comments/s1-comments.json";
+import { useQueryState } from "nuqs";
+import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
 
 interface ExportGradesDialogProps {
   classId: string;
@@ -53,12 +61,26 @@ export default function ExportGradesDialog({
   report,
   trigger,
 }: ExportGradesDialogProps) {
+  // Helper to strip any "XXX - " prefix and lowercase
+  const normalizeSubject = (s: string) =>
+    s.split(" - ").pop()!.trim().toLowerCase();
+
   // 1) students
   const {
     data: classDetail,
     isLoading: studentsLoading,
     isError: studentsError,
   } = useQuery<ClassDetail, Error>({ ...ClassByIdOptions(classId) });
+  const {
+    data: teacherClasses,
+    isLoading: teacherClassesLoading,
+    isError: teacherClassesIsError,
+    error: teacherClassesError,
+  } = useQuery<TeacherClassDetail[]>(TeacherClassesOptions);
+  const [currentClassId, setCurrentClassId] = useQueryState("class_id");
+  const activeClass = teacherClasses?.find(
+    (i) => i.classInfo.class_id === currentClassId,
+  );
   const students = useMemo(
     () => classDetail?.studentInfo ?? [],
     [classDetail?.studentInfo],
@@ -85,7 +107,7 @@ export default function ExportGradesDialog({
     isError: assignmentsError,
   } = useQuery<Assignment[]>(GradedAssignmentOptions(classId));
 
-  // per‐subject selected scales
+  // per‐subject selected scale
   const [selectedScales, setSelectedScales] = useState<Record<string, string>>(
     {},
   );
@@ -99,8 +121,8 @@ export default function ExportGradesDialog({
     setSelectedScales(init);
   }, [allSubjects, gradeScales, report.graded_subjects]);
 
-  const onScaleChange = (subjectId: string, scaleId: string) =>
-    setSelectedScales((prev) => ({ ...prev, [subjectId]: scaleId }));
+  const onScaleChange = (sid: string, scaleId: string) =>
+    setSelectedScales((prev) => ({ ...prev, [sid]: scaleId }));
 
   // flatten all scores
   const allScores = useMemo<AssignmentScore[]>(() => {
@@ -108,7 +130,30 @@ export default function ExportGradesDialog({
     return assignments.flatMap((a) => a.scores ?? []);
   }, [assignments]);
 
-  // compute gradeInfo, gradeCounts, and subjectIssues
+  // build comment map: normalized subject → level → bullet-list
+  const commentMap = useMemo(() => {
+    const m: Record<string, Record<number, string>> = {};
+    (
+      commentsData as Array<{
+        Subject: string;
+        Level: number;
+        Details: string[];
+      }>
+    ).forEach((c) => {
+      const key = normalizeSubject(c.Subject);
+      const text = c.Details.map((d) => `- ${d}`).join("\n");
+      // map both singular and plural to same text
+      m[key] = m[key] ?? {};
+      m[key][c.Level] = text;
+      // also map alternate (math ↔ maths)
+      const alt = key.endsWith("s") ? key.slice(0, -1) : key + "s";
+      m[alt] = m[alt] ?? {};
+      m[alt][c.Level] = text;
+    });
+    return m;
+  }, []);
+
+  // compute gradeInfo, gradeCounts, subjectIssues
   const { gradeInfo, gradeCounts, subjectIssues } = useMemo(() => {
     if (!allSubjects || !gradeScales || !assignments) {
       return {
@@ -143,13 +188,11 @@ export default function ExportGradesDialog({
 
     report.graded_subjects.forEach((sid) => {
       const subj = allSubjects.find((s) => s.id === sid)!;
-
-      // init
       gradeInfo[sid] = {};
       gradeCounts[sid] = {};
       subjectIssues[sid] = [];
 
-      // sections
+      // relevant sections
       const relevantSecs = subj.section_ids
         .map((id) => sectionMap[id])
         .filter(
@@ -179,15 +222,14 @@ export default function ExportGradesDialog({
         0,
       );
 
-      // per‐student
       students.forEach((stu) => {
         const stuScores = allScores.filter(
           (sc) => sc.student_id === stu.student_id,
         );
 
-        // sections pass
-        let earnedSecs = 0;
-        let possibleSecs = totalSecPts;
+        // sections
+        let earnedSecs = 0,
+          possibleSecs = totalSecPts;
         const missingSecs: string[] = [];
         relevantSecs.forEach((sec) => {
           const recSec = stuScores.find((sc) => sc.section_id === sec.id);
@@ -208,8 +250,8 @@ export default function ExportGradesDialog({
         });
 
         // assignments without sections
-        let earnedAsg = 0;
-        let possibleAsg = totalAsgPts;
+        let earnedAsg = 0,
+          possibleAsg = totalAsgPts;
         const missingAssignments: string[] = [];
         assignmentsWithoutSections.forEach((a) => {
           const rec = stuScores.find(
@@ -226,31 +268,23 @@ export default function ExportGradesDialog({
           }
         });
 
-        // compute totals
+        // totals
         const earnedTotal = earnedSecs + earnedAsg;
         const possibleTotal = possibleSecs + possibleAsg;
 
-        // raw % & floored %
+        // raw & floored percent
         const rawPct =
           possibleTotal > 0 ? (earnedTotal / possibleTotal) * 100 : 0;
         const pct = Math.floor(rawPct);
 
-        // determine cell
+        // determine grade cell
         let cell: GradeCell;
         if (possibleTotal === 0) {
-          cell = {
-            label: "N/A",
-            reason: "No graded items (all were excused or none exist).",
-            rawPct,
-          };
+          cell = { label: "N/A", reason: "No graded items.", rawPct };
         } else {
           const scale = gradeScales.find((gs) => gs.id === selectedScales[sid]);
           if (!scale) {
-            cell = {
-              label: "N/A",
-              reason: "No grade scale selected for this subject.",
-              rawPct,
-            };
+            cell = { label: "N/A", reason: "No scale selected.", rawPct };
           } else {
             const bucket = scale.grades.find(
               (g) => pct >= g.minPercentage && pct <= g.maxPercentage,
@@ -258,9 +292,7 @@ export default function ExportGradesDialog({
             if (!bucket) {
               cell = {
                 label: "N/A",
-                reason: `Rounded down ${rawPct.toFixed(
-                  1,
-                )}% → ${pct}%, outside "${scale.name}" ranges.`,
+                reason: `Rounded down ${rawPct.toFixed(1)}%→${pct}%, outside "${scale.name}".`,
                 rawPct,
               };
             } else {
@@ -270,37 +302,27 @@ export default function ExportGradesDialog({
         }
 
         gradeInfo[sid]![stu.student_id] = cell;
-
-        // count this label
         gradeCounts[sid]![cell.label] =
           (gradeCounts[sid]![cell.label] ?? 0) + 1;
 
-        // missing‐sections
+        // record missing
         missingSecs.forEach((itemName) => {
-          const entry = subjectIssues[sid]?.find(
-            (x) => x.itemName === itemName,
-          );
+          const e = subjectIssues[sid]!.find((x) => x.itemName === itemName);
           const nm = `${stu.student_name_first_en} ${stu.student_name_last_en}`;
-          if (entry) entry.studentNames.push(nm);
-          else
-            subjectIssues[sid]?.push({
-              itemName,
-              studentNames: [nm],
-            });
+          if (e) {
+            e.studentNames.push(nm);
+          } else {
+            subjectIssues[sid]!.push({ itemName, studentNames: [nm] });
+          }
         });
-
-        // missing‐assignments
         missingAssignments.forEach((itemName) => {
-          const entry = subjectIssues[sid]?.find(
-            (x) => x.itemName === itemName,
-          );
+          const e = subjectIssues[sid]!.find((x) => x.itemName === itemName);
           const nm = `${stu.student_name_first_en} ${stu.student_name_last_en}`;
-          if (entry) entry.studentNames.push(nm);
-          else
-            subjectIssues[sid]?.push({
-              itemName,
-              studentNames: [nm],
-            });
+          if (e) {
+            e.studentNames.push(nm);
+          } else {
+            subjectIssues[sid]!.push({ itemName, studentNames: [nm] });
+          }
         });
       });
     });
@@ -321,6 +343,81 @@ export default function ExportGradesDialog({
   const errorAny =
     studentsError || subjectsError || scalesError || assignmentsError;
 
+  // CSV-quote any value
+  // CSV-quote any value (only strings or numbers)
+  const quote = (val: string | number): string => {
+    const s = String(val);
+    return `"${s.replace(/"/g, '""')}"`;
+  };
+
+  const downloadCsvs = () => {
+    if (!allSubjects) return;
+    const subjectsList = report.graded_subjects.map((sid) => {
+      const subj = allSubjects.find((s) => s.id === sid)!;
+      return { id: sid, name: subj.name };
+    });
+
+    // grades.csv
+    const header1: string[] = ["number", "first name", "last name"];
+    subjectsList.forEach((s, i) => {
+      header1.push(s.name);
+      if (i < subjectsList.length - 1) header1.push("");
+    });
+    const rows1 = students.map((stu) => {
+      const base: Array<string | number> = [
+        stu.student_number ?? "",
+        stu.student_name_first_en,
+        stu.student_name_last_en,
+      ];
+      subjectsList.forEach((s, i) => {
+        base.push(gradeInfo[s.id]![stu.student_id]!.label);
+        if (i < subjectsList.length - 1) base.push("");
+      });
+      return base;
+    });
+    const csv1 = [header1, ...rows1]
+      .map((r) => r.map((c) => quote(c)).join(","))
+      .join("\n");
+    const blob1 = new Blob([csv1], { type: "text/csv" });
+    const url1 = URL.createObjectURL(blob1);
+    const a1 = document.createElement("a");
+    a1.href = url1;
+    a1.download = `${activeClass?.classInfo.class_name} - ${report.name} report - grades.csv`;
+    a1.click();
+    URL.revokeObjectURL(url1);
+
+    // grades_with_comments.csv
+    const header2: string[] = ["number", "first name", "last name"];
+    subjectsList.forEach((s) => {
+      header2.push(s.name, `${s.name} comment`);
+    });
+    const rows2 = students.map((stu) => {
+      const base: Array<string | number> = [
+        stu.student_number ?? "",
+        stu.student_name_first_en,
+        stu.student_name_last_en,
+      ];
+      subjectsList.forEach((s) => {
+        const cell = gradeInfo[s.id]![stu.student_id];
+        const lvl = parseInt(cell!.label, 10) || 0;
+        const subjKey = normalizeSubject(s.name);
+        const comment = commentMap[subjKey]?.[lvl] ?? "";
+        if (cell) base.push(cell.label, comment);
+      });
+      return base;
+    });
+    const csv2 = [header2, ...rows2]
+      .map((r) => r.map((c) => quote(c)).join(","))
+      .join("\n");
+    const blob2 = new Blob([csv2], { type: "text/csv" });
+    const url2 = URL.createObjectURL(blob2);
+    const a2 = document.createElement("a");
+    a2.href = url2;
+    a2.download = `${activeClass?.classInfo.class_name} - ${report.name} report - grades with comments.csv`;
+    a2.click();
+    URL.revokeObjectURL(url2);
+  };
+
   return (
     <Dialog>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
@@ -336,6 +433,10 @@ export default function ExportGradesDialog({
           <p className="text-destructive">Failed to load data.</p>
         ) : (
           <>
+            <Button onClick={downloadCsvs} variant={"default"}>
+              <Download /> Download CSVs
+            </Button>
+
             <Table>
               <TableHeader>
                 <TableRow>
@@ -366,9 +467,9 @@ export default function ExportGradesDialog({
                           </Select>
                           <table className="mt-1 text-xs">
                             <tbody>
-                              {Object.entries(counts).map(([label, cnt]) => (
-                                <tr key={label}>
-                                  <td className="pr-2">{label}:</td>
+                              {Object.entries(counts).map(([lbl, cnt]) => (
+                                <tr key={lbl}>
+                                  <td className="pr-2">{lbl}</td>
                                   <td>{cnt}</td>
                                 </tr>
                               ))}
@@ -398,7 +499,7 @@ export default function ExportGradesDialog({
                                 : ""
                             }
                           >
-                            {cell?.label} ({Math.floor(cell?.rawPct ?? 0)}%)
+                            {cell?.label} ({cell?.rawPct.toFixed(2)}%)
                           </span>
                         </TableCell>
                       );
