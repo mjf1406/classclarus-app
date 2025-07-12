@@ -1,0 +1,446 @@
+[
+  {
+    "Subject": "Reading",
+    "Level": 1,
+    "Details": [
+      "Can begin to find the main idea and key details with teacher assistance.",
+      "Can begin to identify nonfiction text features.",
+      "Can begin to make connections from text to text, self and the world with teacher assistance.",
+      "Can begin to read their writing.",
+      "Can recognize simple words.",
+      "Continue reading books on RAZ Kids"
+    ]
+  },
+  {
+    "Subject": "Reading",
+    "Level": 2,
+    "Details": [
+      "Can begin to find the main idea and key details.",
+      "Can begin to identify nonfiction text features.",
+      "Can begin to make connections from text to text, self and the world.",
+      "Can learn and share information from reading.",
+      "Can discuss characters and story events with guidance.",
+      "Practice reading English books at home",
+      "Continue reading books on RAZ Kids"
+    ]
+  },
+  {
+    "Subject": "Reading",
+    "Level": 3,
+    "Details": [
+      "Can sometimes, or with assistance, find the main idea and key details.",
+      "Can sometimes, or with assistance, identify non-fiction text features.",
+      "Can sometimes, or with assistance, make various text connections.",
+      "Can begin to read aloud with fluency.",
+      "Continue reading books on RAZ Kids",
+      "Practice reading aloud with fluency"
+    ]
+  },
+  {
+    "Subject": "Reading",
+    "Level": 4,
+    "Details": [
+      "Can mostly figure out what information is important.",
+      "Can mostly find the main idea and key details.",
+      "Can mostly identify non-fiction text features.",
+      "Can mostly make connections from text to text, self and the world.",
+      "Can choose reading materials at the appropriate level.",
+      "Practice reading English books at home",
+      "Practice reading aloud with expression"
+    ]
+  },
+  {
+    "Subject": "Reading",
+    "Level": 5,
+    "Details": [
+      "Can find the main idea and key details.",
+      "Can identify nonfiction text features.",
+      "Can make connections from text to text, self and the world.",
+      "Can ask questions to help them understand what they are reading.",
+      "Can read aloud with fluency, expression, and confidence.",
+      "Stretch themselves by reading more complex books at home"
+    ]
+  },
+  {
+    "Subject": "Writing",
+    "Level": 1,
+    "Details": [
+      "Can begin to differentiate writing for contexts and audiences with teacher assistance.",
+      "Can begin to identify basic components of a letter (date, greeting, body, closing, signature) with teacher assistance.",
+      "Can only use transition words and phrases to connect ideas with teacher support.",
+      "Can begin to use simple sentence structures and punctuation with teacher assistance.",
+      "Can begin to provide reasons and examples with teacher assistance.",
+      "Write sentences independently"
+    ]
+  },
+  {
+    "Subject": "Writing",
+    "Level": 2,
+    "Details": [
+      "Can begin to differentiate writing for contexts and audiences.",
+      "Can begin to identify basic components of a letter (date, greeting, body, closing, signature).",
+      "Can only edit and revise some written pieces with teacher support.",
+      "Can begin to use simple sentence structures and punctuation.",
+      "Can begin to provide a reason to support an opinion.",
+      "Write a wider variety of sentences"
+    ]
+  },
+  {
+    "Subject": "Writing",
+    "Level": 3,
+    "Details": [
+      "Can differentiate writing for some contexts and audiences with prompting.",
+      "Can identify basic components of a letter (date, greeting, body, closing, signature).",
+      "Can use simple sentence structures and punctuation.",
+      "Can sometimes edit and revise some written pieces.",
+      "Can sometimes use transition words and phrases to connect ideas smoothly and logically.",
+      "Can provide a reason to support an opinion, using evidence.",
+      "Continue writing to different audiences"
+    ]
+  },
+  {
+    "Subject": "Writing",
+    "Level": 4,
+    "Details": [
+      "Can differentiate writing for some contexts and audiences.",
+      "Can identify basic components of a letter (date, greeting, body, closing, signature).",
+      "Can use complex sentence structures and punctuation.",
+      "Can independently edit and revise some written pieces.",
+      "Can use transition words and phrases to connect ideas smoothly and logically.",
+      "Can provide multiple reasons to support an opinion, using basic evidence.",
+      "Give more examples and evidence to support reasons"
+    ]
+  },
+  {
+    "Subject": "Writing",
+    "Level": 5,
+    "Details": [
+      "Can differentiate writing for varying contexts and audiences (formal and informal).",
+      "Can identify basic components of a letter (date, greeting, body, closing, signature).",
+      "Can use complex sentence structures and punctuation.",
+      "Can independently edit and revise writing.",
+      "Can use a variety of transition words and phrases to connect ideas smoothly and logically.",
+      "Can provide multiple reasons to support an opinion, using lots of evidence.",
+      "Continue writing to different audiences"
+    ]
+  },
+  {
+    "Subject": "Speaking",
+    "Level": 1,
+    "Details": [
+      "Can begin to use basic English in social situations.",
+      "Can respond to greetings with short phrases.",
+      "Can respond to simple questions with more than one-word answers.",
+      "Can participate orally in very basic classroom discussions with guidance.",
+      "Can express basic needs or conditions.",
+      "Listen to as much English content as possible"
+    ]
+  },
+  {
+    "Subject": "Speaking",
+    "Level": 2,
+    "Details": [
+      "Can use English in social situations.",
+      "Can begin to respond to more complex questions.",
+      "Can express needs and give basic information independently.",
+      "Can ask simple, everyday questions.",
+      "Practice sharing basic social information with peers",
+      "Listen to as much English content as possible"
+    ]
+  },
+  {
+    "Subject": "Speaking",
+    "Level": 3,
+    "Details": [
+      "Can respond to more complex questions independently.",
+      "Can ask questions to clarify content and meaning.",
+      "Can begin to speak with confidence in front of a group.",
+      "Can answer simple content-based questions.",
+      "Can retell short stories or events.",
+      "Can orally engage in problem-solving.",
+      "Practice answering simple questions",
+      "Practice retelling short stories or events"
+    ]
+  },
+  {
+    "Subject": "Speaking",
+    "Level": 4,
+    "Details": [
+      "Can show confidence when speaking in front of a group.",
+      "Can communicate well in a majority of subject areas.",
+      "Can answer opinion questions with supporting details.",
+      "Can discuss stories, issues, and concepts.",
+      "Can give content-based oral reports.",
+      "Can offer creative solutions to issues/problems.",
+      "Practice answering opinion questions with supporting details",
+      "Practice discussing stories"
+    ]
+  },
+  {
+    "Subject": "Speaking",
+    "Level": 5,
+    "Details": [
+      "Can participate and communicate competently in all subject areas.",
+      "Can speak English with near-native fluency; any hesitation does not interfere with communication.",
+      "Can vary speech appropriately using intonation and stress independently.",
+      "Can ask questions to develop ideas and extend understanding."
+    ]
+  },
+  {
+    "Subject": "Listening",
+    "Level": 1,
+    "Details": [
+      "Can follow one-step oral directions.",
+      "Can identify objects, figures, people from oral statements or questions.",
+      "Can match classroom oral language to daily routines.",
+      "Practice demonstrating appropriate attentive listening behaviours without constant teacher prompting"
+    ]
+  },
+  {
+    "Subject": "Listening",
+    "Level": 2,
+    "Details": [
+      "Can follow two- to three-step oral directions.",
+      "Can evaluate oral information.",
+      "Can identify more objects, figures, people from oral statements or questions.",
+      "Can demonstrate appropriate attentive listening behaviours only with significant teacher prompting.",
+      "Practice demonstrating appropriate attentive listening behaviours"
+    ]
+  },
+  {
+    "Subject": "Listening",
+    "Level": 3,
+    "Details": [
+      "Can follow multi-step oral directions occasionally with help.",
+      "Can sometimes identify key information in announcements and instructions.",
+      "Can demonstrate appropriate attentive listening behaviours with some teacher prompting.",
+      "Follow directions and instructions quickly without teacher needing to repeat them",
+      "Use attentive listening behaviors at all times"
+    ]
+  },
+  {
+    "Subject": "Listening",
+    "Level": 4,
+    "Details": [
+      "Can interpret oral information and apply it to situations.",
+      "Can follow multi-step oral directions.",
+      "Can demonstrate appropriate attentive listening behaviours with minimal teacher prompting.",
+      "Follow directions and instructions quickly without teacher needing to repeat them",
+      "Practice demonstrating appropriate attentive listening behaviours at all times"
+    ]
+  },
+  {
+    "Subject": "Listening",
+    "Level": 5,
+    "Details": [
+      "Can carry out oral instructions containing grade level, content-based language.",
+      "Can demonstrate appropriate attentive listening behaviors independently.",
+      "Can follow multi-step oral directions.",
+      "Follow directions and instructions quickly without teacher needing to repeat them"
+    ]
+  },
+  {
+    "Subject": "Use of English",
+    "Level": 1,
+    "Details": [
+      "Can begin to use an increasing range of present simple forms with teacher assistance.",
+      "Can begin to use past simple forms to describe routines, habits and states with teacher assistance.",
+      "Work hard at learning the grammar formulas and studying for the vocabulary and grammar tests",
+      "Remember to use capital letters and correct punctuation"
+    ]
+  },
+  {
+    "Subject": "Use of English",
+    "Level": 2,
+    "Details": [
+      "Can begin to correctly use an increasing range of present simple forms to describe routines, habits and states.",
+      "Can begin to correctly use an increasing range of past simple forms to describe routines, habits and states.",
+      "Work hard at learning the grammar formulas and studying for the vocabulary and grammar tests",
+      "Remember to use capital letters and correct punctuation"
+    ]
+  },
+  {
+    "Subject": "Use of English",
+    "Level": 3,
+    "Details": [
+      "Can sometimes, or with assistance, correctly use an increasing range of present simple forms.",
+      "Can sometimes, or with assistance, correctly use an increasing range of past simple forms.",
+      "Work hard at learning the grammar formulas and studying for the vocabulary and grammar tests",
+      "Do the Vocabulary and Grammar Kahoots as practice before the tests"
+    ]
+  },
+  {
+    "Subject": "Use of English",
+    "Level": 4,
+    "Details": [
+      "Can correctly use an increasing range of present simple forms.",
+      "Can correctly use the present continuous.",
+      "Can correctly use an increasing range of past simple forms.",
+      "Can correctly use present perfect forms to express what has happened with for and since.",
+      "Start using their grammar points in their writing"
+    ]
+  },
+  {
+    "Subject": "Use of English",
+    "Level": 5,
+    "Details": [
+      "Can correctly use an increasing range of present simple forms.",
+      "Can correctly use the present continuous.",
+      "Can correctly use an increasing range of past simple forms.",
+      "Can correctly use present perfect forms to express what has happened with for and since.",
+      "Start using their grammar points in their writing"
+    ]
+  },
+  {
+    "Subject": "Maths",
+    "Level": 1,
+    "Details": [
+      "Struggles and needs a lot of assistance to solve word problems using CUBES.",
+      "Struggles and needs a lot of assistance to convert metric units using King Henry.",
+      "Practice using King Henry more effectively",
+      "Practice using the CUBES strategy"
+    ]
+  },
+  {
+    "Subject": "Maths",
+    "Level": 2,
+    "Details": [
+      "Struggles and needs a lot of assistance to solve word problems using CUBES.",
+      "Struggles and needs a lot of assistance to convert metric units using King Henry.",
+      "Practice using King Henry more effectively",
+      "Practice using the CUBES strategy"
+    ]
+  },
+  {
+    "Subject": "Maths",
+    "Level": 3,
+    "Details": [
+      "Can sometimes, or with assistance, solve word problems using the CUBES strategy.",
+      "Can sometimes, or with assistance, convert metric units using the King Henry chart.",
+      "Convert measurements more effectively",
+      "Practice using the CUBES strategy"
+    ]
+  },
+  {
+    "Subject": "Maths",
+    "Level": 4,
+    "Details": [
+      "Can solve word problems using CUBES.",
+      "Knows which clue words are related to what maths operation.",
+      "Can convert metric units using the King Henry chart.",
+      "Can identify place values.",
+      "Create their own word problems"
+    ]
+  },
+  {
+    "Subject": "Maths",
+    "Level": 5,
+    "Details": [
+      "Can solve word problems using CUBES.",
+      "Knows which clue words are related to what maths operation.",
+      "Can convert metric units using the King Henry chart.",
+      "Can identify place values.",
+      "Create their own word problems"
+    ]
+  },
+  {
+    "Subject": "Social studies",
+    "Level": 1,
+    "Details": [
+      "Can read maps to locate the world’s hemispheres, continents, and oceans with much teacher support.",
+      "Struggled with the Social Studies assignment which impacted their score.",
+      "Put in greater effort in classwork and assignments to help improve understanding"
+    ]
+  },
+  {
+    "Subject": "Social studies",
+    "Level": 2,
+    "Details": [
+      "Can read maps to locate the world’s hemispheres, continents, and oceans with much teacher support.",
+      "Struggled with the Social Studies assignment which impacted their score.",
+      "Put in greater effort in classwork and assignments to help improve understanding"
+    ]
+  },
+  {
+    "Subject": "Social studies",
+    "Level": 3,
+    "Details": [
+      "Can sometimes, or with assistance, read maps to locate the world’s hemispheres, continents, and oceans.",
+      "Can compare Korea and another country with assistance.",
+      "Could have done better in the Social Studies assignment.",
+      "Put in greater effort in classwork and assignments to help improve understanding"
+    ]
+  },
+  {
+    "Subject": "Social studies",
+    "Level": 4,
+    "Details": [
+      "Can read maps and globes to locate the world’s hemispheres, continents, and oceans.",
+      "Can compare and contrast between Korea and another country.",
+      "Did very well in their Social Studies assignment.",
+      "Compare another country"
+    ]
+  },
+  {
+    "Subject": "Social studies",
+    "Level": 5,
+    "Details": [
+      "Can read maps and globes to locate the world’s hemispheres, continents, and oceans.",
+      "Can compare and contrast between Korea and another country.",
+      "Did very well in their Social Studies assignment.",
+      "Compare another country"
+    ]
+  },
+  {
+    "Subject": "Science",
+    "Level": 1,
+    "Details": [
+      "Can name the planets in the solar system but not in order.",
+      "Can describe very few of the characteristics of the planets.",
+      "The planet brochure was not correctly done and brought their grade down.",
+      "Learn the correct order of the planets"
+    ]
+  },
+  {
+    "Subject": "Science",
+    "Level": 2,
+    "Details": [
+      "Can name the planets in the solar system but not in order.",
+      "Can describe very few of the characteristics of the planets.",
+      "The planet brochure was not correctly done and brought their grade down.",
+      "Learn the correct order of the planets"
+    ]
+  },
+  {
+    "Subject": "Science",
+    "Level": 3,
+    "Details": [
+      "Can sometimes, or with assistance, explain the seasons.",
+      "Can sometimes, or with assistance, correctly name the planets in the solar system in order.",
+      "Put in more effort towards the final project",
+      "Learn about other objects in space"
+    ]
+  },
+  {
+    "Subject": "Science",
+    "Level": 4,
+    "Details": [
+      "Can explain the difference between seasons.",
+      "Can name the planets in the solar system in order.",
+      "Knows the solar system is a group of planets orbiting a star.",
+      "Did a good job on their planet brochure.",
+      "Independently inquire further into other areas of interest you may have about space"
+    ]
+  },
+  {
+    "Subject": "Science",
+    "Level": 5,
+    "Details": [
+      "Can explain the difference between seasons.",
+      "Can name the planets in the solar system in order.",
+      "Knows the solar system is a group of planets orbiting a star.",
+      "Did a good job on their planet brochure.",
+      "Independently inquire further into other areas of interest you may have about space"
+    ]
+  }
+]

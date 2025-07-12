@@ -2,17 +2,20 @@
 "use client";
 
 import React from "react";
+import { TbReport } from "react-icons/tb";
 import { useQuery } from "@tanstack/react-query";
-import { GradedAssignmentOptions } from "@/app/api/queryOptions";
+import { GradedAssignmentOptions, ReportOptions } from "@/app/api/queryOptions";
 import LoaderSmallInline from "@/components/loaders/LoaderSmall";
 import { Button } from "@/components/ui/button";
-import type { Assignment } from "./GradedAssignmentsList";
-import GradedAssignmentsList from "./GradedAssignmentsList";
-import { CreateGradedAssignmentDialog } from "./CreateGradedAssignmentDialogFuck";
-import { NotepadText, Scale, Tag } from "lucide-react";
-import { CreateGradedSubjectDialog } from "./CreateGradedSubjectDialog";
-import { GradeScaleManagerDialog } from "./GradeScaleManager";
-import { GradedSubjectManagerDialog } from "./GradedSubjectManager";
+import { MessageSquareDashed, NotepadText, Scale, Tag } from "lucide-react";
+import { GradedSubjectManagerDialog } from "./graded-assignments/GradedSubjectManager";
+import type { Assignment } from "./graded-assignments/GradedAssignmentsList";
+import { GradeScaleManagerDialog } from "./grade-scales/GradeScaleManager";
+import { CreateGradedAssignmentDialog } from "./graded-assignments/CreateGradedAssignmentDialogFuck";
+import GradedAssignmentsList from "./graded-assignments/GradedAssignmentsList";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CreateReportDialog } from "./reports/CreateReportDialog";
+import ReportsList from "./reports/ReportsList";
 
 interface GradebookTabProps {
   classId: string | null;
@@ -22,6 +25,11 @@ const GradebookTab: React.FC<GradebookTabProps> = ({ classId }) => {
   const { data, isLoading, error } = useQuery<Assignment[], Error>(
     GradedAssignmentOptions(classId),
   );
+  const {
+    data: reports,
+    isLoading: reportsIsLoading,
+    error: reportsError,
+  } = useQuery(ReportOptions(classId));
 
   if (isLoading) return <LoaderSmallInline />;
   if (error) {
@@ -29,43 +37,82 @@ const GradebookTab: React.FC<GradebookTabProps> = ({ classId }) => {
   }
 
   return (
-    <div className="mb-5 space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold">Gradebook</h2>
-        <div className="space-x-2">
-          <GradeScaleManagerDialog
-            trigger={
-              <Button variant="outline">
-                <Scale />
-                <span className="hidden sm:block">Grade Scales</span>
-              </Button>
-            }
-          />
+    <div className="mb-5 space-y-2">
+      <h2 className="block text-2xl font-semibold lg:hidden">Gradebook</h2>
+      <Tabs defaultValue="assignments">
+        <TabsList>
+          <TabsTrigger value="assignments">Assignments</TabsTrigger>
+          <TabsTrigger value="reports">Reports</TabsTrigger>
+        </TabsList>
+        <TabsContent value="assignments" className="space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="space-x-2">
+              <GradeScaleManagerDialog
+                trigger={
+                  <Button variant="outline">
+                    <Scale />
+                    <span className="hidden md:block">Grade Scales</span>
+                  </Button>
+                }
+              />
+              <GradedSubjectManagerDialog
+                classId={classId ?? ""}
+                assignments={data ?? []}
+                trigger={
+                  <Button variant="outline">
+                    <Tag />{" "}
+                    <span className="hidden md:block">Graded Subjects</span>
+                  </Button>
+                }
+              />
+              <CreateGradedAssignmentDialog
+                classId={classId ?? ""}
+                trigger={
+                  <Button variant="default">
+                    <NotepadText />{" "}
+                    <span className="hidden md:block">
+                      Create Graded Assignment
+                    </span>
+                  </Button>
+                }
+              />
+            </div>
+          </div>
 
-          <GradedSubjectManagerDialog
-            classId={classId ?? ""}
-            assignments={data ?? []}
-            trigger={
-              <Button variant="outline">
-                <Tag /> <span className="hidden sm:block">Graded Subjects</span>
-              </Button>
-            }
-          />
-          <CreateGradedAssignmentDialog
-            classId={classId ?? ""}
-            trigger={
-              <Button variant="default">
-                <NotepadText />{" "}
-                <span className="hidden sm:block">
-                  Create Graded Assignment
+          {data && (
+            <GradedAssignmentsList assignments={data} classId={classId} />
+          )}
+        </TabsContent>
+        <TabsContent value="reports" className="space-y-2">
+          <div className="space-x-2">
+            <GradeScaleManagerDialog
+              trigger={
+                <Button variant="outline">
+                  <Scale />
+                  <span className="hidden md:block">Grade Scales</span>
+                </Button>
+              }
+            />
+            <CreateReportDialog
+              classId={classId ?? ""}
+              trigger={
+                <Button variant="default">
+                  <TbReport />
+                  <span className="hidden md:block">Create Report</span>
+                </Button>
+              }
+            />
+
+            {/* <Button variant={"outline"}>
+                <MessageSquareDashed />
+                <span className="hidden md:block">
+                  Subject Achievement Comments
                 </span>
-              </Button>
-            }
-          />
-        </div>
-      </div>
-
-      {data && <GradedAssignmentsList assignments={data} classId={classId} />}
+              </Button> */}
+          </div>
+          <ReportsList classId={classId} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

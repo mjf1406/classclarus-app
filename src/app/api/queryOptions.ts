@@ -5,10 +5,11 @@ import type {
   GradedSubject,
   GradeScale,
   Point,
+  Report,
   TeacherClass,
 } from "@/server/db/types";
 import { queryOptions } from "@tanstack/react-query";
-import type { Assignment } from "../class/components/gradebook/GradedAssignmentsList";
+import type { Assignment } from "../class/components/gradebook/graded-assignments/GradedAssignmentsList";
 
 export type TeacherClassDetail = {
   teacherAssignment: TeacherClass;
@@ -134,6 +135,21 @@ export const GradedSubjectsOptions = (classId: string | null) =>
         );
       }
       return (await response.json()) as GradedSubject[];
+    },
+    staleTime: 1000 * 60 * 30, // 30 minutes
+  });
+
+export const ReportOptions = (classId: string | null) =>
+  queryOptions<Report[]>({
+    queryKey: ["reports", classId],
+    queryFn: async () => {
+      const response = await fetch(
+        `/api/reports-by-class-id?class_id=${classId}`,
+      );
+      if (!response.ok) {
+        throw new Error("Failed to load report data. Please refresh the page.");
+      }
+      return (await response.json()) as Report[];
     },
     staleTime: 1000 * 60 * 30, // 30 minutes
   });

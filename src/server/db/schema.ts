@@ -777,3 +777,24 @@ export const grade_scales = sqliteTable(
     ),
   }),
 );
+
+export const reports = sqliteTable(
+  "reports",
+  {
+    id: text("id").notNull().primaryKey(),
+    name: text("name").notNull(),
+    user_id: text("user_id")
+      .notNull()
+      .references(() => users.user_id),
+    class_id: text("class_id")
+      .notNull()
+      .references(() => classes.class_id),
+    graded_subjects: text("graded_subjects", { mode: "json" })
+      .$type<string[]>()
+      .default(sql`'[]'`),
+  },
+  (table) => ({
+    reports_user_id_idx: index("reports_user_id_idx").on(table.user_id),
+    reports_class_id_idx: index("reports_class_id_idx").on(table.class_id),
+  }),
+);

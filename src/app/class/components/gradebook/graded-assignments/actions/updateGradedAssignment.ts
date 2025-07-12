@@ -1,4 +1,4 @@
-// app/_actions/gradedAssignment.ts
+// src\app\class\components\gradebook\graded-assignments\actions\updateGradedAssignment.ts
 "use server";
 
 import { db } from "@/server/db/index";

@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Edit, Tag, Trash2 } from "lucide-react";
 
-import { CreateGradedSubjectDialog } from "./CreateGradedSubjectDialog";
+import { CreateGradedSubjectDialog } from "../graded-subjects/CreateGradedSubjectDialog";
 import { GradedSubjectsOptions } from "@/app/api/queryOptions";
 import {
   AlertDialog,
@@ -24,8 +24,8 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import { useDeleteGradedSubject } from "./hooks/useDeleteGradedSubject";
-import { EditGradedSubjectDialog } from "./EditGradedSubject";
+import { useDeleteGradedSubject } from "../graded-subjects/hooks/useDeleteGradedSubject";
+import { EditGradedSubjectDialog } from "../graded-subjects/EditGradedSubject";
 import type { Assignment } from "./GradedAssignmentsList";
 
 interface GradedSubjectManagerDialogProps {

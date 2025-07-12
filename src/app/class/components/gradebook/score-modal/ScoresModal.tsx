@@ -25,9 +25,9 @@ import {
 import type { ClassDetail, StudentClassWithStudent } from "@/server/db/types";
 import { ClassByIdOptions } from "@/app/api/queryOptions";
 import { useUpdateStudentScore } from "./hooks/useUpdateStudentScore";
-import type { Assignment } from "./GradedAssignmentsList";
 import { NumberInputWithStepper } from "@/components/NumberInputWithStepper";
 import { Checkbox } from "@/components/ui/checkbox";
+import type { Assignment } from "../graded-assignments/GradedAssignmentsList";
 
 type SortKey = "student_number" | "first_name" | "last_name" | "percentage";
 

@@ -8,6 +8,8 @@
 
 - UI: Output Report Cards - when selecting a scale to apply to a subject, show the class grade distribution so the teacher can easily see if there are too many of the highest grade to maybe switch to a new scale that uses smaller range for the highest grade.
 
+- BE: a document parser for the subject comments. Can use a dialog to upload them.
+
 ## Change Log
 
 ### 2025/07/11

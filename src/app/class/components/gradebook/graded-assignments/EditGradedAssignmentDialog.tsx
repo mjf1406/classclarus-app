@@ -1,4 +1,3 @@
-// src\app\class\components\gradebook\CreateGradedAssignmentDialog.tsx
 "use client";
 
 import * as React from "react";
@@ -15,93 +14,102 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { type UpdateGradedAssignmentArgs } from "./actions/updateGradedAssignment";
+import type { AssignmentScore } from "@/server/db/types";
+import { v4 as uuidV4 } from "uuid";
+import { useUpdateGradedAssignment } from "./hooks/useUpdateGradedAssignment";
 import type { SectionInput } from "./actions/createGradedAssignment";
-import { useCreateGradedAssignment } from "./hooks/useCreateGradedAssignment";
 
 interface SectionForm {
+  id: string;
   name: string;
   points: number;
+  // scores: AssignmentScore[];
 }
 
 interface FormValues {
   name: string;
   sections: SectionForm[];
   totalPoints?: number;
+  // scores: AssignmentScore[];
 }
 
-interface Props {
+interface EditGradedAssignmentDialogProps {
   classId: string;
-  trigger?: React.ReactNode;
-  initialData?: {
+  assignment: {
+    id: string;
     name: string;
-    sections: SectionForm[];
-    totalPoints?: number;
+    total_points: number | null;
+    created_date: string;
+    updated_date: string;
+    scores: AssignmentScore[];
+    sections: {
+      id: string;
+      name: string;
+      points: number;
+      scores: AssignmentScore[];
+    }[];
   };
+  trigger?: React.ReactNode;
 }
 
-export function CreateGradedAssignmentDialog({
+export default function EditGradedAssignmentDialog({
   classId,
+  assignment,
   trigger,
-  initialData,
-}: Props) {
+}: EditGradedAssignmentDialogProps) {
   const [open, setOpen] = React.useState(false);
-  const ctrlRef = React.useRef(false);
+  const updateMutation = useUpdateGradedAssignment(classId);
+  const isUpdating = updateMutation.isPending;
 
-  // set up defaultValues based on initialData if provided
-  const defaultValues: FormValues = initialData
-    ? {
-        name: initialData.name,
-        sections: initialData.sections,
-        totalPoints: initialData.totalPoints,
-      }
-    : { name: "", sections: [], totalPoints: undefined };
+  const form = useForm<FormValues>({
+    defaultValues: {
+      name: assignment.name,
+      sections: assignment.sections.map((s) => ({
+        id: s.id, // ← carry the real DB id
+        name: s.name,
+        points: s.points,
+      })),
+      totalPoints:
+        assignment.sections.length === 0
+          ? (assignment.total_points ?? undefined)
+          : undefined,
+    },
+  });
 
-  const form = useForm<FormValues>({ defaultValues });
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "sections",
   });
 
   const sections = form.watch("sections");
-  const computedTotal = sections.reduce((sum, s) => sum + (s.points || 0), 0);
+  const computedTotal = sections.reduce(
+    (sum, sec) => sum + (sec.points || 0),
+    0,
+  );
   const hasSections = sections.length > 0;
 
-  // record Ctrl+Enter
-  const onKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && e.ctrlKey) ctrlRef.current = true;
-  };
-  // record Ctrl+Click
-  const onClick = (e: React.MouseEvent) => {
-    ctrlRef.current = e.ctrlKey;
-  };
-
-  const createMutation = useCreateGradedAssignment(classId);
-  const isPending = createMutation.isPending;
-
   const onSubmit = form.handleSubmit((data) => {
-    const keepOpen = ctrlRef.current;
-    ctrlRef.current = false;
-
-    const payload = {
+    const payload: UpdateGradedAssignmentArgs = {
+      id: assignment.id,
       class_id: classId,
       name: data.name,
       total_points: hasSections ? computedTotal : (data.totalPoints ?? null),
-      sections: data.sections.map(
-        (s): SectionInput => ({ name: s.name, points: s.points }),
-      ),
+      // scores: data.scores,
+      sections: data.sections.map<SectionInput>((s) => ({
+        name: s.name,
+        points: s.points,
+        id: s.id,
+        // scores: s.scores,
+      })),
     };
 
-    // close dialog immediately so the list updates optimistically
-    if (!keepOpen) setOpen(false);
+    // close dialog immediately so the UI updates optimistically
+    setOpen(false);
 
-    createMutation.mutate(payload, {
+    updateMutation.mutate(payload, {
       onError(err) {
-        console.error("Failed to create", err);
-      },
-      onSettled: () => {
-        // reset back to defaultValues (which are initialData or blank)
-        form.reset();
-        if (keepOpen) setOpen(true);
+        console.error("Failed to update assignment", err);
       },
     });
   });
@@ -110,37 +118,30 @@ export function CreateGradedAssignmentDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger ?? (
-          <Button disabled={isPending}>
-            {isPending ? "Creating..." : "Create Graded Assignment"}
+          <Button variant="outline" size="sm" disabled={isUpdating}>
+            {isUpdating ? "Saving..." : "Edit"}
           </Button>
         )}
       </DialogTrigger>
-
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>
-            {initialData
-              ? "Duplicate Graded Assignment"
-              : "Create Graded Assignment"}
-          </DialogTitle>
+          <DialogTitle>Edit Graded Assignment</DialogTitle>
           <DialogDescription>
-            {initialData
-              ? "Adjust and save your duplicated assignment."
-              : "Define name, sections, total points."}
+            Update the name, sections, and total points. <br />
+            <br /> Note that adjusting total points for the assignment or
+            sections here does not modify or change in any way the scores that
+            you have input already. It will, however, result in the grade (%)
+            being changed.
           </DialogDescription>
-          <p className="mt-1 text-sm text-gray-500">
-            Ctrl+Enter or Ctrl+Click to submit without closing.
-          </p>
         </DialogHeader>
 
-        <form onSubmit={onSubmit} onKeyDown={onKeyDown} className="grid gap-6">
+        <form onSubmit={onSubmit} className="grid gap-6">
           <div className="grid gap-1">
             <Label htmlFor="name">Assignment Name</Label>
             <Input
               id="name"
-              placeholder="e.g. Midterm Exam"
               {...form.register("name", { required: true })}
-              disabled={isPending}
+              disabled={isUpdating}
             />
           </div>
 
@@ -149,18 +150,20 @@ export function CreateGradedAssignmentDialog({
               <Label>Sections</Label>
               {fields.map((field, idx) => (
                 <div key={field.id} className="flex items-end gap-2">
+                  <input
+                    type="hidden"
+                    {...form.register(`sections.${idx}.id` as const)}
+                  />
                   <div className="grid flex-1 gap-1">
                     <Label htmlFor={`sections.${idx}.name`}>Section Name</Label>
                     <Input
                       id={`sections.${idx}.name`}
-                      placeholder="e.g. Problem Set"
                       {...form.register(`sections.${idx}.name`, {
                         required: true,
                       })}
-                      disabled={isPending}
+                      disabled={isUpdating}
                     />
                   </div>
-
                   <div className="grid w-32 gap-1">
                     <Label htmlFor={`sections.${idx}.points`}>Points</Label>
                     <Input
@@ -170,16 +173,15 @@ export function CreateGradedAssignmentDialog({
                         required: true,
                         valueAsNumber: true,
                       })}
-                      disabled={isPending}
+                      disabled={isUpdating}
                     />
                   </div>
-
                   <Button
                     type="button"
                     variant="destructive"
                     size="icon"
                     onClick={() => remove(idx)}
-                    disabled={isPending}
+                    disabled={isUpdating}
                   >
                     ×
                   </Button>
@@ -189,8 +191,8 @@ export function CreateGradedAssignmentDialog({
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => append({ name: "", points: 0 })}
-                disabled={isPending}
+                onClick={() => append({ name: "", points: 0, id: uuidV4() })}
+                disabled={isUpdating}
               >
                 Add Section
               </Button>
@@ -206,18 +208,17 @@ export function CreateGradedAssignmentDialog({
               <Input
                 id="totalPoints"
                 type="number"
-                placeholder="e.g. 100"
                 {...form.register("totalPoints", {
                   required: true,
                   valueAsNumber: true,
                 })}
-                disabled={isPending}
+                disabled={isUpdating}
               />
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => append({ name: "", points: 0 })}
-                disabled={isPending}
+                onClick={() => append({ name: "", points: 0, id: uuidV4() })}
+                disabled={isUpdating}
               >
                 Add Sections Instead
               </Button>
@@ -225,12 +226,8 @@ export function CreateGradedAssignmentDialog({
           )}
 
           <DialogFooter>
-            <Button type="submit" onClick={onClick} disabled={isPending}>
-              {isPending
-                ? "Creating..."
-                : initialData
-                  ? "Duplicate Assignment"
-                  : "Create Graded Assignment"}
+            <Button type="submit" disabled={isUpdating}>
+              {isUpdating ? "Saving..." : "Save Changes"}
             </Button>
           </DialogFooter>
         </form>

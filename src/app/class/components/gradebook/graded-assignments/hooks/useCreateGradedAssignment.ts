@@ -1,15 +1,15 @@
-// src/app/class/components/gradebook/hooks/useCreateGradedAssignment.ts
+// src\app\class\components\gradebook\graded-assignments\hooks\useCreateGradedAssignment.ts
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@clerk/nextjs";
+import { toast } from "sonner";
+import { v4 as uuidV4 } from "uuid";
 import {
   createGradedAssignment,
   type CreateGradedAssignmentArgs,
 } from "../actions/createGradedAssignment";
 import type { Assignment } from "../GradedAssignmentsList";
-import { useAuth } from "@clerk/nextjs";
-import { toast } from "sonner";
-import { v4 as uuidV4 } from "uuid";
 
 interface Context {
   previous?: Assignment[];
@@ -22,24 +22,12 @@ export function useCreateGradedAssignment(classId: string) {
 
   const qKey = ["graded_assignments", classId] as const;
 
-  return useMutation<
-    // <-- change this from Assignment to string
-    string,
-    unknown,
-    CreateGradedAssignmentArgs,
-    Context
-  >({
-    // server action returns the new ID
+  return useMutation<string, unknown, CreateGradedAssignmentArgs, Context>({
     mutationFn: (payload) => createGradedAssignment(payload),
-
     onMutate: (payload) => {
-      // cancel any in‐flight fetches
       void queryClient.cancelQueries({ queryKey: qKey });
-
-      // snapshot
       const previous = queryClient.getQueryData<Assignment[]>(qKey) ?? [];
 
-      // build optimistic placeholder
       const optimistic: Assignment = {
         id: uuidV4(),
         user_id: userId,
@@ -77,7 +65,6 @@ export function useCreateGradedAssignment(classId: string) {
     },
 
     onSettled: () => {
-      // refetch to get the real row back
       void queryClient.invalidateQueries({ queryKey: qKey });
     },
   });

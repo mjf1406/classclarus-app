@@ -1,4 +1,4 @@
-// src/app/api/graded-assignments-by-class-id/route.ts
+// src\app\api\graded-assignments-by-class-id\route.ts
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";

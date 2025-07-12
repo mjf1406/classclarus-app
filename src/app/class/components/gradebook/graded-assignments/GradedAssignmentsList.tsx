@@ -23,7 +23,6 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import { useDeleteGradedAssignment } from "./hooks/useDeleteGradedAssignment";
 import { ChevronUp, Copy, Edit, Sigma, Trash2 } from "lucide-react";
 import {
   Table,
@@ -39,11 +38,12 @@ import {
   CollapsibleContent,
 } from "@/components/ui/collapsible";
 
-import ScoreModal from "./ScoresModal";
 import type { AssignmentScore } from "@/server/db/types";
-import { CreateGradedAssignmentDialog } from "./CreateGradedAssignmentDialogFuck";
 import { useQuery } from "@tanstack/react-query";
 import { ClassByIdOptions } from "@/app/api/queryOptions";
+import { useDeleteGradedAssignment } from "./hooks/useDeleteGradedAssignment";
+import ScoresModal from "../score-modal/ScoresModal";
+import { CreateGradedAssignmentDialog } from "./CreateGradedAssignmentDialogFuck";
 
 export interface Section {
   id: string;
@@ -122,7 +122,8 @@ function AssignmentCard({
       name: s.name,
       points: s.points,
     })),
-    totalPoints: a.sections.length ? undefined : (a.total_points ?? undefined),
+    totalPoints:
+      a.sections.length > 0 ? undefined : (a.total_points ?? undefined),
   };
 
   return (
@@ -132,10 +133,6 @@ function AssignmentCard({
           <div>
             <CardTitle>{a.name}</CardTitle>
             <CardDescription>
-              {/* <div>
-                Total Points:{" "}
-                <span className="font-semibold">{a.total_points ?? "—"}</span>
-              </div> */}
               <div>
                 Graded:{" "}
                 <span className="font-semibold">
@@ -145,7 +142,7 @@ function AssignmentCard({
             </CardDescription>
           </div>
           <div className="flex items-center space-x-2">
-            <ScoreModal
+            <ScoresModal
               classId={classId}
               assignment={a}
               trigger={
@@ -183,10 +180,8 @@ function AssignmentCard({
                   <AlertDialogTitle>Delete Assignment?</AlertDialogTitle>
                   <AlertDialogDescription>
                     All data associated with this assignment, including sections
-                    and student scores will be deleted permanently from our
-                    servers. Graded Subjects that took this assignment into
-                    account will no longer do so. This action is irreversible.
-                    Are you sure you want to delete the graded assignment{" "}
+                    and student scores, will be deleted permanently. This action
+                    is irreversible. Delete{" "}
                     <span className="font-bold">{a.name}</span>?
                   </AlertDialogDescription>
                 </AlertDialogHeader>
@@ -224,8 +219,9 @@ function AssignmentCard({
 
         <Collapsible open={sectionsOpen} onOpenChange={setSectionsOpen}>
           <CollapsibleTrigger asChild>
-            <Button variant="ghost" size="sm" className="justify-between">
-              <span>Sections</span>
+            <Button variant="ghost" size="sm">
+              <span>Section{a.sections.length !== 1 ? "s" : ""}:</span>
+              <span className="font-semibold">{a.sections.length}</span>
               <ChevronUp
                 className={`h-4 w-4 transition-transform duration-200 ${
                   sectionsOpen ? "rotate-180" : "rotate-0"

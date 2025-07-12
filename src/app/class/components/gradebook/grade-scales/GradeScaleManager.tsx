@@ -15,7 +15,6 @@ import { Edit, Scale, Trash2 } from "lucide-react";
 import { CreateGradeScaleDialog } from "./CreateGradeScaleDialog";
 import { EditGradeScaleDialog } from "./EditGradeScaleDialog";
 import { GradeScaleOptions } from "@/app/api/queryOptions";
-import { useDeleteGradeScale } from "./hooks/useDeleteGradeScale";
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -27,6 +26,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
+import { useDeleteGradeScale } from "./hooks/useDeleteGradeScale";
 
 interface GradeScaleManagerDialogProps {
   trigger: ReactNode;

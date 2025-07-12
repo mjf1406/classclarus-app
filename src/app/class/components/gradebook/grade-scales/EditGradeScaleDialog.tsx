@@ -1,4 +1,4 @@
-// src/app/class/components/gradebook/CreateGradeScaleDialog.tsx
+// src/app/class/components/gradebook/EditGradeScaleDialog.tsx
 "use client";
 
 import * as React from "react";
@@ -19,27 +19,38 @@ import {
 } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { HelpCircle, Trash2 } from "lucide-react";
-import { useCreateGradeScale } from "./hooks/useCreateGradeScale";
-import type { CreateGradeScaleArgs } from "./actions/createGradeScale";
+import { HelpCircle, Trash2, X } from "lucide-react";
 import type { Grade } from "@/server/db/types";
 import { v4 as uuidV4 } from "uuid";
+import { useUpdateGradeScale } from "./hooks/useUpdateGradeScale";
+import type { UpdateGradeScaleArgs } from "./actions/updateGradeScale";
 
-interface CreateGradeScaleDialogProps {
+interface EditGradeScaleDialogProps {
   trigger: React.ReactNode;
+  scale: {
+    id: string;
+    name: string;
+    grades: Grade[];
+  };
 }
 
-export const CreateGradeScaleDialog: React.FC<CreateGradeScaleDialogProps> = ({
+export const EditGradeScaleDialog: React.FC<EditGradeScaleDialogProps> = ({
   trigger,
+  scale,
 }) => {
   const [open, setOpen] = React.useState(false);
-  const [scaleName, setScaleName] = React.useState("");
-  const [grades, setGrades] = React.useState<Grade[]>([
-    { id: uuidV4(), name: "", minPercentage: 0, maxPercentage: 100 },
-  ]);
+  const [scaleName, setScaleName] = React.useState(scale.name);
+  const [grades, setGrades] = React.useState<Grade[]>(scale.grades);
 
-  const createMutation = useCreateGradeScale();
-  const isPending = createMutation.isPending;
+  const { mutate: save, isPending } = useUpdateGradeScale();
+
+  // whenever we open, reset fields from the prop
+  React.useEffect(() => {
+    if (open) {
+      setScaleName(scale.name);
+      setGrades(scale.grades);
+    }
+  }, [open, scale]);
 
   const addGrade = () =>
     setGrades((g) => [
@@ -66,48 +77,46 @@ export const CreateGradeScaleDialog: React.FC<CreateGradeScaleDialogProps> = ({
       ),
     );
 
-  const resetForm = () => {
-    setScaleName("");
-    setGrades([
-      {
-        id: uuidV4(),
-        name: "",
-        minPercentage: 0,
-        maxPercentage: 100,
-      },
-    ]);
-  };
-
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const payload: CreateGradeScaleArgs = { name: scaleName, grades };
-
+    const payload: UpdateGradeScaleArgs = {
+      id: scale.id,
+      name: scaleName,
+      grades,
+    };
     setOpen(false); // optimistic close
-
-    createMutation.mutate(payload, {
-      onSettled: resetForm,
-    });
+    save(payload);
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
+
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create Grade Scale</DialogTitle>
+          <DialogTitle>Edit Grade Scale</DialogTitle>
           <DialogDescription>
-            Name your scale and define your grade ranges.
+            Change the name or grade ranges, then save.
           </DialogDescription>
+
+          <DialogClose asChild>
+            <Button
+              variant="ghost"
+              className="absolute top-4 right-4 p-2"
+              disabled={isPending}
+            >
+              <X size={16} />
+            </Button>
+          </DialogClose>
         </DialogHeader>
 
-        <form onSubmit={onSubmit} className="space-y-6">
+        <form onSubmit={onSubmit} className="space-y-6 pt-4">
           {/* Scale Name */}
           <div>
             <label className="mb-1 block font-medium">Scale Name</label>
             <Input
               value={scaleName}
               onChange={(e) => setScaleName(e.target.value)}
-              placeholder="e.g. High-Distinction Scale"
               required
               disabled={isPending}
             />
@@ -124,8 +133,8 @@ export const CreateGradeScaleDialog: React.FC<CreateGradeScaleDialogProps> = ({
                 </TooltipTrigger>
                 <TooltipContent className="max-w-sm">
                   <p>
-                    Percentages will not be rounded. If your range is 90–100%, a
-                    score of 89.9% will not qualify.
+                    Percentages won’t be rounded. If your range is 90–100%,
+                    89.9% won’t qualify.
                   </p>
                 </TooltipContent>
               </Tooltip>
@@ -163,7 +172,7 @@ export const CreateGradeScaleDialog: React.FC<CreateGradeScaleDialogProps> = ({
                     step={1}
                     value={g.minPercentage}
                     onChange={(e) =>
-                      updateGrade(i, "minPercentage", Number(e.target.value))
+                      updateGrade(i, "minPercentage", e.target.value)
                     }
                     disabled={isPending}
                   />
@@ -176,7 +185,7 @@ export const CreateGradeScaleDialog: React.FC<CreateGradeScaleDialogProps> = ({
                     step={1}
                     value={g.maxPercentage}
                     onChange={(e) =>
-                      updateGrade(i, "maxPercentage", Number(e.target.value))
+                      updateGrade(i, "maxPercentage", e.target.value)
                     }
                     disabled={isPending}
                   />
@@ -205,7 +214,7 @@ export const CreateGradeScaleDialog: React.FC<CreateGradeScaleDialogProps> = ({
               </Button>
             </DialogClose>
             <Button type="submit" disabled={isPending}>
-              {isPending ? "Saving..." : "Save Scale"}
+              {isPending ? "Saving..." : "Save Changes"}
             </Button>
           </DialogFooter>
         </form>

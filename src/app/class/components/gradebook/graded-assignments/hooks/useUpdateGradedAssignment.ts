@@ -1,4 +1,4 @@
-// src/app/class/components/gradebook/hooks/useUpdateGradedAssignment.ts
+// src\app\class\components\gradebook\graded-assignments\hooks\useUpdateGradedAssignment.ts
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -20,25 +20,12 @@ export function useUpdateGradedAssignment(classId: string) {
   const queryClient = useQueryClient();
   const qKey = ["graded_assignments", classId] as const;
 
-  return useMutation<
-    // ← the server action returns Promise<string> (the assignment ID)
-    string,
-    unknown,
-    UpdateGradedAssignmentArgs,
-    Context
-  >({
-    // 1) call your server‐action
+  return useMutation<string, unknown, UpdateGradedAssignmentArgs, Context>({
     mutationFn: (args) => updateGradedAssignment(args),
-
-    // 2) optimistic patch
     onMutate: (args) => {
-      // cancel any in‐flight fetches
       void queryClient.cancelQueries({ queryKey: qKey });
-
-      // snapshot
       const previous = queryClient.getQueryData<Assignment[]>(qKey) ?? [];
 
-      // build our “updated” version
       const updated: Assignment = {
         id: args.id,
         user_id: previous.find((a) => a.id === args.id)?.user_id ?? "",

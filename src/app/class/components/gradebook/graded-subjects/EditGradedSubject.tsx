@@ -30,10 +30,10 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 
-import type { Assignment } from "./GradedAssignmentsList";
 import { GradeScaleOptions } from "@/app/api/queryOptions";
 import { useUpdateGradedSubject } from "./hooks/useUpdateGradedSubject";
 import type { GradedSubject } from "@/server/db/types";
+import type { Assignment } from "../graded-assignments/GradedAssignmentsList";
 
 interface EditGradedSubjectDialogProps {
   subject: GradedSubject;

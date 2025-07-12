@@ -1,10 +1,10 @@
-// src/app/class/components/gradebook/hooks/useDeleteGradedAssignment.ts
+// src\app\class\components\gradebook\graded-assignments\hooks\useDeleteGradedAssignment.ts
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { deleteGradedAssignment } from "../actions/deleteGradedAssignment";
-import type { Assignment } from "../GradedAssignmentsList";
 import { toast } from "sonner";
+import type { Assignment } from "../GradedAssignmentsList";
+import { deleteGradedAssignment } from "../actions/deleteGradedAssignment";
 
 interface Context {
   previous?: Assignment[];

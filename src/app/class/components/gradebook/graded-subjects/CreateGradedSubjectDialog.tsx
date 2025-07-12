@@ -31,9 +31,9 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 
-import type { Assignment } from "./GradedAssignmentsList";
 import { GradeScaleOptions } from "@/app/api/queryOptions";
 import { useCreateGradedSubject } from "./hooks/useCreateGradedSubject";
+import type { Assignment } from "../graded-assignments/GradedAssignmentsList";
 
 interface CreateGradedSubjectDialogProps {
   classId: string;
