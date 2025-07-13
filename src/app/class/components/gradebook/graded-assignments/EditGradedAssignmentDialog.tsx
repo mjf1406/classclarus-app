@@ -40,8 +40,8 @@ interface EditGradedAssignmentDialogProps {
     id: string;
     name: string;
     total_points: number | null;
-    created_date: string;
-    updated_date: string;
+    created_date?: string | undefined | null;
+    updated_date?: string | undefined | null;
     scores: AssignmentScore[];
     sections: {
       id: string;

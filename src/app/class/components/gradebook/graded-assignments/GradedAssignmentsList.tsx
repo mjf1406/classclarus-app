@@ -44,6 +44,7 @@ import { ClassByIdOptions } from "@/app/api/queryOptions";
 import { useDeleteGradedAssignment } from "./hooks/useDeleteGradedAssignment";
 import ScoresModal from "../score-modal/ScoresModal";
 import { CreateGradedAssignmentDialog } from "./CreateGradedAssignmentDialogFuck";
+import { sqlTimestampToLocaleString } from "@/lib/utils";
 
 export interface Section {
   id: string;
@@ -58,8 +59,8 @@ export interface Assignment {
   class_id: string;
   name: string;
   total_points: number | null;
-  created_date: string;
-  updated_date: string;
+  created_date?: string | undefined | null;
+  updated_date?: string | undefined | null;
   sections: Section[];
   scores: AssignmentScore[];
 }
@@ -209,11 +210,11 @@ function AssignmentCard({
         <dl className="grid grid-cols-2 gap-4 text-sm">
           <div>
             <dt className="font-medium">Created</dt>
-            <dd>{new Date(a.created_date).toLocaleString()}</dd>
+            <dd>{sqlTimestampToLocaleString(a.created_date!)}</dd>
           </div>
           <div>
             <dt className="font-medium">Updated</dt>
-            <dd>{new Date(a.updated_date).toLocaleString()}</dd>
+            <dd>{sqlTimestampToLocaleString(a.updated_date!)}</dd>
           </div>
         </dl>
 

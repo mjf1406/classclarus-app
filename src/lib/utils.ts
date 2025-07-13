@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { DateTime } from "luxon";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -33,4 +34,22 @@ export function formatDateTime(input: string | Date): string {
     `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
     ` ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
   );
+}
+
+export function sqlTimestampToLocaleString(sqlTimestamp: string): string {
+  // pull user’s locale & timezone from the browser
+  const { locale, timeZone } = Intl.DateTimeFormat().resolvedOptions();
+
+  // by annotating `dt` as DateTime, ESLint knows
+  // we're not calling an `any` or `unknown` here
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+  const dt: DateTime = DateTime.fromSQL(sqlTimestamp, { zone: "UTC" }) // parse as UTC
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    .setZone(timeZone) // convert to user's tz
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    .setLocale(locale); // apply user's locale
+
+  // returns something like "Jul 13, 2025, 3:55:39 AM"
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+  return dt.toLocaleString(DateTime.DATETIME_MED_WITH_SECONDS);
 }

@@ -40,8 +40,6 @@ export async function createGradedAssignment(args: CreateGradedAssignmentArgs) {
       class_id: args.class_id,
       name: args.name,
       total_points: args.total_points ?? null,
-      created_date: formatDateTime(new Date()),
-      updated_date: formatDateTime(new Date()),
     });
 
     // 2) Insert each section

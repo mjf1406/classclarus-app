@@ -34,8 +34,6 @@ export function useCreateGradedAssignment(classId: string) {
         class_id: payload.class_id,
         name: payload.name,
         total_points: payload.total_points ?? 0,
-        created_date: new Date().toISOString(),
-        updated_date: new Date().toISOString(),
         scores: [],
         sections: payload.sections.map((s) => ({
           id: uuidV4(),

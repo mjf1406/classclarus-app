@@ -32,10 +32,6 @@ export function useUpdateGradedAssignment(classId: string) {
         class_id: args.class_id,
         name: args.name ?? "",
         total_points: args.total_points ?? 0,
-        created_date:
-          previous.find((a) => a.id === args.id)?.created_date ??
-          new Date().toISOString(),
-        updated_date: new Date().toISOString(),
         scores: args.scores ?? [],
         sections: args.sections.map((s) => ({
           id: genId(),

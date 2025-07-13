@@ -61,6 +61,7 @@ import { AssignmentReportButton } from "./AssignmentReportsPdfGenerator";
 import { useQueryState } from "nuqs";
 import CenturySkillsModal from "./CenturySkillsModal";
 import { useMemo } from "react";
+import SubjectCommentsDialog from "./SubjectCommentsDialog";
 
 interface ReportsListProps {
   classId: string | null;
@@ -217,10 +218,16 @@ function ReportCard({ report, classId }: { report: Report; classId: string }) {
               }
             />
 
-            <Button variant={"secondary"} className="bg-secondary/70">
-              <MessageCirclePlus />{" "}
-              <span className="hidden lg:block">Subject Comments</span>
-            </Button>
+            <SubjectCommentsDialog
+              classId={classId}
+              report={report}
+              trigger={
+                <Button variant={"secondary"} className="bg-secondary/70">
+                  <MessageCirclePlus />{" "}
+                  <span className="hidden lg:block">Subject Comments</span>
+                </Button>
+              }
+            />
 
             <EditReportDialog
               classId={classId}
