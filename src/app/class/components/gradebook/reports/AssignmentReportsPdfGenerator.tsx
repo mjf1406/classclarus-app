@@ -44,6 +44,7 @@ interface AssignmentReportButtonProps {
 interface GradedSubject {
   id: string;
   graded_assignment_ids: string[];
+  section_ids: string[]; // Added this property
 }
 
 // Type for table row data
@@ -141,22 +142,40 @@ export function AssignmentReportButton({
     }
 
     setIsGenerating(true);
-    setDialogOpen(false);
 
     try {
-      // Get assignment IDs from the report's graded subjects
+      // Get both assignment IDs and section IDs from the report's graded subjects
+      // Get both assignment IDs and section IDs from the report's graded subjects
       const assignmentIds = new Set<string>();
+      const includedSectionIds = new Set<string>();
+
       report.graded_subjects.forEach((subjectId) => {
         const subject = gradedSubjects.find((s) => s.id === subjectId);
         if (subject) {
-          subject.graded_assignment_ids.forEach((id) => assignmentIds.add(id));
+          // Add assignments that are fully included
+          subject.graded_assignment_ids.forEach((id: string) =>
+            assignmentIds.add(id),
+          );
+          // Add individual sections that are included
+          subject.section_ids.forEach((id: string) =>
+            includedSectionIds.add(id),
+          );
         }
       });
 
-      // Filter assignments to only those in the report
-      const reportAssignments = gradedAssignments.filter((assignment) =>
-        assignmentIds.has(assignment.id),
-      );
+      // Filter assignments to include:
+      // 1. Assignments fully included in subjects
+      // 2. Assignments that have at least one section included in the report
+      // Keep ALL sections for any included assignment
+      const reportAssignments = gradedAssignments.filter((assignment) => {
+        // Include if the whole assignment is included
+        if (assignmentIds.has(assignment.id)) return true;
+
+        // Include if any of its sections are included
+        return assignment.sections.some((section) =>
+          includedSectionIds.has(section.id),
+        );
+      });
 
       if (reportAssignments.length === 0) {
         alert("No assignments found for this report.");
