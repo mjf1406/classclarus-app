@@ -39,6 +39,7 @@ interface AssignmentReportButtonProps {
   };
   classId: string;
   className: string;
+  trigger: React.ReactNode;
 }
 
 interface GradedSubject {
@@ -72,6 +73,7 @@ export function AssignmentReportButton({
   report,
   classId,
   className,
+  trigger,
 }: AssignmentReportButtonProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -397,26 +399,14 @@ export function AssignmentReportButton({
       alert("Failed to generate PDF. Please try again.");
     } finally {
       setIsGenerating(false);
+      setDialogOpen(false);
     }
   };
 
   return (
     <>
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogTrigger asChild>
-          <Button
-            disabled={isGenerating || !gradedAssignments || !classDetail}
-            size="sm"
-            variant="secondary"
-          >
-            {isGenerating ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Download className="h-4 w-4" />
-            )}
-            {isGenerating ? "Generating..." : "Assignment Reports"}
-          </Button>
-        </DialogTrigger>
+        <DialogTrigger asChild>{trigger}</DialogTrigger>
 
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -473,7 +463,7 @@ export function AssignmentReportButton({
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={generatePDF}>Generate PDF</Button>
+            <Button onClick={generatePDF}>Download PDF</Button>
           </div>
         </DialogContent>
       </Dialog>

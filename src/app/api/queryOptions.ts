@@ -10,6 +10,7 @@ import type {
 } from "@/server/db/types";
 import { queryOptions } from "@tanstack/react-query";
 import type { Assignment } from "../class/components/gradebook/graded-assignments/GradedAssignmentsList";
+import type { CenturySkill } from "@/server/db/schema";
 
 export type TeacherClassDetail = {
   teacherAssignment: TeacherClass;
@@ -150,6 +151,23 @@ export const ReportOptions = (classId: string | null) =>
         throw new Error("Failed to load report data. Please refresh the page.");
       }
       return (await response.json()) as Report[];
+    },
+    staleTime: 1000 * 60 * 30, // 30 minutes
+  });
+
+export const CenturySkillsOptions = (classId: string | null) =>
+  queryOptions<CenturySkill[]>({
+    queryKey: ["century_skills", classId],
+    queryFn: async () => {
+      const response = await fetch(
+        `/api/century-skills-by-class-id?class_id=${classId}`,
+      );
+      if (!response.ok) {
+        throw new Error(
+          "Failed to load graded subjects data. Please refresh the page.",
+        );
+      }
+      return (await response.json()) as CenturySkill[];
     },
     staleTime: 1000 * 60 * 30, // 30 minutes
   });

@@ -1,4 +1,4 @@
-// components/ReportsList.tsx
+// src\app\class\components\gradebook\reports\ReportsList.tsx
 "use client";
 
 import * as React from "react";
@@ -30,11 +30,19 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import { Calculator, ChevronUp, Download, Edit, Trash2 } from "lucide-react";
+import {
+  ChevronUp,
+  Download,
+  Edit,
+  MessageCirclePlus,
+  Percent,
+  Trash2,
+} from "lucide-react";
+import { SiHyperskill } from "react-icons/si";
 
 import type {
-  Report,
   ClassDetail,
+  Report,
   StudentClassWithStudent,
 } from "@/server/db/types";
 import EditReportDialog from "./EditReportDialog";
@@ -43,13 +51,16 @@ import {
   ReportOptions,
   GradedSubjectsOptions,
   GradeScaleOptions,
-  ClassByIdOptions,
   type TeacherClassDetail,
   TeacherClassesOptions,
+  CenturySkillsOptions,
+  ClassByIdOptions,
 } from "@/app/api/queryOptions";
 import ExportGradesDialog from "./ExportGradesDialog";
 import { AssignmentReportButton } from "./AssignmentReportsPdfGenerator";
 import { useQueryState } from "nuqs";
+import CenturySkillsModal from "./CenturySkillsModal";
+import { useMemo } from "react";
 
 interface ReportsListProps {
   classId: string | null;
@@ -98,6 +109,12 @@ function ReportCard({ report, classId }: { report: Report; classId: string }) {
   const isDeleting = deleteReport.isPending;
 
   const {
+    data: centurySkills,
+    isLoading: centurySkillsLoading,
+    isError: centurySkillsError,
+  } = useQuery(CenturySkillsOptions(classId));
+
+  const {
     data: allSubjects,
     isLoading: subjectsLoading,
     isError: subjectsError,
@@ -123,6 +140,15 @@ function ReportCard({ report, classId }: { report: Report; classId: string }) {
   const [selectedScales, setSelectedScales] = React.useState<
     Record<string, string>
   >({});
+
+  const { data: classDetail, isLoading } = useQuery<ClassDetail, Error>({
+    ...ClassByIdOptions(classId),
+  });
+
+  const students = useMemo<StudentClassWithStudent[]>(
+    () => classDetail?.studentInfo ?? [],
+    [classDetail],
+  );
 
   React.useEffect(() => {
     if (allSubjects && gradeScales) {
@@ -160,8 +186,8 @@ function ReportCard({ report, classId }: { report: Report; classId: string }) {
               report={report}
               trigger={
                 <Button variant="secondary" size="sm">
-                  <Calculator />
-                  <span className="hidden sm:block">Calculate Grades</span>
+                  <Percent />
+                  <span className="hidden sm:block">Grades</span>
                 </Button>
               }
             />
@@ -170,21 +196,46 @@ function ReportCard({ report, classId }: { report: Report; classId: string }) {
               report={report}
               classId={classId}
               className={activeClass?.classInfo.class_name ?? "Unknown Class"}
+              trigger={
+                <Button variant="secondary" size="sm">
+                  <Download />
+                  <span className="hidden lg:block">Assignment Reports</span>
+                </Button>
+              }
             />
+
+            <CenturySkillsModal
+              reportId={report.id}
+              classId={classId}
+              centurySkills={centurySkills ?? []}
+              students={students}
+              trigger={
+                <Button variant={"secondary"} className="bg-secondary/70">
+                  <SiHyperskill />{" "}
+                  <span className="hidden lg:block">21st Century Skills</span>
+                </Button>
+              }
+            />
+
+            <Button variant={"secondary"} className="bg-secondary/70">
+              <MessageCirclePlus />{" "}
+              <span className="hidden lg:block">Subject Comments</span>
+            </Button>
 
             <EditReportDialog
               classId={classId}
               report={report}
               trigger={
                 <Button variant="outline" size="sm">
-                  <Edit /> <span className="hidden md:block">Edit</span>
+                  <Edit /> <span className="hidden lg:block">Edit</span>
                 </Button>
               }
             />
+
             <AlertDialog open={alertOpen} onOpenChange={setAlertOpen}>
               <AlertDialogTrigger asChild>
                 <Button variant="destructive" size="sm">
-                  <Trash2 /> <span className="hidden md:block">Delete</span>
+                  <Trash2 /> <span className="hidden xl:block">Delete</span>
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>

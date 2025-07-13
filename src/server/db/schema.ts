@@ -798,3 +798,40 @@ export const reports = sqliteTable(
     reports_class_id_idx: index("reports_class_id_idx").on(table.class_id),
   }),
 );
+
+export type CenturySkillAchievement = "AB" | "CD" | "P" | "NY"; // absent, consistently demonstrates, progressing, not yet
+
+export const century_skills = sqliteTable(
+  "century_skills",
+  {
+    id: text("id").notNull().primaryKey(),
+    user_id: text("user_id")
+      .notNull()
+      .references(() => users.user_id),
+    report_id: text("report_id")
+      .notNull()
+      .references(() => reports.id),
+    student_id: text("student_id")
+      .notNull()
+      .references(() => students.student_id),
+    responsibility: text("responsibility").$type<CenturySkillAchievement>(),
+    organization: text("organization").$type<CenturySkillAchievement>(),
+    collaboration: text("collaboration").$type<CenturySkillAchievement>(),
+    communication: text("communication").$type<CenturySkillAchievement>(),
+    thinking: text("thinking").$type<CenturySkillAchievement>(),
+    inquiry: text("inquiry").$type<CenturySkillAchievement>(),
+    risk_taking: text("risk_taking").$type<CenturySkillAchievement>(),
+    open_minded: text("open_minded").$type<CenturySkillAchievement>(),
+  },
+  (table) => ({
+    century_skill_user_id_idx: index("century_skill_user_id_idx").on(
+      table.user_id,
+    ),
+    century_skills_report_id_idx: index("century_skills_report_id_idx").on(
+      table.report_id,
+    ),
+  }),
+);
+
+export type CenturySkill = typeof century_skills.$inferSelect;
+export type NewCenturySkill = typeof century_skills.$inferInsert;

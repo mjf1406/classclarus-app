@@ -9,6 +9,7 @@
 
 ### 2025/07/13
 
+- Feature: 21st Century Skills - added a modal to input these on a report-basis
 - Feature: Export Grades CSV - the user can now export the calculated grades as a CSV with an empty column between each subject and students as the rows.
 - Feature: Export Grades CSV - on export, first is the above CSV, then a CSV with the grade label and then the comment from s1-comments.json in the next cell to the right.
 - Feature: Download Student Reports - downloads a PDF that has 2 students per page and lists out all the assignments for that student and their scores by section and total and grade. Has student name and number at the top.
