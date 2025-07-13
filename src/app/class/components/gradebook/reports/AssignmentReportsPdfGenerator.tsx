@@ -128,7 +128,8 @@ export function AssignmentReportButton({
       }
 
       const students = classDetail.studentInfo;
-      const doc = new jsPDF("portrait", "mm", "a4");
+      //   const doc = new jsPDF("portrait", "mm", "a4");
+      const doc = new jsPDF("landscape", "mm", "a4");
       let isFirstPage = true;
 
       students.forEach((student) => {
