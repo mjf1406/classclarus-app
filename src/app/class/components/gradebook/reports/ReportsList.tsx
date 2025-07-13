@@ -30,21 +30,6 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import {
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogClose,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
 import { Calculator, ChevronUp, Download, Edit, Trash2 } from "lucide-react";
 
 import type {
@@ -59,8 +44,12 @@ import {
   GradedSubjectsOptions,
   GradeScaleOptions,
   ClassByIdOptions,
+  type TeacherClassDetail,
+  TeacherClassesOptions,
 } from "@/app/api/queryOptions";
 import ExportGradesDialog from "./ExportGradesDialog";
+import { AssignmentReportButton } from "./AssignmentReportsPdfGenerator";
+import { useQueryState } from "nuqs";
 
 interface ReportsListProps {
   classId: string | null;
@@ -115,11 +104,15 @@ function ReportCard({ report, classId }: { report: Report; classId: string }) {
   } = useQuery(GradedSubjectsOptions(classId));
 
   const {
-    data: classDetail,
-    isLoading: studentsLoading,
-    isError: studentsError,
-  } = useQuery<ClassDetail, Error>({ ...ClassByIdOptions(classId) });
-  const students = classDetail?.studentInfo ?? [];
+    data: teacherClasses,
+    isLoading: teacherClassesLoading,
+    isError: teacherClassesIsError,
+    error: teacherClassesError,
+  } = useQuery<TeacherClassDetail[]>(TeacherClassesOptions);
+  const [currentClassId, setCurrentClassId] = useQueryState("class_id");
+  const activeClass = teacherClasses?.find(
+    (i) => i.classInfo.class_id === currentClassId,
+  );
 
   const {
     data: gradeScales,
@@ -172,6 +165,13 @@ function ReportCard({ report, classId }: { report: Report; classId: string }) {
                 </Button>
               }
             />
+
+            <AssignmentReportButton
+              report={report}
+              classId={classId}
+              className={activeClass?.classInfo.class_name ?? "Unknown Class"}
+            />
+
             <EditReportDialog
               classId={classId}
               report={report}

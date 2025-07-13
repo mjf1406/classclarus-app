@@ -5,14 +5,13 @@
 - UX: alert the user to instances of "...not progressing at the expected rate..." according to RAZ Plus. This means that if the student does not level up after 2 assessments, they get added to the RTI list.
 - DB: added Teams
 
-- Feature: Download Student Reports - downloads a PDF that has 2 students per page and lists out all the assignments for that student and their scores by section and total and grade. Has student name and number at the top.
-
 ## Change Log
 
 ### 2025/07/13
 
 - Feature: Export Grades CSV - the user can now export the calculated grades as a CSV with an empty column between each subject and students as the rows.
 - Feature: Export Grades CSV - on export, first is the above CSV, then a CSV with the grade label and then the comment from s1-comments.json in the next cell to the right.
+- Feature: Download Student Reports - downloads a PDF that has 2 students per page and lists out all the assignments for that student and their scores by section and total and grade. Has student name and number at the top.
 
 ### 2025/07/12
 
