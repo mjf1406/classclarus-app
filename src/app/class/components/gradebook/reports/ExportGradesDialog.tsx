@@ -416,6 +416,37 @@ export default function ExportGradesDialog({
     a2.download = `${activeClass?.classInfo.class_name} - ${report.name} report - grades with comments.csv`;
     a2.click();
     URL.revokeObjectURL(url2);
+
+    // --- plain-text version of grades with comments ---
+    const lines: string[] = [];
+    students.forEach((stu) => {
+      // student header
+      lines.push(
+        `${stu.student_number ?? ""}\t${stu.student_name_first_en}\t${stu.student_name_last_en}`,
+      );
+      lines.push("");
+      subjectsList.forEach((s) => {
+        const cell = gradeInfo[s.id]![stu.student_id];
+        const lvl = parseInt(cell!.label, 10) || 0;
+        const subjKey = normalizeSubject(s.name);
+        const comment = commentMap[subjKey]?.[lvl] ?? "";
+        // subject & grade line
+        lines.push(`${s.name}: ${cell?.label}\t`);
+        // bullet-list comments
+        comment.split("\n").forEach((line) => lines.push(line));
+        lines.push("");
+      });
+      // blank line between students
+      lines.push("");
+    });
+    const textContent = lines.join("\n");
+    const blob3 = new Blob([textContent], { type: "text/plain" });
+    const url3 = URL.createObjectURL(blob3);
+    const a3 = document.createElement("a");
+    a3.href = url3;
+    a3.download = `${activeClass?.classInfo.class_name} - ${report.name} - grades with comments.txt`;
+    a3.click();
+    URL.revokeObjectURL(url3);
   };
 
   return (
