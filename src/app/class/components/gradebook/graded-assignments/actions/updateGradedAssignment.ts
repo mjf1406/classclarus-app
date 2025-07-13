@@ -8,7 +8,8 @@ import type { AssignmentScore } from "@/server/db/types";
 import { and, eq, not, inArray } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { auth } from "@clerk/nextjs/server";
-import { formatDateTime } from "@/lib/utils";
+import { formatDateTime, tursoDateTime } from "@/lib/utils";
+import { DateTime } from "luxon";
 
 export type UpdateGradedAssignmentArgs = {
   id: string;
@@ -47,7 +48,7 @@ export async function updateGradedAssignment(
         ...(args.name !== undefined ? { name: args.name } : {}),
         total_points:
           args.total_points !== undefined ? args.total_points : null,
-        updated_date: formatDateTime(new Date()),
+        updated_date: tursoDateTime(),
       })
       .where(eq(graded_assignments.id, args.id));
 
