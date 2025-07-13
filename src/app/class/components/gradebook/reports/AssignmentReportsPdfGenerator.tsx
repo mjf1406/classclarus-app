@@ -2,8 +2,18 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Download, Loader2 } from "lucide-react";
+import { Download, Loader2, Settings } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import jsPDF from "jspdf";
 // cSpell:ignore autotable
 import autoTable from "jspdf-autotable";
@@ -39,6 +49,9 @@ interface GradedSubject {
 // Type for table row data
 type TableRowData = (string | number)[];
 
+// Print layout options
+type PrintLayout = "normal" | "2-per-sheet" | "4-per-sheet";
+
 // Query options for graded subjects
 const GradedSubjectsOptions = (classId: string | null) => ({
   queryKey: ["graded_subjects", classId],
@@ -60,6 +73,8 @@ export function AssignmentReportButton({
   className,
 }: AssignmentReportButtonProps) {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [printLayout, setPrintLayout] = useState<PrintLayout>("normal");
 
   const { data: gradedAssignments } = useQuery(
     GradedAssignmentOptions(classId),
@@ -95,6 +110,26 @@ export function AssignmentReportButton({
     return { mean, median, stdDev, max };
   };
 
+  const addBlankPages = (
+    doc: jsPDF,
+    currentPageCount: number,
+    targetMultiple: number,
+  ) => {
+    const remainder = currentPageCount % targetMultiple;
+    if (remainder !== 0) {
+      const pagesToAdd = targetMultiple - remainder;
+      for (let i = 0; i < pagesToAdd; i++) {
+        doc.addPage();
+        // Add a subtle "blank page" indicator
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(200, 200, 200);
+        doc.text("(Blank page for printing alignment)", 20, 20);
+        doc.setTextColor(0, 0, 0); // Reset color
+      }
+    }
+  };
+
   const generatePDF = async () => {
     if (
       !gradedAssignments ||
@@ -106,6 +141,7 @@ export function AssignmentReportButton({
     }
 
     setIsGenerating(true);
+    setDialogOpen(false);
 
     try {
       // Get assignment IDs from the report's graded subjects
@@ -128,15 +164,16 @@ export function AssignmentReportButton({
       }
 
       const students = classDetail.studentInfo;
-      //   const doc = new jsPDF("portrait", "mm", "a4");
       const doc = new jsPDF("landscape", "mm", "a4");
-      let isFirstPage = true;
 
-      students.forEach((student) => {
-        if (!isFirstPage) {
-          doc.addPage();
-        }
-        isFirstPage = false;
+      // Remove the initial blank page
+      doc.deletePage(1);
+
+      students.forEach((student, studentIndex) => {
+        const pageCountBeforeStudent = doc.getNumberOfPages();
+
+        // Add first page for this student
+        doc.addPage();
 
         // Header with student info
         doc.setFontSize(16);
@@ -312,15 +349,29 @@ export function AssignmentReportButton({
           yPosition = doc.lastAutoTable.finalY + 15;
 
           // Check if we need a new page
-          if (yPosition > 250) {
+          if (yPosition > 180) {
+            // Reduced from 250 for landscape
             doc.addPage();
             yPosition = 20;
           }
         });
+
+        // Add padding pages if needed (except for the last student)
+        if (studentIndex < students.length - 1) {
+          const studentPageCount =
+            doc.getNumberOfPages() - pageCountBeforeStudent;
+
+          if (printLayout === "2-per-sheet") {
+            addBlankPages(doc, studentPageCount, 2);
+          } else if (printLayout === "4-per-sheet") {
+            addBlankPages(doc, studentPageCount, 4);
+          }
+        }
       });
 
       // Save the PDF
-      const filename = `${className} - ${report.name} - Assignment Reports.pdf`;
+      const layoutSuffix = printLayout === "normal" ? "" : ` (${printLayout})`;
+      const filename = `${className} - ${report.name} - Assignment Reports${layoutSuffix}.pdf`;
       doc.save(filename);
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -331,18 +382,82 @@ export function AssignmentReportButton({
   };
 
   return (
-    <Button
-      onClick={generatePDF}
-      disabled={isGenerating || !gradedAssignments || !classDetail}
-      size="sm"
-      variant="secondary"
-    >
-      {isGenerating ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
-      ) : (
-        <Download className="h-4 w-4" />
-      )}
-      {isGenerating ? "Generating..." : "Assignment Reports"}
-    </Button>
+    <>
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogTrigger asChild>
+          <Button
+            disabled={isGenerating || !gradedAssignments || !classDetail}
+            size="sm"
+            variant="secondary"
+          >
+            {isGenerating ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+            {isGenerating ? "Generating..." : "Assignment Reports"}
+          </Button>
+        </DialogTrigger>
+
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Settings className="h-5 w-5" />
+              Print Layout Settings
+            </DialogTitle>
+            <DialogDescription>
+              Choose your print layout to optimize paper usage. The PDF will
+              automatically add blank pages to ensure each student&apos;s report
+              starts on a new physical sheet.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <Label htmlFor="print-layout">Print Layout</Label>
+            <RadioGroup
+              value={printLayout}
+              onValueChange={(value) => setPrintLayout(value as PrintLayout)}
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="normal" id="normal" />
+                <Label htmlFor="normal" className="flex-1">
+                  <div className="font-medium">Normal (1 page per sheet)</div>
+                  <div className="text-muted-foreground text-sm">
+                    Standard printing, no optimization
+                  </div>
+                </Label>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="2-per-sheet" id="2-per-sheet" />
+                <Label htmlFor="2-per-sheet" className="flex-1">
+                  <div className="font-medium">2 pages per sheet</div>
+                  <div className="text-muted-foreground text-sm">
+                    Each student uses an even number of pages
+                  </div>
+                </Label>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="4-per-sheet" id="4-per-sheet" />
+                <Label htmlFor="4-per-sheet" className="flex-1">
+                  <div className="font-medium">4 pages per sheet</div>
+                  <div className="text-muted-foreground text-sm">
+                    Each student uses a multiple of 4 pages
+                  </div>
+                </Label>
+              </div>
+            </RadioGroup>
+          </div>
+
+          <div className="flex justify-end space-x-2 pt-4">
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={generatePDF}>Generate PDF</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
