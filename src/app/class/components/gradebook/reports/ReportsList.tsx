@@ -62,6 +62,7 @@ import { useQueryState } from "nuqs";
 import CenturySkillsModal from "./CenturySkillsModal";
 import { useMemo } from "react";
 import SubjectCommentsDialog from "./SubjectCommentsDialog";
+import { useAuth } from "@clerk/nextjs";
 
 interface ReportsListProps {
   classId: string | null;
@@ -105,6 +106,8 @@ function ReportCard({ report, classId }: { report: Report; classId: string }) {
   const [sectionsOpen, setSectionsOpen] = React.useState(false);
   const [alertOpen, setAlertOpen] = React.useState(false);
   const [exportOpen, setExportOpen] = React.useState(false);
+  const { userId } = useAuth();
+  if (!userId) throw new Error("Not authenticated");
 
   const deleteReport = useDeleteReport(classId);
   const isDeleting = deleteReport.isPending;
@@ -136,7 +139,7 @@ function ReportCard({ report, classId }: { report: Report; classId: string }) {
     data: gradeScales,
     isLoading: scalesLoading,
     isError: scalesError,
-  } = useQuery(GradeScaleOptions());
+  } = useQuery(GradeScaleOptions(userId));
 
   const [selectedScales, setSelectedScales] = React.useState<
     Record<string, string>
@@ -219,7 +222,6 @@ function ReportCard({ report, classId }: { report: Report; classId: string }) {
             />
 
             <SubjectCommentsDialog
-              classId={classId}
               report={report}
               trigger={
                 <Button variant={"secondary"} className="bg-secondary/70">

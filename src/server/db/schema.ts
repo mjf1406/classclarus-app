@@ -835,3 +835,34 @@ export const century_skills = sqliteTable(
 
 export type CenturySkill = typeof century_skills.$inferSelect;
 export type NewCenturySkill = typeof century_skills.$inferInsert;
+
+export const subject_comments = sqliteTable(
+  "subject_comments",
+  {
+    id: text("id").notNull().primaryKey(),
+    user_id: text("user_id")
+      .notNull()
+      .references(() => users.user_id),
+    report_id: text("report_id")
+      .notNull()
+      .references(() => reports.id),
+    comments: text("comments").notNull(),
+    created_date: text("created_date")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    updated_date: text("updated_date")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+  },
+  (table) => ({
+    subject_comments_user_id_idx: index("subject_comments_user_id_idx").on(
+      table.user_id,
+    ),
+    subject_comments_report_id_idx: index("subject_comments_report_id_idx").on(
+      table.report_id,
+    ),
+  }),
+);
+
+export type SubjectComment = typeof subject_comments.$inferInsert;
+export type NewSubjectComment = typeof subject_comments.$inferInsert;

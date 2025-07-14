@@ -27,6 +27,7 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { useDeleteGradeScale } from "./hooks/useDeleteGradeScale";
+import { useAuth } from "@clerk/nextjs";
 
 interface GradeScaleManagerDialogProps {
   trigger: ReactNode;
@@ -35,11 +36,13 @@ interface GradeScaleManagerDialogProps {
 export function GradeScaleManagerDialog({
   trigger,
 }: GradeScaleManagerDialogProps) {
+  const { userId } = useAuth();
+  if (!userId) throw new Error("Not authenticated");
   const {
     data: gradeScales,
     isLoading,
     isError,
-  } = useQuery(GradeScaleOptions());
+  } = useQuery(GradeScaleOptions(userId));
   const { mutate: deleteScale, isPending: isDeleting } = useDeleteGradeScale();
 
   return (

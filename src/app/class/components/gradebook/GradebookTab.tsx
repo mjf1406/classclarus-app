@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { GradedAssignmentOptions, ReportOptions } from "@/app/api/queryOptions";
 import LoaderSmallInline from "@/components/loaders/LoaderSmall";
 import { Button } from "@/components/ui/button";
-import { MessageSquareDashed, NotepadText, Scale, Tag } from "lucide-react";
+import { NotepadText, Scale, Tag } from "lucide-react";
 import { GradedSubjectManagerDialog } from "./graded-assignments/GradedSubjectManager";
 import type { Assignment } from "./graded-assignments/GradedAssignmentsList";
 import { GradeScaleManagerDialog } from "./grade-scales/GradeScaleManager";
@@ -112,13 +112,6 @@ const GradebookTab: React.FC<GradebookTabProps> = ({ classId }) => {
                 </Button>
               }
             />
-
-            {/* <Button variant={"outline"}>
-                <MessageSquareDashed />
-                <span className="hidden md:block">
-                  Subject Achievement Comments
-                </span>
-              </Button> */}
           </div>
           <ReportsList classId={classId} />
         </TabsContent>

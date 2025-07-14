@@ -3,8 +3,8 @@
 import React, { useRef } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { useLocalStorage } from "@uidotdev/usehooks";
 import sillyMonkey from "public/img/silly-monkey.png";
+import { useSSRSafeLocalStorage } from "@/hooks/useSsrSafeLocalStorage";
 
 interface StudentImageProps {
   className?: string;
@@ -12,7 +12,10 @@ interface StudentImageProps {
 
 export function StudentImage({ className = "" }: StudentImageProps) {
   // Store the image data in local storage
-  const [imageData, setImageData] = useLocalStorage<string>("studentImage", "");
+  const [imageData, setImageData] = useSSRSafeLocalStorage<string>(
+    "studentImage",
+    "",
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const triggerFileInput = () => {

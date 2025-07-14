@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useLocalStorage } from "@uidotdev/usehooks";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import type { IconName, IconPrefix } from "@fortawesome/fontawesome-svg-core";
+import { useSSRSafeLocalStorage } from "@/hooks/useSsrSafeLocalStorage";
 
 // We extend our PositionStyle with an optional 'side' field
 interface PositionStyle {
@@ -23,7 +23,7 @@ interface SelectedIcon {
 
 const StudentIconDecoration: React.FC = () => {
   // Retrieve the selected icon from localStorage.
-  const [selectedIcon] = useLocalStorage<SelectedIcon | null>(
+  const [selectedIcon] = useSSRSafeLocalStorage<SelectedIcon | null>(
     "selectedIcon",
     null,
   );

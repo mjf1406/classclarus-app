@@ -43,6 +43,7 @@ import commentsData from "@/app/class/components/gradebook/subject-acheivement-c
 import { useQueryState } from "nuqs";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
+import { useAuth } from "@clerk/nextjs";
 
 interface ExportGradesDialogProps {
   classId: string;
@@ -64,6 +65,8 @@ export default function ExportGradesDialog({
   // Helper to strip any "XXX - " prefix and lowercase
   const normalizeSubject = (s: string) =>
     s.split(" - ").pop()!.trim().toLowerCase();
+  const { userId } = useAuth();
+  if (!userId) throw new Error("Not authenticated");
 
   // 1) students
   const {
@@ -98,7 +101,7 @@ export default function ExportGradesDialog({
     data: gradeScales,
     isLoading: scalesLoading,
     isError: scalesError,
-  } = useQuery(GradeScaleOptions());
+  } = useQuery(GradeScaleOptions(userId));
 
   // 4) assignments
   const {

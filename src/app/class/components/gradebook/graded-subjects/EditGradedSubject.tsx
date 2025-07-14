@@ -34,6 +34,7 @@ import { GradeScaleOptions } from "@/app/api/queryOptions";
 import { useUpdateGradedSubject } from "./hooks/useUpdateGradedSubject";
 import type { GradedSubject } from "@/server/db/types";
 import type { Assignment } from "../graded-assignments/GradedAssignmentsList";
+import { useAuth } from "@clerk/nextjs";
 
 interface EditGradedSubjectDialogProps {
   subject: GradedSubject;
@@ -49,6 +50,8 @@ export function EditGradedSubjectDialog({
   trigger,
 }: EditGradedSubjectDialogProps) {
   const [open, setOpen] = React.useState(false);
+  const { userId } = useAuth();
+  if (!userId) throw new Error("Not authenticated");
 
   // form state
   const [name, setName] = React.useState("");
@@ -58,7 +61,7 @@ export function EditGradedSubjectDialog({
   const [selS, setSelS] = React.useState<Set<string>>(new Set());
 
   // fetch grade scales
-  const { data: scales = [] } = useQuery(GradeScaleOptions());
+  const { data: scales = [] } = useQuery(GradeScaleOptions(userId));
 
   // mutation
   const { mutate: update, isPending } = useUpdateGradedSubject(

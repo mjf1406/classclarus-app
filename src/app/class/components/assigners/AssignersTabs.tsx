@@ -13,7 +13,6 @@ interface AssignersTabProps {
 
 const AssignersTab: React.FC<AssignersTabProps> = ({ classId }) => {
   const { data, isLoading, error } = useQuery(AssignersOptions(classId));
-  console.log("🚀 ~ data:", data);
 
   if (isLoading) return <LoaderSmallInline />;
   if (error) {

@@ -7,6 +7,12 @@
 
 ## Change Log
 
+### 2025/07/14
+
+- ⭐ Milestone: everything is ready for report card generation
+- BE: query options now require a classId or a userId
+- UX: user can now upload subject comments
+
 ### 2025/07/13
 
 - Feature: 21st Century Skills - added a modal to input these on a report-basis

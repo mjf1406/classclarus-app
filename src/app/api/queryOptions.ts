@@ -10,7 +10,7 @@ import type {
 } from "@/server/db/types";
 import { queryOptions } from "@tanstack/react-query";
 import type { Assignment } from "../class/components/gradebook/graded-assignments/GradedAssignmentsList";
-import type { CenturySkill } from "@/server/db/schema";
+import type { CenturySkill, SubjectComment } from "@/server/db/schema";
 
 export type TeacherClassDetail = {
   teacherAssignment: TeacherClass;
@@ -108,9 +108,9 @@ export const GradedAssignmentOptions = (classId: string | null) =>
     // staleTime: 1000 * 60 * 30, // 30 minutes
   });
 
-export const GradeScaleOptions = () =>
+export const GradeScaleOptions = (userId: string | null) =>
   queryOptions<GradeScale[]>({
-    queryKey: ["grade_scales"],
+    queryKey: ["grade_scales", userId],
     queryFn: async () => {
       const response = await fetch(`/api/grade-scales-by-user-id`);
       if (!response.ok) {
@@ -170,4 +170,19 @@ export const CenturySkillsOptions = (classId: string | null) =>
       return (await response.json()) as CenturySkill[];
     },
     staleTime: 1000 * 60 * 30, // 30 minutes
+  });
+
+export const SubjectCommentsOptions = (userId: string) =>
+  queryOptions<SubjectComment[]>({
+    queryKey: ["subject_comments", userId],
+    queryFn: async () => {
+      const response = await fetch(`/api/subject-comments-by-user-id`);
+      if (!response.ok) {
+        throw new Error(
+          "Failed to load subject comments data. Please refresh the page.",
+        );
+      }
+      return (await response.json()) as SubjectComment[];
+    },
+    staleTime: 1000 * 60 * 30,
   });

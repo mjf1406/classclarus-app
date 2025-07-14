@@ -34,6 +34,7 @@ import {
 import { GradeScaleOptions } from "@/app/api/queryOptions";
 import { useCreateGradedSubject } from "./hooks/useCreateGradedSubject";
 import type { Assignment } from "../graded-assignments/GradedAssignmentsList";
+import { useAuth } from "@clerk/nextjs";
 
 interface CreateGradedSubjectDialogProps {
   classId: string;
@@ -48,6 +49,8 @@ export const CreateGradedSubjectDialog: React.FC<
 > = ({ classId, trigger, assignments }) => {
   // control open/close
   const [open, setOpen] = React.useState(false);
+  const { userId } = useAuth();
+  if (!userId) throw new Error("Not authenticated");
 
   // form state
   const [subjectName, setSubjectName] = React.useState("");
@@ -58,7 +61,7 @@ export const CreateGradedSubjectDialog: React.FC<
   const [selSIds, setSelSIds] = React.useState<Set<string>>(new Set());
 
   // fetch scales
-  const { data: gradeScales = [] } = useQuery(GradeScaleOptions());
+  const { data: gradeScales = [] } = useQuery(GradeScaleOptions(userId));
 
   // mutation hook
   const { mutate: createSubject, isPending } = useCreateGradedSubject(classId);
