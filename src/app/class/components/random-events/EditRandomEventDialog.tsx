@@ -93,6 +93,19 @@ export function EditRandomEventDialog({ classId, event, trigger }: Props) {
     null,
   );
 
+  React.useEffect(() => {
+    if (open) {
+      setName(event.name);
+      setDescription(event.description ?? "");
+      setImageUrl(event.image);
+      setAudioUrl(event.audio);
+      setSelected(event.selected);
+      setSelectedIcon(getInitialIcon());
+      setPendingImageFile(null);
+      setPendingAudioFile(null);
+    }
+  }, [open, event]);
+
   const isUploading = isImageUploading || isAudioUploading;
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {

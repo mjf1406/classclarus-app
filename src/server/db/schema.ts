@@ -879,10 +879,13 @@ export const random_events = sqliteTable(
       .references(() => classes.class_id),
     name: text("name").notNull(),
     description: text("description"),
-    image: text("image"), // User can upload their own image file or paste in a URL
-    audio: text("audio"), // User can upload their own audio file or paste in a URL
-    icon: text("icon"), // User can upload their own SVG or choose from StudentIconPicker
+    image: text("image"),
+    audio: text("audio"),
+    icon: text("icon"),
     selected: integer("selected", { mode: "boolean" }).notNull().default(false),
+    old_files: text("old_files", { mode: "json" })
+      .$type<string[]>()
+      .default(sql`'[]'`),
     created_date: text("created_date")
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),

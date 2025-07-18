@@ -101,6 +101,7 @@ export const CreateRandomEventDialog: React.FC<
           image: finalImageUrl,
           audio: finalAudioUrl,
           icon: selectedIcon ? JSON.stringify(selectedIcon) : null,
+          old_files: null,
           selected,
         },
         {

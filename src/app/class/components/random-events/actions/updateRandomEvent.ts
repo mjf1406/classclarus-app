@@ -23,7 +23,7 @@ export async function updateRandomEvent(
   const { userId } = await auth();
   if (!userId) throw new Error("Not authenticated");
 
-  // verify ownership
+  // verify ownership and get current data
   const existing = await db
     .select()
     .from(random_events)
@@ -34,6 +34,20 @@ export async function updateRandomEvent(
     .then((rows) => rows[0]);
   if (!existing) throw new Error("Random event not found or not yours");
 
+  // Collect old files that are being replaced
+  const oldFiles: string[] = [];
+  const currentOldFiles: string[] = existing.old_files ?? [];
+
+  if (args.image && existing.image && existing.image !== args.image) {
+    oldFiles.push(existing.image);
+  }
+  if (args.audio && existing.audio && existing.audio !== args.audio) {
+    oldFiles.push(existing.audio);
+  }
+
+  // Combine with existing old files
+  const updatedOldFiles = [...currentOldFiles, ...oldFiles];
+
   await db
     .update(random_events)
     .set({
@@ -43,6 +57,7 @@ export async function updateRandomEvent(
       audio: args.audio ?? null,
       icon: args.icon ?? null,
       selected: args.selected,
+      old_files: updatedOldFiles.length > 0 ? updatedOldFiles : [],
       updated_date: tursoDateTime(),
     })
     .where(eq(random_events.id, args.id));

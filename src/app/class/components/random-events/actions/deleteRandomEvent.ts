@@ -47,6 +47,18 @@ export async function deleteRandomEvent(id: string): Promise<void> {
     filesToDelete.push(fileKey);
   }
 
+  if (randomEvent.old_files) {
+    for (const element of randomEvent.old_files) {
+      if (element.startsWith(uploadThingPattern)) {
+        const fileKey = element.replace(uploadThingPattern, "");
+        filesToDelete.push(fileKey);
+      } else if (element.startsWith(uploadThingPatternDeprecated)) {
+        const fileKey = element.replace(uploadThingPatternDeprecated, "");
+        filesToDelete.push(fileKey);
+      }
+    }
+  }
+
   // Delete files from UploadThing if any were found
   if (filesToDelete.length > 0) {
     try {
