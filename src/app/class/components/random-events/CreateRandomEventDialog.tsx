@@ -17,11 +17,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { UploadButton } from "@/lib/uploadthing";
 import ShadcnFontAwesomeIconPicker from "@/components/ShadcnFontAwesomeIconPicker";
 import type { IconName, IconPrefix } from "@fortawesome/fontawesome-svg-core";
 import { useCreateRandomEvent } from "./hooks/useCreateRandomEvent";
+import { useUploadThing } from "@/lib/uploadthing";
 
 interface CreateRandomEventDialogProps {
   classId: string;
@@ -34,11 +33,25 @@ export const CreateRandomEventDialog: React.FC<
   const [open, setOpen] = React.useState(false);
   const { mutate, isPending } = useCreateRandomEvent(classId);
 
+  // Upload hooks
+  const { startUpload: startImageUpload, isUploading: isImageUploading } =
+    useUploadThing("imageUploader");
+  const { startUpload: startAudioUpload, isUploading: isAudioUploading } =
+    useUploadThing("audioUploader");
+
   const [name, setName] = React.useState("");
   const [description, setDescription] = React.useState("");
   const [imageUrl, setImageUrl] = React.useState<string | null>(null);
   const [audioUrl, setAudioUrl] = React.useState<string | null>(null);
   const [selected, setSelected] = React.useState(false);
+
+  // File state for pending uploads
+  const [pendingImageFile, setPendingImageFile] = React.useState<File | null>(
+    null,
+  );
+  const [pendingAudioFile, setPendingAudioFile] = React.useState<File | null>(
+    null,
+  );
 
   // local state for the chosen icon
   const [selectedIcon, setSelectedIcon] = React.useState<{
@@ -46,40 +59,98 @@ export const CreateRandomEventDialog: React.FC<
     prefix: IconPrefix;
   } | null>(null);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const isUploading = isImageUploading || isAudioUploading;
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!name.trim()) {
       toast.error("Name is required");
       return;
     }
-    setOpen(false);
-    mutate(
-      {
-        class_id: classId,
-        name: name.trim(),
-        description: description.trim() || null,
-        image: imageUrl,
-        audio: audioUrl,
-        icon: selectedIcon ? JSON.stringify(selectedIcon) : null,
-        selected,
-      },
-      {
-        onSuccess: () => {
-          setName("");
-          setDescription("");
-          setImageUrl(null);
-          setAudioUrl(null);
-          setSelected(false);
-          setSelectedIcon(null);
-          setOpen(false);
+
+    try {
+      let finalImageUrl = imageUrl;
+      let finalAudioUrl = audioUrl;
+
+      // Upload image if there's a pending file
+      if (pendingImageFile) {
+        const imageUploadResult = await startImageUpload([pendingImageFile]);
+        if (imageUploadResult?.[0]?.url) {
+          finalImageUrl = imageUploadResult[0].url;
+        } else {
+          throw new Error("Image upload failed");
+        }
+      }
+
+      // Upload audio if there's a pending file
+      if (pendingAudioFile) {
+        const audioUploadResult = await startAudioUpload([pendingAudioFile]);
+        if (audioUploadResult?.[0]?.url) {
+          finalAudioUrl = audioUploadResult[0].url;
+        } else {
+          throw new Error("Audio upload failed");
+        }
+      }
+
+      // Now create the event with the uploaded URLs
+      mutate(
+        {
+          class_id: classId,
+          name: name.trim(),
+          description: description.trim() || null,
+          image: finalImageUrl,
+          audio: finalAudioUrl,
+          icon: selectedIcon ? JSON.stringify(selectedIcon) : null,
+          selected,
         },
-        onError: (error) => {
-          console.error(error);
-          toast.error("Failed to update event");
-          setOpen(true);
+        {
+          onSuccess: () => {
+            setName("");
+            setDescription("");
+            setImageUrl(null);
+            setAudioUrl(null);
+            setSelected(false);
+            setSelectedIcon(null);
+            setPendingImageFile(null);
+            setPendingAudioFile(null);
+            setOpen(false);
+          },
+          onError: (error) => {
+            console.error(error);
+            toast.error("Failed to create event");
+          },
         },
-      },
-    );
+      );
+    } catch (error) {
+      console.error(error);
+      toast.error("Upload failed. Please try again.");
+    }
+  };
+
+  const handleImageFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPendingImageFile(file);
+      // Clear the URL input when a file is selected
+      setImageUrl(null);
+    }
+  };
+
+  const handleAudioFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPendingAudioFile(file);
+      // Clear the URL input when a file is selected
+      setAudioUrl(null);
+    }
+  };
+
+  const clearImageFile = () => {
+    setPendingImageFile(null);
+  };
+
+  const clearAudioFile = () => {
+    setPendingAudioFile(null);
   };
 
   return (
@@ -119,48 +190,72 @@ export const CreateRandomEventDialog: React.FC<
 
           {/* Image */}
           <div className="grid gap-1">
-            <Label>Image (URL or upload)</Label>
+            <Label>Image (URL or file)</Label>
             <Input
               type="url"
               placeholder="Paste image URL"
               value={imageUrl ?? ""}
               onChange={(e) => setImageUrl(e.target.value.trim() || null)}
+              disabled={!!pendingImageFile}
             />
-            <UploadButton
-              endpoint="imageUploader"
-              className="mt-2"
-              onClientUploadComplete={(res) => {
-                const first = res?.[0];
-                if (first?.url) setImageUrl(first.url);
-              }}
-              onUploadError={(err) => {
-                console.error(err);
-                toast.error("Image upload failed");
-              }}
-            />
+            <div className="flex items-center gap-2">
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={handleImageFileSelect}
+                className="flex-1"
+              />
+              {pendingImageFile && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={clearImageFile}
+                >
+                  Clear
+                </Button>
+              )}
+            </div>
+            {pendingImageFile && (
+              <p className="text-muted-foreground text-sm">
+                Selected: {pendingImageFile.name}
+              </p>
+            )}
           </div>
 
           {/* Audio */}
           <div className="grid gap-1">
-            <Label>Audio (URL or upload)</Label>
+            <Label>Audio (URL or file)</Label>
             <Input
               type="url"
               placeholder="Paste audio URL"
               value={audioUrl ?? ""}
               onChange={(e) => setAudioUrl(e.target.value.trim() || null)}
+              disabled={!!pendingAudioFile}
             />
-            <UploadButton
-              endpoint="audioUploader"
-              className="mt-2"
-              onClientUploadComplete={(res) => {
-                const first = res?.[0];
-                if (first?.url) setAudioUrl(first.url);
-              }}
-              onUploadError={(err) => {
-                console.error(err);
-                toast.error("Audio upload failed");
-              }}
-            />
+            <div className="flex items-center gap-2">
+              <Input
+                type="file"
+                accept="audio/*"
+                onChange={handleAudioFileSelect}
+                className="flex-1"
+              />
+              {pendingAudioFile && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={clearAudioFile}
+                >
+                  Clear
+                </Button>
+              )}
+            </div>
+            {pendingAudioFile && (
+              <p className="text-muted-foreground text-sm">
+                Selected: {pendingAudioFile.name}
+              </p>
+            )}
           </div>
 
           {/* Icon */}
@@ -174,10 +269,16 @@ export const CreateRandomEventDialog: React.FC<
 
           <DialogFooter className="flex justify-end space-x-2">
             <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
+              <Button variant="outline" disabled={isUploading}>
+                Cancel
+              </Button>
             </DialogClose>
-            <Button type="submit" disabled={isPending}>
-              {isPending ? "Saving…" : "Create Event"}
+            <Button type="submit" disabled={isPending || isUploading}>
+              {isUploading
+                ? "Uploading..."
+                : isPending
+                  ? "Saving..."
+                  : "Create Event"}
             </Button>
           </DialogFooter>
         </form>

@@ -2,6 +2,7 @@
 import {
   generateUploadButton,
   generateUploadDropzone,
+  generateReactHelpers,
 } from "@uploadthing/react";
 import type { OurFileRouter } from "@/app/api/uploadthing/core";
 
@@ -9,3 +10,7 @@ import type { OurFileRouter } from "@/app/api/uploadthing/core";
 // Now UploadButton/UploadDropzone know your TRouter.
 export const UploadButton = generateUploadButton<OurFileRouter>();
 export const UploadDropzone = generateUploadDropzone<OurFileRouter>();
+
+// Add the useUploadThing hook
+export const { useUploadThing, uploadFiles } =
+  generateReactHelpers<OurFileRouter>();

@@ -3,10 +3,10 @@
 import * as React from "react";
 import type { RandomEvent } from "@/server/db/schema";
 import { toast } from "sonner";
-import { useSSRSafeLocalStorage } from "@/hooks/useSsrSafeLocalStorage";
 import { useUpdateRandomEvent } from "./hooks/useUpdateRandomEvent";
-import { UploadButton } from "@/lib/uploadthing";
-import StudentIconPicker from "@/app/[classId]/[studentId]/components/StudentIconPicker";
+import { useUploadThing } from "@/lib/uploadthing";
+import ShadcnFontAwesomeIconPicker from "@/components/ShadcnFontAwesomeIconPicker";
+import type { IconName, IconPrefix } from "@fortawesome/fontawesome-svg-core";
 
 import {
   Dialog,
@@ -30,9 +30,50 @@ interface Props {
   trigger: React.ReactNode;
 }
 
+// Type for the expected icon structure
+interface IconData {
+  name: IconName;
+  prefix: IconPrefix;
+}
+
+// Type guard to check if the parsed object has the expected structure
+function isIconData(obj: unknown): obj is IconData {
+  return (
+    typeof obj === "object" &&
+    obj !== null &&
+    "name" in obj &&
+    "prefix" in obj &&
+    typeof (obj as Record<string, unknown>).name === "string" &&
+    typeof (obj as Record<string, unknown>).prefix === "string"
+  );
+}
+
 export function EditRandomEventDialog({ classId, event, trigger }: Props) {
   const [open, setOpen] = React.useState(false);
   const { mutate, isPending } = useUpdateRandomEvent(classId);
+
+  // Upload hooks
+  const { startUpload: startImageUpload, isUploading: isImageUploading } =
+    useUploadThing("imageUploader");
+  const { startUpload: startAudioUpload, isUploading: isAudioUploading } =
+    useUploadThing("audioUploader");
+
+  // Parse existing icon from event
+  const getInitialIcon = (): IconData | null => {
+    if (!event.icon) return null;
+    try {
+      const parsed: unknown = JSON.parse(event.icon);
+      if (isIconData(parsed)) {
+        return {
+          name: parsed.name,
+          prefix: parsed.prefix,
+        };
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  };
 
   // form state
   const [name, setName] = React.useState(event.name);
@@ -40,43 +81,104 @@ export function EditRandomEventDialog({ classId, event, trigger }: Props) {
   const [imageUrl, setImageUrl] = React.useState<string | null>(event.image);
   const [audioUrl, setAudioUrl] = React.useState<string | null>(event.audio);
   const [selected, setSelected] = React.useState(event.selected);
+  const [selectedIcon, setSelectedIcon] = React.useState<IconData | null>(
+    getInitialIcon(),
+  );
 
-  // reuse your StudentIconPicker + localStorage for icon
-  const [storedIcon] = useSSRSafeLocalStorage<{
-    name: string;
-    prefix: string;
-  } | null>("selectedIcon", null);
+  // File state for pending uploads
+  const [pendingImageFile, setPendingImageFile] = React.useState<File | null>(
+    null,
+  );
+  const [pendingAudioFile, setPendingAudioFile] = React.useState<File | null>(
+    null,
+  );
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const isUploading = isImageUploading || isAudioUploading;
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!name.trim()) {
       toast.error("Name is required");
       return;
     }
-    setOpen(false);
-    const iconToSave = storedIcon ? JSON.stringify(storedIcon) : event.icon;
 
-    mutate(
-      {
-        id: event.id,
-        name: name.trim(),
-        description: description.trim() ?? undefined,
-        image: imageUrl ?? undefined,
-        audio: audioUrl ?? undefined,
-        icon: iconToSave ?? undefined,
-        selected,
-      },
-      {
-        onSuccess: () => {
-          setOpen(false);
+    try {
+      let finalImageUrl = imageUrl;
+      let finalAudioUrl = audioUrl;
+
+      // Upload image if there's a pending file
+      if (pendingImageFile) {
+        const imageUploadResult = await startImageUpload([pendingImageFile]);
+        if (imageUploadResult?.[0]?.url) {
+          finalImageUrl = imageUploadResult[0].url;
+        } else {
+          throw new Error("Image upload failed");
+        }
+      }
+
+      // Upload audio if there's a pending file
+      if (pendingAudioFile) {
+        const audioUploadResult = await startAudioUpload([pendingAudioFile]);
+        if (audioUploadResult?.[0]?.url) {
+          finalAudioUrl = audioUploadResult[0].url;
+        } else {
+          throw new Error("Audio upload failed");
+        }
+      }
+
+      // Now save the event with the uploaded URLs
+      mutate(
+        {
+          id: event.id,
+          name: name.trim(),
+          description: description.trim() || undefined,
+          image: finalImageUrl ?? undefined,
+          audio: finalAudioUrl ?? undefined,
+          icon: selectedIcon ? JSON.stringify(selectedIcon) : undefined,
+          selected,
         },
-        onError: (error) => {
-          console.error(error);
-          toast.error("Failed to update event");
-          setOpen(true);
+        {
+          onSuccess: () => {
+            setOpen(false);
+            setPendingImageFile(null);
+            setPendingAudioFile(null);
+          },
+          onError: (error) => {
+            console.error(error);
+            toast.error("Failed to update event");
+          },
         },
-      },
-    );
+      );
+    } catch (error) {
+      console.error(error);
+      toast.error("Upload failed. Please try again.");
+    }
+  };
+
+  const handleImageFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPendingImageFile(file);
+      // Clear the URL input when a file is selected
+      setImageUrl(null);
+    }
+  };
+
+  const handleAudioFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPendingAudioFile(file);
+      // Clear the URL input when a file is selected
+      setAudioUrl(null);
+    }
+  };
+
+  const clearImageFile = () => {
+    setPendingImageFile(null);
+  };
+
+  const clearAudioFile = () => {
+    setPendingAudioFile(null);
   };
 
   return (
@@ -86,7 +188,8 @@ export function EditRandomEventDialog({ classId, event, trigger }: Props) {
         <DialogHeader>
           <DialogTitle>Edit Random Event</DialogTitle>
           <DialogDescription>
-            Change name, description, image/audio, icon, or “selected” state.
+            Change your event a name, optional description, image, audio, and/or
+            icon.
           </DialogDescription>
         </DialogHeader>
 
@@ -115,62 +218,81 @@ export function EditRandomEventDialog({ classId, event, trigger }: Props) {
 
           {/* Image */}
           <div className="grid gap-1">
-            <Label>Image (URL or upload)</Label>
+            <Label>Image (URL or file)</Label>
             <Input
               type="url"
               placeholder="Paste image URL"
               value={imageUrl ?? ""}
               onChange={(e) => setImageUrl(e.target.value || null)}
+              disabled={!!pendingImageFile}
             />
-            <UploadButton
-              endpoint="imageUploader"
-              className="mt-2"
-              onClientUploadComplete={(res) => {
-                const first = res?.[0];
-                if (first?.url) setImageUrl(first.url);
-              }}
-              onUploadError={(err) => {
-                console.error(err);
-                toast.error("Image upload failed");
-              }}
-            />
+            <div className="flex items-center gap-2">
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={handleImageFileSelect}
+                className="flex-1"
+              />
+              {pendingImageFile && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={clearImageFile}
+                >
+                  Clear
+                </Button>
+              )}
+            </div>
+            {pendingImageFile && (
+              <p className="text-muted-foreground text-sm">
+                Selected: {pendingImageFile.name}
+              </p>
+            )}
           </div>
 
           {/* Audio */}
           <div className="grid gap-1">
-            <Label>Audio (URL or upload)</Label>
+            <Label>Audio (URL or file)</Label>
             <Input
               type="url"
               placeholder="Paste audio URL"
               value={audioUrl ?? ""}
               onChange={(e) => setAudioUrl(e.target.value || null)}
+              disabled={!!pendingAudioFile}
             />
-            <UploadButton
-              endpoint="audioUploader"
-              className="mt-2"
-              onClientUploadComplete={(res) => {
-                const first = res?.[0];
-                if (first?.url) setAudioUrl(first.url);
-              }}
-              onUploadError={(err) => {
-                console.error(err);
-                toast.error("Audio upload failed");
-              }}
-            />
+            <div className="flex items-center gap-2">
+              <Input
+                type="file"
+                accept="audio/*"
+                onChange={handleAudioFileSelect}
+                className="flex-1"
+              />
+              {pendingAudioFile && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={clearAudioFile}
+                >
+                  Clear
+                </Button>
+              )}
+            </div>
+            {pendingAudioFile && (
+              <p className="text-muted-foreground text-sm">
+                Selected: {pendingAudioFile.name}
+              </p>
+            )}
           </div>
 
           {/* Icon */}
           <div className="grid gap-1">
             <Label>Icon</Label>
-            <StudentIconPicker />
-            {storedIcon && (
-              <div className="mt-1 flex items-center space-x-2">
-                <span>Preview:</span>
-                <i
-                  className={`${storedIcon.prefix} fa-${storedIcon.name} text-2xl`}
-                />
-              </div>
-            )}
+            <ShadcnFontAwesomeIconPicker
+              selectedIcon={selectedIcon ?? undefined}
+              onSelectIcon={(name, prefix) => setSelectedIcon({ name, prefix })}
+            />
           </div>
 
           {/* Selected */}
@@ -185,10 +307,16 @@ export function EditRandomEventDialog({ classId, event, trigger }: Props) {
 
           <DialogFooter className="flex justify-end space-x-2">
             <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
+              <Button variant="outline" disabled={isUploading}>
+                Cancel
+              </Button>
             </DialogClose>
-            <Button type="submit" disabled={isPending}>
-              {isPending ? "Saving…" : "Save Changes"}
+            <Button type="submit" disabled={isPending || isUploading}>
+              {isUploading
+                ? "Uploading..."
+                : isPending
+                  ? "Saving..."
+                  : "Save Changes"}
             </Button>
           </DialogFooter>
         </form>

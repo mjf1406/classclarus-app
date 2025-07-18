@@ -106,9 +106,10 @@ function RandomEventCard({
                 <AlertDialogHeader>
                   <AlertDialogTitle>Delete Random Event?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This will permanently delete “
-                    <span className="font-semibold">{evt.name}</span>
-                    ”. Are you sure?
+                    This will permanently delete{" "}
+                    <span className="font-semibold">{evt.name}</span> and all of
+                    its associated data, including the image and audio. This
+                    action is irreversible. Are you sure?
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter className="flex justify-end space-x-2">
