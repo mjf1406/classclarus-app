@@ -5,11 +5,15 @@
 - UX: alert the user to instances of "...not progressing at the expected rate..." according to RAZ Plus. This means that if the student does not level up after 2 assessments, they get added to the RTI list.
 - DB: added Teams
 
+- ⭐ Milestone: everything is ready for report card generation
+- UX: added weights to each graded subject.
+  - maybe have text input show up next to each thing that's checked and have the user input number from 0-100 that add up to 100?
+  - how to figure the math for them?
+
 ## Change Log
 
 ### 2025/07/14
 
-- ⭐ Milestone: everything is ready for report card generation
 - BE: query options now require a classId or a userId
 - UX: user can now upload subject comments
 

@@ -1,32 +1,35 @@
-// src/app/api/class-by-id/[classId]/route.ts
-import { type NextRequest, NextResponse } from "next/server";
+// src/app/api/random-events-by-class-id/route.ts
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { eq, and } from "drizzle-orm";
-import { assigners, teacher_classes } from "@/server/db/schema";
+import type { InferModel } from "drizzle-orm";
 import { db } from "@/server/db";
+import { random_events, teacher_classes } from "@/server/db/schema";
 
 export const revalidate = 360;
 export const dynamic = "force-dynamic";
 export const runtime = "edge";
 
+type RandomEventRow = InferModel<typeof random_events, "select">;
+
 export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
-  const classId = searchParams.get("class_id");
+  const classId = request.nextUrl.searchParams.get("class_id");
   const { userId } = await auth();
 
   if (!classId) {
     return NextResponse.json(
-      { error: "Missing 'class_id' search parameter." },
+      { error: "Missing 'class_id' param." },
       { status: 400 },
     );
   }
-
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    const teacherRecords = await db
+    // verify teacher owns the class
+    const teach = await db
       .select()
       .from(teacher_classes)
       .where(
@@ -35,24 +38,23 @@ export async function GET(request: NextRequest) {
           eq(teacher_classes.user_id, userId),
         ),
       );
-
-    if (teacherRecords.length === 0) {
+    if (teach.length === 0) {
       return NextResponse.json(
         { error: "Class not found or forbidden" },
         { status: 404 },
       );
     }
 
-    const assignersData = await db
+    // fetch events
+    const rows: RandomEventRow[] = await db
       .select()
-      .from(assigners)
-      .where(eq(assigners.user_id, userId));
+      .from(random_events)
+      .where(eq(random_events.class_id, classId));
 
-    return NextResponse.json(assignersData, { status: 200 });
-  } catch (error) {
-    console.error("Error fetching class data:", error);
-    const message =
-      error instanceof Error ? error.message : "Unknown error occurred";
+    return NextResponse.json(rows, { status: 200 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    console.error("Error fetching random events:", message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

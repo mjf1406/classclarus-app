@@ -37,6 +37,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import RandomizersTab from "./components/randomizers/RandomizerTabs";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import GradebookTab from "./components/gradebook/GradebookTab";
+import RandomEventsTab from "./components/random-events/RandomEventsTab";
 
 function useIsMdUp() {
   const [isMdUp, setIsMdUp] = React.useState(
@@ -241,13 +242,7 @@ export default function ClassPage() {
               </h2>
             </TabsContent>
             <TabsContent value="random-event">
-              <h2 className="mb-2 block text-xl font-semibold lg:hidden">
-                Random Event
-              </h2>
-              <p>
-                Randomly choose a daily event from default options or ones
-                you&apos;ve added.
-              </p>
+              <RandomEventsTab classId={classId} />
             </TabsContent>
             <TabsContent value="randomizer">
               <h2 className="mb-2 block text-xl font-semibold lg:hidden">

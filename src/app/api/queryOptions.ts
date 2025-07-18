@@ -10,7 +10,11 @@ import type {
 } from "@/server/db/types";
 import { queryOptions } from "@tanstack/react-query";
 import type { Assignment } from "../class/components/gradebook/graded-assignments/GradedAssignmentsList";
-import type { CenturySkill, SubjectComment } from "@/server/db/schema";
+import type {
+  CenturySkill,
+  RandomEvent,
+  SubjectComment,
+} from "@/server/db/schema";
 
 export type TeacherClassDetail = {
   teacherAssignment: TeacherClass;
@@ -183,6 +187,23 @@ export const SubjectCommentsOptions = (userId: string) =>
         );
       }
       return (await response.json()) as SubjectComment[];
+    },
+    staleTime: 1000 * 60 * 30,
+  });
+
+export const RandomEventsOptions = (classId: string | null) =>
+  queryOptions<RandomEvent[]>({
+    queryKey: ["random_events", classId],
+    queryFn: async () => {
+      const response = await fetch(
+        `/api/random-events-by-class-id?class_id=${classId}`,
+      );
+      if (!response.ok) {
+        throw new Error(
+          "Failed to load random events data. Please refresh the page.",
+        );
+      }
+      return (await response.json()) as RandomEvent[];
     },
     staleTime: 1000 * 60 * 30,
   });

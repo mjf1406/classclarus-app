@@ -864,5 +864,41 @@ export const subject_comments = sqliteTable(
   }),
 );
 
-export type SubjectComment = typeof subject_comments.$inferInsert;
+export type SubjectComment = typeof subject_comments.$inferSelect;
 export type NewSubjectComment = typeof subject_comments.$inferInsert;
+
+export const random_events = sqliteTable(
+  "random_events",
+  {
+    id: text("id").notNull().primaryKey(),
+    user_id: text("user_id")
+      .notNull()
+      .references(() => users.user_id),
+    class_id: text("class_id")
+      .notNull()
+      .references(() => classes.class_id),
+    name: text("name").notNull(),
+    description: text("description"),
+    image: text("image"), // User can upload their own image file or paste in a URL
+    audio: text("audio"), // User can upload their own audio file or paste in a URL
+    icon: text("icon"), // User can upload their own SVG or choose from StudentIconPicker
+    selected: integer("selected", { mode: "boolean" }).notNull().default(false),
+    created_date: text("created_date")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    updated_date: text("updated_date")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+  },
+  (table) => ({
+    random_events_user_id_idx: index("random_events_user_id_idx").on(
+      table.user_id,
+    ),
+    random_events_class_id_idx: index("random_events_class_id_idx").on(
+      table.class_id,
+    ),
+  }),
+);
+
+export type RandomEvent = typeof random_events.$inferSelect;
+export type NewRandomEvent = typeof random_events.$inferSelect;

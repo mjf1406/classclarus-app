@@ -1,0 +1,58 @@
+[
+  {
+    "name": "Pirate Party",
+    "description": "Everyone must start speaking by saying \"Arrr, matey\" in their best pirate voice.",
+    "image": "https://r051rsdjcy.ufs.sh/f/Mvjw3VCDi4AFGWLAmwnJtNWk92jA5qnPmS0brZhxFpMuaoye",
+    "audio": "https://r051rsdjcy.ufs.sh/f/Mvjw3VCDi4AFFnPChbtsoORecE4qjm9LZTuPrYgXKQVtMh53",
+    "icon": "{\"prefix\":\"fas\",\"name\":\"skull-crossbones\"}",
+    "selected": false
+  },
+  {
+    "name": "Lords and Ladies",
+    "description": "Whenever talking with someone, everyone must finish speaking by saying \"m'Lord\" to males, \"m'Lady\" to females, or whichever is their preference.",
+    "image": "https://r051rsdjcy.ufs.sh/f/Mvjw3VCDi4AFMD8V2cCDi4AFCNksZhKVSaQYTeuxLqRdc3JI",
+    "audio": "https://r051rsdjcy.ufs.sh/f/Mvjw3VCDi4AFHAiA0hyflpMCEVsSzZXLOU4tKdNrTx5H81gi",
+    "icon": "{\"prefix\":\"fas\",\"name\":\"crown\"}",
+    "selected": false
+  },
+  {
+    "name": "Meow Mix",
+    "description": "Everyone must start and stop speaking by meowing like a cat.",
+    "image": "https://r051rsdjcy.ufs.sh/f/Mvjw3VCDi4AFoj31N5B7g5jk2YSMJpiNZLxwQEszB9VuaC13",
+    "audio": "https://r051rsdjcy.ufs.sh/f/Mvjw3VCDi4AFwb2uflXYxVHZyFN3JsI4lgSqMhWXCALB1u2R",
+    "icon": "{\"prefix\":\"fas\",\"name\":\"cat\"}",
+    "selected": false
+  },
+  {
+    "name": "Thumb Master",
+    "description": "One student is secretly the “Thumb Master.” When they put their thumb on the table, everyone else must too. \n\n Everyone, close your eyes, put your head down, and plug up your ears! If you get tapped, you're the Thumb Master!",
+    "image": "https://r051rsdjcy.ufs.sh/f/Mvjw3VCDi4AFjGSUGeIfs2N3V1LpqKbAevQJZG9Uc5rtghiS",
+    "audio": "https://r051rsdjcy.ufs.sh/f/Mvjw3VCDi4AF3NPSrxwE0LyRZScFputWvKIGHV8genk549xY",
+    "icon": "{\"prefix\":\"fas\",\"name\":\"thumbs-up\"}",
+    "selected": false
+  },
+  {
+    "name": "Invisible Pets",
+    "description": "Students must pretend they have an invisible pet with them and take care of it!",
+    "image": "https://r051rsdjcy.ufs.sh/f/Mvjw3VCDi4AF2IzifLFTJQuP6otMNWKSjDACflU5ysGHZzmp",
+    "audio": "https://r051rsdjcy.ufs.sh/f/Mvjw3VCDi4AFYGsZAQRDXAeJBWul6c3NPa2yhbkOSFo8v9Gi",
+    "icon": "{\"prefix\":\"fas\",\"name\":\"paw\"}",
+    "selected": false
+  },
+  {
+    "name": "Dance Freeze",
+    "description": "Every time music plays, everyone must stand up and dance until the music stops — then freeze like statues!",
+    "image": "https://r051rsdjcy.ufs.sh/f/Mvjw3VCDi4AFeTALxEPnmAvDiqzTPyjMlQxgB8E0FbUcSdrK",
+    "audio": "https://r051rsdjcy.ufs.sh/f/Mvjw3VCDi4AFTdd3Ysm5lnejoIHAMhKdZVsqC6vS0WgDRwJm",
+    "icon": "{\"prefix\":\"fas\",\"name\":\"person-falling\"}",
+    "selected": false
+  },
+  {
+    "name": "Backwards Day",
+    "description": "Every time you walk anywhere, you must walk backwards.",
+    "image": "https://r051rsdjcy.ufs.sh/f/Mvjw3VCDi4AFI2vDDt33g1SqkLdmPaXfWDEesoHnCpNiyZl8",
+    "audio": "https://r051rsdjcy.ufs.sh/f/Mvjw3VCDi4AFmLn0TbvDxjrUiC2ay8HvekSTt015Qz4IMYVA",
+    "icon": "{\"prefix\":\"fas\",\"name\":\"person-falling\"}",
+    "selected": false
+  }
+]

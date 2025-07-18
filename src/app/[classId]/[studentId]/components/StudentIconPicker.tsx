@@ -1,3 +1,4 @@
+// src\app\[classId]\[studentId]\components\StudentIconPicker.tsx
 "use client";
 
 import React from "react";

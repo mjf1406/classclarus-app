@@ -26,7 +26,7 @@ interface FAIconPickerProps {
 }
 
 // Instead of using IconLookup from the library, we create our own type
-interface FAIcon {
+export interface FAIcon {
   prefix: IconPrefix;
   iconName: IconName;
 }
