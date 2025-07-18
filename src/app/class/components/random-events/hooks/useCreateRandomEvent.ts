@@ -10,6 +10,7 @@ import {
   type CreateRandomEventArgs,
 } from "../actions/createRandomEvent";
 import type { RandomEvent } from "@/server/db/schema";
+import { tursoDateTime } from "@/lib/utils";
 
 interface Context {
   previous?: RandomEvent[];
@@ -30,7 +31,6 @@ export function useCreateRandomEvent(classId: string) {
       const previous = queryClient.getQueryData<RandomEvent[]>(qKey) ?? [];
 
       const id = uuidV4();
-      const now = new Date().toISOString();
       const optimistic: RandomEvent = {
         id,
         user_id: userId,
@@ -41,8 +41,9 @@ export function useCreateRandomEvent(classId: string) {
         icon: args.icon ?? null,
         audio: args.audio ?? null,
         selected: args.selected ?? false,
-        created_date: now,
-        updated_date: now,
+        created_date: tursoDateTime(),
+        updated_date: tursoDateTime(),
+        old_files: [],
       };
 
       queryClient.setQueryData<RandomEvent[]>(qKey, (old = []) => [

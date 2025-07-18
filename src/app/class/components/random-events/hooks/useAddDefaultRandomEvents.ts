@@ -7,6 +7,7 @@ import { v4 as uuidV4 } from "uuid";
 import { addDefaultRandomEvents } from "../actions/addDefaultRandomEvents";
 import type { CreateRandomEventArgs } from "../actions/createRandomEvent";
 import type { RandomEvent } from "@/server/db/schema";
+import { tursoDateTime } from "@/lib/utils";
 
 // strip out class_id since we supply it in the hook
 type DefaultEvent = Omit<CreateRandomEventArgs, "class_id">;
@@ -34,7 +35,6 @@ export function useAddDefaultRandomEvents(classId: string) {
       const previous = queryClient.getQueryData<RandomEvent[]>(queryKey) ?? [];
 
       // build optimistic items
-      const now = new Date().toISOString();
       const optimistic: RandomEvent[] = events.map((evt) => ({
         id: uuidV4(),
         user_id: userId,
@@ -45,8 +45,9 @@ export function useAddDefaultRandomEvents(classId: string) {
         audio: evt.audio ?? null,
         icon: evt.icon ?? null,
         selected: evt.selected,
-        created_date: now,
-        updated_date: now,
+        old_files: [],
+        created_date: tursoDateTime(),
+        updated_date: tursoDateTime(),
       }));
 
       // update cache

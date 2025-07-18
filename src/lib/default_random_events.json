@@ -5,7 +5,8 @@
     "image": "https://r051rsdjcy.ufs.sh/f/Mvjw3VCDi4AFGWLAmwnJtNWk92jA5qnPmS0brZhxFpMuaoye",
     "audio": "https://r051rsdjcy.ufs.sh/f/Mvjw3VCDi4AFFnPChbtsoORecE4qjm9LZTuPrYgXKQVtMh53",
     "icon": "{\"prefix\":\"fas\",\"name\":\"skull-crossbones\"}",
-    "selected": false
+    "selected": false,
+    "old_files": []
   },
   {
     "name": "Lords and Ladies",
@@ -13,7 +14,8 @@
     "image": "https://r051rsdjcy.ufs.sh/f/Mvjw3VCDi4AFMD8V2cCDi4AFCNksZhKVSaQYTeuxLqRdc3JI",
     "audio": "https://r051rsdjcy.ufs.sh/f/Mvjw3VCDi4AFHAiA0hyflpMCEVsSzZXLOU4tKdNrTx5H81gi",
     "icon": "{\"prefix\":\"fas\",\"name\":\"crown\"}",
-    "selected": false
+    "selected": false,
+    "old_files": []
   },
   {
     "name": "Meow Mix",
@@ -21,7 +23,8 @@
     "image": "https://r051rsdjcy.ufs.sh/f/Mvjw3VCDi4AFoj31N5B7g5jk2YSMJpiNZLxwQEszB9VuaC13",
     "audio": "https://r051rsdjcy.ufs.sh/f/Mvjw3VCDi4AFwb2uflXYxVHZyFN3JsI4lgSqMhWXCALB1u2R",
     "icon": "{\"prefix\":\"fas\",\"name\":\"cat\"}",
-    "selected": false
+    "selected": false,
+    "old_files": []
   },
   {
     "name": "Thumb Master",
@@ -29,7 +32,8 @@
     "image": "https://r051rsdjcy.ufs.sh/f/Mvjw3VCDi4AFjGSUGeIfs2N3V1LpqKbAevQJZG9Uc5rtghiS",
     "audio": "https://r051rsdjcy.ufs.sh/f/Mvjw3VCDi4AF3NPSrxwE0LyRZScFputWvKIGHV8genk549xY",
     "icon": "{\"prefix\":\"fas\",\"name\":\"thumbs-up\"}",
-    "selected": false
+    "selected": false,
+    "old_files": []
   },
   {
     "name": "Invisible Pets",
@@ -37,7 +41,8 @@
     "image": "https://r051rsdjcy.ufs.sh/f/Mvjw3VCDi4AF2IzifLFTJQuP6otMNWKSjDACflU5ysGHZzmp",
     "audio": "https://r051rsdjcy.ufs.sh/f/Mvjw3VCDi4AFYGsZAQRDXAeJBWul6c3NPa2yhbkOSFo8v9Gi",
     "icon": "{\"prefix\":\"fas\",\"name\":\"paw\"}",
-    "selected": false
+    "selected": false,
+    "old_files": []
   },
   {
     "name": "Dance Freeze",
@@ -45,7 +50,8 @@
     "image": "https://r051rsdjcy.ufs.sh/f/Mvjw3VCDi4AFeTALxEPnmAvDiqzTPyjMlQxgB8E0FbUcSdrK",
     "audio": "https://r051rsdjcy.ufs.sh/f/Mvjw3VCDi4AFTdd3Ysm5lnejoIHAMhKdZVsqC6vS0WgDRwJm",
     "icon": "{\"prefix\":\"fas\",\"name\":\"person-falling\"}",
-    "selected": false
+    "selected": false,
+    "old_files": []
   },
   {
     "name": "Backwards Day",
@@ -53,6 +59,7 @@
     "image": "https://r051rsdjcy.ufs.sh/f/Mvjw3VCDi4AFI2vDDt33g1SqkLdmPaXfWDEesoHnCpNiyZl8",
     "audio": "https://r051rsdjcy.ufs.sh/f/Mvjw3VCDi4AFmLn0TbvDxjrUiC2ay8HvekSTt015Qz4IMYVA",
     "icon": "{\"prefix\":\"fas\",\"name\":\"person-falling\"}",
-    "selected": false
+    "selected": false,
+    "old_files": []
   }
 ]
