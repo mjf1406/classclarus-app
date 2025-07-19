@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Dices } from "lucide-react";
+import { generateSlug } from "random-word-slugs";
 
 interface RandomizerNameInputProps {
   value?: string;
@@ -12,48 +13,7 @@ interface RandomizerNameInputProps {
   placeholder?: string;
 }
 
-const adjectives = [
-  "swift",
-  "bright",
-  "clever",
-  "bold",
-  "quiet",
-  "gentle",
-  "fierce",
-  "calm",
-  "eager",
-  "brave",
-  "wise",
-  "kind",
-  "quick",
-  "strong",
-  "smooth",
-  "sharp",
-];
-
-const nouns = [
-  "tiger",
-  "eagle",
-  "river",
-  "mountain",
-  "ocean",
-  "forest",
-  "star",
-  "moon",
-  "thunder",
-  "lightning",
-  "wind",
-  "fire",
-  "stone",
-  "crystal",
-  "wave",
-  "storm",
-];
-
-function generateRandomSlug(): string {
-  const randomAdjective =
-    adjectives[Math.floor(Math.random() * adjectives.length)];
-  const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
+function generateName(): string {
   const now = new Date();
 
   // Format date as YYYY-MM-DD using locale
@@ -64,7 +24,7 @@ function generateRandomSlug(): string {
   const minutes = String(now.getMinutes()).padStart(2, "0");
   const time = `${hours}:${minutes}`;
 
-  return `${randomAdjective}-${randomNoun} ${date} @ ${time}`;
+  return `${generateSlug()} ${date} @ ${time}`;
 }
 
 const RandomizerNameInput: React.FC<RandomizerNameInputProps> = ({
@@ -73,7 +33,7 @@ const RandomizerNameInput: React.FC<RandomizerNameInputProps> = ({
   placeholder = "Name this randomization",
 }) => {
   const handleGenerateRandomName = () => {
-    const randomName = generateRandomSlug();
+    const randomName = generateName();
     onChange?.(randomName);
   };
 

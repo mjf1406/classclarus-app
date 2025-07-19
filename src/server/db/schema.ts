@@ -221,6 +221,8 @@ export const student_classes = sqliteTable(
       .notNull(),
     points: integer("points", { mode: "number" }),
     redemption_points: integer("redemption_points", { mode: "number" }),
+    first: integer("first", { mode: "boolean" }).default(false),
+    last: integer("last", { mode: "boolean" }).default(false),
     minus_points: integer("minus_points", { mode: "number" }),
     point_history: text("point_history", { mode: "json" }).$type<
       PointRecord[]
@@ -905,3 +907,14 @@ export const random_events = sqliteTable(
 
 export type RandomEvent = typeof random_events.$inferSelect;
 export type NewRandomEvent = typeof random_events.$inferSelect;
+
+export const randomizations = sqliteTable("randomizations", {
+  id: text("id").notNull().primaryKey(),
+  user_id: text("user_id")
+    .notNull()
+    .references(() => users.user_id),
+  class_id: text("class_id")
+    .notNull()
+    .references(() => classes.class_id),
+  name: text("name").notNull(),
+});

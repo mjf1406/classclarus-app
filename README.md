@@ -18,7 +18,8 @@
 
 ### 2025/07/18
 
-- UI: Random Events in MVP now
+- UI: Random Events - MVP now
+- UI: Random Events - added mute and skip animation buttons
 
 ### 2025/07/14
 

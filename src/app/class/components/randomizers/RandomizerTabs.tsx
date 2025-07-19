@@ -35,8 +35,8 @@ const RandomizersTab: React.FC<RandomizersTabProps> = ({ classId }) => {
   return (
     <Tabs defaultValue={"student"} className="pb-10">
       <TabsList className="mb-4">
-        <TabsTrigger value="group">Group</TabsTrigger>
-        <TabsTrigger value="subgroup">Subgroup</TabsTrigger>
+        {/* <TabsTrigger value="group">Group</TabsTrigger>
+        <TabsTrigger value="subgroup">Subgroup</TabsTrigger> */}
         <TabsTrigger value="student">Student</TabsTrigger>
       </TabsList>
       <TabsContent value="group">

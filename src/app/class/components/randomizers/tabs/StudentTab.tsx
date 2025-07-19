@@ -19,7 +19,14 @@ import type {
   StudentClassWithStudent,
 } from "@/server/db/types";
 import { Button } from "@/components/ui/button";
-import { Shuffle, Dice1 } from "lucide-react";
+import {
+  Shuffle,
+  Dice1,
+  Volume2,
+  VolumeX,
+  MonitorPlay,
+  MonitorPause,
+} from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useQuery } from "@tanstack/react-query";
 import { ClassByIdOptions } from "@/app/api/queryOptions";
@@ -66,6 +73,8 @@ const StudentTab: React.FC<StudentTabProps> = ({
   const [isRandomizing, setIsRandomizing] = useState(false);
   const [currentSelectionIndex, setCurrentSelectionIndex] = useState(0);
   const [inlineError, setInlineError] = useState<string | null>(null);
+  const [isMuted, setIsMuted] = useState(false);
+  const [skipAnimation, setSkipAnimation] = useState(false);
 
   // refs for spin intervals, reveal timeouts, and sound timeouts
   const animIntervalRefs = useRef<(NodeJS.Timeout | null)[]>([]);
@@ -107,11 +116,11 @@ const StudentTab: React.FC<StudentTabProps> = ({
   }, []);
 
   const playSelectionSound = useCallback(() => {
-    if (audioRef.current) {
+    if (audioRef.current && !isMuted) {
       audioRef.current.currentTime = 0;
       audioRef.current.play().catch(console.error);
     }
-  }, []);
+  }, [isMuted]);
 
   // fetch students
   const { data: classData } = useQuery(ClassByIdOptions(classId));
@@ -171,6 +180,8 @@ const StudentTab: React.FC<StudentTabProps> = ({
   const animateSelection = useCallback(
     (index: number) => {
       const exclude = selectionMode === "all-at-once" ? true : autoRemove;
+      const revealTime = skipAnimation ? 100 : REVEAL_INTERVAL;
+      const audioDelay = skipAnimation ? 50 : AUDIO_DELAY;
 
       // clear old timers for this slot
       if (animIntervalRefs.current[index]) {
@@ -188,33 +199,33 @@ const StudentTab: React.FC<StudentTabProps> = ({
         prev.map((it, i) => (i === index ? { ...it, isAnimating: true } : it)),
       );
 
-      // spin every SPIN_INTERVAL
-      const spinId = setInterval(() => {
-        const rnd = getRandomStudent(exclude);
-        if (!rnd) return;
-        setSelectedStudents((prev) =>
-          prev.map((it, i) =>
-            i === index
-              ? {
-                  ...it,
-                  currentDisplayName: `${rnd.student_name_first_en} ${rnd.student_name_last_en}`,
-                }
-              : it,
-          ),
-        );
-      }, SPIN_INTERVAL);
-      animIntervalRefs.current[index] = spinId;
+      // spin every SPIN_INTERVAL (only if not skipping animation)
+      let spinId: NodeJS.Timeout | null = null;
+      if (!skipAnimation) {
+        spinId = setInterval(() => {
+          const rnd = getRandomStudent(exclude);
+          if (!rnd) return;
+          setSelectedStudents((prev) =>
+            prev.map((it, i) =>
+              i === index
+                ? {
+                    ...it,
+                    currentDisplayName: `${rnd.student_name_first_en} ${rnd.student_name_last_en}`,
+                  }
+                : it,
+            ),
+          );
+        }, SPIN_INTERVAL);
+        animIntervalRefs.current[index] = spinId;
+      }
 
-      // play sound 500 ms before reveal
-      const soundId = setTimeout(
-        playSelectionSound,
-        REVEAL_INTERVAL - AUDIO_DELAY,
-      );
+      // play sound before reveal
+      const soundId = setTimeout(playSelectionSound, revealTime - audioDelay);
       soundTimeoutRefs.current[index] = soundId;
 
-      // reveal after REVEAL_INTERVAL
+      // reveal after delay
       const doneId = setTimeout(() => {
-        clearInterval(spinId);
+        if (spinId) clearInterval(spinId);
         animIntervalRefs.current[index] = null;
 
         const finalStu = getRandomStudent(exclude);
@@ -237,10 +248,16 @@ const StudentTab: React.FC<StudentTabProps> = ({
         if (selectionMode === "one-by-one") {
           setCurrentSelectionIndex((p) => p + 1);
         }
-      }, REVEAL_INTERVAL);
+      }, revealTime);
       revealTimeoutRefs.current[index] = doneId;
     },
-    [autoRemove, getRandomStudent, playSelectionSound, selectionMode],
+    [
+      autoRemove,
+      getRandomStudent,
+      playSelectionSound,
+      selectionMode,
+      skipAnimation,
+    ],
   );
 
   // start the shuffle/pick
@@ -259,6 +276,8 @@ const StudentTab: React.FC<StudentTabProps> = ({
     setCurrentSelectionIndex(0);
 
     const placeholder = eligibleStudents[0]!;
+    const revealTime = skipAnimation ? 100 : REVEAL_INTERVAL;
+    const audioDelay = skipAnimation ? 50 : AUDIO_DELAY;
 
     if (selectionMode === "all-at-once") {
       const initial = eligibleStudents.map(() => ({
@@ -270,34 +289,37 @@ const StudentTab: React.FC<StudentTabProps> = ({
       setSelectedStudents(initial);
 
       initial.forEach((_, i) => {
-        // spin
-        const spinId = setInterval(() => {
-          const rnd = getRandomStudent(true);
-          if (!rnd) return;
-          setSelectedStudents((prev) =>
-            prev.map((it, idx) =>
-              idx === i
-                ? {
-                    ...it,
-                    currentDisplayName: `${rnd.student_name_first_en} ${rnd.student_name_last_en}`,
-                  }
-                : it,
-            ),
-          );
-        }, SPIN_INTERVAL);
-        animIntervalRefs.current[i] = spinId;
+        // spin (only if not skipping animation)
+        let spinId: NodeJS.Timeout | null = null;
+        if (!skipAnimation) {
+          spinId = setInterval(() => {
+            const rnd = getRandomStudent(true);
+            if (!rnd) return;
+            setSelectedStudents((prev) =>
+              prev.map((it, idx) =>
+                idx === i
+                  ? {
+                      ...it,
+                      currentDisplayName: `${rnd.student_name_first_en} ${rnd.student_name_last_en}`,
+                    }
+                  : it,
+              ),
+            );
+          }, SPIN_INTERVAL);
+          animIntervalRefs.current[i] = spinId;
+        }
 
-        // play sound 500 ms before this slot’s reveal
-        const revealTime = (i + 1) * REVEAL_INTERVAL;
+        // play sound before this slot's reveal
+        const currentRevealTime = (i + 1) * revealTime;
         const soundId = setTimeout(
           playSelectionSound,
-          revealTime - AUDIO_DELAY,
+          currentRevealTime - audioDelay,
         );
         soundTimeoutRefs.current[i] = soundId;
 
-        // reveal at (i+1)*REVEAL_INTERVAL
+        // reveal at (i+1)*revealTime
         const revId = setTimeout(() => {
-          clearInterval(spinId);
+          if (spinId) clearInterval(spinId);
           animIntervalRefs.current[i] = null;
 
           const finalStu = getRandomStudent(true);
@@ -319,7 +341,7 @@ const StudentTab: React.FC<StudentTabProps> = ({
           if (i === initial.length - 1) {
             setIsRandomizing(false);
           }
-        }, revealTime);
+        }, currentRevealTime);
         revealTimeoutRefs.current[i] = revId;
       });
     } else {
@@ -341,6 +363,7 @@ const StudentTab: React.FC<StudentTabProps> = ({
     getRandomStudent,
     playSelectionSound,
     animateSelection,
+    skipAnimation,
   ]);
 
   // chain one-by-one
@@ -351,7 +374,11 @@ const StudentTab: React.FC<StudentTabProps> = ({
       currentSelectionIndex > 0 &&
       currentSelectionIndex < selectedStudents.length
     ) {
-      const t = setTimeout(() => animateSelection(currentSelectionIndex), 1000);
+      const delay = skipAnimation ? 200 : 1000;
+      const t = setTimeout(
+        () => animateSelection(currentSelectionIndex),
+        delay,
+      );
       return () => clearTimeout(t);
     } else if (
       currentSelectionIndex >= selectedStudents.length &&
@@ -365,6 +392,7 @@ const StudentTab: React.FC<StudentTabProps> = ({
     selectionMode,
     isRandomizing,
     animateSelection,
+    skipAnimation,
   ]);
 
   const toggleStudentSelection = useCallback((studentId: string) => {
@@ -412,14 +440,36 @@ const StudentTab: React.FC<StudentTabProps> = ({
         onSubgroupsSelect={handleSubgroupsSelect}
       />
 
-      <Button
-        size="lg"
-        onClick={handleRandomizeStudent}
-        disabled={isRandomizing}
-      >
-        <ButtonIcon />
-        {isRandomizing ? "Randomizing..." : buttonText}
-      </Button>
+      <div className="flex items-center gap-2">
+        <Button
+          size="lg"
+          onClick={handleRandomizeStudent}
+          disabled={isRandomizing}
+        >
+          <ButtonIcon />
+          {isRandomizing ? "Randomizing..." : buttonText}
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setIsMuted(!isMuted)}
+          disabled={isRandomizing}
+          className="h-10 w-10"
+        >
+          {isMuted ? <VolumeX /> : <Volume2 />}
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setSkipAnimation(!skipAnimation)}
+          disabled={isRandomizing}
+          className="h-10 w-10"
+        >
+          {skipAnimation ? <MonitorPause /> : <MonitorPlay />}
+        </Button>
+      </div>
 
       {inlineError && <p className="mt-2 text-red-600">{inlineError}</p>}
 
