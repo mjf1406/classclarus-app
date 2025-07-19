@@ -13,6 +13,7 @@ import type { Assignment } from "../class/components/gradebook/graded-assignment
 import type {
   CenturySkill,
   RandomEvent,
+  RandomizationWithStudents,
   SubjectComment,
 } from "@/server/db/schema";
 
@@ -71,23 +72,6 @@ export const AssignersOptions = (classId: string | null) =>
       if (!response.ok) {
         throw new Error(
           "Failed to load assigners data. Please refresh the page.",
-        );
-      }
-      return (await response.json()) as Assigner[];
-    },
-    staleTime: 1000 * 60 * 30, // 30 minutes
-  });
-
-export const RandomizersOptions = (classId: string | null) =>
-  queryOptions<Assigner[]>({
-    queryKey: ["randomizer", classId],
-    queryFn: async () => {
-      const response = await fetch(
-        `/api/randomizer-by-class-id?class_id=${classId}`,
-      );
-      if (!response.ok) {
-        throw new Error(
-          "Failed to load randomizer data. Please refresh the page.",
         );
       }
       return (await response.json()) as Assigner[];
@@ -204,6 +188,23 @@ export const RandomEventsOptions = (classId: string | null) =>
         );
       }
       return (await response.json()) as RandomEvent[];
+    },
+    staleTime: 1000 * 60 * 30,
+  });
+
+export const RandomizationsOptions = (classId: string | null) =>
+  queryOptions<RandomizationWithStudents[]>({
+    queryKey: ["randomizations", classId],
+    queryFn: async () => {
+      const response = await fetch(
+        `/api/randomizations-by-class-id?class_id=${classId}`,
+      );
+      if (!response.ok) {
+        throw new Error(
+          "Failed to load random events data. Please refresh the page.",
+        );
+      }
+      return (await response.json()) as RandomizationWithStudents[];
     },
     staleTime: 1000 * 60 * 30,
   });

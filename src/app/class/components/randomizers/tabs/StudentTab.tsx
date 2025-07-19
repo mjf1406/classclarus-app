@@ -26,6 +26,7 @@ import {
   VolumeX,
   MonitorPlay,
   MonitorPause,
+  MemoryStick,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useQuery } from "@tanstack/react-query";
@@ -33,6 +34,9 @@ import { ClassByIdOptions } from "@/app/api/queryOptions";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { useCreateRandomization } from "../hooks/useCreateRandomization";
+import { useCreateRandomizationStudent } from "../hooks/useCreateRandomizationStudent";
+import { RandomizationManagerDialog } from "../components/RandomizationManagerDialog";
 
 interface StudentTabProps {
   classId: string | null;
@@ -75,6 +79,9 @@ const StudentTab: React.FC<StudentTabProps> = ({
   const [inlineError, setInlineError] = useState<string | null>(null);
   const [isMuted, setIsMuted] = useState(false);
   const [skipAnimation, setSkipAnimation] = useState(false);
+  const [currentRandomizationId, setCurrentRandomizationId] = useState<
+    string | null
+  >(null);
 
   // refs for spin intervals, reveal timeouts, and sound timeouts
   const animIntervalRefs = useRef<(NodeJS.Timeout | null)[]>([]);
@@ -84,8 +91,21 @@ const StudentTab: React.FC<StudentTabProps> = ({
   // track which student_ids have been revealed
   const revealedIdsRef = useRef<Set<string>>(new Set());
 
+  // track finalized students with their positions for saving
+  const finalizedStudentsRef = useRef<
+    { student_id: string; position: number }[]
+  >([]);
+
   // preload sound
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Initialize hooks
+  const createRandomizationMutation = useCreateRandomization(classId ?? "");
+  const createRandomizationStudentMutation = useCreateRandomizationStudent(
+    classId ?? "",
+    currentRandomizationId ?? "",
+  );
+
   useEffect(() => {
     const url =
       "https://r051rsdjcy.ufs.sh/f/Mvjw3VCDi4AFeMYS0TPnmAvDiqzTPyjMlQxgB8E0FbUcSdrK";
@@ -113,6 +133,7 @@ const StudentTab: React.FC<StudentTabProps> = ({
     soundTimeoutRefs.current.forEach((t) => t && clearTimeout(t));
     soundTimeoutRefs.current = [];
     revealedIdsRef.current.clear();
+    finalizedStudentsRef.current = [];
   }, []);
 
   const playSelectionSound = useCallback(() => {
@@ -121,6 +142,53 @@ const StudentTab: React.FC<StudentTabProps> = ({
       audioRef.current.play().catch(console.error);
     }
   }, [isMuted]);
+
+  // Save students to randomization when all are finalized
+  const saveRandomizationStudents = useCallback(
+    async (
+      studentsWithPositions: { student_id: string; position: number }[],
+    ) => {
+      if (!currentRandomizationId || !classId) return;
+
+      try {
+        for (const { student_id, position } of studentsWithPositions) {
+          await createRandomizationStudentMutation.mutateAsync({
+            student_id,
+            position,
+          });
+        }
+        toast.success(`Randomization "${name}" saved successfully!`);
+      } catch (error) {
+        console.error("Error saving randomization students:", error);
+        toast.error("Failed to save randomization students");
+      }
+    },
+    [currentRandomizationId, classId, createRandomizationStudentMutation, name],
+  );
+
+  // Check if all students are finalized and save if needed
+  const checkAndSaveIfComplete = useCallback(() => {
+    const allFinalized = selectedStudents.every((s) => !s.isAnimating);
+    if (
+      allFinalized &&
+      !isRandomizing &&
+      currentRandomizationId &&
+      finalizedStudentsRef.current.length > 0
+    ) {
+      void saveRandomizationStudents(finalizedStudentsRef.current);
+      finalizedStudentsRef.current = [];
+    }
+  }, [
+    selectedStudents,
+    isRandomizing,
+    currentRandomizationId,
+    saveRandomizationStudents,
+  ]);
+
+  // Watch for completion
+  useEffect(() => {
+    checkAndSaveIfComplete();
+  }, [checkAndSaveIfComplete]);
 
   // fetch students
   const { data: classData } = useQuery(ClassByIdOptions(classId));
@@ -231,6 +299,12 @@ const StudentTab: React.FC<StudentTabProps> = ({
         const finalStu = getRandomStudent(exclude);
         if (finalStu) {
           revealedIdsRef.current.add(finalStu.student_id);
+          // Store student with position (index + 1 for 1-based positioning)
+          finalizedStudentsRef.current.push({
+            student_id: finalStu.student_id,
+            position: index + 1,
+          });
+
           setSelectedStudents((prev) =>
             prev.map((it, i) =>
               i === index
@@ -261,7 +335,7 @@ const StudentTab: React.FC<StudentTabProps> = ({
   );
 
   // start the shuffle/pick
-  const handleRandomizeStudent = useCallback(() => {
+  const handleRandomizeStudent = useCallback(async () => {
     // clear previous inline error
     setInlineError(null);
 
@@ -271,9 +345,34 @@ const StudentTab: React.FC<StudentTabProps> = ({
       setInlineError(msg);
       return;
     }
+
+    if (!classId) {
+      toast.error("Class ID is required");
+      return;
+    }
+
     clearAllTimers();
     setIsRandomizing(true);
     setCurrentSelectionIndex(0);
+    setCurrentRandomizationId(null);
+
+    // Create randomization if name is provided
+    let randomizationId: string | null = null;
+    if (name.trim()) {
+      try {
+        // Get the highest position for this class to ensure unique positions
+        randomizationId = await createRandomizationMutation.mutateAsync({
+          class_id: classId,
+          name: name.trim(),
+        });
+        setCurrentRandomizationId(randomizationId);
+      } catch (error) {
+        console.error("Error creating randomization:", error);
+        toast.error("Failed to create randomization");
+        setIsRandomizing(false);
+        return;
+      }
+    }
 
     const placeholder = eligibleStudents[0]!;
     const revealTime = skipAnimation ? 100 : REVEAL_INTERVAL;
@@ -325,6 +424,12 @@ const StudentTab: React.FC<StudentTabProps> = ({
           const finalStu = getRandomStudent(true);
           if (finalStu) {
             revealedIdsRef.current.add(finalStu.student_id);
+            // Store student with position (i + 1 for 1-based positioning)
+            finalizedStudentsRef.current.push({
+              student_id: finalStu.student_id,
+              position: i + 1,
+            });
+
             setSelectedStudents((prev) =>
               prev.map((it, idx) =>
                 idx === i
@@ -364,6 +469,9 @@ const StudentTab: React.FC<StudentTabProps> = ({
     playSelectionSound,
     animateSelection,
     skipAnimation,
+    classId,
+    name,
+    createRandomizationMutation,
   ]);
 
   // chain one-by-one
@@ -412,103 +520,105 @@ const StudentTab: React.FC<StudentTabProps> = ({
   const ButtonIcon = selectionMode === "all-at-once" ? Shuffle : Dice1;
 
   return (
-    <div className="space-y-6">
-      <p>
-        Randomly select students from the whole class or from certain
-        group(s)/subgroup(s).
-      </p>
-      <RandomizerNameInput value={name} onChange={setName} />
-      <SelectionModeRadio
-        value={selectionMode}
-        onValueChange={(value) =>
-          setSelectionMode(value as "all-at-once" | "one-by-one")
-        }
-      />
-      {selectionMode === "one-by-one" && (
-        <AutoRemoveCheckbox
-          entityType="students"
-          checked={autoRemove}
-          onCheckedChange={setAutoRemove}
+    <div>
+      <div className="space-y-6">
+        <p>
+          Randomly select students from the whole class or from certain
+          group(s)/subgroup(s).
+        </p>
+        <RandomizerNameInput value={name} onChange={setName} />
+        <SelectionModeRadio
+          value={selectionMode}
+          onValueChange={(value) =>
+            setSelectionMode(value as "all-at-once" | "one-by-one")
+          }
         />
-      )}
-      <GroupsSelect
-        classId={classId}
-        selectedGroups={selectedGroups}
-        onGroupsSelect={handleGroupsSelect}
-        showSubgroups
-        selectedSubgroups={selectedSubgroups}
-        onSubgroupsSelect={handleSubgroupsSelect}
-      />
+        {selectionMode === "one-by-one" && (
+          <AutoRemoveCheckbox
+            entityType="students"
+            checked={autoRemove}
+            onCheckedChange={setAutoRemove}
+          />
+        )}
+        <GroupsSelect
+          classId={classId}
+          selectedGroups={selectedGroups}
+          onGroupsSelect={handleGroupsSelect}
+          showSubgroups
+          selectedSubgroups={selectedSubgroups}
+          onSubgroupsSelect={handleSubgroupsSelect}
+        />
 
-      <div className="flex items-center gap-2">
-        <Button
-          size="lg"
-          onClick={handleRandomizeStudent}
-          disabled={isRandomizing}
-        >
-          <ButtonIcon />
-          {isRandomizing ? "Randomizing..." : buttonText}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            size="lg"
+            onClick={handleRandomizeStudent}
+            disabled={isRandomizing}
+          >
+            <ButtonIcon />
+            {isRandomizing ? "Randomizing..." : buttonText}
+          </Button>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setIsMuted(!isMuted)}
-          disabled={isRandomizing}
-          className="h-10 w-10"
-        >
-          {isMuted ? <VolumeX /> : <Volume2 />}
-        </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsMuted(!isMuted)}
+            disabled={isRandomizing}
+            className="h-10 w-10"
+          >
+            {isMuted ? <VolumeX /> : <Volume2 />}
+          </Button>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setSkipAnimation(!skipAnimation)}
-          disabled={isRandomizing}
-          className="h-10 w-10"
-        >
-          {skipAnimation ? <MonitorPause /> : <MonitorPlay />}
-        </Button>
-      </div>
-
-      {inlineError && <p className="mt-2 text-red-600">{inlineError}</p>}
-
-      {selectedStudents.length > 0 && (
-        <div className="space-y-2">
-          <h3 className="text-lg font-semibold">
-            {selectionMode === "all-at-once"
-              ? "Shuffled Students"
-              : "Picked Student"}
-          </h3>
-          <ol className="space-y-1">
-            {selectedStudents.map((item, idx) => (
-              <li
-                key={`${item.student.student_id}-${idx}`}
-                className={cn(
-                  "flex w-fit items-center space-x-3 px-2 py-1 text-xl transition-all duration-200",
-                  item.isAnimating && "font-bold text-yellow-700",
-                )}
-              >
-                <span className="w-6 text-left">{idx + 1}</span>
-                <Checkbox
-                  id={`student-${item.student.student_id}-${idx}`}
-                  checked={item.isSelected}
-                  onCheckedChange={() =>
-                    toggleStudentSelection(item.student.student_id)
-                  }
-                  disabled={item.isAnimating}
-                />
-                <Label
-                  htmlFor={`student-${item.student.student_id}-${idx}`}
-                  className="flex-1 cursor-pointer"
-                >
-                  {item.currentDisplayName}
-                </Label>
-              </li>
-            ))}
-          </ol>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setSkipAnimation(!skipAnimation)}
+            disabled={isRandomizing}
+            className="h-10 w-10"
+          >
+            {skipAnimation ? <MonitorPause /> : <MonitorPlay />}
+          </Button>
         </div>
-      )}
+
+        {inlineError && <p className="mt-2 text-red-600">{inlineError}</p>}
+
+        {selectedStudents.length > 0 && (
+          <div className="space-y-2">
+            <h3 className="text-lg font-semibold">
+              {selectionMode === "all-at-once"
+                ? "Shuffled Students"
+                : "Picked Student"}
+            </h3>
+            <ol className="space-y-1">
+              {selectedStudents.map((item, idx) => (
+                <li
+                  key={`${item.student.student_id}-${idx}`}
+                  className={cn(
+                    "flex w-fit items-center space-x-3 px-2 py-1 text-xl transition-all duration-200",
+                    item.isAnimating && "text-secondary font-bold",
+                  )}
+                >
+                  <span className="w-6 text-left">{idx + 1}</span>
+                  <Checkbox
+                    id={`student-${item.student.student_id}-${idx}`}
+                    checked={item.isSelected}
+                    onCheckedChange={() =>
+                      toggleStudentSelection(item.student.student_id)
+                    }
+                    disabled={item.isAnimating}
+                  />
+                  <Label
+                    htmlFor={`student-${item.student.student_id}-${idx}`}
+                    className="flex-1 cursor-pointer"
+                  >
+                    {item.currentDisplayName}
+                  </Label>
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

@@ -15,6 +15,7 @@
 ### 2025/07/19
 
 - UX: the Ramdomizer frontend is complete for shuffling students
+- UI: Randomizer Students - MVP is released
 
 ### 2025/07/18
 

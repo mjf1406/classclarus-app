@@ -908,13 +908,79 @@ export const random_events = sqliteTable(
 export type RandomEvent = typeof random_events.$inferSelect;
 export type NewRandomEvent = typeof random_events.$inferSelect;
 
-export const randomizations = sqliteTable("randomizations", {
-  id: text("id").notNull().primaryKey(),
-  user_id: text("user_id")
-    .notNull()
-    .references(() => users.user_id),
-  class_id: text("class_id")
-    .notNull()
-    .references(() => classes.class_id),
-  name: text("name").notNull(),
-});
+export const randomizations = sqliteTable(
+  "randomizations",
+  {
+    id: text("id").notNull().primaryKey(),
+    user_id: text("user_id")
+      .notNull()
+      .references(() => users.user_id),
+    class_id: text("class_id")
+      .notNull()
+      .references(() => classes.class_id),
+    name: text("name").notNull(),
+    created_date: text("created_date")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    updated_date: text("updated_date")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+  },
+  (table) => ({
+    randomizations_user_id_idx: index("randomizations_user_id_idx").on(
+      table.user_id,
+    ),
+    randomizations_class_id_idx: index("randomizations_class_id_idx").on(
+      table.class_id,
+    ),
+  }),
+);
+
+export type Randomization = typeof randomizations.$inferSelect;
+export type NewRandomization = typeof randomizations.$inferInsert;
+
+export const randomizations_students = sqliteTable(
+  "randomizations_students",
+  {
+    id: text("id").notNull().primaryKey(),
+    user_id: text("user_id")
+      .notNull()
+      .references(() => users.user_id),
+    class_id: text("class_id")
+      .notNull()
+      .references(() => classes.class_id),
+    student_id: text("student_id")
+      .notNull()
+      .references(() => students.student_id),
+    randomization_id: text("randomization_id")
+      .notNull()
+      .references(() => randomizations.id),
+    checked: integer("checked", { mode: "boolean" }).notNull().default(false),
+    position: integer("position").notNull(),
+    created_date: text("created_date")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    updated_date: text("updated_date")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+  },
+  (table) => ({
+    randomizations_students_user_id_idx: index(
+      "randomizations_students_user_id_idx",
+    ).on(table.user_id),
+    randomizations_students_class_id_idx: index(
+      "randomizations_students_class_id_idx",
+    ).on(table.class_id),
+    randomizations_students_randomization_id_idx: index(
+      "randomizations_students_randomization_id_idx",
+    ).on(table.randomization_id),
+  }),
+);
+
+export type RandomizationStudent = typeof randomizations_students.$inferSelect;
+export type NewRandomizationStudent =
+  typeof randomizations_students.$inferInsert;
+
+export type RandomizationWithStudents = Randomization & {
+  students: RandomizationStudent[];
+};

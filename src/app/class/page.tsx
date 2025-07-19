@@ -245,9 +245,6 @@ export default function ClassPage() {
               <RandomEventsTab classId={classId} />
             </TabsContent>
             <TabsContent value="randomizer">
-              <h2 className="mb-2 block text-xl font-semibold lg:hidden">
-                Randomizer
-              </h2>
               <RandomizersTab classId={classId} />
             </TabsContent>
             <TabsContent value="raz">
