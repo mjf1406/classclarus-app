@@ -222,7 +222,7 @@ export default function ClassPage() {
                 </h2>
                 <CreateAssignerDialog />
               </div>
-              <AssignersTab classId={classId} />
+              {/* <AssignersTab classId={classId} /> */}
             </TabsContent>
 
             <TabsContent value="dashboard">
@@ -248,11 +248,6 @@ export default function ClassPage() {
               <h2 className="mb-2 block text-xl font-semibold lg:hidden">
                 Randomizer
               </h2>
-              <p>
-                Randomly select from groups, teams, or students with or without
-                replacement.
-              </p>
-              <br />
               <RandomizersTab classId={classId} />
             </TabsContent>
             <TabsContent value="raz">

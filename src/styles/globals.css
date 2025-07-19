@@ -342,3 +342,7 @@
   font-size: 16rem; /* 256px */
   line-height: 1; /* 16px */
 }
+.disabled {
+  opacity: 50%;
+  cursor: not-allowed;
+}

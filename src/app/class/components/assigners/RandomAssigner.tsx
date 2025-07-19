@@ -139,6 +139,8 @@ export default function RandomAssignerForm({ classId }: { classId: string }) {
                 <GroupsSelect
                   classId={selectedClass}
                   onGroupsSelect={(values) => field.onChange(values)}
+                  // TODO: Gotta fix the below when we update this tab
+                  selectedGroups={[]}
                 />
                 <FormMessage />
               </FormItem>

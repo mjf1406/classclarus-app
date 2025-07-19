@@ -12,6 +12,10 @@
 
 ## Change Log
 
+### 2025/07/19
+
+- UX: the Ramdomizer frontend is complete for shuffling students
+
 ### 2025/07/18
 
 - UI: Random Events in MVP now
