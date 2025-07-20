@@ -81,6 +81,7 @@ export function RandomizationManagerDialog({
                   </div>
                   <div className="flex space-x-2">
                     <ViewRandomizationDialog
+                      mode="view"
                       randomization={randomization}
                       classId={classId}
                       trigger={

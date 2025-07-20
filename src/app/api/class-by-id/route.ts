@@ -45,8 +45,8 @@ export async function GET(request: NextRequest) {
       .where(
         and(
           eq(teacher_classes.class_id, classId),
-          eq(teacher_classes.user_id, userId)
-        )
+          eq(teacher_classes.user_id, userId),
+        ),
       );
 
     if (!isTeacher) {
@@ -66,6 +66,8 @@ export async function GET(request: NextRequest) {
         redemption_points: student_classes.redemption_points,
         absent_dates: student_classes.absent_dates,
         enrollment_date: student_classes.enrollment_date,
+        first_count: student_classes.first_count,
+        last_count: student_classes.last_count,
         student_name_first_en: students.student_name_first_en,
         student_name_last_en: students.student_name_last_en,
         student_name_alt: students.student_name_alt,
@@ -131,10 +133,7 @@ export async function GET(request: NextRequest) {
     );
 
     // New: Query for raz records filtered by classId.
-    const razPromise = db
-      .select()
-      .from(raz)
-      .where(eq(raz.class_id, classId));
+    const razPromise = db.select().from(raz).where(eq(raz.class_id, classId));
 
     const [
       studentClasses,

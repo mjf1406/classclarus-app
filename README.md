@@ -7,10 +7,17 @@
 
 - ⭐ Milestone: everything is ready for report card generation
 - UX: added weights to each graded subject.
+
   - maybe have text input show up next to each thing that's checked and have the user input number from 0-100 that add up to 100?
   - how to figure the math for them?
 
+- BE: Randomizer - the total times each student is first and last is tracked and those position prioritize students with lowest totals
+
 ## Change Log
+
+### 2025/07/20
+
+- UX: Randomizer - when clicking shuffle, the View modeal is opened and the animation shows up there
 
 ### 2025/07/19
 

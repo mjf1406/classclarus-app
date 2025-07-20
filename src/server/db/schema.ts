@@ -223,6 +223,8 @@ export const student_classes = sqliteTable(
     redemption_points: integer("redemption_points", { mode: "number" }),
     first: integer("first", { mode: "boolean" }).default(false),
     last: integer("last", { mode: "boolean" }).default(false),
+    first_count: integer("first_count").notNull().default(0),
+    last_count: integer("last_count").notNull().default(0),
     minus_points: integer("minus_points", { mode: "number" }),
     point_history: text("point_history", { mode: "json" }).$type<
       PointRecord[]

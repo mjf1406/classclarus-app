@@ -37,6 +37,7 @@ import { toast } from "sonner";
 import { useCreateRandomization } from "../hooks/useCreateRandomization";
 import { useCreateRandomizationStudent } from "../hooks/useCreateRandomizationStudent";
 import { RandomizationManagerDialog } from "../components/RandomizationManagerDialog";
+import { ViewRandomizationDialog } from "../components/ViewRandomizationDialog";
 
 interface StudentTabProps {
   classId: string | null;
@@ -68,6 +69,7 @@ const StudentTab: React.FC<StudentTabProps> = ({
   const [selectionMode, setSelectionMode] = useState<
     "all-at-once" | "one-by-one"
   >("all-at-once");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [autoRemove, setAutoRemove] = useState(false);
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [selectedSubgroups, setSelectedSubgroups] = useState<string[]>([]);
@@ -503,15 +505,27 @@ const StudentTab: React.FC<StudentTabProps> = ({
     skipAnimation,
   ]);
 
-  const toggleStudentSelection = useCallback((studentId: string) => {
-    setSelectedStudents((prev) =>
-      prev.map((it) =>
-        it.student.student_id === studentId
-          ? { ...it, isSelected: !it.isSelected }
-          : it,
-      ),
-    );
-  }, []);
+  useEffect(() => {
+    if (eligibleStudents.length === 0) {
+      if (selectedGroups.length > 0 || selectedSubgroups.length > 0) {
+        setInlineError(
+          "No students found in the selected group(s)/subgroup(s).",
+        );
+      } else if (studentInfo.length === 0) {
+        setInlineError("No students available in this class.");
+      } else {
+        setInlineError("No students available for selection.");
+      }
+    } else {
+      // Clear the error when students are available
+      setInlineError(null);
+    }
+  }, [
+    eligibleStudents.length,
+    selectedGroups.length,
+    selectedSubgroups.length,
+    studentInfo.length,
+  ]);
 
   const buttonText =
     selectionMode === "all-at-once"
@@ -550,15 +564,43 @@ const StudentTab: React.FC<StudentTabProps> = ({
         />
 
         <div className="flex items-center gap-2">
-          <Button
-            size="lg"
-            onClick={handleRandomizeStudent}
-            disabled={isRandomizing}
-          >
-            <ButtonIcon />
-            {isRandomizing ? "Randomizing..." : buttonText}
-          </Button>
-
+          <ViewRandomizationDialog
+            mode="randomize"
+            classId={classId!}
+            randomizationParams={{
+              name,
+              selectionMode,
+              autoRemove,
+              selectedGroups,
+              selectedSubgroups,
+              eligibleStudents,
+              studentGroups,
+              studentSubGroups,
+              isMuted, // Add this
+              skipAnimation, // Add this
+            }}
+            open={isDialogOpen}
+            onOpenChange={setIsDialogOpen}
+            trigger={
+              <Button
+                size="lg"
+                disabled={!eligibleStudents.length}
+                onClick={() => {
+                  setInlineError(null);
+                  if (!eligibleStudents.length) {
+                    const msg = "No students available for selection.";
+                    toast.error(msg);
+                    setInlineError(msg);
+                    return;
+                  }
+                  setIsDialogOpen(true);
+                }}
+              >
+                <ButtonIcon />
+                {buttonText}
+              </Button>
+            }
+          />
           <Button
             variant="ghost"
             size="icon"
@@ -581,43 +623,6 @@ const StudentTab: React.FC<StudentTabProps> = ({
         </div>
 
         {inlineError && <p className="mt-2 text-red-600">{inlineError}</p>}
-
-        {selectedStudents.length > 0 && (
-          <div className="space-y-2">
-            <h3 className="text-lg font-semibold">
-              {selectionMode === "all-at-once"
-                ? "Shuffled Students"
-                : "Picked Student"}
-            </h3>
-            <ol className="space-y-1">
-              {selectedStudents.map((item, idx) => (
-                <li
-                  key={`${item.student.student_id}-${idx}`}
-                  className={cn(
-                    "flex w-fit items-center space-x-3 px-2 py-1 text-xl transition-all duration-200",
-                    item.isAnimating && "text-secondary font-bold",
-                  )}
-                >
-                  <span className="w-6 text-left">{idx + 1}</span>
-                  <Checkbox
-                    id={`student-${item.student.student_id}-${idx}`}
-                    checked={item.isSelected}
-                    onCheckedChange={() =>
-                      toggleStudentSelection(item.student.student_id)
-                    }
-                    disabled={item.isAnimating}
-                  />
-                  <Label
-                    htmlFor={`student-${item.student.student_id}-${idx}`}
-                    className="flex-1 cursor-pointer"
-                  >
-                    {item.currentDisplayName}
-                  </Label>
-                </li>
-              ))}
-            </ol>
-          </div>
-        )}
       </div>
     </div>
   );
