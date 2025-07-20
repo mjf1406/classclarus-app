@@ -15,8 +15,8 @@
 
 ### 2025/07/20
 
-- BE: Randomizer - the total times each student is first and last is tracked and those position prioritize students with lowest totals
-- UX: Randomizer - when clicking shuffle, the View modeal is opened and the animation shows up there
+- BE: Randomizer - the total times each student is first and last is tracked and those positions prioritize students with lowest totals
+- UX: Randomizer - when clicking shuffle, the View model is opened and the animation shows up there
 
 ### 2025/07/19
 
