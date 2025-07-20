@@ -181,6 +181,7 @@ const StudentTab: React.FC<StudentTabProps> = ({
   const eligibleStudents = useMemo(() => {
     if (!studentInfo.length) return [];
     let arr = studentInfo;
+    console.log("🚀 ~ eligibleStudents ~ selectedGroups:", selectedGroups);
     if (selectedGroups.length) {
       const inG = new Set(
         studentGroups

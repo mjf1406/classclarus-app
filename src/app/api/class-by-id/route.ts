@@ -107,30 +107,29 @@ export async function GET(request: NextRequest) {
       .where(eq(absent_dates.class_id, classId));
 
     // For student_groups, check if we have any groups before constructing its query.
-    const studentGroupsPromise = groupsPromise.then((groupsData: Group[]) => {
-      if (!groupsData || groupsData.length === 0 || !groupsData[0]) {
-        return [];
-      }
-      const groupId = groupsData[0].group_id;
-      return db
-        .select()
-        .from(student_groups)
-        .where(eq(student_groups.group_id, groupId));
-    });
+    // Instead of waiting for groups/subgroups, query directly by joining
+    const studentGroupsPromise = db
+      .select({
+        student_id: student_groups.student_id,
+        group_id: student_groups.group_id,
+        // Include any other fields you need
+      })
+      .from(student_groups)
+      .innerJoin(groups, eq(student_groups.group_id, groups.group_id))
+      .where(eq(groups.class_id, classId));
 
-    // For student_sub_groups, do a similar check.
-    const studentSubGroupsPromise = subGroupsPromise.then(
-      (subGroupsData: SubGroup[]) => {
-        if (!subGroupsData || subGroupsData.length === 0 || !subGroupsData[0]) {
-          return [];
-        }
-        const subGroupId = subGroupsData[0].sub_group_id;
-        return db
-          .select()
-          .from(student_sub_groups)
-          .where(eq(student_sub_groups.sub_group_id, subGroupId));
-      },
-    );
+    const studentSubGroupsPromise = db
+      .select({
+        student_id: student_sub_groups.student_id,
+        sub_group_id: student_sub_groups.sub_group_id,
+        // Include any other fields you need
+      })
+      .from(student_sub_groups)
+      .innerJoin(
+        sub_groups,
+        eq(student_sub_groups.sub_group_id, sub_groups.sub_group_id),
+      )
+      .where(eq(sub_groups.class_id, classId));
 
     // New: Query for raz records filtered by classId.
     const razPromise = db.select().from(raz).where(eq(raz.class_id, classId));

@@ -15,6 +15,7 @@
 
 ### 2025/07/20
 
+- BUG: src/app/api/class-by-id/[classId]/route.ts - this get request now properly returns all student groups and subgroups
 - BE: Randomizer - the total times each student is first and last is tracked and those positions prioritize students with lowest totals
 - UX: Randomizer - when clicking shuffle, the View model is opened and the animation shows up there
 
