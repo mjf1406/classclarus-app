@@ -26,17 +26,11 @@ import {
   VolumeX,
   MonitorPlay,
   MonitorPause,
-  MemoryStick,
 } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useQuery } from "@tanstack/react-query";
 import { ClassByIdOptions } from "@/app/api/queryOptions";
-import { cn } from "@/lib/utils";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { useCreateRandomization } from "../hooks/useCreateRandomization";
 import { useCreateRandomizationStudent } from "../hooks/useCreateRandomizationStudent";
-import { RandomizationManagerDialog } from "../components/RandomizationManagerDialog";
 import { ViewRandomizationDialog } from "../components/ViewRandomizationDialog";
 
 interface StudentTabProps {
@@ -102,10 +96,8 @@ const StudentTab: React.FC<StudentTabProps> = ({
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Initialize hooks
-  const createRandomizationMutation = useCreateRandomization(classId ?? "");
   const createRandomizationStudentMutation = useCreateRandomizationStudent(
     classId ?? "",
-    currentRandomizationId ?? "",
   );
 
   useEffect(() => {
@@ -115,27 +107,6 @@ const StudentTab: React.FC<StudentTabProps> = ({
       audioRef.current = new Audio(url);
       audioRef.current.preload = "auto";
     }
-  }, []);
-
-  // cleanup on unmount
-  useEffect(() => {
-    return () => {
-      animIntervalRefs.current.forEach((i) => i && clearInterval(i));
-      revealTimeoutRefs.current.forEach((t) => t && clearTimeout(t));
-      soundTimeoutRefs.current.forEach((t) => t && clearTimeout(t));
-    };
-  }, []);
-
-  // clear everything when starting a new shuffle
-  const clearAllTimers = useCallback(() => {
-    animIntervalRefs.current.forEach((i) => i && clearInterval(i));
-    animIntervalRefs.current = [];
-    revealTimeoutRefs.current.forEach((t) => t && clearTimeout(t));
-    revealTimeoutRefs.current = [];
-    soundTimeoutRefs.current.forEach((t) => t && clearTimeout(t));
-    soundTimeoutRefs.current = [];
-    revealedIdsRef.current.clear();
-    finalizedStudentsRef.current = [];
   }, []);
 
   const playSelectionSound = useCallback(() => {
@@ -155,6 +126,7 @@ const StudentTab: React.FC<StudentTabProps> = ({
       try {
         for (const { student_id, position } of studentsWithPositions) {
           await createRandomizationStudentMutation.mutateAsync({
+            randomization_id: currentRandomizationId,
             student_id,
             position,
           });
@@ -335,146 +307,6 @@ const StudentTab: React.FC<StudentTabProps> = ({
       skipAnimation,
     ],
   );
-
-  // start the shuffle/pick
-  const handleRandomizeStudent = useCallback(async () => {
-    // clear previous inline error
-    setInlineError(null);
-
-    if (!eligibleStudents.length) {
-      const msg = "No students available for selection.";
-      toast.error(msg);
-      setInlineError(msg);
-      return;
-    }
-
-    if (!classId) {
-      toast.error("Class ID is required");
-      return;
-    }
-
-    clearAllTimers();
-    setIsRandomizing(true);
-    setCurrentSelectionIndex(0);
-    setCurrentRandomizationId(null);
-
-    // Create randomization if name is provided
-    let randomizationId: string | null = null;
-    if (name.trim()) {
-      try {
-        // Get the highest position for this class to ensure unique positions
-        randomizationId = await createRandomizationMutation.mutateAsync({
-          class_id: classId,
-          name: name.trim(),
-        });
-        setCurrentRandomizationId(randomizationId);
-      } catch (error) {
-        console.error("Error creating randomization:", error);
-        toast.error("Failed to create randomization");
-        setIsRandomizing(false);
-        return;
-      }
-    }
-
-    const placeholder = eligibleStudents[0]!;
-    const revealTime = skipAnimation ? 100 : REVEAL_INTERVAL;
-    const audioDelay = skipAnimation ? 50 : AUDIO_DELAY;
-
-    if (selectionMode === "all-at-once") {
-      const initial = eligibleStudents.map(() => ({
-        student: placeholder,
-        isSelected: false,
-        isAnimating: true,
-        currentDisplayName: `${placeholder.student_name_first_en} ${placeholder.student_name_last_en}`,
-      }));
-      setSelectedStudents(initial);
-
-      initial.forEach((_, i) => {
-        // spin (only if not skipping animation)
-        let spinId: NodeJS.Timeout | null = null;
-        if (!skipAnimation) {
-          spinId = setInterval(() => {
-            const rnd = getRandomStudent(true);
-            if (!rnd) return;
-            setSelectedStudents((prev) =>
-              prev.map((it, idx) =>
-                idx === i
-                  ? {
-                      ...it,
-                      currentDisplayName: `${rnd.student_name_first_en} ${rnd.student_name_last_en}`,
-                    }
-                  : it,
-              ),
-            );
-          }, SPIN_INTERVAL);
-          animIntervalRefs.current[i] = spinId;
-        }
-
-        // play sound before this slot's reveal
-        const currentRevealTime = (i + 1) * revealTime;
-        const soundId = setTimeout(
-          playSelectionSound,
-          currentRevealTime - audioDelay,
-        );
-        soundTimeoutRefs.current[i] = soundId;
-
-        // reveal at (i+1)*revealTime
-        const revId = setTimeout(() => {
-          if (spinId) clearInterval(spinId);
-          animIntervalRefs.current[i] = null;
-
-          const finalStu = getRandomStudent(true);
-          if (finalStu) {
-            revealedIdsRef.current.add(finalStu.student_id);
-            // Store student with position (i + 1 for 1-based positioning)
-            finalizedStudentsRef.current.push({
-              student_id: finalStu.student_id,
-              position: i + 1,
-            });
-
-            setSelectedStudents((prev) =>
-              prev.map((it, idx) =>
-                idx === i
-                  ? {
-                      student: finalStu,
-                      isSelected: false,
-                      isAnimating: false,
-                      currentDisplayName: `${finalStu.student_name_first_en} ${finalStu.student_name_last_en}`,
-                    }
-                  : it,
-              ),
-            );
-          }
-          if (i === initial.length - 1) {
-            setIsRandomizing(false);
-          }
-        }, currentRevealTime);
-        revealTimeoutRefs.current[i] = revId;
-      });
-    } else {
-      // one-by-one: up to 5 picks
-      const count = Math.min(5, eligibleStudents.length);
-      const initial = Array.from({ length: count }, () => ({
-        student: placeholder,
-        isSelected: false,
-        isAnimating: false,
-        currentDisplayName: `${placeholder.student_name_first_en} ${placeholder.student_name_last_en}`,
-      }));
-      setSelectedStudents(initial);
-      setTimeout(() => animateSelection(0), 500);
-    }
-  }, [
-    eligibleStudents,
-    selectionMode,
-    clearAllTimers,
-    getRandomStudent,
-    playSelectionSound,
-    animateSelection,
-    skipAnimation,
-    classId,
-    name,
-    createRandomizationMutation,
-  ]);
 
   // chain one-by-one
   useEffect(() => {

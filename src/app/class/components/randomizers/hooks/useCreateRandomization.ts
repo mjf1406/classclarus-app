@@ -4,7 +4,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@clerk/nextjs";
 import { toast } from "sonner";
-import { v4 as uuidV4 } from "uuid";
 import {
   createRandomization,
   type CreateRandomizationArgs,
@@ -29,10 +28,9 @@ export function useCreateRandomization(classId: string) {
       void queryClient.cancelQueries({ queryKey: qKey });
       const previous = queryClient.getQueryData<Randomization[]>(qKey) ?? [];
 
-      const id = uuidV4();
       const now = new Date().toISOString();
       const optimistic: Randomization = {
-        id,
+        id: args.id,
         user_id: userId,
         class_id: args.class_id,
         name: args.name,

@@ -52,6 +52,13 @@ const RandomizersTab: React.FC<RandomizersTabProps> = ({ classId }) => {
           }
         />
       </div>
+      <div>
+        <p>
+          We track how often each student is placed in the first or last
+          position. Students with lower counts are prioritized for those
+          positions to ensure fairness.
+        </p>
+      </div>
       <Tabs defaultValue={"student"} className="pb-10">
         <TabsList className="mb-4">
           {/* <TabsTrigger value="group">Group</TabsTrigger>

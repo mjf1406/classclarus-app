@@ -7,6 +7,7 @@ import React, {
   useMemo,
 } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { v4 as uuidV4 } from "uuid"; // Add this import
 import {
   Dialog,
   DialogTrigger,
@@ -52,8 +53,8 @@ interface RandomizationParams {
   eligibleStudents: StudentClassWithStudent[];
   studentGroups?: StudentGroup[];
   studentSubGroups?: StudentSubGroup[];
-  isMuted?: boolean; // Add this
-  skipAnimation?: boolean; // Add this
+  isMuted?: boolean;
+  skipAnimation?: boolean;
 }
 
 interface ViewRandomizationDialogProps {
@@ -86,10 +87,9 @@ export function ViewRandomizationDialog({
 
   const { mutate: updateStudent } = useUpdateRandomizationStudent(classId);
   const createRandomizationMutation = useCreateRandomization(classId);
-  const createRandomizationStudentMutation = useCreateRandomizationStudent(
-    classId,
-    "",
-  );
+  // Initialize with empty string - we'll pass the randomization_id in the mutation call
+  const createRandomizationStudentMutation =
+    useCreateRandomizationStudent(classId);
 
   // Randomization state
   const [selectedStudents, setSelectedStudents] = useState<SelectedStudent[]>(
@@ -150,14 +150,34 @@ export function ViewRandomizationDialog({
   }, [isMuted]);
 
   const getRandomStudent = useCallback(
-    (excludeRevealed = false) => {
+    (excludeRevealed = false, position?: number, totalPositions?: number) => {
       if (!randomizationParams?.eligibleStudents) return null;
       let pool = randomizationParams.eligibleStudents;
       if (excludeRevealed) {
         pool = pool.filter((st) => !revealedIdsRef.current.has(st.student_id));
       }
       if (!pool.length) return null;
-      return pool[Math.floor(Math.random() * pool.length)];
+
+      // If no position info provided, return random student (fallback behavior)
+      if (position === undefined || totalPositions === undefined) {
+        return pool[Math.floor(Math.random() * pool.length)];
+      }
+
+      // Position-based selection logic
+      if (position === 1) {
+        // First position: prioritize students with lowest first_count
+        const minFirstCount = Math.min(...pool.map((s) => s.first_count));
+        const candidates = pool.filter((s) => s.first_count === minFirstCount);
+        return candidates[Math.floor(Math.random() * candidates.length)];
+      } else if (position === totalPositions) {
+        // Last position: prioritize students with lowest last_count
+        const minLastCount = Math.min(...pool.map((s) => s.last_count));
+        const candidates = pool.filter((s) => s.last_count === minLastCount);
+        return candidates[Math.floor(Math.random() * candidates.length)];
+      } else {
+        // Middle positions: completely random
+        return pool[Math.floor(Math.random() * pool.length)];
+      }
     },
     [randomizationParams?.eligibleStudents],
   );
@@ -166,12 +186,14 @@ export function ViewRandomizationDialog({
   const saveRandomizationStudents = useCallback(
     async (
       studentsWithPositions: { student_id: string; position: number }[],
+      retryCount = 0,
     ) => {
       if (!currentRandomizationId || !classId) return;
 
       try {
         for (const { student_id, position } of studentsWithPositions) {
           await createRandomizationStudentMutation.mutateAsync({
+            randomization_id: currentRandomizationId,
             student_id,
             position,
           });
@@ -181,6 +203,14 @@ export function ViewRandomizationDialog({
         );
       } catch (error) {
         console.error("Error saving randomization students:", error);
+
+        // Retry once after a delay if it's the first attempt
+        if (retryCount === 0) {
+          console.log("Retrying save operation...");
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          return saveRandomizationStudents(studentsWithPositions, 1);
+        }
+
         toast.error("Failed to save randomization students");
       }
     },
@@ -211,11 +241,16 @@ export function ViewRandomizationDialog({
         let randomizationId: string | null = null;
         if (randomizationParams.name.trim()) {
           try {
+            const generatedId = uuidV4();
             randomizationId = await createRandomizationMutation.mutateAsync({
               class_id: classId,
               name: randomizationParams.name.trim(),
+              id: generatedId,
             });
             setCurrentRandomizationId(randomizationId);
+
+            // Add a small delay to ensure the randomization is persisted
+            await new Promise((resolve) => setTimeout(resolve, 100));
           } catch (error) {
             console.error("Error creating randomization:", error);
             toast.error("Failed to create randomization");
@@ -237,10 +272,14 @@ export function ViewRandomizationDialog({
           setSelectedStudents(initial);
 
           initial.forEach((_, i) => {
+            const position = i + 1;
+            const totalPositions = initial.length;
+
             // Animation logic for all-at-once mode
             let spinId: NodeJS.Timeout | null = null;
             if (!skipAnimation) {
               spinId = setInterval(() => {
+                // During animation, show random students (no position logic needed)
                 const rnd = getRandomStudent(true);
                 if (!rnd) return;
                 setSelectedStudents((prev) =>
@@ -268,12 +307,13 @@ export function ViewRandomizationDialog({
               if (spinId) clearInterval(spinId);
               animIntervalRefs.current[i] = null;
 
-              const finalStu = getRandomStudent(true);
+              // Use position-aware selection for final reveal
+              const finalStu = getRandomStudent(true, position, totalPositions);
               if (finalStu) {
                 revealedIdsRef.current.add(finalStu.student_id);
                 finalizedStudentsRef.current.push({
                   student_id: finalStu.student_id,
-                  position: i + 1,
+                  position: position,
                 });
 
                 setSelectedStudents((prev) =>
@@ -346,7 +386,6 @@ export function ViewRandomizationDialog({
         setIsRandomizing(false);
         setCurrentSelectionIndex(0);
         setCurrentRandomizationId(null);
-        // Remove the reset of isMuted and skipAnimation since they're no longer local state
       }
     },
     [onOpenChange, mode, clearAllTimers],
@@ -471,7 +510,6 @@ export function ViewRandomizationDialog({
                     student.checked && mode === "view"
                       ? "opacity-50"
                       : "shadow-sm hover:shadow-md",
-                    // student.isAnimating && "ring-primary ring-2",
                   )}
                 >
                   <CardContent>

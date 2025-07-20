@@ -133,6 +133,8 @@ export interface StudentClass {
   class_id: string;
   enrollment_date: string;
   points?: number;
+  first_count: number;
+  last_count: number;
   point_history?: PointRecord[];
   redemption_history?: RedemptionRecord[];
   absent_dates?: string[];

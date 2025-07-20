@@ -5,7 +5,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { v4 as uuidV4 } from "uuid";
-import { createRandomizationStudent } from "../actions/createRandomizationStudent";
+import {
+  createRandomizationStudent,
+  type CreateRandomizationStudentArgs,
+} from "../actions/createRandomizationStudent";
 import type { RandomizationStudent } from "@/server/db/schema";
 import { tursoDateTime } from "@/lib/utils";
 
@@ -17,7 +20,6 @@ interface RandomizationWithStudents {
   name: string;
   created_date: string;
   updated_date: string;
-  position: number;
   students: RandomizationStudent[];
 }
 
@@ -25,10 +27,7 @@ interface Context {
   previous?: RandomizationWithStudents[];
 }
 
-export function useCreateRandomizationStudent(
-  classId: string,
-  randomizationId: string,
-) {
+export function useCreateRandomizationStudent(classId: string) {
   const queryClient = useQueryClient();
   const { userId } = useAuth();
   if (!userId) throw new Error("Not authenticated");
@@ -38,15 +37,10 @@ export function useCreateRandomizationStudent(
   return useMutation<
     string,
     unknown,
-    { student_id: string; position: number },
+    CreateRandomizationStudentArgs, // Use the full args type
     Context
   >({
-    mutationFn: (args) =>
-      createRandomizationStudent({
-        randomization_id: randomizationId,
-        student_id: args.student_id,
-        position: args.position,
-      }),
+    mutationFn: (args) => createRandomizationStudent(args),
 
     onMutate: (args) => {
       void queryClient.cancelQueries({ queryKey: qKey });
@@ -58,7 +52,7 @@ export function useCreateRandomizationStudent(
         id,
         user_id: userId,
         class_id: classId,
-        randomization_id: randomizationId,
+        randomization_id: args.randomization_id,
         student_id: args.student_id,
         position: args.position,
         created_date: dt,
@@ -67,7 +61,7 @@ export function useCreateRandomizationStudent(
       };
 
       const next = previous.map((r) =>
-        r.id === randomizationId
+        r.id === args.randomization_id
           ? {
               ...r,
               students: [...r.students, optimisticStudent],
