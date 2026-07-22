@@ -9,6 +9,7 @@ Class management
   - [ ] convex-authz
   - [ ] onvex-dev/rate-limiter
 - [ ] Shadcn
+  - [ ] light/dark theme actual toggle, not dropdown
 - [ ] Tanstack Query
 - [ ] Tanstack Form
 - [ ] Tanstack Router
