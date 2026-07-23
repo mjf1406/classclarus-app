@@ -9,12 +9,15 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as PublicRouteRouteImport } from './routes/_public/route'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as PublicIndexRouteImport } from './routes/_public/index'
+import { Route as PublicSplatRouteImport } from './routes/_public/$'
+import { Route as PublicLoginRouteImport } from './routes/_public/login'
+import { Route as PublicUnauthorizedRouteImport } from './routes/_public/unauthorized'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const PublicRouteRoute = PublicRouteRouteImport.update({
+  id: '/_public',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -22,40 +25,77 @@ const AboutRoute = AboutRouteImport.update({
   path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PublicIndexRoute = PublicIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PublicRouteRoute,
+} as any)
+const PublicSplatRoute = PublicSplatRouteImport.update({
+  id: '/$',
+  path: '/$',
+  getParentRoute: () => PublicRouteRoute,
+} as any)
+const PublicLoginRoute = PublicLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => PublicRouteRoute,
+} as any)
+const PublicUnauthorizedRoute = PublicUnauthorizedRouteImport.update({
+  id: '/unauthorized',
+  path: '/unauthorized',
+  getParentRoute: () => PublicRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/': typeof PublicIndexRoute
   '/about': typeof AboutRoute
+  '/$': typeof PublicSplatRoute
+  '/login': typeof PublicLoginRoute
+  '/unauthorized': typeof PublicUnauthorizedRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/$': typeof PublicSplatRoute
+  '/login': typeof PublicLoginRoute
+  '/unauthorized': typeof PublicUnauthorizedRoute
+  '/': typeof PublicIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
+  '/_public': typeof PublicRouteRouteWithChildren
   '/about': typeof AboutRoute
+  '/_public/$': typeof PublicSplatRoute
+  '/_public/login': typeof PublicLoginRoute
+  '/_public/unauthorized': typeof PublicUnauthorizedRoute
+  '/_public/': typeof PublicIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about'
+  fullPaths: '/' | '/about' | '/$' | '/login' | '/unauthorized'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about'
-  id: '__root__' | '/' | '/about'
+  to: '/about' | '/$' | '/login' | '/unauthorized' | '/'
+  id:
+    | '__root__'
+    | '/_public'
+    | '/about'
+    | '/_public/$'
+    | '/_public/login'
+    | '/_public/unauthorized'
+    | '/_public/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
+  PublicRouteRoute: typeof PublicRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
+    '/_public': {
+      id: '/_public'
+      path: ''
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+      preLoaderRoute: typeof PublicRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about': {
@@ -65,11 +105,57 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_public/': {
+      id: '/_public/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof PublicIndexRouteImport
+      parentRoute: typeof PublicRouteRoute
+    }
+    '/_public/$': {
+      id: '/_public/$'
+      path: '/$'
+      fullPath: '/$'
+      preLoaderRoute: typeof PublicSplatRouteImport
+      parentRoute: typeof PublicRouteRoute
+    }
+    '/_public/login': {
+      id: '/_public/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof PublicLoginRouteImport
+      parentRoute: typeof PublicRouteRoute
+    }
+    '/_public/unauthorized': {
+      id: '/_public/unauthorized'
+      path: '/unauthorized'
+      fullPath: '/unauthorized'
+      preLoaderRoute: typeof PublicUnauthorizedRouteImport
+      parentRoute: typeof PublicRouteRoute
+    }
   }
 }
 
+interface PublicRouteRouteChildren {
+  PublicSplatRoute: typeof PublicSplatRoute
+  PublicLoginRoute: typeof PublicLoginRoute
+  PublicUnauthorizedRoute: typeof PublicUnauthorizedRoute
+  PublicIndexRoute: typeof PublicIndexRoute
+}
+
+const PublicRouteRouteChildren: PublicRouteRouteChildren = {
+  PublicSplatRoute: PublicSplatRoute,
+  PublicLoginRoute: PublicLoginRoute,
+  PublicUnauthorizedRoute: PublicUnauthorizedRoute,
+  PublicIndexRoute: PublicIndexRoute,
+}
+
+const PublicRouteRouteWithChildren = PublicRouteRoute._addFileChildren(
+  PublicRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
+  PublicRouteRoute: PublicRouteRouteWithChildren,
   AboutRoute: AboutRoute,
 }
 export const routeTree = rootRouteImport

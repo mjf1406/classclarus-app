@@ -8,6 +8,7 @@ import { ConvexReactClient } from "convex/react";
 // Import the generated route tree
 import { routeTree } from "./routeTree.gen";
 import { ThemeProvider } from "./components/theme/theme-provider";
+import { Toaster } from "./components/ui/sonner";
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
 
 // Create a new router instance
@@ -30,6 +31,7 @@ if (!rootElement.innerHTML) {
         <ConvexAuthProvider client={convex}>
           <ThemeProvider>
             <RouterProvider router={router} />
+            <Toaster />
           </ThemeProvider>
         </ConvexAuthProvider>
       </QueryClientProvider>

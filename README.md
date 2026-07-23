@@ -21,11 +21,17 @@ Class management
 - [x] Zod
 - [x] only have @ import alias, not #
 - [ ] i18next
+  - this requires a provider and many other things
 - [ ] Pages
   - [ ] /
     - [ ] grid of classes
     - [ ] grid of schools
-  - [ ] /login
+  - [ ] _public
+    - [ ] /login
+      - currently borked because we don't have i18next set up
+    - [ ] /join
+    - [x] /unauthorized
+    - [x] $
   - [ ] /c/CLASS_ID
     - [ ] sidebar layout
     - [ ] member management
