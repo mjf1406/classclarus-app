@@ -4,21 +4,22 @@ Class management
 
 ## To-do List
 
-- [ ] Convex
-  - [ ] convex auth
-  - [ ] convex-tenants
-  - [ ] convex-authz
-  - [ ] onvex-dev/rate-limiter
-- [ ] Shadcn
-  - [ ] light/dark theme actual toggle, not dropdown
-  - [ ] `bunx --bun shadcn@latest init --preset bbZ0kFM --template vite --pointer`
-- [ ] Tanstack
-  - [ ] Tanstack Query
-    - [ ] @convex-dev/react-query
-  - [ ] Tanstack Form
-  - [ ] Tanstack Router
-- [ ] Zod
-- [ ] only have @ import alias, not #
+- [x] Convex
+  - [ ] [convex auth](https://labs.convex.dev/auth)
+  - [x] [convex-tenants](https://www.convex.dev/components/djpanda/convex-tenants)
+  - [x] [convex-authz](https://www.convex.dev/components/djpanda/convex-authz)
+  - [x] [convex-dev/rate-limiter](https://www.convex.dev/components/rate-limiter)
+- [x] Shadcn
+  - [x] light/dark theme actual toggle, not dropdown
+  - [x] `bunx --bun shadcn@latest init --preset bbZ0kFM --template vite --pointer`
+- [x] Tailwind
+- [x] Tanstack
+  - [x] Tanstack Query
+    - [x] @convex-dev/react-query
+  - [x] Tanstack Form
+  - [x] Tanstack Router
+- [x] Zod
+- [x] only have @ import alias, not #
 - [ ] i18next
 - [ ] Pages
   - [ ] /
