@@ -9,6 +9,7 @@
  */
 
 import type * as account from "../account.js";
+import type * as activity from "../activity.js";
 import type * as adminUsers from "../adminUsers.js";
 import type * as appConfig from "../appConfig.js";
 import type * as auth from "../auth.js";
@@ -31,6 +32,7 @@ import type * as lib_auth from "../lib/auth.js";
 import type * as lib_authzModel from "../lib/authzModel.js";
 import type * as lib_avatarUrl from "../lib/avatarUrl.js";
 import type * as lib_billingGuards from "../lib/billingGuards.js";
+import type * as lib_classActivity from "../lib/classActivity.js";
 import type * as lib_customFunctions from "../lib/customFunctions.js";
 import type * as lib_entitlement from "../lib/entitlement.js";
 import type * as lib_fileAccess from "../lib/fileAccess.js";
@@ -64,6 +66,7 @@ import type { ApiFromModules, FilterApi, FunctionReference } from "convex/server
 
 declare const fullApi: ApiFromModules<{
   account: typeof account;
+  activity: typeof activity;
   adminUsers: typeof adminUsers;
   appConfig: typeof appConfig;
   auth: typeof auth;
@@ -86,6 +89,7 @@ declare const fullApi: ApiFromModules<{
   "lib/authzModel": typeof lib_authzModel;
   "lib/avatarUrl": typeof lib_avatarUrl;
   "lib/billingGuards": typeof lib_billingGuards;
+  "lib/classActivity": typeof lib_classActivity;
   "lib/customFunctions": typeof lib_customFunctions;
   "lib/entitlement": typeof lib_entitlement;
   "lib/fileAccess": typeof lib_fileAccess;

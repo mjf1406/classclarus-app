@@ -2,7 +2,7 @@ import { v } from "convex/values";
 
 import { authz } from "./authz.js";
 import { APP_CONFIG } from "./appConfig.js";
-import { components } from "./_generated/api.js";
+import { components, internal } from "./_generated/api.js";
 import type { Doc, Id } from "./_generated/dataModel.js";
 import type { MutationCtx } from "./_generated/server.js";
 import {
@@ -12,6 +12,7 @@ import {
   pickHighestClassRole,
   type ClassRole,
 } from "./lib/authzModel.js";
+import { recordClassActivity } from "./lib/classActivity.js";
 import { authedQuery, classMutation, classQuery, entitledMutation } from "./lib/customFunctions.js";
 import { rateLimiter } from "./lib/rateLimiter.js";
 import { clearLinksForClass } from "./lib/guardianLinks.js";
@@ -243,6 +244,15 @@ export const create = entitledMutation({
     if (!created) {
       throw new Error("Failed to create class");
     }
+    await recordClassActivity(ctx, {
+      classId,
+      actorUserId: ctx.userId,
+      action: "write",
+      resourceType: "class",
+      resourceId: classId,
+      summary: `Created class "${created.name}"`,
+      metadata: { name: created.name, year: String(created.year) },
+    });
     return withStudentLanguage(created);
   },
 });
@@ -269,6 +279,15 @@ export const update = classMutation({
     if (!updated) {
       throw new Error("Failed to update class");
     }
+    await recordClassActivity(ctx, {
+      classId: ctx.classDoc._id,
+      actorUserId: ctx.userId,
+      action: "update",
+      resourceType: "class",
+      resourceId: ctx.classDoc._id,
+      summary: `Updated class settings for "${updated.name}"`,
+      metadata: { name: updated.name, year: String(updated.year) },
+    });
     return withStudentLanguage(updated);
   },
 });
@@ -289,6 +308,17 @@ export const setArchived = classMutation({
     if (!updated) {
       throw new Error("Failed to update class archive state");
     }
+    await recordClassActivity(ctx, {
+      classId: ctx.classDoc._id,
+      actorUserId: ctx.userId,
+      action: "update",
+      resourceType: "class",
+      resourceId: ctx.classDoc._id,
+      summary: args.archived
+        ? `Archived class "${ctx.classDoc.name}"`
+        : `Unarchived class "${ctx.classDoc.name}"`,
+      metadata: { archived: String(args.archived) },
+    });
     return withStudentLanguage(updated);
   },
 });
@@ -319,6 +349,15 @@ export const setBanner = classMutation({
     if (!updated) {
       throw new Error("Failed to set class banner");
     }
+    await recordClassActivity(ctx, {
+      classId: ctx.classDoc._id,
+      actorUserId: ctx.userId,
+      action: "update",
+      resourceType: "class",
+      resourceId: ctx.classDoc._id,
+      summary: `Set dashboard banner for "${ctx.classDoc.name}"`,
+      metadata: { fileId: args.fileId, fileName: file.name },
+    });
     return withStudentLanguage(updated);
   },
 });
@@ -339,6 +378,15 @@ export const setStudentLanguage = classMutation({
     if (!updated) {
       throw new Error("Failed to update student language");
     }
+    await recordClassActivity(ctx, {
+      classId: ctx.classDoc._id,
+      actorUserId: ctx.userId,
+      action: "update",
+      resourceType: "class",
+      resourceId: ctx.classDoc._id,
+      summary: `Set student language to ${args.studentLanguage}`,
+      metadata: { studentLanguage: args.studentLanguage },
+    });
     return withStudentLanguage(updated);
   },
 });
@@ -357,6 +405,14 @@ export const clearBanner = classMutation({
     if (!updated) {
       throw new Error("Failed to clear class banner");
     }
+    await recordClassActivity(ctx, {
+      classId: ctx.classDoc._id,
+      actorUserId: ctx.userId,
+      action: "update",
+      resourceType: "class",
+      resourceId: ctx.classDoc._id,
+      summary: `Cleared dashboard banner for "${ctx.classDoc.name}"`,
+    });
     return withStudentLanguage(updated);
   },
 });
@@ -373,11 +429,14 @@ export const remove = classMutation({
     if (args.confirmation !== expected) {
       throw new Error(`Type "${expected}" to confirm deletion`);
     }
-    await revokeAllClassMembership(ctx, ctx.classDoc._id);
-    await deleteJoinCodesForClass(ctx, ctx.classDoc._id);
-    await clearLinksForClass(ctx, ctx.classDoc._id);
-    await deleteFilesForClass(ctx, ctx.classDoc._id);
-    await ctx.db.delete("classes", ctx.classDoc._id);
+    const classId = ctx.classDoc._id;
+    await revokeAllClassMembership(ctx, classId);
+    await deleteJoinCodesForClass(ctx, classId);
+    await clearLinksForClass(ctx, classId);
+    await deleteFilesForClass(ctx, classId);
+    // Purge activity without keeping a delete row (class is gone).
+    await ctx.scheduler.runAfter(0, internal.activity.purgeForClass, { classId });
+    await ctx.db.delete("classes", classId);
     return null;
   },
 });
@@ -497,6 +556,15 @@ export const transferOwnership = classMutation({
     if (!updated) {
       throw new Error("Failed to transfer ownership");
     }
+    await recordClassActivity(ctx, {
+      classId: ctx.classDoc._id,
+      actorUserId: ctx.userId,
+      action: "update",
+      resourceType: "class",
+      resourceId: ctx.classDoc._id,
+      summary: `Transferred ownership of "${ctx.classDoc.name}"`,
+      metadata: { toUserId: args.toUserId },
+    });
     return withStudentLanguage(updated);
   },
 });

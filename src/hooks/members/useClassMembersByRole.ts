@@ -1,6 +1,8 @@
+import { useMemo } from "react";
 import { convexQuery } from "@convex-dev/react-query";
 
 import type { Id } from "../../../convex/_generated/dataModel";
+import { useLogClassAccessOnce } from "@/hooks/activity/useLogClassAccess";
 import { useAuthedQuery } from "@/hooks/useAuthedQuery";
 import type { MemberListRole } from "@/lib/members/members";
 import { ONE_HOUR } from "@/lib/queryCache";
@@ -11,5 +13,20 @@ export function classMembersByRoleQueryKey(classId: Id<"classes">, role: MemberL
 }
 
 export function useClassMembersByRole(classId: Id<"classes">, role: MemberListRole) {
-  return useAuthedQuery(api.members.listByRole, { classId, role }, { gcTime: ONE_HOUR });
+  const result = useAuthedQuery(api.members.listByRole, { classId, role }, { gcTime: ONE_HOUR });
+  const accessArgs = useMemo(
+    () =>
+      result.data !== undefined
+        ? {
+            classId,
+            resourceType: "member",
+            resourceId: role,
+            summary: `Viewed ${role} member list`,
+            metadata: { role },
+          }
+        : null,
+    [classId, role, result.data],
+  );
+  useLogClassAccessOnce(result.data !== undefined, accessArgs);
+  return result;
 }

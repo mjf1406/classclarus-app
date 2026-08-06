@@ -1,7 +1,9 @@
+import { useMemo } from "react";
 import { keepPreviousData } from "@tanstack/react-query";
 import { convexQuery } from "@convex-dev/react-query";
 
 import type { Id } from "../../../convex/_generated/dataModel";
+import { useLogClassAccessOnce } from "@/hooks/activity/useLogClassAccess";
 import { useAuthedQuery } from "@/hooks/useAuthedQuery";
 import { api } from "../../../convex/_generated/api";
 import { ONE_HOUR } from "@/lib/queryCache";
@@ -11,7 +13,7 @@ export function joinCodesListQueryKey(classId: Id<"classes">, now: number) {
 }
 
 export function useJoinCodes(classId: Id<"classes">, now: number) {
-  return useAuthedQuery(
+  const result = useAuthedQuery(
     api.joinCodes.listForClass,
     { classId, now },
     {
@@ -19,4 +21,17 @@ export function useJoinCodes(classId: Id<"classes">, now: number) {
       placeholderData: keepPreviousData,
     },
   );
+  const accessArgs = useMemo(
+    () =>
+      result.data !== undefined
+        ? {
+            classId,
+            resourceType: "joinCode",
+            summary: "Viewed invite codes",
+          }
+        : null,
+    [classId, result.data],
+  );
+  useLogClassAccessOnce(result.data !== undefined, accessArgs);
+  return result;
 }

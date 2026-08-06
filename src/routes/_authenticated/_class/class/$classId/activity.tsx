@@ -1,18 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useTranslation } from "react-i18next";
 
+import { ActivityLogPage } from "@/components/activity/ActivityLogPage";
 import { RequirePermission } from "@/components/permissions/RequirePermission";
+import type { Id } from "../../../../../../convex/_generated/dataModel";
 
 export const Route = createFileRoute("/_authenticated/_class/class/$classId/activity")({
   component: function ClassActivityPage() {
-    const { t } = useTranslation("classes");
+    const { classId } = Route.useParams();
+    const typedClassId = classId as Id<"classes">;
 
     return (
       <RequirePermission permission="activity:read">
-        <div className="flex w-full flex-col gap-2 px-4 py-8 sm:px-8">
-          <h1 className="text-2xl font-semibold tracking-tight">{t("navActivityLog")}</h1>
-          <p className="text-sm text-muted-foreground">{t("comingSoon")}</p>
-        </div>
+        <ActivityLogPage classId={typedClassId} />
       </RequirePermission>
     );
   },

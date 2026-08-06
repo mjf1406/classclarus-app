@@ -24,4 +24,11 @@ crons.interval(
   {},
 );
 
+crons.daily(
+  "purge expired class activity events",
+  { hourUTC: 7, minuteUTC: 0 },
+  internal.activity.purgeExpired,
+  {},
+);
+
 export default crons;

@@ -72,6 +72,8 @@ const rateLimits = {
   /** Cloud feedback form — per signed-in user. */
   feedbackSubmitDaily: { kind: "token bucket" as const, rate: 10, period: DAY, capacity: 10 },
   feedbackSubmitWeekly: { kind: "token bucket" as const, rate: 20, period: WEEK, capacity: 20 },
+  /** Intentional education-record access logging from the client. */
+  activityLogAccess: { kind: "token bucket" as const, rate: 120, period: HOUR, capacity: 40 },
 };
 
 export const rateLimiter = new RateLimiter(components.rateLimiter, rateLimits);

@@ -22,6 +22,7 @@ import {
   type JoinCodeRole,
   type MemberListRole,
 } from "./lib/authzModel.js";
+import { recordClassActivity } from "./lib/classActivity.js";
 import { classMutation, classQuery } from "./lib/customFunctions.js";
 import {
   clearLinksForUser,
@@ -126,6 +127,15 @@ export const setSuspended = classMutation({
     } else {
       await authz.removeOverride(ctx, args.userId, "*", ctx.scope);
     }
+    await recordClassActivity(ctx, {
+      classId: ctx.classDoc._id,
+      actorUserId: ctx.userId,
+      action: "update",
+      resourceType: "member",
+      resourceId: args.userId,
+      summary: args.suspended ? `Suspended member (${role})` : `Unsuspended member (${role})`,
+      metadata: { role, suspended: String(args.suspended), targetUserId: args.userId },
+    });
     return null;
   },
 });
@@ -279,6 +289,15 @@ export const remove = classMutation({
       removeRelationships: true,
       removeAttributes: false,
     });
+    await recordClassActivity(ctx, {
+      classId: ctx.classDoc._id,
+      actorUserId: ctx.userId,
+      action: "delete",
+      resourceType: "member",
+      resourceId: args.userId,
+      summary: `Removed member (${role})`,
+      metadata: { role, targetUserId: args.userId },
+    });
     return null;
   },
 });
@@ -339,6 +358,19 @@ export const setGuardianStudentLinks = classMutation({
         createdBy: ctx.userId,
       });
     }
+
+    await recordClassActivity(ctx, {
+      classId,
+      actorUserId: ctx.userId,
+      action: "update",
+      resourceType: "guardianLink",
+      resourceId: args.guardianUserId,
+      summary: `Updated guardian–student links (${uniqueStudentIds.length} student(s))`,
+      metadata: {
+        guardianUserId: args.guardianUserId,
+        studentCount: String(uniqueStudentIds.length),
+      },
+    });
 
     return null;
   },
@@ -409,6 +441,19 @@ export const setRole = classMutation({
       await authz.revokeRole(ctx, args.userId, role, ctx.scope);
     }
     await authz.assignRole(ctx, args.userId, newRole, ctx.scope);
+    await recordClassActivity(ctx, {
+      classId: ctx.classDoc._id,
+      actorUserId: ctx.userId,
+      action: "update",
+      resourceType: "member",
+      resourceId: args.userId,
+      summary: `Changed member role from ${fromRole} to ${newRole}`,
+      metadata: {
+        fromRole,
+        toRole: newRole,
+        targetUserId: args.userId,
+      },
+    });
     return null;
   },
 });

@@ -3,6 +3,7 @@ import { ConvexError, v } from "convex/values";
 import { api, internal } from "./_generated/api.js";
 import type { Doc, Id } from "./_generated/dataModel.js";
 import { action } from "./_generated/server.js";
+import { recordClassActivity } from "./lib/classActivity.js";
 import { authedMutation, classQuery } from "./lib/customFunctions.js";
 import { clearAvatarIfReferencesFile, clearBannerIfReferencesFile } from "./lib/filesCleanup.js";
 import { requireFileOwner } from "./lib/fileAccess.js";
@@ -250,7 +251,19 @@ export const renameFile = authedMutation({
     if (name === file.name) {
       return null;
     }
+    const previousName = file.name;
     await ctx.db.patch("files", args.fileId, { name });
+    if (file.classId !== undefined) {
+      await recordClassActivity(ctx, {
+        classId: file.classId,
+        actorUserId: ctx.userId,
+        action: "update",
+        resourceType: "file",
+        resourceId: args.fileId,
+        summary: `Renamed file "${previousName}" to "${name}"`,
+        metadata: { previousName, name },
+      });
+    }
     return null;
   },
 });
@@ -266,6 +279,17 @@ export const deleteFile = authedMutation({
   handler: async (ctx, args) => {
     await rateLimiter.limit(ctx, "fileDelete", { key: ctx.userId, throws: true });
     const file = await requireFileOwner(ctx, args.fileId, ctx.userId);
+    if (file.classId !== undefined) {
+      await recordClassActivity(ctx, {
+        classId: file.classId,
+        actorUserId: ctx.userId,
+        action: "delete",
+        resourceType: "file",
+        resourceId: args.fileId,
+        summary: `Deleted file "${file.name}"`,
+        metadata: { name: file.name },
+      });
+    }
     await clearBannerIfReferencesFile(ctx, args.fileId, file.classId);
     await clearAvatarIfReferencesFile(ctx, args.fileId, ctx.userId);
     await ctx.storage.delete(file.storageId);

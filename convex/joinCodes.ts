@@ -9,6 +9,7 @@ import {
   pickHighestClassRole,
   type JoinCodeRole,
 } from "./lib/authzModel.js";
+import { recordClassActivity } from "./lib/classActivity.js";
 import { deleteJoinCodeById } from "./lib/joinCodesCleanup.js";
 import { authedMutation, classMutation, classQuery } from "./lib/customFunctions.js";
 import { rateLimiter } from "./lib/rateLimiter.js";
@@ -170,6 +171,15 @@ export const create = classMutation({
     if (!created) {
       throw new Error("Failed to create invite code");
     }
+    await recordClassActivity(ctx, {
+      classId: ctx.classDoc._id,
+      actorUserId: ctx.userId,
+      action: "write",
+      resourceType: "joinCode",
+      resourceId: joinCodeId,
+      summary: `Created invite code for role ${args.role}`,
+      metadata: { role: args.role, maxUses: String(maxUses) },
+    });
     return toPublicJoinCode(created);
   },
 });
@@ -187,6 +197,15 @@ export const revoke = classMutation({
       throw new Error("Invite code not found");
     }
     await deleteJoinCodeById(ctx, codeDoc._id);
+    await recordClassActivity(ctx, {
+      classId: ctx.classDoc._id,
+      actorUserId: ctx.userId,
+      action: "delete",
+      resourceType: "joinCode",
+      resourceId: args.joinCodeId,
+      summary: `Revoked invite code for role ${codeDoc.role}`,
+      metadata: { role: codeDoc.role },
+    });
     return null;
   },
 });
@@ -267,6 +286,16 @@ export const redeem = authedMutation({
     } else {
       await ctx.db.patch("joinCodes", codeDoc._id, { useCount: nextUseCount });
     }
+
+    await recordClassActivity(ctx, {
+      classId: codeDoc.classId,
+      actorUserId: ctx.userId,
+      action: "write",
+      resourceType: "member",
+      resourceId: ctx.userId,
+      summary: `Joined class as ${role}`,
+      metadata: { role, via: "joinCode" },
+    });
 
     return { classId: codeDoc.classId, role };
   },

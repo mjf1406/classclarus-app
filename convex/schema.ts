@@ -110,6 +110,30 @@ const schema = defineSchema({
     .index("by_class_student", ["classId", "studentUserId"])
     .index("by_class_guardian_student", ["classId", "guardianUserId", "studentUserId"]),
   /**
+   * Per-class FERPA activity log (append-only).
+   * Purged on class delete and by retention cron (1 year).
+   */
+  classActivityEvents: defineTable({
+    classId: v.id("classes"),
+    actorUserId: v.id("users"),
+    actorEmail: v.string(),
+    /** Highest class role at event time; omitted on older rows. */
+    actorRole: v.optional(v.string()),
+    action: v.union(
+      v.literal("read"),
+      v.literal("write"),
+      v.literal("update"),
+      v.literal("delete"),
+    ),
+    resourceType: v.string(),
+    resourceId: v.optional(v.string()),
+    summary: v.string(),
+    metadata: v.optional(v.record(v.string(), v.string())),
+    createdAt: v.number(),
+  })
+    .index("by_class_createdAt", ["classId", "createdAt"])
+    .index("by_createdAt", ["createdAt"]),
+  /**
    * Anonymous Free-card CTA clicks (cloud prod only). No user/IP fields.
    * Aggregated via @convex-dev/aggregate for range counts.
    */

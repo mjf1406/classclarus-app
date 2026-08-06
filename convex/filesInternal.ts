@@ -6,6 +6,7 @@ import type { Id } from "./_generated/dataModel.js";
 import { internalMutation, internalQuery } from "./_generated/server.js";
 import { authz } from "./authz.js";
 import { classScope } from "./lib/authzModel.js";
+import { recordClassActivity } from "./lib/classActivity.js";
 import { canAccessFile } from "./lib/fileAccess.js";
 import {
   isEnabledUploadPreset,
@@ -174,7 +175,7 @@ export const registerFinalizedUpload = internalMutation({
     }
 
     const name = args.name.trim().slice(0, 255) || "file";
-    return await ctx.db.insert("files", {
+    const fileId = await ctx.db.insert("files", {
       storageId: args.storageId,
       userId,
       ...(classId !== undefined ? { classId } : {}),
@@ -184,6 +185,20 @@ export const registerFinalizedUpload = internalMutation({
       preset: args.preset,
       createdAt: Date.now(),
     });
+
+    if (classId !== undefined) {
+      await recordClassActivity(ctx, {
+        classId,
+        actorUserId: userId,
+        action: "write",
+        resourceType: "file",
+        resourceId: fileId,
+        summary: `Uploaded file "${name}"`,
+        metadata: { name, preset: args.preset, contentType: args.contentType },
+      });
+    }
+
+    return fileId;
   },
 });
 
