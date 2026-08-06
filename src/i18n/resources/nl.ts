@@ -678,6 +678,10 @@ const nl = {
     navDashboard: "Dashboard",
     navActivityLog: "Activiteitenlog",
     navSettings: "Instellingen",
+    studentLanguageTitle: "Leerlingentaal",
+    studentLanguageDescription:
+      "Taal die leerlingen in deze klas zien. Andere rollen behouden hun eigen taal.",
+    studentLanguageSaveFailed: "Leerlingentaal kon niet worden bijgewerkt.",
     bannerTitle: "Dashboardbanner",
     bannerDescription: "Upload een afbeelding die op het klassendashboard wordt getoond.",
     bannerRemove: "Banner verwijderen",

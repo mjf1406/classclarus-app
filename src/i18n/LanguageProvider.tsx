@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { isAppLanguage, type AppLanguage } from "@/lib/languages";
 import { STORAGE_KEYS } from "@/lib/storageKeys";
@@ -11,43 +11,60 @@ function getI18nLanguage(): AppLanguage {
 }
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<AppLanguage>(getI18nLanguage);
+  const [preferredLanguage, setPreferredLanguage] = useState<AppLanguage>(getI18nLanguage);
+  const [overrideLanguage, setOverrideLanguageState] = useState<AppLanguage | null>(null);
   const [isLocaleLoading, setIsLocaleLoading] = useState(false);
+  const overrideRef = useRef<AppLanguage | null>(null);
+  const preferredRef = useRef(preferredLanguage);
+  overrideRef.current = overrideLanguage;
+  preferredRef.current = preferredLanguage;
 
-  const applyLanguage = useCallback(async (nextLanguage: AppLanguage) => {
+  const applyI18nLanguage = useCallback(async (nextLanguage: AppLanguage) => {
     setIsLocaleLoading(true);
     try {
       await ensureLocaleLoaded(nextLanguage);
-      writeStoredLanguage(nextLanguage);
-      setLanguageState(nextLanguage);
       await i18n.changeLanguage(nextLanguage);
     } finally {
       setIsLocaleLoading(false);
     }
   }, []);
 
-  /** Apply a language already persisted elsewhere (e.g. another tab) without rewriting storage. */
-  const syncLanguage = useCallback(async (nextLanguage: AppLanguage) => {
-    if (nextLanguage === getI18nLanguage()) {
-      return;
-    }
-    await ensureLocaleLoaded(nextLanguage);
-    setLanguageState(nextLanguage);
-    await i18n.changeLanguage(nextLanguage);
-  }, []);
-
-  useEffect(() => {
-    const handleLanguageChanged = (nextLanguage: string) => {
-      if (isAppLanguage(nextLanguage)) {
-        setLanguageState(nextLanguage);
+  const setLanguage = useCallback(
+    (nextLanguage: AppLanguage) => {
+      writeStoredLanguage(nextLanguage);
+      setPreferredLanguage(nextLanguage);
+      preferredRef.current = nextLanguage;
+      if (overrideRef.current === null) {
+        void applyI18nLanguage(nextLanguage);
       }
-    };
+    },
+    [applyI18nLanguage],
+  );
 
-    i18n.on("languageChanged", handleLanguageChanged);
-    return () => {
-      i18n.off("languageChanged", handleLanguageChanged);
-    };
-  }, []);
+  const setLanguageOverride = useCallback(
+    (nextLanguage: AppLanguage | null) => {
+      setOverrideLanguageState(nextLanguage);
+      overrideRef.current = nextLanguage;
+      if (nextLanguage === null) {
+        void applyI18nLanguage(preferredRef.current);
+        return;
+      }
+      void applyI18nLanguage(nextLanguage);
+    },
+    [applyI18nLanguage],
+  );
+
+  /** Apply a preferred language already persisted elsewhere (e.g. another tab). */
+  const syncPreferredLanguage = useCallback(
+    async (nextLanguage: AppLanguage) => {
+      setPreferredLanguage(nextLanguage);
+      preferredRef.current = nextLanguage;
+      if (overrideRef.current === null && nextLanguage !== getI18nLanguage()) {
+        await applyI18nLanguage(nextLanguage);
+      }
+    },
+    [applyI18nLanguage],
+  );
 
   useEffect(() => {
     const handleStorage = (event: StorageEvent) => {
@@ -57,29 +74,34 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       if (!isAppLanguage(event.newValue)) {
         return;
       }
-      void syncLanguage(event.newValue);
+      void syncPreferredLanguage(event.newValue);
     };
 
     window.addEventListener("storage", handleStorage);
     return () => {
       window.removeEventListener("storage", handleStorage);
     };
-  }, [syncLanguage]);
+  }, [syncPreferredLanguage]);
 
-  const setLanguage = useCallback(
-    (nextLanguage: AppLanguage) => {
-      void applyLanguage(nextLanguage);
-    },
-    [applyLanguage],
-  );
+  const language = overrideLanguage ?? preferredLanguage;
 
   const value = useMemo(
     () => ({
       language,
+      preferredLanguage,
       setLanguage,
+      setLanguageOverride,
+      isLanguageOverridden: overrideLanguage !== null,
       isSaving: isLocaleLoading,
     }),
-    [isLocaleLoading, language, setLanguage],
+    [
+      language,
+      preferredLanguage,
+      setLanguage,
+      setLanguageOverride,
+      overrideLanguage,
+      isLocaleLoading,
+    ],
   );
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;

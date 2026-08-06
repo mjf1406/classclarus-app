@@ -17,6 +17,7 @@ import { rateLimiter } from "./lib/rateLimiter.js";
 import { clearLinksForClass } from "./lib/guardianLinks.js";
 import { deleteFilesForClass } from "./lib/filesCleanup.js";
 import { deleteJoinCodesForClass } from "./lib/joinCodesCleanup.js";
+import { languageValidator, type LanguageCode } from "./lib/languages.js";
 import { resolveUserImageUrl } from "./lib/userImage.js";
 
 const MIN_YEAR = 1900;
@@ -43,9 +44,20 @@ const classValidator = v.object({
   description: v.optional(v.string()),
   icon: v.optional(v.string()),
   bannerFileId: v.optional(v.id("files")),
+  studentLanguage: languageValidator,
   updatedAt: v.number(),
   archivedAt: v.optional(v.number()),
 });
+
+/** API always returns a language; pre-backfill rows default to English. */
+function withStudentLanguage(
+  classDoc: Doc<"classes">,
+): Doc<"classes"> & { studentLanguage: LanguageCode } {
+  return {
+    ...classDoc,
+    studentLanguage: classDoc.studentLanguage ?? "en",
+  };
+}
 
 const classWithRoleValidator = classValidator.extend({
   role: classRoleValidator,
@@ -150,7 +162,7 @@ export const listMine = authedQuery({
       rolesByClassId.set(classId, existing);
     }
 
-    const results: Array<Doc<"classes"> & { role: ClassRole }> = [];
+    const results: Array<Doc<"classes"> & { studentLanguage: LanguageCode; role: ClassRole }> = [];
 
     for (const [classId, roleNames] of rolesByClassId) {
       const scope = classScope(classId);
@@ -163,7 +175,7 @@ export const listMine = authedQuery({
       const classDoc = await ctx.db.get("classes", classId as Id<"classes">);
       if (!classDoc) continue;
 
-      results.push({ ...classDoc, role });
+      results.push({ ...withStudentLanguage(classDoc), role });
     }
 
     return results;
@@ -184,7 +196,7 @@ export const listOwned = authedQuery({
       .query("classes")
       .withIndex("by_owner", (q) => q.eq("ownerId", ctx.userId))
       .collect();
-    return owned;
+    return owned.map(withStudentLanguage);
   },
 });
 
@@ -200,7 +212,7 @@ export const get = authedQuery({
     if (!canRead) {
       return null;
     }
-    return classDoc;
+    return withStudentLanguage(classDoc);
   },
 });
 
@@ -210,6 +222,7 @@ export const create = entitledMutation({
     year: v.number(),
     description: v.optional(v.string()),
     icon: v.optional(v.string()),
+    studentLanguage: languageValidator,
   },
   returns: classValidator,
   handler: async (ctx, args) => {
@@ -222,6 +235,7 @@ export const create = entitledMutation({
       year: normalizeYear(args.year),
       description: normalizeDescription(args.description),
       icon: normalizeIcon(args.icon),
+      studentLanguage: args.studentLanguage,
       updatedAt: now,
     });
     await authz.assignRole(ctx, ctx.userId, "owner", classScope(classId));
@@ -229,7 +243,7 @@ export const create = entitledMutation({
     if (!created) {
       throw new Error("Failed to create class");
     }
-    return created;
+    return withStudentLanguage(created);
   },
 });
 
@@ -255,7 +269,7 @@ export const update = classMutation({
     if (!updated) {
       throw new Error("Failed to update class");
     }
-    return updated;
+    return withStudentLanguage(updated);
   },
 });
 
@@ -275,7 +289,7 @@ export const setArchived = classMutation({
     if (!updated) {
       throw new Error("Failed to update class archive state");
     }
-    return updated;
+    return withStudentLanguage(updated);
   },
 });
 
@@ -305,7 +319,27 @@ export const setBanner = classMutation({
     if (!updated) {
       throw new Error("Failed to set class banner");
     }
-    return updated;
+    return withStudentLanguage(updated);
+  },
+});
+
+export const setStudentLanguage = classMutation({
+  args: {
+    studentLanguage: languageValidator,
+  },
+  returns: classValidator,
+  handler: async (ctx, args) => {
+    await rateLimiter.limit(ctx, "classUpdate", { key: ctx.userId, throws: true });
+    await ctx.require("class:update");
+    await ctx.db.patch("classes", ctx.classDoc._id, {
+      studentLanguage: args.studentLanguage,
+      updatedAt: Date.now(),
+    });
+    const updated = await ctx.db.get("classes", ctx.classDoc._id);
+    if (!updated) {
+      throw new Error("Failed to update student language");
+    }
+    return withStudentLanguage(updated);
   },
 });
 
@@ -323,7 +357,7 @@ export const clearBanner = classMutation({
     if (!updated) {
       throw new Error("Failed to clear class banner");
     }
-    return updated;
+    return withStudentLanguage(updated);
   },
 });
 
@@ -463,6 +497,6 @@ export const transferOwnership = classMutation({
     if (!updated) {
       throw new Error("Failed to transfer ownership");
     }
-    return updated;
+    return withStudentLanguage(updated);
   },
 });

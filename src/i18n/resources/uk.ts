@@ -675,6 +675,10 @@ const uk = {
     navDashboard: "Панель",
     navActivityLog: "Журнал активності",
     navSettings: "Налаштування",
+    studentLanguageTitle: "Мова учнів",
+    studentLanguageDescription:
+      "Мова інтерфейсу для учнів у цьому класі. Інші ролі зберігають власну мову.",
+    studentLanguageSaveFailed: "Не вдалося оновити мову учнів.",
     bannerTitle: "Банер панелі",
     bannerDescription: "Завантажте зображення, яке показується на панелі класу.",
     bannerRemove: "Видалити банер",

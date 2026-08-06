@@ -668,6 +668,10 @@ const en = {
     navDashboard: "Dashboard",
     navActivityLog: "Activity log",
     navSettings: "Settings",
+    studentLanguageTitle: "Student language",
+    studentLanguageDescription:
+      "Language shown to students in this class. Other roles keep their own language.",
+    studentLanguageSaveFailed: "Could not update student language.",
     bannerTitle: "Dashboard Banner",
     bannerDescription: "Upload an image shown on the class dashboard.",
     bannerRemove: "Remove banner",

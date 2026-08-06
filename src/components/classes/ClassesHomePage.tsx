@@ -30,6 +30,7 @@ import { useCreateClass } from "@/hooks/classes/useCreateClass";
 import { useDeleteClass } from "@/hooks/classes/useDeleteClass";
 import { useSetClassArchived } from "@/hooks/classes/useSetClassArchived";
 import { useUpdateClass } from "@/hooks/classes/useUpdateClass";
+import { useAppLanguage } from "@/i18n/language-context";
 import type { ClassPublic } from "@/lib/classes/classes";
 import type { ClassFormValues } from "@/lib/classes/classFormSchema";
 import {
@@ -100,6 +101,7 @@ function ClassesSkeleton({ viewMode }: { viewMode: ClassViewMode }) {
 export function ClassesHomePage() {
   const { t } = useTranslation("classes");
   const navigate = useNavigate();
+  const { preferredLanguage } = useAppLanguage();
   const { entitlement } = useEntitlement();
   const { data, isPending, isError, refetch } = useClasses();
   const createClass = useCreateClass();
@@ -188,6 +190,7 @@ export function ClassesHomePage() {
       year: values.year,
       description: values.description,
       icon: values.icon,
+      studentLanguage: preferredLanguage,
     });
   };
 

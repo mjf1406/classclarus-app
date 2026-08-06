@@ -17,6 +17,7 @@ import type * as authzBackfill from "../authzBackfill.js";
 import type * as billing from "../billing.js";
 import type * as billingActions from "../billingActions.js";
 import type * as classes from "../classes.js";
+import type * as classesBackfill from "../classesBackfill.js";
 import type * as crons from "../crons.js";
 import type * as feedback from "../feedback.js";
 import type * as files from "../files.js";
@@ -71,6 +72,7 @@ declare const fullApi: ApiFromModules<{
   billing: typeof billing;
   billingActions: typeof billingActions;
   classes: typeof classes;
+  classesBackfill: typeof classesBackfill;
   crons: typeof crons;
   feedback: typeof feedback;
   files: typeof files;

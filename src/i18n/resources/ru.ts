@@ -677,6 +677,10 @@ const ru = {
     navDashboard: "Панель",
     navActivityLog: "Журнал активности",
     navSettings: "Настройки",
+    studentLanguageTitle: "Язык учеников",
+    studentLanguageDescription:
+      "Язык интерфейса для учеников в этом классе. Остальные роли сохраняют свой язык.",
+    studentLanguageSaveFailed: "Не удалось обновить язык учеников.",
     bannerTitle: "Баннер панели",
     bannerDescription: "Загрузите изображение, которое отображается на панели класса.",
     bannerRemove: "Удалить баннер",

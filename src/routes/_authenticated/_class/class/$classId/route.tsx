@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 
 import { TrialBanner } from "@/components/billing/TrialBanner";
 import { ClassPresenceChip } from "@/components/classes/ClassPresenceChip";
+import { ClassStudentLanguageOverride } from "@/components/classes/ClassStudentLanguageOverride";
 import { SelfHostUpdateBanner } from "@/components/classroom/SelfHostUpdateBanner";
 import { AppFooter } from "@/components/navigation/AppFooter";
 import { ClassContent } from "@/components/navigation/class-sidebar/ClassContent";
@@ -68,6 +69,9 @@ export const Route = createFileRoute("/_authenticated/_class/class/$classId")({
 
     return (
       <ClassPermissionsProvider classId={classId}>
+        {classDoc ? (
+          <ClassStudentLanguageOverride studentLanguage={classDoc.studentLanguage} />
+        ) : null}
         <ClassPresenceProvider classId={classId}>
           <SidebarProvider>
             {classDoc ? <ClassAppSidebar classDoc={classDoc} /> : <ClassSidebarSkeleton />}

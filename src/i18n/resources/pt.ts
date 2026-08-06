@@ -675,6 +675,10 @@ const pt = {
     navDashboard: "Painel",
     navActivityLog: "Registro de atividades",
     navSettings: "Configurações",
+    studentLanguageTitle: "Idioma dos alunos",
+    studentLanguageDescription:
+      "Idioma mostrado aos alunos nesta turma. Os outros papéis mantêm o próprio idioma.",
+    studentLanguageSaveFailed: "Não foi possível atualizar o idioma dos alunos.",
     bannerTitle: "Banner do painel",
     bannerDescription: "Envie uma imagem exibida no painel da turma.",
     bannerRemove: "Remover banner",

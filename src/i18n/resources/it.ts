@@ -683,6 +683,10 @@ const it = {
     navDashboard: "Dashboard",
     navActivityLog: "Registro attività",
     navSettings: "Impostazioni",
+    studentLanguageTitle: "Lingua degli studenti",
+    studentLanguageDescription:
+      "Lingua mostrata agli studenti in questa classe. Gli altri ruoli mantengono la propria lingua.",
+    studentLanguageSaveFailed: "Impossibile aggiornare la lingua degli studenti.",
     bannerTitle: "Banner della dashboard",
     bannerDescription: "Carica un’immagine mostrata nella dashboard della classe.",
     bannerRemove: "Rimuovi banner",

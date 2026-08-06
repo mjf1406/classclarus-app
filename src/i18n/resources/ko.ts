@@ -664,6 +664,10 @@ const ko = {
     navDashboard: "대시보드",
     navActivityLog: "활동 로그",
     navSettings: "설정",
+    studentLanguageTitle: "학생 언어",
+    studentLanguageDescription:
+      "이 클래스에서 학생에게 표시되는 언어입니다. 다른 역할은 각자의 언어 설정을 사용합니다.",
+    studentLanguageSaveFailed: "학생 언어를 업데이트할 수 없습니다.",
     bannerTitle: "대시보드 배너",
     bannerDescription: "클래스 대시보드에 표시할 이미지를 업로드하세요.",
     bannerRemove: "배너 제거",

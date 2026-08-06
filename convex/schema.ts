@@ -35,6 +35,8 @@ const schema = defineSchema({
     icon: v.optional(v.string()),
     /** Class-scoped image file shown on the dashboard. */
     bannerFileId: v.optional(v.id("files")),
+    /** UI language forced for students while inside this class. */
+    studentLanguage: languageValidator,
     updatedAt: v.number(),
     archivedAt: v.optional(v.number()),
   }).index("by_owner", ["ownerId"]),

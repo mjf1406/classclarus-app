@@ -7,6 +7,7 @@ import {
   type ClassFormInitialValues,
 } from "@/components/classes/ClassFormCredenza";
 import { ClassIconDisplay } from "@/components/classes/ClassIconDisplay";
+import { LanguageSelect } from "@/components/i18n/LanguageSelect";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ErrorState } from "@/components/ui/error-state";
@@ -15,9 +16,11 @@ import { FileDropzone } from "@/components/upload/FileDropzone";
 import { useClass } from "@/hooks/classes/useClass";
 import { useClearClassBanner } from "@/hooks/classes/useClearClassBanner";
 import { useSetClassBanner } from "@/hooks/classes/useSetClassBanner";
+import { useSetStudentLanguage } from "@/hooks/classes/useSetStudentLanguage";
 import { useUpdateClass } from "@/hooks/classes/useUpdateClass";
 import { useFileBytes } from "@/hooks/files/useFileBytes";
 import type { ClassFormValues } from "@/lib/classes/classFormSchema";
+import type { AppLanguage } from "@/lib/languages";
 import type { Id } from "../../../convex/_generated/dataModel";
 
 type ClassSettingsPageProps = {
@@ -60,6 +63,7 @@ export function ClassSettingsPage({ classId }: ClassSettingsPageProps) {
   const updateClass = useUpdateClass();
   const setBanner = useSetClassBanner();
   const clearBanner = useClearClassBanner();
+  const setStudentLanguage = useSetStudentLanguage();
   const [editOpen, setEditOpen] = useState(false);
 
   const showSkeleton = (isPending || isAuthLoading) && classDoc == null;
@@ -92,6 +96,10 @@ export function ClassSettingsPage({ classId }: ClassSettingsPageProps) {
 
   const handleClearBanner = () => {
     clearBanner.mutate({ classId });
+  };
+
+  const handleStudentLanguageChange = (studentLanguage: AppLanguage) => {
+    setStudentLanguage.mutate({ classId, studentLanguage });
   };
 
   return (
@@ -149,6 +157,21 @@ export function ClassSettingsPage({ classId }: ClassSettingsPageProps) {
                   })}
                 </span>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card className="max-w-2xl">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold">{t("studentLanguageTitle")}</CardTitle>
+              <CardDescription>{t("studentLanguageDescription")}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <LanguageSelect
+                value={classDoc.studentLanguage}
+                onValueChange={handleStudentLanguageChange}
+                disabled={setStudentLanguage.isPending}
+                triggerClassName="w-auto min-w-40"
+              />
             </CardContent>
           </Card>
 

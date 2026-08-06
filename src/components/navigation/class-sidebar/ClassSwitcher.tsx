@@ -9,6 +9,7 @@ import { useClassPermissionsContext } from "@/components/permissions/classPermis
 import { useEntitlement } from "@/hooks/billing/useEntitlement";
 import { useCreateClass } from "@/hooks/classes/useCreateClass";
 import { useActiveClasses } from "@/hooks/classes/useClasses";
+import { useAppLanguage } from "@/i18n/language-context";
 import type { ClassDoc } from "@/lib/classes/classes";
 import type { ClassFormValues } from "@/lib/classes/classFormSchema";
 import { classRouteFromPathname } from "@/lib/classes/classRoutes";
@@ -34,6 +35,7 @@ export function ClassSwitcher({ currentClass }: ClassSwitcherProps) {
   const { role } = useClassPermissionsContext();
   const navigate = useNavigate();
   const { entitlement } = useEntitlement();
+  const { preferredLanguage } = useAppLanguage();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const { data: classes = [] } = useActiveClasses();
   const createClass = useCreateClass();
@@ -60,6 +62,7 @@ export function ClassSwitcher({ currentClass }: ClassSwitcherProps) {
       year: values.year,
       description: values.description,
       icon: values.icon,
+      studentLanguage: preferredLanguage,
     });
     closeMobileSidebar();
     void navigate({

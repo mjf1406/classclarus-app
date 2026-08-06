@@ -10,6 +10,7 @@ import { useOptimisticMutation } from "@/hooks/useOptimisticMutation";
 import { isSubscriptionRequiredError } from "@/lib/billing/errors";
 import type { ClassPublic } from "@/lib/classes/classes";
 import { messageFromError } from "@/lib/errors/convexError";
+import type { AppLanguage } from "@/lib/languages";
 import { randomClientId } from "@/lib/optimistic";
 
 type CreateClassArgs = {
@@ -17,6 +18,7 @@ type CreateClassArgs = {
   year: number;
   description?: string;
   icon?: string;
+  studentLanguage: AppLanguage;
 };
 
 export function useCreateClass() {
@@ -41,6 +43,7 @@ export function useCreateClass() {
         year: args.year,
         description: args.description,
         icon: args.icon,
+        studentLanguage: args.studentLanguage,
         updatedAt: now,
         role: "owner",
         _pending: true,

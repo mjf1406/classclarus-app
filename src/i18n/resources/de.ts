@@ -683,6 +683,10 @@ const de = {
     navDashboard: "Übersicht",
     navActivityLog: "Aktivitätsprotokoll",
     navSettings: "Einstellungen",
+    studentLanguageTitle: "Schülersprache",
+    studentLanguageDescription:
+      "Sprache, die Schüler in dieser Klasse sehen. Andere Rollen behalten ihre eigene Sprache.",
+    studentLanguageSaveFailed: "Schülersprache konnte nicht aktualisiert werden.",
     bannerTitle: "Dashboard-Banner",
     bannerDescription: "Laden Sie ein Bild hoch, das auf dem Klassendashboard angezeigt wird.",
     bannerRemove: "Banner entfernen",

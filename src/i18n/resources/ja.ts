@@ -674,6 +674,10 @@ const ja = {
     navDashboard: "ダッシュボード",
     navActivityLog: "アクティビティログ",
     navSettings: "設定",
+    studentLanguageTitle: "生徒の言語",
+    studentLanguageDescription:
+      "このクラスで生徒に表示する言語です。他の役割は各自の言語設定を使います。",
+    studentLanguageSaveFailed: "生徒の言語を更新できませんでした。",
     bannerTitle: "ダッシュボードバナー",
     bannerDescription: "クラスのダッシュボードに表示する画像をアップロードします。",
     bannerRemove: "バナーを削除",

@@ -690,6 +690,10 @@ const fr = {
     navDashboard: "Tableau de bord",
     navActivityLog: "Journal d'activité",
     navSettings: "Paramètres",
+    studentLanguageTitle: "Langue des élèves",
+    studentLanguageDescription:
+      "Langue affichée aux élèves dans cette classe. Les autres rôles gardent leur propre langue.",
+    studentLanguageSaveFailed: "Impossible de mettre à jour la langue des élèves.",
     bannerTitle: "Bannière du tableau de bord",
     bannerDescription: "Téléversez une image affichée sur le tableau de bord de la classe.",
     bannerRemove: "Supprimer la bannière",

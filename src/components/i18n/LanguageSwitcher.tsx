@@ -20,7 +20,7 @@ type LanguageSwitcherProps = {
 
 export function LanguageSwitcher({ descriptionId }: LanguageSwitcherProps) {
   const { t } = useTranslation("common");
-  const { language, setLanguage, isSaving } = useAppLanguage();
+  const { language, setLanguage, isSaving, isLanguageOverridden } = useAppLanguage();
   const currentLanguage = getLanguageOption(language);
 
   return (
@@ -30,7 +30,7 @@ export function LanguageSwitcher({ descriptionId }: LanguageSwitcherProps) {
           <Button
             variant="outline"
             size="icon"
-            disabled={isSaving}
+            disabled={isSaving || isLanguageOverridden}
             aria-describedby={descriptionId}
           />
         }

@@ -67,7 +67,7 @@ function FooterColumn({ title, children }: { title: string; children: ReactNode 
 export function AppFooter() {
   const { t } = useTranslation("common");
   const { isAuthenticated } = useConvexAuth();
-  const { language, setLanguage, isSaving } = useAppLanguage();
+  const { language, setLanguage, isSaving, isLanguageOverridden } = useAppLanguage();
   const year = new Date().getFullYear();
   const showFeedback = isAuthenticated && !isSelfHosted();
 
@@ -151,7 +151,7 @@ export function AppFooter() {
             <LanguageSelect
               value={language}
               onValueChange={setLanguage}
-              disabled={isSaving}
+              disabled={isSaving || isLanguageOverridden}
               triggerClassName="w-auto min-w-40"
             />
             <ThemeToggle />
