@@ -1,0 +1,57 @@
+---
+description: When to use Base UI toasts and which variant to pick
+alwaysApply: true
+---
+
+# Toast Usage (Base UI)
+
+Toasts come from `@/components/ui/toast-manager.ts` (rendered via `<Toaster />` in `src/main.tsx`).
+
+Import with:
+
+```ts
+import { toast } from "@/components/ui/toast-manager";
+```
+
+## Variants
+
+Use these `type` values (they match the styled variants in `src/components/ui/toast.tsx`):
+
+- `success`
+- `warning`
+- `tip`
+- `info`
+- `error`
+- `loading`
+
+## Success toasts — use sparingly
+
+Only show a success toast when the UI does NOT update in an obvious way after the action. If the result is immediately visible (optimistic update renders instantly, dialog closes and changes are on screen), do NOT add a success toast — it's redundant noise.
+
+## Errors — toast on failure (pairs with optimistic updates)
+
+For failed mutations, always show an `error` toast. With optimistic updates, rollbacks in `onError` are invisible to the user, so the toast is the only feedback.
+
+Prefer the server's message when it's user-friendly:
+
+`error instanceof Error ? error.message : t("genericFailed")`
+
+## Loading toasts
+
+Use `loading` only when there's no inline pending UI (e.g. long-running uploads/exports).
+
+Use either:
+
+1. `toast.promise(promise, { loading, success, error })`
+2. `const id = toast.add({ type: "loading", timeout: 0, ... })` then `toast.update(id, { type: "success" | "error", ... })`
+
+Dismiss with `toast.close(id)` (there is no `remove()`).
+
+## Undo pattern
+
+For reversible destructive actions, use `undoToast` from `src/components/ui/undo-toast.ts`.
+
+## General
+
+- Keep titles/messages short and translated (`t(...)`).
+- Never use a toast as the primary way to display data — it's for transient feedback only.

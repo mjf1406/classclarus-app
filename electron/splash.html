@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'"
+    />
+    <title>Starting…</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #252525;
+        --fg: #f5f5f5;
+        --muted: #a3a3a3;
+        --error: #f87171;
+      }
+      @media (prefers-color-scheme: light) {
+        :root {
+          --bg: #ffffff;
+          --fg: #171717;
+          --muted: #737373;
+          --error: #dc2626;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        font-family: system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--fg);
+      }
+      main {
+        width: min(28rem, calc(100vw - 2rem));
+        text-align: center;
+      }
+      h1 {
+        margin: 0 0 0.5rem;
+        font-size: 1.125rem;
+        font-weight: 600;
+      }
+      p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.875rem;
+        line-height: 1.4;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      p.error {
+        margin-top: 0.75rem;
+        color: var(--error);
+      }
+      .spinner {
+        width: 1.75rem;
+        height: 1.75rem;
+        margin: 0 auto 1.25rem;
+        border: 2px solid color-mix(in srgb, var(--muted) 35%, transparent);
+        border-top-color: var(--fg);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      .spinner[hidden] {
+        display: none;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div id="spinner" class="spinner" aria-hidden="true"></div>
+      <h1 id="title">Starting classroom server…</h1>
+      <p id="detail">This can take a minute on first launch.</p>
+      <p id="error" class="error" hidden></p>
+    </main>
+    <script>
+      const titleEl = document.getElementById("title");
+      const detailEl = document.getElementById("detail");
+      const errorEl = document.getElementById("error");
+      const spinnerEl = document.getElementById("spinner");
+
+      const LABELS = {
+        starting: {
+          title: "Starting classroom server…",
+          detail: "This can take a minute on first launch.",
+        },
+        deploying: {
+          title: "Preparing classroom data…",
+          detail: "Deploying the local backend. Please keep this window open.",
+        },
+        running: {
+          title: "Classroom server is running",
+          detail: "Opening the app…",
+        },
+        error: {
+          title: "Classroom server failed",
+          detail: "The app could not finish starting.",
+        },
+        stopped: {
+          title: "Classroom server stopped",
+          detail: "Close and reopen the app to try again.",
+        },
+      };
+
+      function render(session) {
+        const status = session?.status ?? "starting";
+        const labels = LABELS[status] ?? LABELS.starting;
+        titleEl.textContent = labels.title;
+        detailEl.textContent = labels.detail;
+        const isError = status === "error";
+        spinnerEl.hidden = isError || status === "stopped";
+        if (isError && session?.errorMessage) {
+          errorEl.hidden = false;
+          errorEl.textContent = session.errorMessage;
+        } else {
+          errorEl.hidden = true;
+          errorEl.textContent = "";
+        }
+      }
+
+      async function boot() {
+        if (!window.classroom) {
+          render({ status: "error", errorMessage: "Desktop bridge unavailable." });
+          return;
+        }
+        try {
+          render(await window.classroom.getSession());
+        } catch (error) {
+          render({
+            status: "error",
+            errorMessage: error instanceof Error ? error.message : String(error),
+          });
+          return;
+        }
+        window.classroom.onSession(render);
+      }
+
+      void boot();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,24 @@
+---
+description: Require TanStack Query hooks and optimistic updates for Convex operations
+alwaysApply: true
+---
+
+# Convex TanStack Query Hooks
+
+- Access Convex functions through TanStack Query (`useQuery` / `useMutation` + `@convex-dev/react-query`).
+- Encapsulate every Convex query or mutation in a dedicated custom hook; components must not call Convex functions directly.
+- CRUD mutations must use optimistic updates.
+- In `onMutate`, cancel affected queries, snapshot prior cache data, and apply the optimistic cache update.
+- In `onError`, restore the snapshot.
+- In `onSettled`, invalidate affected queries so the cache reconciles with Convex.
+- Share query keys between the query hook and related mutation hooks (prefer `convexQuery(...).queryKey`).
+- Choose a sensible `gcTime` for each query based on data lifetime. When planning a new query, state the proposed `gcTime` and ask the user to confirm it.
+- Preserve strict TypeScript types; do not use `any`.
+- Credenza and Dialog component should close immediately upon submitting, then reopen only on fail
+
+## Reference examples
+
+- Auth-gated query hook: `src/hooks/useAuthedQuery.ts`
+- Optimistic mutation hook: `src/hooks/useOptimisticMutation.ts`
+
+Follow those files' patterns when adding new Convex data hooks.

@@ -1,0 +1,123 @@
+# Local self-host stack (clone + Portainer use the same file).
+# Builds web/deploy on the machine. Docs: docs/SELF_HOSTING.md
+#
+#   PUBLIC_HOST=<lan-ip-or-localhost> docker compose up -d --build
+#   open http://$PUBLIC_HOST:8088
+
+name: vctr
+
+services:
+  backend:
+    image: ghcr.io/get-convex/convex-backend:latest
+    stop_grace_period: 10s
+    stop_signal: SIGINT
+    ports:
+      - "${PORT:-3210}:3210"
+      - "${SITE_PROXY_PORT:-3211}:3211"
+    volumes:
+      - convex-data:/convex/data
+    environment:
+      # Cloud origin must be the LAN URL browsers use for WebSockets.
+      CONVEX_CLOUD_ORIGIN: "http://${PUBLIC_HOST:-localhost}:${PORT:-3210}"
+      # Site origin is the JWT issuer + OIDC discovery base. The backend fetches
+      # /.well-known/* from this URL *from inside the container*, so use loopback
+      # (official self-host default). Using PUBLIC_HOST here breaks auth discovery
+      # when Docker cannot hairpin back to the published port.
+      CONVEX_SITE_ORIGIN: "${CONVEX_SITE_ORIGIN:-http://127.0.0.1:${SITE_PROXY_PORT:-3211}}"
+      INSTANCE_NAME: "${INSTANCE_NAME:-vctr}"
+      INSTANCE_SECRET: "${INSTANCE_SECRET:-a1b2c3d4e5f60718293a4b5c6d7e8f90112233445566778899aabbccddeeff00}"
+      RUST_LOG: "${RUST_LOG:-info}"
+      DISABLE_METRICS_ENDPOINT: "true"
+      DOCUMENT_RETENTION_DELAY: "${DOCUMENT_RETENTION_DELAY:-172800}"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3210/version"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
+  admin-key:
+    image: ghcr.io/get-convex/convex-backend:latest
+    restart: "no"
+    volumes:
+      - convex-data:/convex/data
+    environment:
+      INSTANCE_NAME: "${INSTANCE_NAME:-vctr}"
+      INSTANCE_SECRET: "${INSTANCE_SECRET:-a1b2c3d4e5f60718293a4b5c6d7e8f90112233445566778899aabbccddeeff00}"
+    depends_on:
+      backend:
+        condition: service_healthy
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        set -euo pipefail
+        if [ -s /convex/data/admin_key ]; then
+          echo "Admin key already present"
+          exit 0
+        fi
+        ./generate_admin_key.sh | tr -d '\r\n' > /convex/data/admin_key
+        chmod 600 /convex/data/admin_key
+        echo "Admin key written"
+
+  deploy:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: deploy
+    pull_policy: build
+    restart: "no"
+    volumes:
+      - convex-data:/convex/data
+    environment:
+      CONVEX_SELF_HOSTED_URL: http://backend:3210
+      PUBLIC_HOST: "${PUBLIC_HOST:-localhost}"
+      WEB_PORT: "${WEB_PORT:-8088}"
+      # Label prefix for deploy marker; convex/ content hash always appended.
+      APP_VERSION: "${APP_VERSION:-0.0.0}"
+    depends_on:
+      backend:
+        condition: service_healthy
+      admin-key:
+        condition: service_completed_successfully
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: web
+      args:
+        VITE_CONVEX_URL: "http://${PUBLIC_HOST:-localhost}:${PORT:-3210}"
+        VITE_CONVEX_SITE_URL: "http://${PUBLIC_HOST:-localhost}:${SITE_PROXY_PORT:-3211}"
+        VITE_AUTH_PASSWORD_ENABLED: "true"
+        VITE_SELF_HOSTED: "true"
+        VITE_APP_VERSION: "${APP_VERSION:-0.0.0}"
+    pull_policy: build
+    ports:
+      - "${WEB_PORT:-8088}:80"
+    environment:
+      PUBLIC_HOST: "${PUBLIC_HOST:-localhost}"
+      PORT: "${PORT:-3210}"
+      SITE_PROXY_PORT: "${SITE_PROXY_PORT:-3211}"
+      VITE_AUTH_PASSWORD_ENABLED: "true"
+      VITE_SELF_HOSTED: "true"
+      # Optional runtime override; 0.0.0/empty keeps the git-stamped build version.
+      APP_VERSION: "${APP_VERSION:-0.0.0}"
+      NGINX_ENVSUBST_FILTER: "^(PUBLIC_HOST|PORT|SITE_PROXY_PORT)$"
+    depends_on:
+      deploy:
+        condition: service_completed_successfully
+
+  dashboard:
+    image: ghcr.io/get-convex/convex-dashboard:latest
+    stop_grace_period: 10s
+    stop_signal: SIGINT
+    ports:
+      - "${DASHBOARD_PORT:-6791}:6791"
+    environment:
+      NEXT_PUBLIC_DEPLOYMENT_URL: "http://${PUBLIC_HOST:-localhost}:${PORT:-3210}"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  convex-data:

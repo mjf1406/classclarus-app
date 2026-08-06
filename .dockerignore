@@ -1,0 +1,25 @@
+node_modules
+dist
+# Keep .git so web-build can resolve VITE_APP_VERSION via git describe.
+.github
+.cursor
+.agents
+.vscode
+.vite-hooks
+*.local
+.env
+.env.*
+!example.env
+agent-transcripts
+coverage
+**/__screenshots__
+**/*.test.ts
+**/*.test.tsx
+**/*.md
+!docs/SELF_HOSTING.md
+Dockerfile*
+docker-compose*.yml
+.gitignore
+.oxfmtrc.json
+.oxlintrc.json
+eslint.config.js

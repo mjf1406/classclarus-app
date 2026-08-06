@@ -1,0 +1,39 @@
+---
+description: User-facing copy must use i18n; add keys to every locale catalog when missing
+alwaysApply: true
+---
+
+# i18n for UI Copy
+
+All user-facing strings in components and routes go through `react-i18next`. Do not hardcode display text (labels, titles, empty states, toasts, pending messages, button copy, errors shown to users).
+
+## When adding or changing UI copy
+
+1. Prefer an **existing** key if one already fits (`src/i18n/resources/en.ts` is the catalog source of truth).
+2. If missing, add the key to **`en.ts` first**, then to **every** locale file under `src/i18n/resources/` (`ja`, `ko`, `zhs`, `zht`, `es`, `fr`, `it`, `de`, `pt`, `ru`, `uk`). `engb` reuses `en` — do not add an `engb` file.
+3. Update `REQUIRED_KEYS` (and the `LocaleResources` type) in `src/i18n/entityNoun.test.ts` when the new key should be enforced across catalogs.
+4. Use `useTranslation("<namespace>")` and `t("key")` in the component.
+
+```tsx
+// ❌ BAD
+<span>Loading...</span>
+
+// ✅ GOOD — reuse or add common.loading in all locale files
+const { t } = useTranslation("common");
+<span>{t("loading")}</span>
+```
+
+## Namespaces
+
+| Namespace | Use for |
+|---|---|
+| `common` | Shared UI (loading, language, generic actions/errors) |
+| Feature (`home`, `classes`, …) | Copy specific to that area |
+
+Match the namespace to the feature; put cross-cutting strings in `common`.
+
+## Rules of thumb
+
+- Keep values short, non-empty strings in every locale (same key path everywhere).
+- `TranslationCatalog` is inferred from `en.ts` — shape changes start there.
+- Do not leave English-only keys in other locales when you add a new key; translate or provide a reasonable locale string in the same change.
