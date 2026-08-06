@@ -490,6 +490,8 @@ const uk = {
     checkoutFailed: "Не вдалося розпочати оформлення замовлення",
     errorInvalidProduct: "That plan is not available.",
     errorSubscriptionRequired: "Subscription required. Your free trial has ended.",
+    errorCreateRequiresSubscription:
+      "Оформіть підписку, щоб створити клас. Приєднання за запрошенням лишається безкоштовним.",
     currentPlan: "Поточний тариф",
     trialActive: "Безкоштовний пробний період — залишився {{count}} день",
     trialActive_other: "Безкоштовний пробний період — залишилося {{count}} днів",

@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { ClassRoleIconBadge } from "@/components/badges/ClassRoleBadges";
 import { ClassFormCredenza } from "@/components/classes/ClassFormCredenza";
 import { useClassPermissionsContext } from "@/components/permissions/classPermissionsContext";
+import { useEntitlement } from "@/hooks/billing/useEntitlement";
 import { useCreateClass } from "@/hooks/classes/useCreateClass";
 import { useActiveClasses } from "@/hooks/classes/useClasses";
 import type { ClassDoc } from "@/lib/classes/classes";
@@ -32,6 +33,7 @@ export function ClassSwitcher({ currentClass }: ClassSwitcherProps) {
   const { isMobile, setOpenMobile } = useSidebar();
   const { role } = useClassPermissionsContext();
   const navigate = useNavigate();
+  const { entitlement } = useEntitlement();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const { data: classes = [] } = useActiveClasses();
   const createClass = useCreateClass();
@@ -41,6 +43,15 @@ export function ClassSwitcher({ currentClass }: ClassSwitcherProps) {
     if (isMobile) {
       setOpenMobile(false);
     }
+  };
+
+  const openCreate = () => {
+    if (entitlement?.status === "expired") {
+      closeMobileSidebar();
+      void navigate({ to: "/billing" });
+      return;
+    }
+    setCreateOpen(true);
   };
 
   const handleCreate = async (values: ClassFormValues) => {
@@ -113,7 +124,7 @@ export function ClassSwitcher({ currentClass }: ClassSwitcherProps) {
                 ))}
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="gap-2 p-2" onClick={() => setCreateOpen(true)}>
+              <DropdownMenuItem className="gap-2 p-2" onClick={openCreate}>
                 <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
                   <Plus className="size-4" />
                 </div>

@@ -1,24 +1,15 @@
 import PendingComponent from "@/components/loading/PendingComponent";
 import { useEntitlement } from "@/hooks/billing/useEntitlement";
 import { useEnsureTrialGrant } from "@/hooks/billing/useEnsureTrialGrant";
-import { Navigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 
-const ALLOWLIST_PREFIXES = ["/billing", "/account"] as const;
-
-function isAllowlisted(pathname: string): boolean {
-  return ALLOWLIST_PREFIXES.some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
-  );
-}
-
 /**
- * Hard gate: expired trial (no active subscription) may only visit
- * `/billing` and `/account`.
+ * Bootstraps the card-less trial grant for new sessions.
+ * Does not hard-redirect expired users — create-class and billing CTAs
+ * enforce pay-to-create on the client; `classes.create` enforces on the server.
  */
 export function BillingGate({ children }: { children: ReactNode }) {
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { data, entitlement, isPending, isAuthLoading, refetch } = useEntitlement();
+  const { data, isPending, isAuthLoading, refetch } = useEntitlement();
   const { mutateAsync: ensureTrialGrant } = useEnsureTrialGrant();
   const [ensureSettled, setEnsureSettled] = useState(false);
 
@@ -36,7 +27,7 @@ export function BillingGate({ children }: { children: ReactNode }) {
         await refetch();
       })
       .catch(() => {
-        // Fall through — treat as expired if still no grant.
+        // Fall through — create stays server-gated if still no grant.
       })
       .finally(() => {
         if (!cancelled) {
@@ -50,10 +41,6 @@ export function BillingGate({ children }: { children: ReactNode }) {
 
   if (isAuthLoading || isPending || !ensureSettled) {
     return <PendingComponent inset />;
-  }
-
-  if (entitlement?.status === "expired" && !isAllowlisted(pathname)) {
-    return <Navigate to="/billing" replace />;
   }
 
   return children;

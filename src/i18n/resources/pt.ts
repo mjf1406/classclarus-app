@@ -486,6 +486,8 @@ const pt = {
     checkoutFailed: "Não foi possível iniciar o pagamento",
     errorInvalidProduct: "That plan is not available.",
     errorSubscriptionRequired: "Subscription required. Your free trial has ended.",
+    errorCreateRequiresSubscription:
+      "Assine para criar uma turma. Entrar em turmas convidadas continua grátis.",
     currentPlan: "Plano atual",
     trialActive: "Teste grátis — falta {{count}} dia",
     trialActive_other: "Teste grátis — faltam {{count}} dias",

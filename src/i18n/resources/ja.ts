@@ -489,6 +489,8 @@ const ja = {
     checkoutFailed: "チェックアウトを開始できませんでした",
     errorInvalidProduct: "That plan is not available.",
     errorSubscriptionRequired: "Subscription required. Your free trial has ended.",
+    errorCreateRequiresSubscription:
+      "クラスを作成するには登録が必要です。招待されたクラスへの参加は無料のままです。",
     currentPlan: "現在のプラン",
     trialActive: "無料トライアル — 残り{{count}}日",
     trialActive_other: "無料トライアル — 残り{{count}}日",

@@ -28,7 +28,6 @@ import {
 } from "@/lib/invitations/joinCodeFormSchema";
 import { JOIN_CODE_PARAM } from "@/lib/invitations/joinCodes";
 import { canReadAsyncClipboard, readClipboardText } from "@/lib/clipboard";
-import { isSubscriptionRequiredError } from "@/lib/billing/errors";
 import { codeFromError, messageFromError } from "@/lib/errors/convexError";
 
 const joinSearchSchema = z.object({
@@ -44,7 +43,6 @@ export const Route = createFileRoute("/_authenticated/_app/join")({
   component: function JoinPage() {
     const { t } = useTranslation("classes");
     const { t: tCommon } = useTranslation("common");
-    const { t: tBilling } = useTranslation("billing");
     const navigate = useNavigate();
     const searchStr = useRouterState({ select: (state) => state.location.searchStr });
     const { [JOIN_CODE_PARAM]: codeFromSearch } = Route.useSearch();
@@ -144,14 +142,12 @@ export const Route = createFileRoute("/_authenticated/_app/join")({
           params: { classId: result.classId },
         });
       } catch (submitError) {
-        const code = codeFromError(submitError);
-        if (isSubscriptionRequiredError(submitError)) {
-          setError(tBilling("errorSubscriptionRequired"));
-        } else if (code === "ALREADY_MEMBER") {
+        const errCode = codeFromError(submitError);
+        if (errCode === "ALREADY_MEMBER") {
           setError(t("joinAlreadyMember"));
-        } else if (code === "INVALID_JOIN_CODE") {
+        } else if (errCode === "INVALID_JOIN_CODE") {
           setError(t("joinInvalidCode"));
-        } else if (code === "CLASS_ARCHIVED") {
+        } else if (errCode === "CLASS_ARCHIVED") {
           setError(t("joinClassArchived"));
         } else {
           setError(messageFromError(submitError, t("joinFailed"), tCommon("rateLimited")));

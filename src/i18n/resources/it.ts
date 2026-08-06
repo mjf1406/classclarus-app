@@ -493,6 +493,8 @@ const it = {
     checkoutFailed: "Impossibile avviare il pagamento",
     errorInvalidProduct: "That plan is not available.",
     errorSubscriptionRequired: "Subscription required. Your free trial has ended.",
+    errorCreateRequiresSubscription:
+      "Abbonati per creare una classe. Unirsi alle classi invitate resta gratuito.",
     currentPlan: "Piano attuale",
     trialActive: "Prova gratuita — {{count}} giorno rimasto",
     trialActive_other: "Prova gratuita — {{count}} giorni rimasti",

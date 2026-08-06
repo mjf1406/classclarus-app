@@ -490,6 +490,8 @@ const nl = {
     checkoutFailed: "Afrekenen kon niet worden gestart",
     errorInvalidProduct: "That plan is not available.",
     errorSubscriptionRequired: "Subscription required. Your free trial has ended.",
+    errorCreateRequiresSubscription:
+      "Abonneer om een klas aan te maken. Uitgenodigde klassen blijven gratis.",
     currentPlan: "Huidig abonnement",
     trialActive: "Gratis proefperiode — nog {{count}} dag",
     trialActive_other: "Gratis proefperiode — nog {{count}} dagen",

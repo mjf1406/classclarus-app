@@ -474,6 +474,7 @@ const zhs = {
     checkoutFailed: "无法开始结账",
     errorInvalidProduct: "That plan is not available.",
     errorSubscriptionRequired: "Subscription required. Your free trial has ended.",
+    errorCreateRequiresSubscription: "订阅后即可创建班级。加入受邀班级仍然免费。",
     currentPlan: "当前套餐",
     trialActive: "免费试用 — 剩余 {{count}} 天",
     trialActive_other: "免费试用 — 剩余 {{count}} 天",

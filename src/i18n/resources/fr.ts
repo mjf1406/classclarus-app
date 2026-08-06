@@ -499,6 +499,8 @@ const fr = {
     checkoutFailed: "Impossible de démarrer le paiement",
     errorInvalidProduct: "That plan is not available.",
     errorSubscriptionRequired: "Subscription required. Your free trial has ended.",
+    errorCreateRequiresSubscription:
+      "Abonnez-vous pour créer une classe. Rejoindre les classes invitées reste gratuit.",
     currentPlan: "Offre actuelle",
     trialActive: "Essai gratuit — {{count}} jour restant",
     trialActive_other: "Essai gratuit — {{count}} jours restants",

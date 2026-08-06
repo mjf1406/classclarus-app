@@ -464,6 +464,8 @@ const en = {
     errorUnauthenticated: "Please sign in to manage billing.",
     errorInvalidProduct: "That plan is not available.",
     errorSubscriptionRequired: "Subscription required. Your free trial has ended.",
+    errorCreateRequiresSubscription:
+      "Subscribe to create a class. Joining invited classes stays free.",
     currentPlan: "Current plan",
     subscriptionsTitle: "Subscriptions",
     statusLabel: "Status",

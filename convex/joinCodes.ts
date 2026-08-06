@@ -10,11 +10,7 @@ import {
   type JoinCodeRole,
 } from "./lib/authzModel.js";
 import { deleteJoinCodeById } from "./lib/joinCodesCleanup.js";
-import {
-  entitledClassMutation,
-  entitledClassQuery,
-  entitledMutation,
-} from "./lib/customFunctions.js";
+import { authedMutation, classMutation, classQuery } from "./lib/customFunctions.js";
 import { rateLimiter } from "./lib/rateLimiter.js";
 import { authz } from "./authz.js";
 import { internal } from "./_generated/api.js";
@@ -109,7 +105,7 @@ function toPublicJoinCode(doc: Doc<"joinCodes">) {
   };
 }
 
-export const listForClass = entitledClassQuery({
+export const listForClass = classQuery({
   args: {
     now: v.number(),
   },
@@ -129,7 +125,7 @@ export const listForClass = entitledClassQuery({
   },
 });
 
-export const create = entitledClassMutation({
+export const create = classMutation({
   args: {
     role: joinCodeRoleValidator,
     ttlMs: v.number(),
@@ -178,7 +174,7 @@ export const create = entitledClassMutation({
   },
 });
 
-export const revoke = entitledClassMutation({
+export const revoke = classMutation({
   args: {
     joinCodeId: v.id("joinCodes"),
   },
@@ -195,7 +191,7 @@ export const revoke = entitledClassMutation({
   },
 });
 
-export const redeem = entitledMutation({
+export const redeem = authedMutation({
   args: {
     code: v.string(),
   },

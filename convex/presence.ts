@@ -5,7 +5,7 @@ import { components } from "./_generated/api.js";
 import type { Id } from "./_generated/dataModel.js";
 import { mutation, query } from "./_generated/server.js";
 import { authz } from "./authz.js";
-import { entitledMutation } from "./lib/customFunctions.js";
+import { authedMutation } from "./lib/customFunctions.js";
 import { classScope } from "./lib/authzModel.js";
 import { resolveUserImageUrl } from "./lib/userImage.js";
 
@@ -27,10 +27,10 @@ const presenceEntryValidator = v.object({
 
 /**
  * Keepalive for class presence rooms (`roomId` = class id).
- * Requires entitlement (no-op on self-host/Electron) + `class:read`.
+ * Requires auth + `class:read`.
  * Always heartbeats as the authenticated user — ignores spoofed `userId`.
  */
-export const heartbeat = entitledMutation({
+export const heartbeat = authedMutation({
   args: {
     roomId: v.string(),
     userId: v.string(),

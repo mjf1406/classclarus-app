@@ -22,7 +22,7 @@ import {
   type JoinCodeRole,
   type MemberListRole,
 } from "./lib/authzModel.js";
-import { entitledClassMutation, entitledClassQuery } from "./lib/customFunctions.js";
+import { classMutation, classQuery } from "./lib/customFunctions.js";
 import {
   clearLinksForUser,
   getClassRoleForUser,
@@ -95,7 +95,7 @@ async function countUsersForListRole(
  * Suspend / unsuspend a class member via a scoped deny override ("*").
  * Role assignment is preserved; unsuspend removes the override.
  */
-export const setSuspended = entitledClassMutation({
+export const setSuspended = classMutation({
   args: {
     userId: v.id("users"),
     suspended: v.boolean(),
@@ -134,7 +134,7 @@ export const setSuspended = entitledClassMutation({
  * List members for a people page (teachers includes owners).
  * Class people lists are intentionally small / classroom-sized.
  */
-export const listByRole = entitledClassQuery({
+export const listByRole = classQuery({
   args: {
     role: memberListRoleValidator,
   },
@@ -215,7 +215,7 @@ export const listByRole = entitledClassQuery({
  * Sidebar counts per people-list role.
  * Returns null for roles the viewer cannot read.
  */
-export const countsByRole = entitledClassQuery({
+export const countsByRole = classQuery({
   args: {},
   returns: memberCountsValidator,
   handler: async (ctx) => {
@@ -244,7 +244,7 @@ export const countsByRole = entitledClassQuery({
 /**
  * Remove a class member by offboarding their scoped authz membership.
  */
-export const remove = entitledClassMutation({
+export const remove = classMutation({
   args: {
     userId: v.id("users"),
   },
@@ -287,7 +287,7 @@ export const remove = entitledClassMutation({
  * Replace a guardian's linked students. Actor needs guardians:invite.
  * Every studentUserId must currently hold the student role in this class.
  */
-export const setGuardianStudentLinks = entitledClassMutation({
+export const setGuardianStudentLinks = classMutation({
   args: {
     guardianUserId: v.id("users"),
     studentUserIds: v.array(v.id("users")),
@@ -348,7 +348,7 @@ export const setGuardianStudentLinks = entitledClassMutation({
  * Change a class member's role (owners/teachers only, target must be strictly below).
  * Revokes all scoped class membership roles, then assigns the new role.
  */
-export const setRole = entitledClassMutation({
+export const setRole = classMutation({
   args: {
     userId: v.id("users"),
     role: memberListRoleValidator,

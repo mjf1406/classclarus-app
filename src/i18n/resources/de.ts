@@ -493,6 +493,8 @@ const de = {
     checkoutFailed: "Bezahlvorgang konnte nicht gestartet werden",
     errorInvalidProduct: "That plan is not available.",
     errorSubscriptionRequired: "Subscription required. Your free trial has ended.",
+    errorCreateRequiresSubscription:
+      "Abonnieren Sie, um eine Klasse zu erstellen. Eingeladene Klassen bleiben kostenlos.",
     currentPlan: "Aktueller Tarif",
     trialActive: "Kostenlose Testphase — noch {{count}} Tag",
     trialActive_other: "Kostenlose Testphase — noch {{count}} Tage",

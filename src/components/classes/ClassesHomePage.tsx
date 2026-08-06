@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { GraduationCapIcon, SearchIcon } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 
 import { ClassCard } from "@/components/classes/ClassCard";
@@ -23,6 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useEntitlement } from "@/hooks/billing/useEntitlement";
 import { useClasses } from "@/hooks/classes/useClasses";
 import { useClassSearch } from "@/hooks/classes/useClassSearch";
 import { useCreateClass } from "@/hooks/classes/useCreateClass";
@@ -98,6 +99,8 @@ function ClassesSkeleton({ viewMode }: { viewMode: ClassViewMode }) {
 
 export function ClassesHomePage() {
   const { t } = useTranslation("classes");
+  const navigate = useNavigate();
+  const { entitlement } = useEntitlement();
   const { data, isPending, isError, refetch } = useClasses();
   const createClass = useCreateClass();
   const updateClass = useUpdateClass();
@@ -141,6 +144,10 @@ export function ClassesHomePage() {
   };
 
   const openCreate = () => {
+    if (entitlement?.status === "expired") {
+      void navigate({ to: "/billing" });
+      return;
+    }
     setFormTarget({ mode: "create" });
     setFormOpen(true);
   };
@@ -307,8 +314,6 @@ export function ClassesHomePage() {
         initialValues={formInitialValues}
         onSubmit={handleFormSubmit}
       />
-
-      <div>Cloudflare Test</div>
 
       <DeleteClassCredenza
         key={deleteTarget ? `delete:${deleteTarget._id}` : "delete"}

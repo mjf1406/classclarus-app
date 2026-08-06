@@ -491,6 +491,8 @@ const ru = {
     checkoutFailed: "Не удалось начать оформление заказа",
     errorInvalidProduct: "That plan is not available.",
     errorSubscriptionRequired: "Subscription required. Your free trial has ended.",
+    errorCreateRequiresSubscription:
+      "Оформите подписку, чтобы создать класс. Присоединение по приглашению остаётся бесплатным.",
     currentPlan: "Текущий тариф",
     trialActive: "Бесплатный пробный период — остался {{count}} день",
     trialActive_other: "Бесплатный пробный период — осталось {{count}} дней",

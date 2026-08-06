@@ -474,6 +474,7 @@ const zht = {
     checkoutFailed: "無法開始結帳",
     errorInvalidProduct: "That plan is not available.",
     errorSubscriptionRequired: "Subscription required. Your free trial has ended.",
+    errorCreateRequiresSubscription: "訂閱後即可建立班級。加入受邀班級仍然免費。",
     currentPlan: "目前方案",
     trialActive: "免費試用 — 剩餘 {{count}} 天",
     trialActive_other: "免費試用 — 剩餘 {{count}} 天",

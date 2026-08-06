@@ -6,7 +6,6 @@ import type { Id } from "./_generated/dataModel.js";
 import { internalMutation, internalQuery } from "./_generated/server.js";
 import { authz } from "./authz.js";
 import { classScope } from "./lib/authzModel.js";
-import { assertEntitled } from "./lib/entitlement.js";
 import { canAccessFile } from "./lib/fileAccess.js";
 import {
   isEnabledUploadPreset,
@@ -46,7 +45,6 @@ export const getAccessibleFile = internalQuery({
     if (userId === null) {
       return null;
     }
-    await assertEntitled(ctx, userId);
     const file = await ctx.db.get("files", args.fileId);
     if (!file) {
       return null;
@@ -95,7 +93,6 @@ export const registerFinalizedUpload = internalMutation({
         message: "Not authenticated",
       });
     }
-    await assertEntitled(ctx, userId);
 
     if (!isUploadPresetKey(args.preset) || !isEnabledUploadPreset(args.preset)) {
       await ctx.storage.delete(args.storageId);

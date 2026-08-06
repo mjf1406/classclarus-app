@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { useEntitlement } from "@/hooks/billing/useEntitlement";
+import { useOwnedClasses } from "@/hooks/classes/useOwnedClasses";
 import { Alert, AlertAction, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { buttonVariants } from "@/components/ui/button-variants";
@@ -28,13 +29,19 @@ function dismissForSession(): void {
   }
 }
 
-/** Escalating upgrade banner for the last 14 days of the card-less trial. */
+/**
+ * Escalating upgrade banner for the last 14 days of the card-less trial.
+ * Only shown to class owners — invited members do not need to pay.
+ */
 export function TrialBanner() {
   const { t } = useTranslation("billing");
   const { entitlement } = useEntitlement();
+  const { data: ownedClasses } = useOwnedClasses();
   const [dismissed, setDismissed] = useState(wasDismissedThisSession);
 
-  if (!entitlement?.showWarningBanner || entitlement.daysRemaining === null) {
+  const ownsClass = (ownedClasses?.length ?? 0) > 0;
+
+  if (!ownsClass || !entitlement?.showWarningBanner || entitlement.daysRemaining === null) {
     return null;
   }
 

@@ -74,7 +74,8 @@ export const authedMutation = customMutation(mutation, {
 
 /**
  * Mutation wrapper that requires authentication + an active trial or subscription.
- * Use for write paths that should not work after the free trial expires.
+ * Reserved for pay-to-create paths (e.g. `classes.create`). Class membership
+ * and day-to-day class ops use `authedMutation` / `classMutation` instead.
  */
 export const entitledMutation = customMutation(mutation, {
   args: {},
@@ -101,7 +102,7 @@ export const authedQuery = customQuery(query, {
 
 /**
  * Query wrapper that requires authentication + an active trial or subscription.
- * Use for class/tenant data reads that should not work after the free trial expires.
+ * Prefer `authedQuery` for membership reads; keep this for rare paid-only reads.
  */
 export const entitledQuery = customQuery(query, {
   args: {},
@@ -134,7 +135,7 @@ export const classMutation = customMutation(mutation, {
 
 /**
  * Class-scoped mutation that also requires an active trial or subscription.
- * Use for paid class writes (update, archive, members, invites).
+ * Prefer `classMutation` for membership writes; keep for rare paid-only class writes.
  */
 export const entitledClassMutation = customMutation(mutation, {
   args: { classId: v.id("classes") },
@@ -154,7 +155,7 @@ export const entitledClassMutation = customMutation(mutation, {
 
 /**
  * Class-scoped query: loads the class, injects scope + can/require helpers.
- * Does not require entitlement (exit paths that still need class context).
+ * Does not require entitlement (membership reads and class interaction).
  */
 export const classQuery = customQuery(query, {
   args: { classId: v.id("classes") },
@@ -173,7 +174,7 @@ export const classQuery = customQuery(query, {
 
 /**
  * Class-scoped query that also requires an active trial or subscription.
- * Use for class/member/invitation reads that should lock out after trial expiry.
+ * Prefer `classQuery` for membership reads; keep for rare paid-only class reads.
  */
 export const entitledClassQuery = customQuery(query, {
   args: { classId: v.id("classes") },

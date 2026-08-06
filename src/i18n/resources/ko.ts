@@ -480,6 +480,8 @@ const ko = {
     checkoutFailed: "결제를 시작하지 못했습니다",
     errorInvalidProduct: "That plan is not available.",
     errorSubscriptionRequired: "Subscription required. Your free trial has ended.",
+    errorCreateRequiresSubscription:
+      "수업을 만들려면 구독하세요. 초대받은 수업 참여는 계속 무료입니다.",
     currentPlan: "현재 요금제",
     trialActive: "무료 체험 — {{count}}일 남음",
     trialActive_other: "무료 체험 — {{count}}일 남음",

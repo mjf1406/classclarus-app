@@ -7,6 +7,7 @@ import { toast } from "@/components/ui/toast-manager";
 import { classesListQueryKey } from "@/hooks/classes/useClasses";
 import { ownedClassesQueryKey } from "@/hooks/classes/useOwnedClasses";
 import { useOptimisticMutation } from "@/hooks/useOptimisticMutation";
+import { isSubscriptionRequiredError } from "@/lib/billing/errors";
 import type { ClassPublic } from "@/lib/classes/classes";
 import { messageFromError } from "@/lib/errors/convexError";
 import { randomClientId } from "@/lib/optimistic";
@@ -21,6 +22,7 @@ type CreateClassArgs = {
 export function useCreateClass() {
   const { t } = useTranslation("classes");
   const { t: tCommon } = useTranslation("common");
+  const { t: tBilling } = useTranslation("billing");
   const mutationFn = useConvexMutation(api.classes.create);
   const queryKey = classesListQueryKey();
   const ownedKey = ownedClassesQueryKey();
@@ -49,7 +51,9 @@ export function useCreateClass() {
     },
     onError: (error) => {
       toast.add({
-        title: messageFromError(error, t("saveFailed"), tCommon("rateLimited")),
+        title: isSubscriptionRequiredError(error)
+          ? tBilling("errorCreateRequiresSubscription")
+          : messageFromError(error, t("saveFailed"), tCommon("rateLimited")),
         type: "error",
       });
     },

@@ -473,6 +473,7 @@ const th = {
     checkoutFailed: "ไม่สามารถเริ่มชำระเงินได้",
     errorInvalidProduct: "That plan is not available.",
     errorSubscriptionRequired: "Subscription required. Your free trial has ended.",
+    errorCreateRequiresSubscription: "สมัครสมาชิกเพื่อสร้างชั้นเรียน การเข้าร่วมชั้นเรียนที่ได้รับเชิญยังฟรี",
     currentPlan: "แพ็กเกจปัจจุบัน",
     trialActive: "ทดลองใช้ฟรี — เหลือ {{count}} วัน",
     trialActive_other: "ทดลองใช้ฟรี — เหลือ {{count}} วัน",
