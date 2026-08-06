@@ -47,7 +47,7 @@ docker compose down -v          # stop and wipe data
 ## Option B — Portainer
 
 1. Stacks → **Add stack** → **Repository**
-2. Repository URL: `https://github.com/mjf1406/vctr`
+2. Repository URL: `https://github.com/mjf1406/classclarus-app`
 3. Repository Reference: `refs/heads/master`
 4. Compose path: `docker-compose.yml`
 5. Environment variables → **Load variables from .env file** → upload [`example.env`](../example.env) (edit `PUBLIC_HOST` first if needed)

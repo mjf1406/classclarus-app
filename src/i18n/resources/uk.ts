@@ -42,7 +42,7 @@ const uk = {
     termsAndConditions: "Умови використання",
     cookiePolicy: "Політика cookie",
     copyright: "© {{year}} {{appName}}",
-    footerTagline: "Гейміфікуйте клас, щоб мотивувати учнів.",
+    footerTagline: "Gamify your classroom to motivate your students.",
     footerProduct: "Продукт",
     footerResources: "Ресурси",
     footerLegal: "Правова інформація",

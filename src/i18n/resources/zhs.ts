@@ -41,7 +41,7 @@ const zhs = {
     termsAndConditions: "服务条款",
     cookiePolicy: "Cookie 政策",
     copyright: "© {{year}} {{appName}}",
-    footerTagline: "让课堂游戏化，激发学生动力。",
+    footerTagline: "Gamify your classroom to motivate your students.",
     footerProduct: "产品",
     footerResources: "资源",
     footerLegal: "法律",

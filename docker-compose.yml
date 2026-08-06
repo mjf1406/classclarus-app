@@ -4,7 +4,7 @@
 #   PUBLIC_HOST=<lan-ip-or-localhost> docker compose up -d --build
 #   open http://$PUBLIC_HOST:8088
 
-name: vctr
+name: classclarus
 
 services:
   backend:
@@ -24,7 +24,7 @@ services:
       # (official self-host default). Using PUBLIC_HOST here breaks auth discovery
       # when Docker cannot hairpin back to the published port.
       CONVEX_SITE_ORIGIN: "${CONVEX_SITE_ORIGIN:-http://127.0.0.1:${SITE_PROXY_PORT:-3211}}"
-      INSTANCE_NAME: "${INSTANCE_NAME:-vctr}"
+      INSTANCE_NAME: "${INSTANCE_NAME:-classclarus}"
       INSTANCE_SECRET: "${INSTANCE_SECRET:-a1b2c3d4e5f60718293a4b5c6d7e8f90112233445566778899aabbccddeeff00}"
       RUST_LOG: "${RUST_LOG:-info}"
       DISABLE_METRICS_ENDPOINT: "true"
@@ -42,7 +42,7 @@ services:
     volumes:
       - convex-data:/convex/data
     environment:
-      INSTANCE_NAME: "${INSTANCE_NAME:-vctr}"
+      INSTANCE_NAME: "${INSTANCE_NAME:-classclarus}"
       INSTANCE_SECRET: "${INSTANCE_SECRET:-a1b2c3d4e5f60718293a4b5c6d7e8f90112233445566778899aabbccddeeff00}"
     depends_on:
       backend:

@@ -74,7 +74,7 @@ export default defineConfig({
         registerType: "prompt",
         injectRegister: false,
         includeAssets: [
-          "vctr/vctr-favicon.webp",
+          "brand/favicon.webp",
           "brand/logo/icon-86.webp",
           "pwa/apple-touch-icon.png",
         ],

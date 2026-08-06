@@ -41,7 +41,7 @@ const pt = {
     termsAndConditions: "Termos e Condições",
     cookiePolicy: "Política de Cookies",
     copyright: "© {{year}} {{appName}}",
-    footerTagline: "Gamifique a sua sala de aula para motivar os alunos.",
+    footerTagline: "Gamify your classroom to motivate your students.",
     footerProduct: "Produto",
     footerResources: "Recursos",
     footerLegal: "Legal",

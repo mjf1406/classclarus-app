@@ -41,7 +41,7 @@ const es = {
     termsAndConditions: "Términos y condiciones",
     cookiePolicy: "Política de cookies",
     copyright: "© {{year}} {{appName}}",
-    footerTagline: "Gamifica tu aula para motivar a tus estudiantes.",
+    footerTagline: "Gamify your classroom to motivate your students.",
     footerProduct: "Producto",
     footerResources: "Recursos",
     footerLegal: "Legal",

@@ -1,12 +1,12 @@
 {
-  "name": "vctr",
+  "name": "classclarus",
   "version": "0.0.0",
   "private": true,
-  "description": "vctr — classroom app template (web, self-host, Electron)",
-  "author": "vctr",
+  "description": "ClassClarus — Vite+ / React / Convex app",
+  "author": "ClassClarus",
   "repository": {
     "type": "git",
-    "url": "https://github.com/mjf1406/vctr.git"
+    "url": "https://github.com/mjf1406/classclarus-app.git"
   },
   "type": "module",
   "main": "dist-electron/main.js",

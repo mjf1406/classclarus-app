@@ -43,7 +43,7 @@ const fr = {
     termsAndConditions: "Conditions générales",
     cookiePolicy: "Politique relative aux cookies",
     copyright: "© {{year}} {{appName}}",
-    footerTagline: "Gamifiez votre classe pour motiver vos élèves.",
+    footerTagline: "Gamify your classroom to motivate your students.",
     footerProduct: "Produit",
     footerResources: "Ressources",
     footerLegal: "Mentions légales",

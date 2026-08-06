@@ -42,7 +42,7 @@ const nl = {
     termsAndConditions: "Algemene voorwaarden",
     cookiePolicy: "Cookiebeleid",
     copyright: "© {{year}} {{appName}}",
-    footerTagline: "Gamificeer je klaslokaal om je leerlingen te motiveren.",
+    footerTagline: "Gamify your classroom to motivate your students.",
     footerProduct: "Product",
     footerResources: "Bronnen",
     footerLegal: "Juridisch",

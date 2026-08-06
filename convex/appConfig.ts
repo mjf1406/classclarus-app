@@ -1,11 +1,10 @@
 /**
- * TEMPLATE: Single brand config — change these when cloning (`bun run post-clone`).
- * **vctr** = template package name; **classclarus** slug/URLs = sample product (ClassClarus).
- * Brand images: `public/brand/`. Template favicon: `public/vctr/vctr-favicon.webp`.
+ * Single brand config for ClassClarus.
+ * Brand images: `public/brand/` (favicon: `public/brand/favicon.webp`).
  * `name` is never translated — i18n uses it via defaultVariables.appName.
  */
 export const APP_CONFIG = {
-  name: "vctr",
+  name: "ClassClarus",
   /** Storage keys (`${slug}-…` via src/lib/storageKeys.ts) and package-name check. */
   slug: "classclarus",
   /** Appended after name in the document title (`Name | suffix`). */
@@ -18,11 +17,11 @@ export const APP_CONFIG = {
   cookieUrl: "https://www.classclarus.com/cookie-policy",
   changeLog: "https://change-log.pages.dev/classclarus",
   roadMap: "https://change-log.pages.dev/classclarus/board",
-  github: "https://github.com/mjf1406/vctr",
+  github: "https://github.com/mjf1406/classclarus-app",
   /** Electron / desktop release landing page. Billing Free downloads use desktopDownloads.ts. */
-  downloadUrl: "https://github.com/mjf1406/vctr/releases/latest",
+  downloadUrl: "https://github.com/mjf1406/classclarus-app/releases/latest",
   /** Self-hosting docs (billing Free card). Change when cloning. */
-  selfHostUrl: "https://github.com/mjf1406/vctr/blob/master/docs/SELF_HOSTING.md",
+  selfHostUrl: "https://github.com/mjf1406/classclarus-app/blob/master/docs/SELF_HOSTING.md",
   /** Tip / gift links (billing page; replace placeholders). */
   kofiUrl: "https://ko-fi.com/YOUR_PAGE",
   patreonUrl: "https://www.patreon.com/YOUR_PAGE",

@@ -42,7 +42,7 @@ const ru = {
     termsAndConditions: "Условия использования",
     cookiePolicy: "Политика cookie",
     copyright: "© {{year}} {{appName}}",
-    footerTagline: "Геймифицируйте класс, чтобы мотивировать учеников.",
+    footerTagline: "Gamify your classroom to motivate your students.",
     footerProduct: "Продукт",
     footerResources: "Ресурсы",
     footerLegal: "Правовая информация",

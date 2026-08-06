@@ -41,7 +41,7 @@ const zht = {
     termsAndConditions: "服務條款",
     cookiePolicy: "Cookie 政策",
     copyright: "© {{year}} {{appName}}",
-    footerTagline: "讓課堂遊戲化，激發學生動力。",
+    footerTagline: "Gamify your classroom to motivate your students.",
     footerProduct: "產品",
     footerResources: "資源",
     footerLegal: "法律",

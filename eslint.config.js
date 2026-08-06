@@ -110,6 +110,8 @@ export default [
   ...convexPlugin.configs.recommended,
 
   // Additional Convex hardening for this template.
+  // Do not list convex paths in allowDefaultProject — they are already in
+  // tsconfig.convex.json; dual membership makes typed lint fail to parse.
   {
     files: ["convex/**/*.ts"],
     languageOptions: {
@@ -119,15 +121,6 @@ export default [
           // Use the dedicated tsconfig for Convex so type-aware rules
           // (e.g. `@convex-dev/*`) have type info.
           defaultProject: "./tsconfig.convex.json",
-          // Disallowing `**` keeps lint fast; we only need this for
-          // the current Convex directory depth.
-          allowDefaultProject: [
-            "convex/*.ts",
-            "convex/*/*.ts",
-            "convex/*/*/*.ts",
-            "eslint.config.js",
-          ],
-          maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 80,
         },
         tsconfigRootDir,
       },

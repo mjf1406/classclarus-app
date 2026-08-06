@@ -41,7 +41,7 @@ const ko = {
     termsAndConditions: "이용약관",
     cookiePolicy: "쿠키 정책",
     copyright: "© {{year}} {{appName}}",
-    footerTagline: "교실을 게이미파이하여 학생들의 동기를 부여하세요.",
+    footerTagline: "Gamify your classroom to motivate your students.",
     footerProduct: "제품",
     footerResources: "리소스",
     footerLegal: "법적 고지",

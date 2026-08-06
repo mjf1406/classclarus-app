@@ -12,45 +12,45 @@ Do **not** reuse the template’s Convex deployment or copy `.env` / `.env.local
 
 <!-- clone:identity-remote -->
 
-- [ ] New git remote; do not copy secrets from another machine
+- [x] New git remote; do not copy secrets from another machine
 
 <!-- clone:identity-license -->
 
-- [ ] License reviewed (`LICENSE.md` is MIT — change only if you want a different license)
+- [x] License reviewed (`LICENSE.md` is MIT — change only if you want a different license)
 
 <!-- clone:identity-package -->
 
-- [ ] `package.json` name / description / author / repository updated
+- [x] `package.json` name / description / author / repository updated
 
 <!-- clone:identity-app-config -->
 
-- [ ] `convex/appConfig.ts` fields set for the new product (`name`, `slug`, URLs, `authzTenantId`, …)
+- [x] `convex/appConfig.ts` fields set for the new product (`name`, `slug`, URLs, `authzTenantId`, …)
 
 <!-- clone:identity-title -->
 
-- [ ] `index.html` title updated
+- [x] `index.html` title updated
 
 <!-- clone:identity-footer-tagline -->
 
-- [ ] `common.footerTagline` updated in all locales under `src/i18n/resources/`
+- [x] `common.footerTagline` updated in all locales under `src/i18n/resources/`
 
 <!-- clone:identity-self-host-docs -->
 
-- [ ] `docs/SELF_HOSTING.md` Portainer/repo examples retargeted (not `mjf1406/vctr` / `classclarus-*`)
+- [x] `docs/SELF_HOSTING.md` Portainer/repo examples retargeted (not `mjf1406/vctr` / `classclarus-*`)
 
 <!-- clone:identity-compose -->
 
-- [ ] `docker-compose.yml` / `example.env` instance names updated
+- [x] `docker-compose.yml` / `example.env` instance names updated
 
 <!-- clone:env-example -->
 
-- [ ] `.env.example` present with Vite-side vars documented
+- [x] `.env.example` present with Vite-side vars documented
 
-`bun run post-clone` marks the identity items it edits. Product brand: `public/brand/` (+ `Logo.tsx`). Template favicon: `public/vctr/vctr-favicon.webp` (`index.html`) — replace file or update the `href` when rebranding.
+`bun run post-clone` marks the identity items it edits. Product brand: `public/brand/` (+ `Logo.tsx`). Favicon: `public/brand/favicon.webp` (`index.html`).
 
 <!-- clone:brand-assets -->
 
-- [ ] Brand assets + favicon replaced (or intentionally kept)
+- [x] Brand assets + favicon replaced (or intentionally kept)
 
 Electron `productName` / `appId` / storage keys derive from `APP_CONFIG.name` / `slug` — no separate config files.
 
@@ -65,7 +65,7 @@ vp install
 
 <!-- clone:install-deps -->
 
-- [ ] `vp install` / `bun install` completed with no errors
+- [x] `vp install` / `bun install` completed with no errors
 
 ---
 
@@ -226,15 +226,15 @@ See `convex/lib/authzModel.ts`, `convex/schema.ts`, routes under `src/routes/_au
 
 <!-- clone:domain-authz -->
 
-- [ ] Redefined permissions/roles in `authzModel.ts` for the new domain (or kept ClassClarus)
+- [x] Redefined permissions/roles in `authzModel.ts` for the new domain (or kept ClassClarus)
 
 <!-- clone:domain-surface -->
 
-- [ ] Replaced or removed example tables/functions/routes/components (if not keeping classroom)
+- [x] Replaced or removed example tables/functions/routes/components (if not keeping classroom)
 
 <!-- clone:domain-i18n -->
 
-- [ ] Trimmed or rewrote feature i18n keys in all locales + tests
+- [x] Trimmed or rewrote feature i18n keys in all locales + tests
 
 ---
 

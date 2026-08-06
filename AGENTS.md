@@ -1,8 +1,8 @@
-# VCTR template
+# ClassClarus
 
-**VCTR** = this template. **ClassClarus** = sample domain (classes, roles, join codes). Keep platform patterns; replace classroom nouns unless `--keep-classroom`.
+Classroom app (classes, roles, join codes) built on Vite+ / React / Convex. Package manager is **bun** only.
 
-Clone: `bun run post-clone` → [`CLONE_CHECKLIST.md`](./CLONE_CHECKLIST.md). Keep [`.cursor/rules/`](./.cursor/rules/). Use [`.cursor/skills/`](./.cursor/skills/) for authz / Polar / shadcn / Convex components.
+Remaining infra setup (Convex, Auth, Google, Polar): [`CLONE_CHECKLIST.md`](./CLONE_CHECKLIST.md). Keep [`.cursor/rules/`](./.cursor/rules/). Use [`.cursor/skills/`](./.cursor/skills/) for authz / Polar / shadcn / Convex components.
 
 <!--VITE PLUS START-->
 
