@@ -141,7 +141,18 @@ If Portainer reuses stale layers after a Dockerfile or dependency change, follow
 
 ## Instance secret
 
-`INSTANCE_NAME` and `INSTANCE_SECRET` identify the Convex instance. Changing them after the first start invalidates the admin key and can strand data. The compose default secret is for **local-only** use. For any shared or exposed host, set a fresh secret (`openssl rand -hex 32`) before the first start.
+`INSTANCE_NAME` and `INSTANCE_SECRET` identify the Convex instance. Changing them after the first start can strand data that was written under the old identity. The compose default secret is for **local-only** use. For any shared or exposed host, set a fresh secret (`openssl rand -hex 32`) before the first start, then keep it stable in your Portainer / `.env` variables.
+
+If deploy fails with `BadAdminKey` / `401 Unauthorized`, the volume has an admin key that does not match the running backend. From a local clone (same `.env` / secret as the stack):
+
+```bash
+sudo docker compose up -d backend
+sudo docker compose run --rm admin-key   # rewrites /convex/data/admin_key
+sudo docker compose run --rm deploy
+sudo docker compose up -d
+```
+
+Or wipe the volume and start fresh (`sudo docker compose down -v`) if you do not need existing classroom data.
 
 ## What differs from cloud
 

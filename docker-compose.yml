@@ -50,14 +50,12 @@ services:
     entrypoint: ["/bin/bash", "-c"]
     command:
       - |
+        # Always rewrite: a leftover admin_key from a different INSTANCE_SECRET
+        # (common after Portainer retries) causes deploy to 401 BadAdminKey.
         set -euo pipefail
-        if [ -s /convex/data/admin_key ]; then
-          echo "Admin key already present"
-          exit 0
-        fi
         ./generate_admin_key.sh | tr -d '\r\n' > /convex/data/admin_key
         chmod 600 /convex/data/admin_key
-        echo "Admin key written"
+        echo "Admin key written for this instance"
 
   deploy:
     build:
