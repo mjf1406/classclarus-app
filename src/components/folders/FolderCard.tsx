@@ -1,7 +1,7 @@
 import { useDroppable } from "@dnd-kit/core";
 import { Folder as FolderIcon, Pencil, Trash2 } from "lucide-react";
 import type { ReactNode } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { FontAwesomeIconFromId } from "@/components/icons/FontAwesomeIconFromId";
@@ -16,7 +16,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { folderDropId } from "@/lib/folders/folderDnd";
-import type { FolderCardModel } from "@/lib/folders/folders";
+import type { FolderCardModel, FolderI18nNamespace } from "@/lib/folders/folders";
 import type { ClassPermission } from "@/lib/permissions/classPermissions";
 import { cn } from "@/lib/utils";
 
@@ -28,6 +28,9 @@ type FolderCardProps<TItem> = {
   onDelete: () => void;
   renderItem: (item: TItem) => ReactNode;
   emptyLabel: string;
+  namespace?: FolderI18nNamespace;
+  /** Optional short purchase-limit summary shown on the card. */
+  limitSummary?: string;
   /** Accept drops of items into this folder. */
   canDrop?: boolean;
   /**
@@ -45,11 +48,17 @@ export function FolderCard<TItem>({
   onDelete,
   renderItem,
   emptyLabel,
+  namespace = "behaviors",
+  limitSummary,
   canDrop = false,
   keepOpen = false,
 }: FolderCardProps<TItem>) {
-  const { t } = useTranslation("behaviors");
+  const { t } = useTranslation(namespace);
   const [open, setOpen] = useState(false);
+  const wasKeepOpenRef = useRef(keepOpen);
+  /** After drag-unpin, the next open can be closed by a stale focus-out/outside-press. */
+  const suppressStaleDismissRef = useRef(false);
+  const openedAtRef = useRef(0);
   const { setNodeRef, isOver } = useDroppable({
     id: folderDropId(folder._id),
     data: { type: "folder" as const, folderId: folder._id },
@@ -59,10 +68,16 @@ export function FolderCard<TItem>({
   useEffect(() => {
     if (keepOpen) {
       setOpen(true);
+      wasKeepOpenRef.current = true;
       return;
     }
-    // Close after a pinned drag settles so the source unmounts cleanly.
-    setOpen(false);
+    if (wasKeepOpenRef.current) {
+      // Close after a pinned drag settles so the source unmounts cleanly.
+      setOpen(false);
+      suppressStaleDismissRef.current = true;
+      wasKeepOpenRef.current = false;
+      return;
+    }
   }, [keepOpen]);
 
   const menuItems = useMemo<Array<ActionMenuItem>>(
@@ -94,9 +109,26 @@ export function FolderCard<TItem>({
   return (
     <Popover
       open={isOpen}
-      onOpenChange={(next) => {
-        if (keepOpen && !next) return;
-        setOpen(next);
+      onOpenChange={(next, eventDetails) => {
+        if (keepOpen && !next) {
+          // Dragging out fires outside-press/focus-out; cancel so Base UI stays in sync.
+          eventDetails.cancel();
+          return;
+        }
+        if (next) {
+          openedAtRef.current = performance.now();
+          setOpen(true);
+          return;
+        }
+        // Same gesture that re-opens after a drag-out often also delivers a stale dismiss.
+        // Clicking elsewhere first consumes it; ignore that immediate close instead.
+        if (suppressStaleDismissRef.current && performance.now() - openedAtRef.current < 100) {
+          suppressStaleDismissRef.current = false;
+          eventDetails.cancel();
+          return;
+        }
+        suppressStaleDismissRef.current = false;
+        setOpen(false);
       }}
     >
       <Card
@@ -128,13 +160,16 @@ export function FolderCard<TItem>({
             <ActionMenu items={menuItems} label={t("folderActions")} />
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-col gap-1">
           <PopoverTrigger
             type="button"
-            className="text-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+            className="text-left text-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
           >
             {t("folderItemCount", { count: folder.itemCount })}
           </PopoverTrigger>
+          {limitSummary ? (
+            <p className="text-xs text-muted-foreground tabular-nums">{limitSummary}</p>
+          ) : null}
         </CardContent>
       </Card>
 
@@ -143,6 +178,7 @@ export function FolderCard<TItem>({
           <PopoverTitle>{folder.name}</PopoverTitle>
           <PopoverDescription>
             {t("folderItemCount", { count: folder.itemCount })}
+            {limitSummary ? ` · ${limitSummary}` : ""}
           </PopoverDescription>
         </PopoverHeader>
         {items.length === 0 ? (

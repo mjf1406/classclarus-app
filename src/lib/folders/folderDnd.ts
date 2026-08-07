@@ -1,11 +1,15 @@
 import type { UniqueIdentifier } from "@dnd-kit/core";
 
-/** Shared drag/drop id helpers for foldered grids (behaviors now, rewards later). */
+/** Shared drag/drop id helpers for foldered grids (behaviors, rewards). */
 
 export type FolderDropTarget = { kind: "folder"; folderId: string } | { kind: "unfiled" };
 
 export function behaviorDragId(behaviorId: string): string {
   return `behavior:${behaviorId}`;
+}
+
+export function rewardDragId(rewardId: string): string {
+  return `reward:${rewardId}`;
 }
 
 export function folderDropId(folderId: string): string {
@@ -27,4 +31,10 @@ export function parseBehaviorDragId(id: UniqueIdentifier): string | null {
   const value = String(id);
   if (!value.startsWith("behavior:")) return null;
   return value.slice("behavior:".length);
+}
+
+export function parseRewardDragId(id: UniqueIdentifier): string | null {
+  const value = String(id);
+  if (!value.startsWith("reward:")) return null;
+  return value.slice("reward:".length);
 }

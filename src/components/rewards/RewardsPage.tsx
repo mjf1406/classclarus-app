@@ -10,19 +10,19 @@ import {
   type DropAnimation,
 } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { SmilePlus } from "lucide-react";
+import { Gift } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { BehaviorCard } from "@/components/behaviors/BehaviorCard";
-import { BehaviorFormCredenza } from "@/components/behaviors/BehaviorFormCredenza";
-import { BehaviorPointsApplyCredenza } from "@/components/behaviors/BehaviorPointsApplyCredenza";
-import { BehaviorsToolbar } from "@/components/behaviors/BehaviorsToolbar";
-import { ImportBehaviorsCredenza } from "@/components/behaviors/ImportBehaviorsCredenza";
 import { FolderCard } from "@/components/folders/FolderCard";
 import { FolderFormCredenza } from "@/components/folders/FolderFormCredenza";
 import { FolderedCardGrid } from "@/components/folders/FolderedCardGrid";
 import { DeleteNamedCredenza } from "@/components/groups/DeleteNamedCredenza";
+import { ImportRewardsCredenza } from "@/components/rewards/ImportRewardsCredenza";
+import { RewardCard } from "@/components/rewards/RewardCard";
+import { RewardFormCredenza } from "@/components/rewards/RewardFormCredenza";
+import { RewardPointsApplyCredenza } from "@/components/rewards/RewardPointsApplyCredenza";
+import { RewardsToolbar } from "@/components/rewards/RewardsToolbar";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -34,65 +34,66 @@ import {
 } from "@/components/ui/empty";
 import { ErrorState } from "@/components/ui/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useCreateBehaviorFolder } from "@/hooks/behaviorFolders/useCreateBehaviorFolder";
-import { useBehaviorFolders } from "@/hooks/behaviorFolders/useBehaviorFolders";
-import { useRemoveBehaviorFolder } from "@/hooks/behaviorFolders/useRemoveBehaviorFolder";
-import { useUpdateBehaviorFolder } from "@/hooks/behaviorFolders/useUpdateBehaviorFolder";
-import { useCreateBehavior } from "@/hooks/behaviors/useCreateBehavior";
-import { useBehaviors } from "@/hooks/behaviors/useBehaviors";
-import { useImportBehaviorsFromClass } from "@/hooks/behaviors/useImportBehaviorsFromClass";
-import { useRemoveBehavior } from "@/hooks/behaviors/useRemoveBehavior";
-import { useUpdateBehavior } from "@/hooks/behaviors/useUpdateBehavior";
+import { useCreateRewardFolder } from "@/hooks/rewardFolders/useCreateRewardFolder";
+import { useRewardFolders } from "@/hooks/rewardFolders/useRewardFolders";
+import { useRemoveRewardFolder } from "@/hooks/rewardFolders/useRemoveRewardFolder";
+import { useUpdateRewardFolder } from "@/hooks/rewardFolders/useUpdateRewardFolder";
+import { useCreateReward } from "@/hooks/rewards/useCreateReward";
+import { useImportRewardsFromClass } from "@/hooks/rewards/useImportRewardsFromClass";
+import { useRemoveReward } from "@/hooks/rewards/useRemoveReward";
+import { useRewards } from "@/hooks/rewards/useRewards";
+import { useUpdateReward } from "@/hooks/rewards/useUpdateReward";
 import { useCan } from "@/hooks/permissions/useCan";
-import {
-  filterBehaviorsByName,
-  partitionBehaviorsByFolder,
-  type BehaviorFolderListItem,
-  type BehaviorFormValues,
-  type BehaviorListItem,
-  type PointsApplyMode,
-} from "@/lib/behaviors/behaviors";
-import { parseBehaviorDragId, parseFolderDropTarget } from "@/lib/folders/folderDnd";
+import { parseFolderDropTarget, parseRewardDragId } from "@/lib/folders/folderDnd";
 import type { FolderFormValues } from "@/lib/folders/folders";
+import { formatPurchaseLimitSummary } from "@/lib/rewards/purchaseLimit";
+import {
+  filterRewardsByName,
+  partitionRewardsByFolder,
+  type PointsApplyMode,
+  type RewardFolderListItem,
+  type RewardFormValues,
+  type RewardListItem,
+} from "@/lib/rewards/rewards";
 import type { Id } from "../../../convex/_generated/dataModel";
 
-type BehaviorsPageProps = {
+type RewardsPageProps = {
   classId: Id<"classes">;
 };
 
 /** Match DragOverlay settle so the source stays hidden until the drop lands. */
 const DROP_ANIMATION_MS = 200;
 
-export function BehaviorsPage({ classId }: BehaviorsPageProps) {
-  const { t } = useTranslation("behaviors");
+export function RewardsPage({ classId }: RewardsPageProps) {
+  const { t } = useTranslation("rewards");
   const { can, isPending: permissionsPending } = useCan();
-  const canManage = can("behaviors:manage");
+  const canManage = can("rewards:manage");
 
-  const foldersQuery = useBehaviorFolders(classId);
-  const behaviorsQuery = useBehaviors(classId);
-  const createBehavior = useCreateBehavior();
-  const updateBehavior = useUpdateBehavior();
-  const removeBehavior = useRemoveBehavior();
-  const createFolder = useCreateBehaviorFolder();
-  const updateFolder = useUpdateBehaviorFolder();
-  const removeFolder = useRemoveBehaviorFolder();
-  const importBehaviors = useImportBehaviorsFromClass();
+  const foldersQuery = useRewardFolders(classId);
+  const rewardsQuery = useRewards(classId);
+  const createReward = useCreateReward();
+  const updateReward = useUpdateReward();
+  const removeReward = useRemoveReward();
+  const createFolder = useCreateRewardFolder();
+  const updateFolder = useUpdateRewardFolder();
+  const removeFolder = useRemoveRewardFolder();
+  const importRewards = useImportRewardsFromClass();
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [createBehaviorOpen, setCreateBehaviorOpen] = useState(false);
-  const [editingBehavior, setEditingBehavior] = useState<BehaviorListItem | null>(null);
-  const [deletingBehavior, setDeletingBehavior] = useState<BehaviorListItem | null>(null);
+  const [createRewardOpen, setCreateRewardOpen] = useState(false);
+  const [editingReward, setEditingReward] = useState<RewardListItem | null>(null);
+  const [deletingReward, setDeletingReward] = useState<RewardListItem | null>(null);
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
-  const [editingFolder, setEditingFolder] = useState<BehaviorFolderListItem | null>(null);
-  const [deletingFolder, setDeletingFolder] = useState<BehaviorFolderListItem | null>(null);
+  const [editingFolder, setEditingFolder] = useState<RewardFolderListItem | null>(null);
+  const [deletingFolder, setDeletingFolder] = useState<RewardFolderListItem | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [pendingPointsUpdate, setPendingPointsUpdate] = useState<{
-    behavior: BehaviorListItem;
-    values: BehaviorFormValues;
+    reward: RewardListItem;
+    values: RewardFormValues;
   } | null>(null);
-  const [activeBehavior, setActiveBehavior] = useState<BehaviorListItem | null>(null);
-  const [hiddenBehaviorId, setHiddenBehaviorId] = useState<Id<"behaviors"> | null>(null);
-  const [pinnedFolderId, setPinnedFolderId] = useState<Id<"behaviorFolders"> | null>(null);
+  const [activeReward, setActiveReward] = useState<RewardListItem | null>(null);
+  const [hiddenRewardId, setHiddenRewardId] = useState<Id<"rewards"> | null>(null);
+  const [pinnedFolderId, setPinnedFolderId] = useState<Id<"rewardFolders"> | null>(null);
   const overRectRef = useRef<{ left: number; top: number } | null>(null);
   /** Unfiled is a sorted grid — flying to the zone origin looks like a ghost at index 0. */
   const fadeDropInPlaceRef = useRef(false);
@@ -105,8 +106,8 @@ export function BehaviorsPage({ classId }: BehaviorsPageProps) {
       clearTimeout(dropSettleTimeoutRef.current);
       dropSettleTimeoutRef.current = null;
     }
-    setActiveBehavior(null);
-    setHiddenBehaviorId(null);
+    setActiveReward(null);
+    setHiddenRewardId(null);
     setPinnedFolderId(null);
     overRectRef.current = null;
     fadeDropInPlaceRef.current = false;
@@ -120,9 +121,6 @@ export function BehaviorsPage({ classId }: BehaviorsPageProps) {
     };
   }, []);
 
-  // Animate the overlay into the droppable instead of back to the drag origin
-  // (important when dragging out of a folder popover). Unfiled drops fade in place
-  // so we don't land on the zone's top-left before the card appears in sort order.
   const dropAnimation = useMemo<DropAnimation>(
     () => ({
       duration: DROP_ANIMATION_MS,
@@ -150,20 +148,20 @@ export function BehaviorsPage({ classId }: BehaviorsPageProps) {
     [],
   );
 
-  const isPending = foldersQuery.isPending || behaviorsQuery.isPending || permissionsPending;
-  const isError = foldersQuery.isError || behaviorsQuery.isError;
+  const isPending = foldersQuery.isPending || rewardsQuery.isPending || permissionsPending;
+  const isError = foldersQuery.isError || rewardsQuery.isError;
 
   const folders = foldersQuery.data;
-  const behaviors = behaviorsQuery.data;
+  const rewards = rewardsQuery.data;
 
-  const filteredBehaviors = useMemo(
-    () => filterBehaviorsByName(behaviors ?? [], searchQuery),
-    [behaviors, searchQuery],
+  const filteredRewards = useMemo(
+    () => filterRewardsByName(rewards ?? [], searchQuery),
+    [rewards, searchQuery],
   );
 
-  const unfiledBehaviors = useMemo(
-    () => partitionBehaviorsByFolder(filteredBehaviors, null),
-    [filteredBehaviors],
+  const unfiledRewards = useMemo(
+    () => partitionRewardsByFolder(filteredRewards, null),
+    [filteredRewards],
   );
 
   const visibleFolders = useMemo(() => {
@@ -171,51 +169,70 @@ export function BehaviorsPage({ classId }: BehaviorsPageProps) {
     if (!searchQuery.trim()) return folderList;
     return folderList.filter((folder) => {
       const nameMatch = folder.name.toLowerCase().includes(searchQuery.trim().toLowerCase());
-      const hasMatchingItems = partitionBehaviorsByFolder(filteredBehaviors, folder._id).length > 0;
+      const hasMatchingItems = partitionRewardsByFolder(filteredRewards, folder._id).length > 0;
       return nameMatch || hasMatchingItems;
     });
-  }, [filteredBehaviors, folders, searchQuery]);
+  }, [filteredRewards, folders, searchQuery]);
 
-  const isEmpty = !isPending && (folders?.length ?? 0) === 0 && (behaviors?.length ?? 0) === 0;
+  const isEmpty = !isPending && (folders?.length ?? 0) === 0 && (rewards?.length ?? 0) === 0;
   const searchEmpty =
     !isPending &&
     !isEmpty &&
     visibleFolders.length === 0 &&
-    unfiledBehaviors.length === 0 &&
+    unfiledRewards.length === 0 &&
     Boolean(searchQuery.trim());
 
-  const moveBehaviorToFolder = useCallback(
-    (behavior: BehaviorListItem, folderId: Id<"behaviorFolders"> | undefined) => {
-      if (behavior.folderId === folderId) return;
-      void updateBehavior.mutateAsync({
-        classId,
-        behaviorId: behavior._id,
-        name: behavior.name,
-        description: behavior.description,
-        icon: behavior.icon,
-        points: behavior.points,
-        folderId,
+  const formatFolderLimit = useCallback(
+    (folder: RewardFolderListItem) => {
+      if (!folder.purchaseLimit) return undefined;
+      return formatPurchaseLimitSummary(folder.purchaseLimit, {
+        max: (count) => t("purchaseLimitSummaryMax", { count }),
+        every: (count, period) => t("purchaseLimitSummaryEvery", { count, period }),
+        period: (period) =>
+          t(
+            `purchaseLimitPeriod_${period}` as
+              | "purchaseLimitPeriod_day"
+              | "purchaseLimitPeriod_week"
+              | "purchaseLimitPeriod_month",
+          ),
       });
     },
-    [classId, updateBehavior],
+    [t],
+  );
+
+  const moveRewardToFolder = useCallback(
+    (reward: RewardListItem, folderId: Id<"rewardFolders"> | undefined) => {
+      if (reward.folderId === folderId) return;
+      void updateReward.mutateAsync({
+        classId,
+        rewardId: reward._id,
+        name: reward.name,
+        description: reward.description,
+        icon: reward.icon,
+        points: reward.points,
+        folderId,
+        purchaseLimit: reward.purchaseLimit,
+      });
+    },
+    [classId, updateReward],
   );
 
   const handleDragStart = useCallback(
     (event: DragStartEvent) => {
       if (!canManage) return;
-      const behaviorId = parseBehaviorDragId(event.active.id);
-      if (!behaviorId) return;
+      const rewardId = parseRewardDragId(event.active.id);
+      if (!rewardId) return;
       if (dropSettleTimeoutRef.current !== null) {
         clearTimeout(dropSettleTimeoutRef.current);
         dropSettleTimeoutRef.current = null;
       }
       fadeDropInPlaceRef.current = false;
-      const behavior = (behaviors ?? []).find((item) => item._id === behaviorId) ?? null;
-      setActiveBehavior(behavior);
-      setHiddenBehaviorId(behavior?._id ?? null);
-      setPinnedFolderId(behavior?.folderId ?? null);
+      const reward = (rewards ?? []).find((item) => item._id === rewardId) ?? null;
+      setActiveReward(reward);
+      setHiddenRewardId(reward?._id ?? null);
+      setPinnedFolderId(reward?.folderId ?? null);
     },
-    [behaviors, canManage],
+    [canManage, rewards],
   );
 
   const handleDragOver = useCallback((event: DragOverEvent) => {
@@ -225,17 +242,15 @@ export function BehaviorsPage({ classId }: BehaviorsPageProps) {
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
-      const behaviorId = parseBehaviorDragId(event.active.id);
-      const behavior =
-        behaviorId != null
-          ? ((behaviors ?? []).find((item) => item._id === behaviorId) ?? null)
-          : null;
+      const rewardId = parseRewardDragId(event.active.id);
+      const reward =
+        rewardId != null ? ((rewards ?? []).find((item) => item._id === rewardId) ?? null) : null;
 
       const finishWithoutMove = () => {
         clearDragVisuals();
       };
 
-      if (!canManage || !behavior || !event.over) {
+      if (!canManage || !reward || !event.over) {
         finishWithoutMove();
         return;
       }
@@ -256,84 +271,81 @@ export function BehaviorsPage({ classId }: BehaviorsPageProps) {
       }
 
       const nextFolderId =
-        target.kind === "unfiled" ? undefined : (target.folderId as Id<"behaviorFolders">);
-      if (behavior.folderId === nextFolderId) {
+        target.kind === "unfiled" ? undefined : (target.folderId as Id<"rewardFolders">);
+      if (reward.folderId === nextFolderId) {
         finishWithoutMove();
         return;
       }
 
       const overRect = event.over.rect;
-      // Unfiled items sort into a grid. Animating to the zone's top-left reads as a
-      // ghost at index 0, then the real card pops in at its alphabetical slot.
-      // Fade at the pointer instead; folder drops still fly into the folder card.
       const fadeInPlace = target.kind === "unfiled";
       fadeDropInPlaceRef.current = fadeInPlace;
       overRectRef.current = fadeInPlace ? null : { left: overRect.left, top: overRect.top };
 
-      // Apply the move now so the card mounts hidden in its sorted slot. The overlay
-      // fades at the pointer (unfiled) or into the folder card — not to zone origin —
-      // so unmounting the folder source does not create a top-left ghost.
-      moveBehaviorToFolder(behavior, nextFolderId);
+      moveRewardToFolder(reward, nextFolderId);
       dropSettleTimeoutRef.current = setTimeout(() => {
         dropSettleTimeoutRef.current = null;
-        setActiveBehavior(null);
-        setHiddenBehaviorId(null);
+        setActiveReward(null);
+        setHiddenRewardId(null);
         setPinnedFolderId(null);
         overRectRef.current = null;
         fadeDropInPlaceRef.current = false;
       }, DROP_ANIMATION_MS);
     },
-    [behaviors, canManage, clearDragVisuals, moveBehaviorToFolder],
+    [canManage, clearDragVisuals, moveRewardToFolder, rewards],
   );
 
-  const submitBehavior = async (
-    values: BehaviorFormValues,
+  const submitReward = async (
+    values: RewardFormValues,
     mode: "create" | "edit",
-    existing?: BehaviorListItem | null,
+    existing?: RewardListItem | null,
   ) => {
     if (mode === "create") {
-      await createBehavior.mutateAsync({
+      await createReward.mutateAsync({
         classId,
         name: values.name,
         description: values.description,
         icon: values.icon,
         points: values.points,
         folderId: values.folderId,
+        purchaseLimit: values.purchaseLimit,
       });
       return;
     }
     if (!existing) return;
 
     const pointsChanged = existing.points !== values.points;
-    if (pointsChanged && existing.applicationCount > 0 && !values.pointsApplyMode) {
-      setPendingPointsUpdate({ behavior: existing, values });
+    if (pointsChanged && existing.purchaseCount > 0 && !values.pointsApplyMode) {
+      setPendingPointsUpdate({ reward: existing, values });
       return;
     }
 
-    await updateBehavior.mutateAsync({
+    await updateReward.mutateAsync({
       classId,
-      behaviorId: existing._id,
+      rewardId: existing._id,
       name: values.name,
       description: values.description,
       icon: values.icon,
       points: values.points,
       folderId: values.folderId,
+      purchaseLimit: values.purchaseLimit,
       pointsApplyMode: values.pointsApplyMode ?? "future",
     });
   };
 
   const confirmPointsApply = async (mode: PointsApplyMode) => {
     if (!pendingPointsUpdate) return;
-    const { behavior, values } = pendingPointsUpdate;
+    const { reward, values } = pendingPointsUpdate;
     setPendingPointsUpdate(null);
-    await updateBehavior.mutateAsync({
+    await updateReward.mutateAsync({
       classId,
-      behaviorId: behavior._id,
+      rewardId: reward._id,
       name: values.name,
       description: values.description,
       icon: values.icon,
       points: values.points,
       folderId: values.folderId,
+      purchaseLimit: values.purchaseLimit,
       pointsApplyMode: mode,
     });
   };
@@ -341,7 +353,7 @@ export function BehaviorsPage({ classId }: BehaviorsPageProps) {
   const submitFolder = async (
     values: FolderFormValues,
     mode: "create" | "edit",
-    existing?: BehaviorFolderListItem | null,
+    existing?: RewardFolderListItem | null,
   ) => {
     if (mode === "create") {
       await createFolder.mutateAsync({
@@ -349,6 +361,7 @@ export function BehaviorsPage({ classId }: BehaviorsPageProps) {
         name: values.name,
         description: values.description,
         icon: values.icon,
+        purchaseLimit: values.purchaseLimit,
       });
       return;
     }
@@ -359,17 +372,18 @@ export function BehaviorsPage({ classId }: BehaviorsPageProps) {
       name: values.name,
       description: values.description,
       icon: values.icon,
+      purchaseLimit: values.purchaseLimit,
     });
   };
 
   return (
     <div className="flex w-full flex-col gap-4 px-4 py-8 sm:px-8">
-      <BehaviorsToolbar
+      <RewardsToolbar
         searchQuery={searchQuery}
-        resultCount={filteredBehaviors.length}
+        resultCount={filteredRewards.length}
         canManage={canManage}
         onSearchChange={setSearchQuery}
-        onCreateBehavior={() => setCreateBehaviorOpen(true)}
+        onCreateReward={() => setCreateRewardOpen(true)}
         onCreateFolder={() => setCreateFolderOpen(true)}
         onImport={() => setImportOpen(true)}
       />
@@ -388,7 +402,7 @@ export function BehaviorsPage({ classId }: BehaviorsPageProps) {
           description={t("loadFailedDescription")}
           onRetry={() => {
             void foldersQuery.refetch();
-            void behaviorsQuery.refetch();
+            void rewardsQuery.refetch();
           }}
         />
       ) : null}
@@ -397,14 +411,14 @@ export function BehaviorsPage({ classId }: BehaviorsPageProps) {
         <Empty>
           <EmptyHeader>
             <EmptyMedia variant="icon">
-              <SmilePlus />
+              <Gift />
             </EmptyMedia>
             <EmptyTitle>{t("emptyTitle")}</EmptyTitle>
             <EmptyDescription>{t("emptyDescription")}</EmptyDescription>
           </EmptyHeader>
           {canManage ? (
             <EmptyContent>
-              <Button type="button" onClick={() => setCreateBehaviorOpen(true)}>
+              <Button type="button" onClick={() => setCreateRewardOpen(true)}>
                 {t("createAction")}
               </Button>
             </EmptyContent>
@@ -431,7 +445,7 @@ export function BehaviorsPage({ classId }: BehaviorsPageProps) {
         >
           <FolderedCardGrid
             folders={visibleFolders}
-            unfiledItems={unfiledBehaviors}
+            unfiledItems={unfiledRewards}
             getItemKey={(item) => item._id}
             unfiledDropZone={
               visibleFolders.length > 0
@@ -446,41 +460,42 @@ export function BehaviorsPage({ classId }: BehaviorsPageProps) {
             renderFolder={(folder) => (
               <FolderCard
                 folder={folder}
-                items={partitionBehaviorsByFolder(filteredBehaviors, folder._id)}
-                managePermission="behaviors:manage"
-                namespace="behaviors"
+                items={partitionRewardsByFolder(filteredRewards, folder._id)}
+                managePermission="rewards:manage"
+                namespace="rewards"
                 emptyLabel={t("folderEmptyItems")}
+                limitSummary={formatFolderLimit(folder)}
                 canDrop={canManage}
                 keepOpen={pinnedFolderId === folder._id}
                 onEdit={() => setEditingFolder(folder)}
                 onDelete={() => setDeletingFolder(folder)}
-                renderItem={(behavior) => (
-                  <BehaviorCard
-                    key={behavior._id}
-                    behavior={behavior}
+                renderItem={(reward) => (
+                  <RewardCard
+                    key={reward._id}
+                    reward={reward}
                     compact
                     canDrag={canManage}
-                    hidden={hiddenBehaviorId === behavior._id}
-                    onEdit={setEditingBehavior}
-                    onDelete={setDeletingBehavior}
+                    hidden={hiddenRewardId === reward._id}
+                    onEdit={setEditingReward}
+                    onDelete={setDeletingReward}
                   />
                 )}
               />
             )}
-            renderItem={(behavior) => (
-              <BehaviorCard
-                behavior={behavior}
+            renderItem={(reward) => (
+              <RewardCard
+                reward={reward}
                 canDrag={canManage}
-                hidden={hiddenBehaviorId === behavior._id}
-                onEdit={setEditingBehavior}
-                onDelete={setDeletingBehavior}
+                hidden={hiddenRewardId === reward._id}
+                onEdit={setEditingReward}
+                onDelete={setDeletingReward}
               />
             )}
           />
           <DragOverlay dropAnimation={dropAnimation}>
-            {activeBehavior ? (
-              <BehaviorCard
-                behavior={activeBehavior}
+            {activeReward ? (
+              <RewardCard
+                reward={activeReward}
                 canDrag={false}
                 onEdit={() => undefined}
                 onDelete={() => undefined}
@@ -490,36 +505,36 @@ export function BehaviorsPage({ classId }: BehaviorsPageProps) {
         </DndContext>
       ) : null}
 
-      <BehaviorFormCredenza
-        open={createBehaviorOpen}
-        onOpenChange={setCreateBehaviorOpen}
+      <RewardFormCredenza
+        open={createRewardOpen}
+        onOpenChange={setCreateRewardOpen}
         mode="create"
         folders={folders ?? []}
         onSubmit={async (values) => {
-          await submitBehavior(values, "create");
+          await submitReward(values, "create");
         }}
       />
 
-      <BehaviorFormCredenza
-        open={editingBehavior !== null}
+      <RewardFormCredenza
+        open={editingReward !== null}
         onOpenChange={(open) => {
-          if (!open) setEditingBehavior(null);
+          if (!open) setEditingReward(null);
         }}
         mode="edit"
         folders={folders ?? []}
-        initial={editingBehavior}
+        initial={editingReward}
         onSubmit={async (values) => {
-          await submitBehavior(values, "edit", editingBehavior);
-          setEditingBehavior(null);
+          await submitReward(values, "edit", editingReward);
+          setEditingReward(null);
         }}
       />
 
-      <BehaviorPointsApplyCredenza
+      <RewardPointsApplyCredenza
         open={pendingPointsUpdate !== null}
         onOpenChange={(open) => {
           if (!open) setPendingPointsUpdate(null);
         }}
-        applicationCount={pendingPointsUpdate?.behavior.applicationCount ?? 0}
+        purchaseCount={pendingPointsUpdate?.reward.purchaseCount ?? 0}
         onConfirm={confirmPointsApply}
       />
 
@@ -527,7 +542,8 @@ export function BehaviorsPage({ classId }: BehaviorsPageProps) {
         open={createFolderOpen}
         onOpenChange={setCreateFolderOpen}
         mode="create"
-        namespace="behaviors"
+        namespace="rewards"
+        supportsPurchaseLimit
         onSubmit={async (values) => {
           await submitFolder(values, "create");
         }}
@@ -539,7 +555,8 @@ export function BehaviorsPage({ classId }: BehaviorsPageProps) {
           if (!open) setEditingFolder(null);
         }}
         mode="edit"
-        namespace="behaviors"
+        namespace="rewards"
+        supportsPurchaseLimit
         initial={editingFolder}
         onSubmit={async (values) => {
           await submitFolder(values, "edit", editingFolder);
@@ -547,30 +564,30 @@ export function BehaviorsPage({ classId }: BehaviorsPageProps) {
         }}
       />
 
-      <ImportBehaviorsCredenza
+      <ImportRewardsCredenza
         open={importOpen}
         onOpenChange={setImportOpen}
         targetClassId={classId}
         onSubmit={async (sourceClassId) => {
-          await importBehaviors.mutateAsync({ classId, sourceClassId });
+          await importRewards.mutateAsync({ classId, sourceClassId });
         }}
       />
 
       <DeleteNamedCredenza
-        open={deletingBehavior !== null}
+        open={deletingReward !== null}
         onOpenChange={(open) => {
-          if (!open) setDeletingBehavior(null);
+          if (!open) setDeletingReward(null);
         }}
-        title={t("deleteConfirmTitle", { name: deletingBehavior?.name ?? "" })}
+        title={t("deleteConfirmTitle", { name: deletingReward?.name ?? "" })}
         description={t("deleteConfirmDescription")}
         confirmLabel={t("deleteAction")}
         onConfirm={async () => {
-          if (!deletingBehavior) return;
-          await removeBehavior.mutateAsync({
+          if (!deletingReward) return;
+          await removeReward.mutateAsync({
             classId,
-            behaviorId: deletingBehavior._id,
+            rewardId: deletingReward._id,
           });
-          setDeletingBehavior(null);
+          setDeletingReward(null);
         }}
       />
 

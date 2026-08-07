@@ -289,7 +289,7 @@ const schema = defineSchema({
     .index("by_classId", ["classId"]),
   /**
    * Behavior folders — flat containers for behaviors within a class.
-   * Separate from reward folders (future); not a shared cross-feature table.
+   * Separate from reward folders; not a shared cross-feature table.
    */
   behaviorFolders: defineTable({
     classId: v.id("classes"),
@@ -333,6 +333,71 @@ const schema = defineSchema({
     note: v.optional(v.string()),
   })
     .index("by_behaviorId", ["behaviorId"])
+    .index("by_classId_student", ["classId", "studentUserId"])
+    .index("by_classId", ["classId"]),
+  /**
+   * Reward folders — flat containers for rewards within a class.
+   * Separate from behavior folders; not a shared cross-feature table.
+   * Optional purchaseLimit is a folder aggregate; item limits supersede it.
+   */
+  rewardFolders: defineTable({
+    classId: v.id("classes"),
+    name: v.string(),
+    description: v.optional(v.string()),
+    /** Font Awesome icon id (`fas:…` / `far:…`), same format as class/group icons. */
+    icon: v.optional(v.string()),
+    purchaseLimit: v.optional(
+      v.object({
+        maxPurchases: v.number(),
+        type: v.literal("recurring"),
+        period: v.union(v.literal("day"), v.literal("week"), v.literal("month")),
+        every: v.number(),
+      }),
+    ),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_classId", ["classId"]),
+  /**
+   * Reward catalog entries — point cost when redeemed by students.
+   */
+  rewards: defineTable({
+    classId: v.id("classes"),
+    folderId: v.optional(v.id("rewardFolders")),
+    name: v.string(),
+    description: v.optional(v.string()),
+    /** Font Awesome icon id (`fas:…` / `far:…`). */
+    icon: v.optional(v.string()),
+    /** Integer point cost; non-negative. */
+    points: v.number(),
+    purchaseLimit: v.optional(
+      v.object({
+        maxPurchases: v.number(),
+        type: v.literal("recurring"),
+        period: v.union(v.literal("day"), v.literal("week"), v.literal("month")),
+        every: v.number(),
+      }),
+    ),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_classId", ["classId"])
+    .index("by_folderId", ["folderId"]),
+  /**
+   * Per-student reward purchases (ledger). `pointsCost` is a snapshot at purchase
+   * time so future catalog edits can leave history alone or rewrite it.
+   */
+  rewardPurchases: defineTable({
+    classId: v.id("classes"),
+    rewardId: v.id("rewards"),
+    studentUserId: v.id("users"),
+    pointsCost: v.number(),
+    purchasedBy: v.id("users"),
+    purchasedAt: v.number(),
+    note: v.optional(v.string()),
+  })
+    .index("by_rewardId", ["rewardId"])
     .index("by_classId_student", ["classId", "studentUserId"])
     .index("by_classId", ["classId"]),
   /**

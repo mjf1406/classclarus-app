@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { FontAwesomeIconPickerLazy } from "@/components/icons/FontAwesomeIconPickerLazy";
 import { iconDefinitionToId, resolveIconId } from "@/components/icons/fontawesome-icon-catalog";
+import { PurchaseLimitFields } from "@/components/rewards/PurchaseLimitFields";
 import { Button } from "@/components/ui/button";
 import {
   Credenza,
@@ -29,24 +30,30 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  MAX_BEHAVIOR_DESCRIPTION_LENGTH,
-  MAX_BEHAVIOR_NAME_LENGTH,
-  MAX_BEHAVIOR_POINTS,
-  type BehaviorFolderListItem,
-  type BehaviorFormValues,
-  type BehaviorListItem,
-} from "@/lib/behaviors/behaviors";
+  formValuesToPurchaseLimit,
+  purchaseLimitToFormValues,
+  validatePurchaseLimitFormValues,
+  type PurchaseLimitFormValues,
+} from "@/lib/rewards/purchaseLimit";
+import {
+  MAX_REWARD_DESCRIPTION_LENGTH,
+  MAX_REWARD_NAME_LENGTH,
+  MAX_REWARD_POINTS,
+  type RewardFolderListItem,
+  type RewardFormValues,
+  type RewardListItem,
+} from "@/lib/rewards/rewards";
 import type { Id } from "../../../convex/_generated/dataModel";
 
 const NONE_FOLDER = "__none__";
 
-type BehaviorFormCredenzaProps = {
+type RewardFormCredenzaProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   mode: "create" | "edit";
-  folders: Array<BehaviorFolderListItem>;
-  initial?: BehaviorListItem | null;
-  onSubmit: (values: BehaviorFormValues) => Promise<void>;
+  folders: Array<RewardFolderListItem>;
+  initial?: RewardListItem | null;
+  onSubmit: (values: RewardFormValues) => Promise<void>;
 };
 
 type FormDefaults = {
@@ -55,6 +62,7 @@ type FormDefaults = {
   icon: string;
   points: string;
   folderId: string;
+  purchaseLimit: PurchaseLimitFormValues;
 };
 
 function fieldErrorMessage(errors: unknown): string | undefined {
@@ -68,15 +76,15 @@ function fieldErrorMessage(errors: unknown): string | undefined {
   return undefined;
 }
 
-export function BehaviorFormCredenza({
+export function RewardFormCredenza({
   open,
   onOpenChange,
   mode,
   folders,
   initial,
   onSubmit,
-}: BehaviorFormCredenzaProps) {
-  const { t } = useTranslation("behaviors");
+}: RewardFormCredenzaProps) {
+  const { t } = useTranslation("rewards");
   const { t: tCommon } = useTranslation("common");
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [faIcon, setFaIcon] = useState<IconDefinition | null>(null);
@@ -89,6 +97,7 @@ export function BehaviorFormCredenza({
       icon: initial?.icon ?? "",
       points: initial ? String(initial.points) : "1",
       folderId: initial?.folderId ?? NONE_FOLDER,
+      purchaseLimit: purchaseLimitToFormValues(initial?.purchaseLimit),
     }),
     [initial],
   );
@@ -102,24 +111,24 @@ export function BehaviorFormCredenza({
           .string()
           .trim()
           .min(1, t("nameRequired"))
-          .max(MAX_BEHAVIOR_NAME_LENGTH, t("nameTooLong", { max: MAX_BEHAVIOR_NAME_LENGTH })),
+          .max(MAX_REWARD_NAME_LENGTH, t("nameTooLong", { max: MAX_REWARD_NAME_LENGTH })),
         description: z
           .string()
           .max(
-            MAX_BEHAVIOR_DESCRIPTION_LENGTH,
-            t("descriptionTooLong", { max: MAX_BEHAVIOR_DESCRIPTION_LENGTH }),
+            MAX_REWARD_DESCRIPTION_LENGTH,
+            t("descriptionTooLong", { max: MAX_REWARD_DESCRIPTION_LENGTH }),
           ),
         icon: z.string(),
         points: z
           .string()
           .trim()
-          .regex(/^-?\d+$/, t("pointsInvalid"))
+          .regex(/^\d+$/, t("pointsInvalid"))
           .refine(
             (value) => {
               const n = Number(value);
-              return Number.isInteger(n) && Math.abs(n) <= MAX_BEHAVIOR_POINTS;
+              return Number.isInteger(n) && n >= 0 && n <= MAX_REWARD_POINTS;
             },
-            t("pointsOutOfRange", { max: MAX_BEHAVIOR_POINTS }),
+            t("pointsOutOfRange", { max: MAX_REWARD_POINTS }),
           ),
         folderId: z.string(),
       }),
@@ -131,23 +140,30 @@ export function BehaviorFormCredenza({
     validators: {
       onSubmit: ({ value }) => {
         const result = schema.safeParse(value);
-        if (result.success) return undefined;
         const fieldErrors: Partial<
-          Record<"name" | "description" | "icon" | "points" | "folderId", string>
+          Record<"name" | "description" | "icon" | "points" | "folderId" | "purchaseLimit", string>
         > = {};
-        for (const issue of result.error.issues) {
-          const key = issue.path[0];
-          if (
-            key === "name" ||
-            key === "description" ||
-            key === "icon" ||
-            key === "points" ||
-            key === "folderId"
-          ) {
-            fieldErrors[key] = issue.message;
+        if (!result.success) {
+          for (const issue of result.error.issues) {
+            const key = issue.path[0];
+            if (
+              key === "name" ||
+              key === "description" ||
+              key === "icon" ||
+              key === "points" ||
+              key === "folderId"
+            ) {
+              fieldErrors[key] = issue.message;
+            }
           }
         }
-        return { fields: fieldErrors };
+        const limitErrors = validatePurchaseLimitFormValues(value.purchaseLimit, t);
+        if (limitErrors?.maxPurchases) {
+          fieldErrors.purchaseLimit = limitErrors.maxPurchases;
+        } else if (limitErrors?.every) {
+          fieldErrors.purchaseLimit = limitErrors.every;
+        }
+        return Object.keys(fieldErrors).length > 0 ? { fields: fieldErrors } : undefined;
       },
     },
     onSubmit: async ({ value }) => {
@@ -156,7 +172,8 @@ export function BehaviorFormCredenza({
       const description = parsed.description.trim() || undefined;
       const icon = parsed.icon.trim() || undefined;
       const folderId =
-        parsed.folderId === NONE_FOLDER ? undefined : (parsed.folderId as Id<"behaviorFolders">);
+        parsed.folderId === NONE_FOLDER ? undefined : (parsed.folderId as Id<"rewardFolders">);
+      const purchaseLimit = formValuesToPurchaseLimit(value.purchaseLimit);
       skipNextResetRef.current = true;
       onOpenChange(false);
       try {
@@ -166,6 +183,7 @@ export function BehaviorFormCredenza({
           icon,
           points: Number(parsed.points),
           folderId,
+          purchaseLimit,
         });
         skipNextResetRef.current = false;
         const values = defaultsRef.current;
@@ -223,9 +241,9 @@ export function BehaviorFormCredenza({
                   const error = fieldErrorMessage(field.state.meta.errors);
                   return (
                     <Field data-invalid={error ? true : undefined}>
-                      <FieldLabel htmlFor="behavior-name">{t("nameLabel")}</FieldLabel>
+                      <FieldLabel htmlFor="reward-name">{t("nameLabel")}</FieldLabel>
                       <Input
-                        id="behavior-name"
+                        id="reward-name"
                         value={field.state.value}
                         onBlur={field.handleBlur}
                         onChange={(event) => field.handleChange(event.target.value)}
@@ -242,14 +260,14 @@ export function BehaviorFormCredenza({
                   const error = fieldErrorMessage(field.state.meta.errors);
                   return (
                     <Field data-invalid={error ? true : undefined}>
-                      <FieldLabel htmlFor="behavior-description">
+                      <FieldLabel htmlFor="reward-description">
                         {t("descriptionLabel")}
                         <span className="font-normal text-muted-foreground">
                           ({tCommon("optional")})
                         </span>
                       </FieldLabel>
                       <Textarea
-                        id="behavior-description"
+                        id="reward-description"
                         value={field.state.value}
                         onBlur={field.handleBlur}
                         onChange={(event) => field.handleChange(event.target.value)}
@@ -307,9 +325,9 @@ export function BehaviorFormCredenza({
                   const error = fieldErrorMessage(field.state.meta.errors);
                   return (
                     <Field data-invalid={error ? true : undefined}>
-                      <FieldLabel htmlFor="behavior-points">{t("pointsLabel")}</FieldLabel>
+                      <FieldLabel htmlFor="reward-points">{t("pointsLabel")}</FieldLabel>
                       <Input
-                        id="behavior-points"
+                        id="reward-points"
                         inputMode="numeric"
                         value={field.state.value}
                         onBlur={field.handleBlur}
@@ -360,6 +378,21 @@ export function BehaviorFormCredenza({
                       </Select>
                       {error ? <FieldError>{error}</FieldError> : null}
                     </Field>
+                  );
+                }}
+              </form.Field>
+
+              <form.Field name="purchaseLimit">
+                {(field) => {
+                  const limitErrors = validatePurchaseLimitFormValues(field.state.value, t);
+                  return (
+                    <PurchaseLimitFields
+                      t={t}
+                      tipVariant="item"
+                      values={field.state.value}
+                      onChange={field.handleChange}
+                      errors={limitErrors}
+                    />
                   );
                 }}
               </form.Field>

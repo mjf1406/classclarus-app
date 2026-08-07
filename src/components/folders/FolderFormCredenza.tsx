@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { FontAwesomeIconPickerLazy } from "@/components/icons/FontAwesomeIconPickerLazy";
 import { iconDefinitionToId, resolveIconId } from "@/components/icons/fontawesome-icon-catalog";
+import { PurchaseLimitFields } from "@/components/rewards/PurchaseLimitFields";
 import { Button } from "@/components/ui/button";
 import {
   Credenza,
@@ -24,16 +25,28 @@ import {
   MAX_FOLDER_DESCRIPTION_LENGTH,
   MAX_FOLDER_NAME_LENGTH,
   type FolderFormValues,
+  type FolderI18nNamespace,
 } from "@/lib/folders/folders";
+import {
+  emptyPurchaseLimitFormValues,
+  formValuesToPurchaseLimit,
+  purchaseLimitToFormValues,
+  validatePurchaseLimitFormValues,
+  type PurchaseLimit,
+  type PurchaseLimitFormValues,
+} from "@/lib/rewards/purchaseLimit";
 
 type FolderFormCredenzaProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   mode: "create" | "edit";
+  namespace?: FolderI18nNamespace;
+  supportsPurchaseLimit?: boolean;
   initial?: {
     name: string;
     description?: string;
     icon?: string;
+    purchaseLimit?: PurchaseLimit;
   } | null;
   onSubmit: (values: FolderFormValues) => Promise<void>;
 };
@@ -42,6 +55,7 @@ type FormDefaults = {
   name: string;
   description: string;
   icon: string;
+  purchaseLimit: PurchaseLimitFormValues;
 };
 
 function fieldErrorMessage(errors: unknown): string | undefined {
@@ -59,10 +73,13 @@ export function FolderFormCredenza({
   open,
   onOpenChange,
   mode,
+  namespace = "behaviors",
+  supportsPurchaseLimit = false,
   initial,
   onSubmit,
 }: FolderFormCredenzaProps) {
-  const { t } = useTranslation("behaviors");
+  const { t } = useTranslation(namespace);
+  const { t: tRewards } = useTranslation("rewards");
   const { t: tCommon } = useTranslation("common");
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [faIcon, setFaIcon] = useState<IconDefinition | null>(null);
@@ -73,8 +90,11 @@ export function FolderFormCredenza({
       name: initial?.name ?? "",
       description: initial?.description ?? "",
       icon: initial?.icon ?? "",
+      purchaseLimit: supportsPurchaseLimit
+        ? purchaseLimitToFormValues(initial?.purchaseLimit)
+        : emptyPurchaseLimitFormValues(),
     }),
-    [initial],
+    [initial, supportsPurchaseLimit],
   );
   const defaultsRef = useRef(defaults);
   defaultsRef.current = defaults;
@@ -103,15 +123,26 @@ export function FolderFormCredenza({
     validators: {
       onSubmit: ({ value }) => {
         const result = schema.safeParse(value);
-        if (result.success) return undefined;
-        const fieldErrors: Partial<Record<"name" | "description" | "icon", string>> = {};
-        for (const issue of result.error.issues) {
-          const key = issue.path[0];
-          if (key === "name" || key === "description" || key === "icon") {
-            fieldErrors[key] = issue.message;
+        const fieldErrors: Partial<
+          Record<"name" | "description" | "icon" | "purchaseLimit", string>
+        > = {};
+        if (!result.success) {
+          for (const issue of result.error.issues) {
+            const key = issue.path[0];
+            if (key === "name" || key === "description" || key === "icon") {
+              fieldErrors[key] = issue.message;
+            }
           }
         }
-        return { fields: fieldErrors };
+        if (supportsPurchaseLimit) {
+          const limitErrors = validatePurchaseLimitFormValues(value.purchaseLimit, tRewards);
+          if (limitErrors?.maxPurchases) {
+            fieldErrors.purchaseLimit = limitErrors.maxPurchases;
+          } else if (limitErrors?.every) {
+            fieldErrors.purchaseLimit = limitErrors.every;
+          }
+        }
+        return Object.keys(fieldErrors).length > 0 ? { fields: fieldErrors } : undefined;
       },
     },
     onSubmit: async ({ value }) => {
@@ -119,6 +150,9 @@ export function FolderFormCredenza({
       const parsed = schema.parse(value);
       const description = parsed.description.trim() || undefined;
       const icon = parsed.icon.trim() || undefined;
+      const purchaseLimit = supportsPurchaseLimit
+        ? formValuesToPurchaseLimit(value.purchaseLimit)
+        : undefined;
       skipNextResetRef.current = true;
       onOpenChange(false);
       try {
@@ -126,7 +160,17 @@ export function FolderFormCredenza({
           name: parsed.name,
           description,
           icon,
+          ...(supportsPurchaseLimit ? { purchaseLimit } : {}),
         });
+        skipNextResetRef.current = false;
+        const values = defaultsRef.current;
+        form.reset(values);
+        setSubmitError(null);
+        if (values.icon) {
+          void resolveIconId(values.icon).then((resolved) => setFaIcon(resolved));
+        } else {
+          setFaIcon(null);
+        }
       } catch (error) {
         onOpenChange(true);
         setSubmitError(error instanceof Error ? error.message : t("folderSaveFailed"));
@@ -254,6 +298,26 @@ export function FolderFormCredenza({
                   );
                 }}
               </form.Field>
+
+              {supportsPurchaseLimit ? (
+                <form.Field name="purchaseLimit">
+                  {(field) => {
+                    const limitErrors = validatePurchaseLimitFormValues(
+                      field.state.value,
+                      tRewards,
+                    );
+                    return (
+                      <PurchaseLimitFields
+                        t={tRewards}
+                        tipVariant="folder"
+                        values={field.state.value}
+                        onChange={field.handleChange}
+                        errors={limitErrors}
+                      />
+                    );
+                  }}
+                </form.Field>
+              ) : null}
             </FieldGroup>
             {submitError ? <p className="text-sm text-destructive">{submitError}</p> : null}
           </CredenzaBody>

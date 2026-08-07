@@ -2,6 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   ChevronRight,
   ClipboardCheck,
+  Gift,
   GraduationCap,
   History,
   LayoutDashboard,
@@ -63,6 +64,7 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
   const { t: tAttendance } = useTranslation("attendance");
   const { t: tTasks } = useTranslation("tasks");
   const { t: tBehaviors } = useTranslation("behaviors");
+  const { t: tRewards } = useTranslation("rewards");
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const { isMobile, state, setOpenMobile } = useSidebar();
   const { can, isPending } = useCan();
@@ -159,6 +161,12 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
       icon: SmilePlus,
       to: "/class/$classId/behaviors",
       permission: "behaviors:manage",
+    },
+    {
+      title: tRewards("nav"),
+      icon: Gift,
+      to: "/class/$classId/rewards",
+      permission: "rewards:manage",
     },
     {
       title: t("navActivityLog"),
