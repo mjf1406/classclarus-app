@@ -153,6 +153,24 @@ const schema = defineSchema({
     .index("by_class_student", ["classId", "studentUserId"])
     .index("by_class_guardian_student", ["classId", "guardianUserId", "studentUserId"]),
   /**
+   * Class announcements — teacher-authored posts with optional public slug pages.
+   */
+  announcements: defineTable({
+    classId: v.id("classes"),
+    authorId: v.id("users"),
+    title: v.string(),
+    /** Serialized TipTap/ProseMirror JSON document. */
+    bodyJson: v.string(),
+    isPublic: v.boolean(),
+    /** Unguessable slug for `/a/$publicSlug`; retained when unpublished. */
+    publicSlug: v.optional(v.string()),
+    attachmentFileIds: v.array(v.id("files")),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_classId_createdAt", ["classId", "createdAt"])
+    .index("by_publicSlug", ["publicSlug"]),
+  /**
    * Per-class FERPA activity log (append-only).
    * Purged on class delete and by retention cron (1 year).
    */

@@ -5,6 +5,7 @@ import {
   History,
   LayoutDashboard,
   Mail,
+  Megaphone,
   Settings2,
   Shield,
   UserRound,
@@ -55,6 +56,7 @@ type NavItem = {
 
 export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
   const { t } = useTranslation("classes");
+  const { t: tAnnouncements } = useTranslation("announcements");
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const { isMobile, state, setOpenMobile } = useSidebar();
   const { can, isPending } = useCan();
@@ -79,6 +81,12 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
       title: t("navDashboard"),
       icon: LayoutDashboard,
       to: "/class/$classId",
+      permission: "class:read",
+    },
+    {
+      title: tAnnouncements("nav"),
+      icon: Megaphone,
+      to: "/class/$classId/announcements",
       permission: "class:read",
     },
     {

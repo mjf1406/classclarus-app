@@ -16,6 +16,7 @@ export const ACTIVITY_RESOURCE_TYPES = [
   "group",
   "team",
   "groupMembership",
+  "announcement",
 ] as const;
 export type ActivityResourceType = (typeof ACTIVITY_RESOURCE_TYPES)[number];
 

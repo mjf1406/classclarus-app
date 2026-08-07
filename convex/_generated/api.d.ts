@@ -11,6 +11,7 @@
 import type * as account from "../account.js";
 import type * as activity from "../activity.js";
 import type * as adminUsers from "../adminUsers.js";
+import type * as announcements from "../announcements.js";
 import type * as appConfig from "../appConfig.js";
 import type * as auth from "../auth.js";
 import type * as authz from "../authz.js";
@@ -29,6 +30,8 @@ import type * as http from "../http.js";
 import type * as joinCodes from "../joinCodes.js";
 import type * as lib_accountDeletion from "../lib/accountDeletion.js";
 import type * as lib_admin from "../lib/admin.js";
+import type * as lib_announcementLimits from "../lib/announcementLimits.js";
+import type * as lib_announcementsCleanup from "../lib/announcementsCleanup.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_authzModel from "../lib/authzModel.js";
 import type * as lib_avatarUrl from "../lib/avatarUrl.js";
@@ -70,6 +73,7 @@ declare const fullApi: ApiFromModules<{
   account: typeof account;
   activity: typeof activity;
   adminUsers: typeof adminUsers;
+  announcements: typeof announcements;
   appConfig: typeof appConfig;
   auth: typeof auth;
   authz: typeof authz;
@@ -88,6 +92,8 @@ declare const fullApi: ApiFromModules<{
   joinCodes: typeof joinCodes;
   "lib/accountDeletion": typeof lib_accountDeletion;
   "lib/admin": typeof lib_admin;
+  "lib/announcementLimits": typeof lib_announcementLimits;
+  "lib/announcementsCleanup": typeof lib_announcementsCleanup;
   "lib/auth": typeof lib_auth;
   "lib/authzModel": typeof lib_authzModel;
   "lib/avatarUrl": typeof lib_avatarUrl;

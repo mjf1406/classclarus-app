@@ -82,6 +82,10 @@ const rateLimits = {
   feedbackSubmitWeekly: { kind: "token bucket" as const, rate: 20, period: WEEK, capacity: 20 },
   /** Intentional education-record access logging from the client. */
   activityLogAccess: { kind: "token bucket" as const, rate: 120, period: HOUR, capacity: 40 },
+  announcementCreate: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 20 },
+  announcementUpdate: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 30 },
+  announcementRemove: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 20 },
+  announcementSetPublic: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 30 },
 };
 
 export const rateLimiter = new RateLimiter(components.rateLimiter, rateLimits);

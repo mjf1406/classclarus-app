@@ -18,6 +18,7 @@ import { Route as AuthenticatedAdminRouteRouteImport } from "./routes/_authentic
 import { Route as PublicSplatRouteImport } from "./routes/_public/$";
 import { Route as PublicLoginRouteImport } from "./routes/_public/login";
 import { Route as PublicUnauthorizedRouteImport } from "./routes/_public/unauthorized";
+import { Route as APublicSlugRouteImport } from "./routes/a.$publicSlug";
 import { Route as AuthenticatedAppIndexRouteImport } from "./routes/_authenticated/_app/index";
 import { Route as AuthenticatedAppAccountRouteImport } from "./routes/_authenticated/_app/account";
 import { Route as AuthenticatedAppBillingRouteImport } from "./routes/_authenticated/_app/billing";
@@ -37,6 +38,8 @@ import { Route as AuthenticatedClassClassClassIdInvitationsRouteImport } from ".
 import { Route as AuthenticatedClassClassClassIdSettingsRouteImport } from "./routes/_authenticated/_class/class/$classId/settings";
 import { Route as AuthenticatedClassClassClassIdStudentsRouteImport } from "./routes/_authenticated/_class/class/$classId/students";
 import { Route as AuthenticatedClassClassClassIdTeachersRouteImport } from "./routes/_authenticated/_class/class/$classId/teachers";
+import { Route as AuthenticatedClassClassClassIdAnnouncementsIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/announcements/index";
+import { Route as AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRouteImport } from "./routes/_authenticated/_class/class/$classId/announcements/$announcementId";
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: "/_authenticated",
@@ -78,6 +81,11 @@ const PublicUnauthorizedRoute = PublicUnauthorizedRouteImport.update({
   id: "/unauthorized",
   path: "/unauthorized",
   getParentRoute: () => PublicRouteRoute,
+} as any);
+const APublicSlugRoute = APublicSlugRouteImport.update({
+  id: "/a/$publicSlug",
+  path: "/a/$publicSlug",
+  getParentRoute: () => rootRouteImport,
 } as any);
 const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
   id: "/",
@@ -184,6 +192,18 @@ const AuthenticatedClassClassClassIdTeachersRoute =
     path: "/teachers",
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
   } as any);
+const AuthenticatedClassClassClassIdAnnouncementsIndexRoute =
+  AuthenticatedClassClassClassIdAnnouncementsIndexRouteImport.update({
+    id: "/announcements/",
+    path: "/announcements/",
+    getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
+  } as any);
+const AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute =
+  AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRouteImport.update({
+    id: "/announcements/$announcementId",
+    path: "/announcements/$announcementId",
+    getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
+  } as any);
 
 export interface FileRoutesByFullPath {
   "/": typeof AuthenticatedAppIndexRoute;
@@ -192,6 +212,7 @@ export interface FileRoutesByFullPath {
   "/$": typeof PublicSplatRoute;
   "/login": typeof PublicLoginRoute;
   "/unauthorized": typeof PublicUnauthorizedRoute;
+  "/a/$publicSlug": typeof APublicSlugRoute;
   "/account": typeof AuthenticatedAppAccountRoute;
   "/billing": typeof AuthenticatedAppBillingRoute;
   "/feedback": typeof AuthenticatedAppFeedbackRoute;
@@ -210,6 +231,8 @@ export interface FileRoutesByFullPath {
   "/class/$classId/students": typeof AuthenticatedClassClassClassIdStudentsRoute;
   "/class/$classId/teachers": typeof AuthenticatedClassClassClassIdTeachersRoute;
   "/class/$classId/": typeof AuthenticatedClassClassClassIdIndexRoute;
+  "/class/$classId/announcements/$announcementId": typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute;
+  "/class/$classId/announcements/": typeof AuthenticatedClassClassClassIdAnnouncementsIndexRoute;
 }
 export interface FileRoutesByTo {
   "/": typeof AuthenticatedAppIndexRoute;
@@ -217,6 +240,7 @@ export interface FileRoutesByTo {
   "/$": typeof PublicSplatRoute;
   "/login": typeof PublicLoginRoute;
   "/unauthorized": typeof PublicUnauthorizedRoute;
+  "/a/$publicSlug": typeof APublicSlugRoute;
   "/account": typeof AuthenticatedAppAccountRoute;
   "/billing": typeof AuthenticatedAppBillingRoute;
   "/feedback": typeof AuthenticatedAppFeedbackRoute;
@@ -234,6 +258,8 @@ export interface FileRoutesByTo {
   "/class/$classId/students": typeof AuthenticatedClassClassClassIdStudentsRoute;
   "/class/$classId/teachers": typeof AuthenticatedClassClassClassIdTeachersRoute;
   "/class/$classId": typeof AuthenticatedClassClassClassIdIndexRoute;
+  "/class/$classId/announcements/$announcementId": typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute;
+  "/class/$classId/announcements": typeof AuthenticatedClassClassClassIdAnnouncementsIndexRoute;
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport;
@@ -246,6 +272,7 @@ export interface FileRoutesById {
   "/_public/$": typeof PublicSplatRoute;
   "/_public/login": typeof PublicLoginRoute;
   "/_public/unauthorized": typeof PublicUnauthorizedRoute;
+  "/a/$publicSlug": typeof APublicSlugRoute;
   "/_authenticated/_app/account": typeof AuthenticatedAppAccountRoute;
   "/_authenticated/_app/billing": typeof AuthenticatedAppBillingRoute;
   "/_authenticated/_app/feedback": typeof AuthenticatedAppFeedbackRoute;
@@ -265,6 +292,8 @@ export interface FileRoutesById {
   "/_authenticated/_class/class/$classId/students": typeof AuthenticatedClassClassClassIdStudentsRoute;
   "/_authenticated/_class/class/$classId/teachers": typeof AuthenticatedClassClassClassIdTeachersRoute;
   "/_authenticated/_class/class/$classId/": typeof AuthenticatedClassClassClassIdIndexRoute;
+  "/_authenticated/_class/class/$classId/announcements/$announcementId": typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute;
+  "/_authenticated/_class/class/$classId/announcements/": typeof AuthenticatedClassClassClassIdAnnouncementsIndexRoute;
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
@@ -275,6 +304,7 @@ export interface FileRouteTypes {
     | "/$"
     | "/login"
     | "/unauthorized"
+    | "/a/$publicSlug"
     | "/account"
     | "/billing"
     | "/feedback"
@@ -292,7 +322,9 @@ export interface FileRouteTypes {
     | "/class/$classId/settings"
     | "/class/$classId/students"
     | "/class/$classId/teachers"
-    | "/class/$classId/";
+    | "/class/$classId/"
+    | "/class/$classId/announcements/$announcementId"
+    | "/class/$classId/announcements/";
   fileRoutesByTo: FileRoutesByTo;
   to:
     | "/"
@@ -300,6 +332,7 @@ export interface FileRouteTypes {
     | "/$"
     | "/login"
     | "/unauthorized"
+    | "/a/$publicSlug"
     | "/account"
     | "/billing"
     | "/feedback"
@@ -316,7 +349,9 @@ export interface FileRouteTypes {
     | "/class/$classId/settings"
     | "/class/$classId/students"
     | "/class/$classId/teachers"
-    | "/class/$classId";
+    | "/class/$classId"
+    | "/class/$classId/announcements/$announcementId"
+    | "/class/$classId/announcements";
   id:
     | "__root__"
     | "/_authenticated"
@@ -328,6 +363,7 @@ export interface FileRouteTypes {
     | "/_public/$"
     | "/_public/login"
     | "/_public/unauthorized"
+    | "/a/$publicSlug"
     | "/_authenticated/_app/account"
     | "/_authenticated/_app/billing"
     | "/_authenticated/_app/feedback"
@@ -346,13 +382,16 @@ export interface FileRouteTypes {
     | "/_authenticated/_class/class/$classId/settings"
     | "/_authenticated/_class/class/$classId/students"
     | "/_authenticated/_class/class/$classId/teachers"
-    | "/_authenticated/_class/class/$classId/";
+    | "/_authenticated/_class/class/$classId/"
+    | "/_authenticated/_class/class/$classId/announcements/$announcementId"
+    | "/_authenticated/_class/class/$classId/announcements/";
   fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren;
   PublicRouteRoute: typeof PublicRouteRouteWithChildren;
   JoinDisplayRoute: typeof JoinDisplayRoute;
+  APublicSlugRoute: typeof APublicSlugRoute;
 }
 
 declare module "@tanstack/react-router" {
@@ -419,6 +458,13 @@ declare module "@tanstack/react-router" {
       fullPath: "/unauthorized";
       preLoaderRoute: typeof PublicUnauthorizedRouteImport;
       parentRoute: typeof PublicRouteRoute;
+    };
+    "/a/$publicSlug": {
+      id: "/a/$publicSlug";
+      path: "/a/$publicSlug";
+      fullPath: "/a/$publicSlug";
+      preLoaderRoute: typeof APublicSlugRouteImport;
+      parentRoute: typeof rootRouteImport;
     };
     "/_authenticated/_app/": {
       id: "/_authenticated/_app/";
@@ -553,6 +599,20 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof AuthenticatedClassClassClassIdTeachersRouteImport;
       parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
     };
+    "/_authenticated/_class/class/$classId/announcements/": {
+      id: "/_authenticated/_class/class/$classId/announcements/";
+      path: "/announcements";
+      fullPath: "/class/$classId/announcements/";
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdAnnouncementsIndexRouteImport;
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
+    };
+    "/_authenticated/_class/class/$classId/announcements/$announcementId": {
+      id: "/_authenticated/_class/class/$classId/announcements/$announcementId";
+      path: "/announcements/$announcementId";
+      fullPath: "/class/$classId/announcements/$announcementId";
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRouteImport;
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
+    };
   }
 }
 
@@ -590,6 +650,8 @@ interface AuthenticatedClassClassClassIdRouteRouteChildren {
   AuthenticatedClassClassClassIdStudentsRoute: typeof AuthenticatedClassClassClassIdStudentsRoute;
   AuthenticatedClassClassClassIdTeachersRoute: typeof AuthenticatedClassClassClassIdTeachersRoute;
   AuthenticatedClassClassClassIdIndexRoute: typeof AuthenticatedClassClassClassIdIndexRoute;
+  AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute: typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute;
+  AuthenticatedClassClassClassIdAnnouncementsIndexRoute: typeof AuthenticatedClassClassClassIdAnnouncementsIndexRoute;
 }
 
 const AuthenticatedClassClassClassIdRouteRouteChildren: AuthenticatedClassClassClassIdRouteRouteChildren =
@@ -604,6 +666,10 @@ const AuthenticatedClassClassClassIdRouteRouteChildren: AuthenticatedClassClassC
     AuthenticatedClassClassClassIdStudentsRoute: AuthenticatedClassClassClassIdStudentsRoute,
     AuthenticatedClassClassClassIdTeachersRoute: AuthenticatedClassClassClassIdTeachersRoute,
     AuthenticatedClassClassClassIdIndexRoute: AuthenticatedClassClassClassIdIndexRoute,
+    AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute:
+      AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute,
+    AuthenticatedClassClassClassIdAnnouncementsIndexRoute:
+      AuthenticatedClassClassClassIdAnnouncementsIndexRoute,
   };
 
 const AuthenticatedClassClassClassIdRouteRouteWithChildren =
@@ -671,6 +737,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   PublicRouteRoute: PublicRouteRouteWithChildren,
   JoinDisplayRoute: JoinDisplayRoute,
+  APublicSlugRoute: APublicSlugRoute,
 };
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
