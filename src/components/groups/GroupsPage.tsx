@@ -10,7 +10,7 @@ import {
   type DropAnimation,
 } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { Plus, UsersRound } from "lucide-react";
+import { FileDown, Plus, UsersRound } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -32,6 +32,9 @@ import {
 } from "@/components/ui/empty";
 import { ErrorState } from "@/components/ui/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "@/components/ui/toast-manager";
+import { useLogClassAccess } from "@/hooks/activity/useLogClassAccess";
+import { useClass } from "@/hooks/classes/useClass";
 import { useAssignStudent } from "@/hooks/groups/useAssignStudent";
 import { useAssignStudents } from "@/hooks/groups/useAssignStudents";
 import { useCopyTeam } from "@/hooks/groups/useCopyTeam";
@@ -46,6 +49,11 @@ import { useCan } from "@/hooks/permissions/useCan";
 import type { BoardGroup, BoardStudent, BoardTeam, DropTarget } from "@/lib/groups/groups";
 import { findStudentOnBoard } from "@/lib/groups/groups";
 import type { GroupFormSchemaValues } from "@/lib/groups/groupFormSchema";
+import {
+  buildGroupsPrintMatrix,
+  groupsPrintLogoAlt,
+  printGroupsMatrix,
+} from "@/lib/groups/groupsPrint";
 import type { Id } from "../../../convex/_generated/dataModel";
 
 type GroupsPageProps = {
@@ -102,6 +110,9 @@ export function GroupsPage({ classId }: GroupsPageProps) {
   const { can, isPending: permissionsPending } = useCan();
   const canManage = !permissionsPending && can("groups:manage");
   const { data, isPending, isError, refetch, isAuthLoading } = useGroupsBoard(classId);
+  const { data: classDoc } = useClass(classId);
+  const logAccess = useLogClassAccess();
+  const [exportPending, setExportPending] = useState(false);
 
   const createGroup = useCreateGroup();
   const updateGroup = useUpdateGroup();
@@ -344,6 +355,44 @@ export function GroupsPage({ classId }: GroupsPageProps) {
           }
       : undefined;
 
+  const printMatrix = useMemo(
+    () => (data ? buildGroupsPrintMatrix(data, { teamlessLabel: t("groupsNoTeamLabel") }) : null),
+    [data, t],
+  );
+  const canExportPdf = Boolean(printMatrix && printMatrix.rows.length > 0);
+
+  const handleExportPdf = useCallback(async () => {
+    if (!data || !printMatrix || printMatrix.rows.length === 0) {
+      toast.add({ type: "warning", title: t("groupsExportPdfEmpty") });
+      return;
+    }
+    const className = classDoc?.name?.trim() || t("navGroups");
+    const subtitle = t("groupsExportPdfSubtitle");
+    setExportPending(true);
+    try {
+      await printGroupsMatrix(printMatrix, {
+        documentTitle: `${className} — ${subtitle}`,
+        heading: className,
+        subtitle,
+        teamColumnLabel: t("groupsExportPdfTeamColumn"),
+        logoAlt: groupsPrintLogoAlt(),
+      });
+      logAccess.mutate({
+        classId,
+        resourceType: "groups",
+        summary: "Exported groups PDF",
+        metadata: {
+          groupCount: String(printMatrix.groupNames.length),
+          teamRowCount: String(printMatrix.rows.length),
+        },
+      });
+    } catch {
+      toast.add({ type: "error", title: t("groupsExportPdfFailed") });
+    } finally {
+      setExportPending(false);
+    }
+  }, [classDoc?.name, classId, data, logAccess, printMatrix, t]);
+
   return (
     <div className="flex w-full flex-col gap-6 px-4 py-8 sm:px-8">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -351,16 +400,25 @@ export function GroupsPage({ classId }: GroupsPageProps) {
           <h1 className="text-2xl font-semibold tracking-tight">{t("navGroups")}</h1>
           <p className="text-sm text-muted-foreground">{t("groupsDescription")}</p>
         </div>
-        {canManage ? (
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
           <Button
             type="button"
-            className="shrink-0"
-            onClick={() => setFormState({ kind: "group", mode: "create" })}
+            variant="outline"
+            disabled={!canExportPdf || exportPending || isPending || isAuthLoading}
+            onClick={() => {
+              void handleExportPdf();
+            }}
           >
-            <Plus data-icon="inline-start" />
-            {t("groupsCreateAction")}
+            <FileDown data-icon="inline-start" />
+            {exportPending ? t("groupsExportPdfPending") : t("groupsExportPdf")}
           </Button>
-        ) : null}
+          {canManage ? (
+            <Button type="button" onClick={() => setFormState({ kind: "group", mode: "create" })}>
+              <Plus data-icon="inline-start" />
+              {t("groupsCreateAction")}
+            </Button>
+          ) : null}
+        </div>
       </div>
 
       {isPending || isAuthLoading ? <GroupsSkeleton /> : null}
