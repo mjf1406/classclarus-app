@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/drawer";
 import { APP_CONFIG } from "@/config/app";
 import { isPasswordAuthEnabled } from "@/lib/auth/authPassword";
-import { getSafeAuthRedirect } from "@/lib/auth/authRedirect";
+import { getSafeAuthRedirect, isAuthExemptPath } from "@/lib/auth/authRedirect";
 import { stashPendingJoinCode } from "@/lib/auth/pendingJoinCode";
 import { JOIN_CODE_PARAM } from "@/lib/invitations/joinCodes";
 
@@ -63,9 +63,14 @@ export const Route = createFileRoute("/_public/login")({
     if (context.auth.isLoading) {
       return;
     }
+    const safeRedirect = getSafeAuthRedirect(search.redirect);
+    // Public share links must not require sign-in — recover if a race landed here.
+    if (!context.auth.isAuthenticated && isAuthExemptPath(safeRedirect)) {
+      throw redirect({ href: safeRedirect });
+    }
     if (context.auth.isAuthenticated) {
       throw redirect({
-        href: getSafeAuthRedirect(search.redirect),
+        href: safeRedirect,
       });
     }
   },

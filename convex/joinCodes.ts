@@ -13,6 +13,7 @@ import { recordClassActivity } from "./lib/classActivity.js";
 import { deleteJoinCodeById } from "./lib/joinCodesCleanup.js";
 import { authedMutation, classMutation, classQuery } from "./lib/customFunctions.js";
 import { rateLimiter } from "./lib/rateLimiter.js";
+import { ensureStudentRosterRow } from "./lib/studentRosters.js";
 import { authz } from "./authz.js";
 import { internal } from "./_generated/api.js";
 import { ConvexError, v } from "convex/values";
@@ -281,6 +282,10 @@ export const redeem = authedMutation({
 
     const role: JoinCodeRole = codeDoc.role;
     await authz.assignRole(ctx, ctx.userId, role, scope);
+
+    if (role === "student") {
+      await ensureStudentRosterRow(ctx, codeDoc.classId, ctx.userId);
+    }
 
     const nextUseCount = codeDoc.useCount + 1;
     if (nextUseCount >= codeDoc.maxUses) {

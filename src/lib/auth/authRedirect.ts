@@ -1,4 +1,18 @@
 /**
+ * Paths that must work while logged out (public announcement links, join display).
+ * Used to recover if a cold-load auth race incorrectly sends users to /login.
+ */
+export function isAuthExemptPath(pathWithSearch: string): boolean {
+  const pathname = pathWithSearch.split(/[?#]/, 1)[0] ?? "";
+  return (
+    pathname === "/join-display" ||
+    pathname.startsWith("/join-display/") ||
+    pathname === "/a" ||
+    pathname.startsWith("/a/")
+  );
+}
+
+/**
  * Returns a same-app relative path for post-login navigation,
  * or "/" if the value is missing or unsafe (open-redirect protection).
  */

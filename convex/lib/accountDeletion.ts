@@ -10,6 +10,7 @@ import {
   clearGroupOrTeamImagesIfReferencesFile,
 } from "./filesCleanup.js";
 import { isSelfHosted } from "./selfHosted.js";
+import { deleteClassUserSettingsForUser, deleteStudentRostersForUser } from "./studentRosters.js";
 
 const ACTIVE_SUBSCRIPTION_STATUSES = new Set(["active", "trialing"]);
 
@@ -173,6 +174,8 @@ export async function deleteAccountData(ctx: MutationCtx, userId: Id<"users">): 
   await deleteJoinCodesCreatedByUser(ctx, userId);
   await deleteFilesForUser(ctx, userId);
   await deleteUserSettings(ctx, userId);
+  await deleteClassUserSettingsForUser(ctx, userId);
+  await deleteStudentRostersForUser(ctx, userId);
   await authz.deprovisionUser(ctx, userId, { actorId: userId, enableAudit: true });
   await deleteAuthSessionsForUser(ctx, userId);
   await deleteAuthAccountsForUser(ctx, userId);

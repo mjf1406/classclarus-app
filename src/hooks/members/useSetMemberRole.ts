@@ -10,6 +10,7 @@ import { groupsBoardQueryKey } from "@/hooks/groups/useGroupsBoard";
 import { classMemberCountsQueryKey } from "@/hooks/members/useClassMemberCounts";
 import { classMembersByRoleQueryKey } from "@/hooks/members/useClassMembersByRole";
 import { classPermissionsQueryKey } from "@/hooks/permissions/useClassPermissions";
+import { studentRosterQueryKey } from "@/hooks/roster/useStudentRoster";
 import { useOptimisticMutation } from "@/hooks/useOptimisticMutation";
 import {
   memberListRoleFor,
@@ -83,6 +84,7 @@ export function useSetMemberRole() {
       ];
       if (args.fromRole === "student" || args.role === "student") {
         keys.push(groupsBoardQueryKey(args.classId));
+        keys.push(studentRosterQueryKey(args.classId));
       }
       return keys;
     },

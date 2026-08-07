@@ -10,7 +10,15 @@ import {
 
 const SEARCH_DEBOUNCE_MS = 250;
 
-type UseMemberSearchOptions<T extends { userId: string; name?: string; email?: string }> = {
+type UseMemberSearchOptions<
+  T extends {
+    userId: string;
+    name?: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+  },
+> = {
   members: readonly T[] | undefined;
   query: string;
 };
@@ -36,10 +44,15 @@ function isSearchResult(data: unknown): data is MemberSearchResponse {
  * Debounces the search query (250ms trailing) and filters members on a Web Worker.
  * Empty queries skip the worker and return the full list immediately.
  */
-export function useMemberSearch<T extends { userId: string; name?: string; email?: string }>({
-  members,
-  query,
-}: UseMemberSearchOptions<T>): UseMemberSearchResult<T> {
+export function useMemberSearch<
+  T extends {
+    userId: string;
+    name?: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+  },
+>({ members, query }: UseMemberSearchOptions<T>): UseMemberSearchResult<T> {
   const items = useMemo(() => members ?? [], [members]);
   const [debouncedQuery, setDebouncedQuery] = useState(() => query.trim());
   const [matchedIds, setMatchedIds] = useState<string[] | null>(null);

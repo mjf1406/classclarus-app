@@ -21,6 +21,10 @@ import { deleteAnnouncementsForClass } from "./lib/announcementsCleanup.js";
 import { deleteGroupsForClass } from "./lib/groupsCleanup.js";
 import { deleteJoinCodesForClass } from "./lib/joinCodesCleanup.js";
 import { languageValidator, type LanguageCode } from "./lib/languages.js";
+import {
+  deleteClassUserSettingsForClass,
+  deleteStudentRostersForClass,
+} from "./lib/studentRosters.js";
 import { resolveUserImageUrl } from "./lib/userImage.js";
 
 const MIN_YEAR = 1900;
@@ -445,6 +449,8 @@ export const remove = classMutation({
     await deleteJoinCodesForClass(ctx, classId);
     await clearLinksForClass(ctx, classId);
     await deleteGroupsForClass(ctx, classId);
+    await deleteStudentRostersForClass(ctx, classId);
+    await deleteClassUserSettingsForClass(ctx, classId);
     await deleteAnnouncementsForClass(ctx, classId);
     await deleteFilesForClass(ctx, classId);
     // Purge activity without keeping a delete row (class is gone).

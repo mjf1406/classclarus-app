@@ -15,7 +15,7 @@ export const permissions = definePermissions({
   activity: { read: true },
   teachers: { read: true, invite: true, remove: true, suspend: true },
   assistantTeachers: { read: true, invite: true, remove: true, suspend: true },
-  students: { read: true, add: true, remove: true, suspend: true },
+  students: { read: true, add: true, update: true, remove: true, suspend: true },
   guardians: { read: true, invite: true, remove: true, suspend: true },
   invitations: { read: true, create: true, revoke: true },
   /** Class file library — create is teacher+; mutate stays ownership-based (uploader). */
@@ -43,7 +43,7 @@ export const roles = defineRoles(permissions, {
   teacher: {
     inherits: "assistant_teacher",
     class: ["update", "archive"],
-    students: ["add", "remove", "suspend"],
+    students: ["add", "update", "remove", "suspend"],
     guardians: ["invite", "remove", "suspend"],
     assistantTeachers: ["invite", "remove", "suspend"],
     invitations: ["read", "create", "revoke"],

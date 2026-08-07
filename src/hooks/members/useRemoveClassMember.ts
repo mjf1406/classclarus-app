@@ -10,8 +10,10 @@ import { groupsBoardQueryKey } from "@/hooks/groups/useGroupsBoard";
 import { classMemberCountsQueryKey } from "@/hooks/members/useClassMemberCounts";
 import { classMembersByRoleQueryKey } from "@/hooks/members/useClassMembersByRole";
 import { classPermissionsQueryKey } from "@/hooks/permissions/useClassPermissions";
+import { studentRosterQueryKey } from "@/hooks/roster/useStudentRoster";
 import { useOptimisticMutation } from "@/hooks/useOptimisticMutation";
 import type { ClassMemberCounts, ClassMemberPublic, MemberListRole } from "@/lib/members/members";
+import type { StudentRosterEntry } from "@/lib/roster/roster";
 import { messageFromError } from "@/lib/errors/convexError";
 
 type RemoveClassMemberArgs = {
@@ -33,6 +35,7 @@ export function useRemoveClassMember(listRole: MemberListRole) {
       ];
       if (listRole === "student") {
         keys.push(classMembersByRoleQueryKey(args.classId, "guardian"));
+        keys.push(studentRosterQueryKey(args.classId));
       }
       return keys;
     },
@@ -41,6 +44,7 @@ export function useRemoveClassMember(listRole: MemberListRole) {
       if (listRole === "student") {
         keys.push(classMembersByRoleQueryKey(args.classId, "guardian"));
         keys.push(groupsBoardQueryKey(args.classId));
+        keys.push(studentRosterQueryKey(args.classId));
       }
       return keys;
     },
@@ -67,6 +71,13 @@ export function useRemoveClassMember(listRole: MemberListRole) {
               (student) => student.userId !== args.userId,
             ),
           }));
+        });
+        const rosterKey = studentRosterQueryKey(args.classId);
+        queryClient.setQueryData<StudentRosterEntry[]>(rosterKey, (old) => {
+          if (!old) return old;
+          return old
+            .filter((entry) => entry.userId !== args.userId)
+            .map((entry, index) => ({ ...entry, rosterNumber: index + 1 }));
         });
       }
     },

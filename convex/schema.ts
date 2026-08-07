@@ -27,6 +27,60 @@ const schema = defineSchema({
     userId: v.id("users"),
     language: languageValidator,
   }).index("by_userId", ["userId"]),
+  /**
+   * Per-user, per-class UI preferences (e.g. students roster view).
+   * Distinct from global `userSettings` (language).
+   */
+  classUserSettings: defineTable({
+    userId: v.id("users"),
+    classId: v.id("classes"),
+    studentsViewMode: v.optional(v.union(v.literal("grid"), v.literal("table"))),
+    studentsColumnOrder: v.optional(v.array(v.string())),
+    studentsColumnVisibility: v.optional(v.record(v.string(), v.boolean())),
+  })
+    .index("by_userId_classId", ["userId", "classId"])
+    .index("by_userId", ["userId"])
+    .index("by_classId", ["classId"]),
+  /**
+   * Class-scoped student roster profile (roster #, names, gender, pronouns).
+   * Independent of `users.name` / email.
+   */
+  studentRosters: defineTable({
+    classId: v.id("classes"),
+    userId: v.id("users"),
+    rosterNumber: v.number(),
+    firstName: v.optional(v.string()),
+    lastName: v.optional(v.string()),
+    gender: v.optional(
+      v.union(
+        v.literal("male"),
+        v.literal("female"),
+        v.literal("transMale"),
+        v.literal("transFemale"),
+        v.literal("nonBinary"),
+        v.literal("selfDescribe"),
+        v.literal("preferNotToSay"),
+      ),
+    ),
+    genderSelfDescribe: v.optional(v.string()),
+    pronouns: v.optional(
+      v.union(
+        v.literal("heHim"),
+        v.literal("sheHer"),
+        v.literal("theyThem"),
+        v.literal("heThey"),
+        v.literal("sheThey"),
+        v.literal("useNameOnly"),
+        v.literal("askSelfDescribe"),
+        v.literal("preferNotToSay"),
+      ),
+    ),
+    pronounsSelfDescribe: v.optional(v.string()),
+  })
+    .index("by_classId_userId", ["classId", "userId"])
+    .index("by_classId_rosterNumber", ["classId", "rosterNumber"])
+    .index("by_classId", ["classId"])
+    .index("by_userId", ["userId"]),
   classes: defineTable({
     ownerId: v.id("users"),
     name: v.string(),

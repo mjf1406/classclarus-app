@@ -53,4 +53,18 @@ describe("filterMemberIds", () => {
   test("returns empty array when nothing matches", () => {
     expect(filterMemberIds(members, "zzzz")).toEqual([]);
   });
+
+  test("matches firstName and lastName roster fields", () => {
+    const withRoster: SearchableMember[] = [
+      {
+        id: "4",
+        name: "Display Only",
+        firstName: "Kai",
+        lastName: "Nguyen",
+        email: "kai@school.edu",
+      },
+    ];
+    expect(filterMemberIds(withRoster, "kai")).toEqual(["4"]);
+    expect(filterMemberIds(withRoster, "nguyen")).toEqual(["4"]);
+  });
 });

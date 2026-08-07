@@ -30,6 +30,7 @@ import {
   listLinkedStudentsForGuardian,
 } from "./lib/guardianLinks.js";
 import { clearGroupMembershipForStudent } from "./lib/groupsCleanup.js";
+import { deleteStudentRosterRow, ensureStudentRosterRow } from "./lib/studentRosters.js";
 import { resolveUserImageUrl } from "./lib/userImage.js";
 import { rateLimiter } from "./lib/rateLimiter.js";
 import { isSelfHosted } from "./lib/selfHosted.js";
@@ -288,6 +289,7 @@ export const remove = classMutation({
     }
     if (role === "student") {
       await clearGroupMembershipForStudent(ctx, ctx.classDoc._id, args.userId);
+      await deleteStudentRosterRow(ctx, ctx.classDoc._id, args.userId);
     }
 
     await authz.offboardUser(ctx, args.userId, {
@@ -446,6 +448,7 @@ export const setRole = classMutation({
     }
     if (fromRole === "student") {
       await clearGroupMembershipForStudent(ctx, ctx.classDoc._id, args.userId);
+      await deleteStudentRosterRow(ctx, ctx.classDoc._id, args.userId);
     }
 
     // Drop every scoped class membership role so the member keeps a single role.
@@ -454,6 +457,10 @@ export const setRole = classMutation({
       await authz.revokeRole(ctx, args.userId, role, ctx.scope);
     }
     await authz.assignRole(ctx, args.userId, newRole, ctx.scope);
+
+    if (newRole === "student") {
+      await ensureStudentRosterRow(ctx, ctx.classDoc._id, args.userId);
+    }
     await recordClassActivity(ctx, {
       classId: ctx.classDoc._id,
       actorUserId: ctx.userId,

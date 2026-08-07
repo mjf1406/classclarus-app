@@ -2,6 +2,8 @@
 export type SearchableMember = {
   id: string;
   name?: string;
+  firstName?: string;
+  lastName?: string;
   email?: string;
 };
 
@@ -27,10 +29,11 @@ export function memberMatchesQuery(item: SearchableMember, normalizedQuery: stri
     return true;
   }
 
-  const name = item.name ? normalizeSearchText(item.name) : "";
-  const email = item.email ? normalizeSearchText(item.email) : "";
+  const fields = [item.name, item.firstName, item.lastName, item.email]
+    .filter((value): value is string => Boolean(value))
+    .map(normalizeSearchText);
 
-  return name.includes(normalizedQuery) || email.includes(normalizedQuery);
+  return fields.some((field) => field.includes(normalizedQuery));
 }
 
 /** Pure matcher used by the worker and unit tests. */
@@ -52,11 +55,15 @@ export function filterMemberIds(items: readonly SearchableMember[], query: strin
 export function toSearchableMember(doc: {
   userId: string;
   name?: string;
+  firstName?: string;
+  lastName?: string;
   email?: string;
 }): SearchableMember {
   return {
     id: doc.userId,
     name: doc.name,
+    firstName: doc.firstName,
+    lastName: doc.lastName,
     email: doc.email,
   };
 }

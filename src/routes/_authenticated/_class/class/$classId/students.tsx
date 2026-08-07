@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { MembersPage } from "@/components/members/MembersPage";
 import { RequirePermission } from "@/components/permissions/RequirePermission";
+import { StudentsPage } from "@/components/students/StudentsPage";
 import type { Id } from "../../../../../../convex/_generated/dataModel";
 
 export const Route = createFileRoute("/_authenticated/_class/class/$classId/students")({
@@ -11,7 +11,7 @@ export const Route = createFileRoute("/_authenticated/_class/class/$classId/stud
 
     return (
       <RequirePermission permission="students:read">
-        <MembersPage classId={typedClassId} role="student" titleKey="navStudents" />
+        <StudentsPage classId={typedClassId} />
       </RequirePermission>
     );
   },

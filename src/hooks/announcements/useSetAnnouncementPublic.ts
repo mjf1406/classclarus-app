@@ -1,4 +1,5 @@
 import { useConvexMutation } from "@convex-dev/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 
 import { api } from "../../../convex/_generated/api";
@@ -19,6 +20,7 @@ type SetAnnouncementPublicArgs = {
 export function useSetAnnouncementPublic() {
   const { t } = useTranslation("announcements");
   const { t: tCommon } = useTranslation("common");
+  const queryClient = useQueryClient();
   const mutationFn = useConvexMutation(api.announcements.setPublic);
 
   return useOptimisticMutation({
@@ -44,6 +46,28 @@ export function useSetAnnouncementPublic() {
       queryClient.setQueryData<Announcement | null>(detailKey, (old) => {
         if (!old) return old;
         return { ...old, isPublic: args.isPublic, updatedAt: now };
+      });
+    },
+    onSuccess: (data, args) => {
+      // Server allocates publicSlug on first publish — apply immediately so the
+      // copy-link UI does not wait on invalidate/refetch.
+      const now = Date.now();
+      const listKey = announcementsListQueryKey(args.classId);
+      const detailKey = announcementDetailQueryKey(args.classId, args.announcementId);
+      const patch = {
+        isPublic: data.isPublic,
+        publicSlug: data.publicSlug,
+        updatedAt: now,
+      };
+
+      queryClient.setQueryData<AnnouncementList>(listKey, (old) => {
+        if (!old) return old;
+        return old.map((item) => (item._id === args.announcementId ? { ...item, ...patch } : item));
+      });
+
+      queryClient.setQueryData<Announcement | null>(detailKey, (old) => {
+        if (!old) return old;
+        return { ...old, ...patch };
       });
     },
     onError: (error) => {

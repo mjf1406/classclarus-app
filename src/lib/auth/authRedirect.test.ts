@@ -1,8 +1,24 @@
 import { describe, expect, test } from "vite-plus/test";
 
-import { getSafeAuthRedirect } from "./authRedirect";
+import { getSafeAuthRedirect, isAuthExemptPath } from "./authRedirect";
 
 const ORIGIN = "https://app.classclarus.com";
+
+describe("isAuthExemptPath", () => {
+  test("allows public announcement and join-display paths", () => {
+    expect(isAuthExemptPath("/a/abc123")).toBe(true);
+    expect(isAuthExemptPath("/a/abc123?x=1")).toBe(true);
+    expect(isAuthExemptPath("/join-display")).toBe(true);
+    expect(isAuthExemptPath("/join-display?jc=ABC")).toBe(true);
+  });
+
+  test("rejects authenticated app paths", () => {
+    expect(isAuthExemptPath("/")).toBe(false);
+    expect(isAuthExemptPath("/login")).toBe(false);
+    expect(isAuthExemptPath("/class/xyz/announcements/abc")).toBe(false);
+    expect(isAuthExemptPath("/account")).toBe(false);
+  });
+});
 
 describe("getSafeAuthRedirect", () => {
   test("allows same-app relative paths", () => {
