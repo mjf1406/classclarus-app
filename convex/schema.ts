@@ -260,6 +260,34 @@ const schema = defineSchema({
     .index("by_classId_createdAt", ["classId", "createdAt"])
     .index("by_publicSlug", ["publicSlug"]),
   /**
+   * Class tasks — teacher-authored checklist items with per-student completion.
+   */
+  tasks: defineTable({
+    classId: v.id("classes"),
+    name: v.string(),
+    description: v.optional(v.string()),
+    /** Optional local school-day due date (YYYY-MM-DD), same idea as attendance dateKey. */
+    dueDateKey: v.optional(v.string()),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_classId", ["classId"])
+    .index("by_classId_updatedAt", ["classId", "updatedAt"]),
+  /**
+   * Sparse per-student task completion. Missing row = not done.
+   */
+  taskCompletions: defineTable({
+    classId: v.id("classes"),
+    taskId: v.id("tasks"),
+    studentUserId: v.id("users"),
+    completedAt: v.number(),
+    completedBy: v.id("users"),
+  })
+    .index("by_task_student", ["taskId", "studentUserId"])
+    .index("by_task", ["taskId"])
+    .index("by_classId", ["classId"]),
+  /**
    * Per-class FERPA activity log (append-only).
    * Purged on class delete and by retention cron (1 year).
    */

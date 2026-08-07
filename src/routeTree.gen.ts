@@ -41,6 +41,8 @@ import { Route as AuthenticatedClassClassClassIdStudentsRouteImport } from "./ro
 import { Route as AuthenticatedClassClassClassIdTeachersRouteImport } from "./routes/_authenticated/_class/class/$classId/teachers";
 import { Route as AuthenticatedClassClassClassIdAnnouncementsIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/announcements/index";
 import { Route as AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRouteImport } from "./routes/_authenticated/_class/class/$classId/announcements/$announcementId";
+import { Route as AuthenticatedClassClassClassIdTasksIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/tasks/index";
+import { Route as AuthenticatedClassClassClassIdTasksTaskIdRouteImport } from "./routes/_authenticated/_class/class/$classId/tasks/$taskId";
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: "/_authenticated",
@@ -211,6 +213,18 @@ const AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute =
     path: "/announcements/$announcementId",
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
   } as any);
+const AuthenticatedClassClassClassIdTasksIndexRoute =
+  AuthenticatedClassClassClassIdTasksIndexRouteImport.update({
+    id: "/tasks/",
+    path: "/tasks/",
+    getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
+  } as any);
+const AuthenticatedClassClassClassIdTasksTaskIdRoute =
+  AuthenticatedClassClassClassIdTasksTaskIdRouteImport.update({
+    id: "/tasks/$taskId",
+    path: "/tasks/$taskId",
+    getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
+  } as any);
 
 export interface FileRoutesByFullPath {
   "/": typeof AuthenticatedAppIndexRoute;
@@ -240,7 +254,9 @@ export interface FileRoutesByFullPath {
   "/class/$classId/teachers": typeof AuthenticatedClassClassClassIdTeachersRoute;
   "/class/$classId/": typeof AuthenticatedClassClassClassIdIndexRoute;
   "/class/$classId/announcements/$announcementId": typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute;
+  "/class/$classId/tasks/$taskId": typeof AuthenticatedClassClassClassIdTasksTaskIdRoute;
   "/class/$classId/announcements/": typeof AuthenticatedClassClassClassIdAnnouncementsIndexRoute;
+  "/class/$classId/tasks/": typeof AuthenticatedClassClassClassIdTasksIndexRoute;
 }
 export interface FileRoutesByTo {
   "/": typeof AuthenticatedAppIndexRoute;
@@ -268,7 +284,9 @@ export interface FileRoutesByTo {
   "/class/$classId/teachers": typeof AuthenticatedClassClassClassIdTeachersRoute;
   "/class/$classId": typeof AuthenticatedClassClassClassIdIndexRoute;
   "/class/$classId/announcements/$announcementId": typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute;
+  "/class/$classId/tasks/$taskId": typeof AuthenticatedClassClassClassIdTasksTaskIdRoute;
   "/class/$classId/announcements": typeof AuthenticatedClassClassClassIdAnnouncementsIndexRoute;
+  "/class/$classId/tasks": typeof AuthenticatedClassClassClassIdTasksIndexRoute;
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport;
@@ -303,7 +321,9 @@ export interface FileRoutesById {
   "/_authenticated/_class/class/$classId/teachers": typeof AuthenticatedClassClassClassIdTeachersRoute;
   "/_authenticated/_class/class/$classId/": typeof AuthenticatedClassClassClassIdIndexRoute;
   "/_authenticated/_class/class/$classId/announcements/$announcementId": typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute;
+  "/_authenticated/_class/class/$classId/tasks/$taskId": typeof AuthenticatedClassClassClassIdTasksTaskIdRoute;
   "/_authenticated/_class/class/$classId/announcements/": typeof AuthenticatedClassClassClassIdAnnouncementsIndexRoute;
+  "/_authenticated/_class/class/$classId/tasks/": typeof AuthenticatedClassClassClassIdTasksIndexRoute;
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
@@ -335,7 +355,9 @@ export interface FileRouteTypes {
     | "/class/$classId/teachers"
     | "/class/$classId/"
     | "/class/$classId/announcements/$announcementId"
-    | "/class/$classId/announcements/";
+    | "/class/$classId/tasks/$taskId"
+    | "/class/$classId/announcements/"
+    | "/class/$classId/tasks/";
   fileRoutesByTo: FileRoutesByTo;
   to:
     | "/"
@@ -363,7 +385,9 @@ export interface FileRouteTypes {
     | "/class/$classId/teachers"
     | "/class/$classId"
     | "/class/$classId/announcements/$announcementId"
-    | "/class/$classId/announcements";
+    | "/class/$classId/tasks/$taskId"
+    | "/class/$classId/announcements"
+    | "/class/$classId/tasks";
   id:
     | "__root__"
     | "/_authenticated"
@@ -397,7 +421,9 @@ export interface FileRouteTypes {
     | "/_authenticated/_class/class/$classId/teachers"
     | "/_authenticated/_class/class/$classId/"
     | "/_authenticated/_class/class/$classId/announcements/$announcementId"
-    | "/_authenticated/_class/class/$classId/announcements/";
+    | "/_authenticated/_class/class/$classId/tasks/$taskId"
+    | "/_authenticated/_class/class/$classId/announcements/"
+    | "/_authenticated/_class/class/$classId/tasks/";
   fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
@@ -633,6 +659,20 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRouteImport;
       parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
     };
+    "/_authenticated/_class/class/$classId/tasks/": {
+      id: "/_authenticated/_class/class/$classId/tasks/";
+      path: "/tasks";
+      fullPath: "/class/$classId/tasks/";
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdTasksIndexRouteImport;
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
+    };
+    "/_authenticated/_class/class/$classId/tasks/$taskId": {
+      id: "/_authenticated/_class/class/$classId/tasks/$taskId";
+      path: "/tasks/$taskId";
+      fullPath: "/class/$classId/tasks/$taskId";
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdTasksTaskIdRouteImport;
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
+    };
   }
 }
 
@@ -672,7 +712,9 @@ interface AuthenticatedClassClassClassIdRouteRouteChildren {
   AuthenticatedClassClassClassIdTeachersRoute: typeof AuthenticatedClassClassClassIdTeachersRoute;
   AuthenticatedClassClassClassIdIndexRoute: typeof AuthenticatedClassClassClassIdIndexRoute;
   AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute: typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute;
+  AuthenticatedClassClassClassIdTasksTaskIdRoute: typeof AuthenticatedClassClassClassIdTasksTaskIdRoute;
   AuthenticatedClassClassClassIdAnnouncementsIndexRoute: typeof AuthenticatedClassClassClassIdAnnouncementsIndexRoute;
+  AuthenticatedClassClassClassIdTasksIndexRoute: typeof AuthenticatedClassClassClassIdTasksIndexRoute;
 }
 
 const AuthenticatedClassClassClassIdRouteRouteChildren: AuthenticatedClassClassClassIdRouteRouteChildren =
@@ -690,8 +732,10 @@ const AuthenticatedClassClassClassIdRouteRouteChildren: AuthenticatedClassClassC
     AuthenticatedClassClassClassIdIndexRoute: AuthenticatedClassClassClassIdIndexRoute,
     AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute:
       AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute,
+    AuthenticatedClassClassClassIdTasksTaskIdRoute: AuthenticatedClassClassClassIdTasksTaskIdRoute,
     AuthenticatedClassClassClassIdAnnouncementsIndexRoute:
       AuthenticatedClassClassClassIdAnnouncementsIndexRoute,
+    AuthenticatedClassClassClassIdTasksIndexRoute: AuthenticatedClassClassClassIdTasksIndexRoute,
   };
 
 const AuthenticatedClassClassClassIdRouteRouteWithChildren =

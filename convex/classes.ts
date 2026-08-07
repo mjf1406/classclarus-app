@@ -20,6 +20,7 @@ import { deleteFilesForClass } from "./lib/filesCleanup.js";
 import { deleteAnnouncementsForClass } from "./lib/announcementsCleanup.js";
 import { deleteAttendanceForClass } from "./lib/attendanceCleanup.js";
 import { deleteGroupsForClass } from "./lib/groupsCleanup.js";
+import { deleteTasksForClass } from "./lib/tasksCleanup.js";
 import { deleteJoinCodesForClass } from "./lib/joinCodesCleanup.js";
 import { languageValidator, type LanguageCode } from "./lib/languages.js";
 import {
@@ -502,6 +503,7 @@ export const remove = classMutation({
     await deleteStudentRostersForClass(ctx, classId);
     await deleteClassUserSettingsForClass(ctx, classId);
     await deleteAnnouncementsForClass(ctx, classId);
+    await deleteTasksForClass(ctx, classId);
     await deleteFilesForClass(ctx, classId);
     // Purge activity without keeping a delete row (class is gone).
     await ctx.scheduler.runAfter(0, internal.activity.purgeForClass, { classId });

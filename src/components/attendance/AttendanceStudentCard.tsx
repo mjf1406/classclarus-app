@@ -74,7 +74,12 @@ export function AttendanceStudentCard({
           <AvatarFallback>{initials}</AvatarFallback>
         </Avatar>
         <div className="min-w-0 flex-1">
-          <p className="truncate font-medium">{displayName}</p>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-md bg-muted text-xs font-semibold tabular-nums">
+              {student.rosterNumber}
+            </span>
+            <p className="truncate font-medium">{displayName}</p>
+          </div>
           <span
             className={cn(
               "mt-1 inline-flex rounded-md px-2 py-0.5 text-xs font-medium",

@@ -166,7 +166,8 @@ function collectStudentsInGroups(
   return [...byId.values()];
 }
 
-function collectAllStudents(board: GroupsBoard): Array<BoardStudent> {
+/** Flatten every student on the board (ungrouped + groups + teams), unique by userId. */
+export function collectAllStudents(board: GroupsBoard): Array<BoardStudent> {
   const byId = new Map<Id<"users">, BoardStudent>();
   for (const student of board.ungrouped) {
     byId.set(student.userId, student);

@@ -5,6 +5,7 @@ import {
   GraduationCap,
   History,
   LayoutDashboard,
+  ListTodo,
   Mail,
   Megaphone,
   Settings2,
@@ -59,6 +60,7 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
   const { t } = useTranslation("classes");
   const { t: tAnnouncements } = useTranslation("announcements");
   const { t: tAttendance } = useTranslation("attendance");
+  const { t: tTasks } = useTranslation("tasks");
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const { isMobile, state, setOpenMobile } = useSidebar();
   const { can, isPending } = useCan();
@@ -97,6 +99,12 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
       icon: ClipboardCheck,
       to: "/class/$classId/attendance",
       permission: "attendance:manage",
+    },
+    {
+      title: tTasks("nav"),
+      icon: ListTodo,
+      to: "/class/$classId/tasks",
+      permission: "class:read",
     },
     {
       title: t("navGroups"),

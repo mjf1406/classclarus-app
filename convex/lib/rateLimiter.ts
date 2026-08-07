@@ -92,6 +92,10 @@ const rateLimits = {
   announcementSetPublic: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 30 },
   attendanceSave: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 30 },
   attendanceMarkAbsent: { kind: "token bucket" as const, rate: 120, period: HOUR, capacity: 40 },
+  taskCreate: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 20 },
+  taskUpdate: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 30 },
+  taskRemove: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 20 },
+  taskSetCompletion: { kind: "token bucket" as const, rate: 240, period: HOUR, capacity: 60 },
 };
 
 export const rateLimiter = new RateLimiter(components.rateLimiter, rateLimits);
