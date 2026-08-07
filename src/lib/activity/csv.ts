@@ -6,6 +6,8 @@ export type ActivityCsvRow = {
   resourceType: string;
   resourceId?: string;
   summary: string;
+  summaryKey?: string;
+  metadata?: Record<string, string>;
 };
 
 function escapeCsvField(value: string): string {

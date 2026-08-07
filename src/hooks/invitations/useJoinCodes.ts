@@ -28,6 +28,7 @@ export function useJoinCodes(classId: Id<"classes">, now: number) {
             classId,
             resourceType: "joinCode",
             summary: "Viewed invite codes",
+            summaryKey: "activitySummary_viewedInviteCodes",
           }
         : null,
     [classId, result.data],

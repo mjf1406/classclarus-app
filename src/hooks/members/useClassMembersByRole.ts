@@ -22,6 +22,7 @@ export function useClassMembersByRole(classId: Id<"classes">, role: MemberListRo
             resourceType: "member",
             resourceId: role,
             summary: `Viewed ${role} member list`,
+            summaryKey: "activitySummary_viewedMemberList",
             metadata: { role },
           }
         : null,

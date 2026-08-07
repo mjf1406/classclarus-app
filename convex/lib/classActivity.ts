@@ -36,6 +36,8 @@ export type RecordClassActivityArgs = {
   resourceType: ActivityResourceType | string;
   resourceId?: string;
   summary: string;
+  /** i18n key for client-side summary formatting; English `summary` remains the audit fallback. */
+  summaryKey?: string;
   metadata?: Record<string, string>;
 };
 
@@ -78,6 +80,7 @@ export async function recordClassActivity(
     resourceType: args.resourceType,
     ...(args.resourceId !== undefined ? { resourceId: args.resourceId } : {}),
     summary: args.summary,
+    ...(args.summaryKey !== undefined ? { summaryKey: args.summaryKey } : {}),
     ...(args.metadata !== undefined ? { metadata: args.metadata } : {}),
     createdAt,
   });
@@ -148,6 +151,7 @@ export type ClassActivityEventPublic = {
   resourceType: string;
   resourceId?: string;
   summary: string;
+  summaryKey?: string;
   metadata?: Record<string, string>;
   createdAt: number;
 };
@@ -164,6 +168,7 @@ export function toPublicActivityEvent(doc: Doc<"classActivityEvents">): ClassAct
     resourceType: doc.resourceType,
     ...(doc.resourceId !== undefined ? { resourceId: doc.resourceId } : {}),
     summary: doc.summary,
+    ...(doc.summaryKey !== undefined ? { summaryKey: doc.summaryKey } : {}),
     ...(doc.metadata !== undefined ? { metadata: doc.metadata } : {}),
     createdAt: doc.createdAt,
   };

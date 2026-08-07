@@ -171,6 +171,8 @@ const schema = defineSchema({
     resourceType: v.string(),
     resourceId: v.optional(v.string()),
     summary: v.string(),
+    /** i18n key for client-side summary formatting; omitted on older rows. */
+    summaryKey: v.optional(v.string()),
     metadata: v.optional(v.record(v.string(), v.string())),
     createdAt: v.number(),
   })

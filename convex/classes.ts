@@ -252,6 +252,7 @@ export const create = entitledMutation({
       resourceType: "class",
       resourceId: classId,
       summary: `Created class "${created.name}"`,
+      summaryKey: "activitySummary_createdClass",
       metadata: { name: created.name, year: String(created.year) },
     });
     return withStudentLanguage(created);
@@ -287,6 +288,7 @@ export const update = classMutation({
       resourceType: "class",
       resourceId: ctx.classDoc._id,
       summary: `Updated class settings for "${updated.name}"`,
+      summaryKey: "activitySummary_updatedClassSettings",
       metadata: { name: updated.name, year: String(updated.year) },
     });
     return withStudentLanguage(updated);
@@ -318,7 +320,10 @@ export const setArchived = classMutation({
       summary: args.archived
         ? `Archived class "${ctx.classDoc.name}"`
         : `Unarchived class "${ctx.classDoc.name}"`,
-      metadata: { archived: String(args.archived) },
+      summaryKey: args.archived
+        ? "activitySummary_archivedClass"
+        : "activitySummary_unarchivedClass",
+      metadata: { name: ctx.classDoc.name, archived: String(args.archived) },
     });
     return withStudentLanguage(updated);
   },
@@ -357,7 +362,8 @@ export const setBanner = classMutation({
       resourceType: "class",
       resourceId: ctx.classDoc._id,
       summary: `Set dashboard banner for "${ctx.classDoc.name}"`,
-      metadata: { fileId: args.fileId, fileName: file.name },
+      summaryKey: "activitySummary_setDashboardBanner",
+      metadata: { name: ctx.classDoc.name, fileId: args.fileId, fileName: file.name },
     });
     return withStudentLanguage(updated);
   },
@@ -386,6 +392,7 @@ export const setStudentLanguage = classMutation({
       resourceType: "class",
       resourceId: ctx.classDoc._id,
       summary: `Set student language to ${args.studentLanguage}`,
+      summaryKey: "activitySummary_setStudentLanguage",
       metadata: { studentLanguage: args.studentLanguage },
     });
     return withStudentLanguage(updated);
@@ -413,6 +420,8 @@ export const clearBanner = classMutation({
       resourceType: "class",
       resourceId: ctx.classDoc._id,
       summary: `Cleared dashboard banner for "${ctx.classDoc.name}"`,
+      summaryKey: "activitySummary_clearedDashboardBanner",
+      metadata: { name: ctx.classDoc.name },
     });
     return withStudentLanguage(updated);
   },
@@ -565,7 +574,8 @@ export const transferOwnership = classMutation({
       resourceType: "class",
       resourceId: ctx.classDoc._id,
       summary: `Transferred ownership of "${ctx.classDoc.name}"`,
-      metadata: { toUserId: args.toUserId },
+      summaryKey: "activitySummary_transferredOwnership",
+      metadata: { name: ctx.classDoc.name, toUserId: args.toUserId },
     });
     return withStudentLanguage(updated);
   },

@@ -9,6 +9,7 @@ import { toast } from "@/components/ui/toast-manager";
 import { useLogClassAccess } from "@/hooks/activity/useLogClassAccess";
 import { CLASS_ACTIVITY_PAGE_SIZE } from "@/hooks/activity/useClassActivity";
 import { buildActivityCsv, downloadTextFile } from "@/lib/activity/csv";
+import { formatActivitySummary } from "@/lib/activity/formatActivitySummary";
 import { messageFromError } from "@/lib/errors/convexError";
 
 type ExportClassActivityCsvArgs = {
@@ -16,7 +17,7 @@ type ExportClassActivityCsvArgs = {
   expectedTotal?: number;
 };
 
-type ActivityCsvRow = {
+type ActivityListEvent = {
   createdAt: number;
   actorEmail: string;
   actorRole: string;
@@ -24,6 +25,8 @@ type ActivityCsvRow = {
   resourceType: string;
   resourceId?: string;
   summary: string;
+  summaryKey?: string;
+  metadata?: Record<string, string>;
 };
 
 /**
@@ -40,7 +43,15 @@ export function useExportClassActivityCsv(classId: Id<"classes">) {
   const mutation = useMutation({
     mutationFn: async (args?: ExportClassActivityCsvArgs) => {
       const expectedTotal = args?.expectedTotal;
-      const rows: ActivityCsvRow[] = [];
+      const rows: Array<{
+        createdAt: number;
+        actorEmail: string;
+        actorRole: string;
+        action: string;
+        resourceType: string;
+        resourceId?: string;
+        summary: string;
+      }> = [];
       let cursor: string | null = null;
       let isDone = false;
       let pagesFetched = 0;
@@ -49,7 +60,7 @@ export function useExportClassActivityCsv(classId: Id<"classes">) {
 
       while (!isDone) {
         const page: {
-          page: ActivityCsvRow[];
+          page: ActivityListEvent[];
           isDone: boolean;
           continueCursor: string;
         } = await convex.query(api.activity.list, {
@@ -67,7 +78,7 @@ export function useExportClassActivityCsv(classId: Id<"classes">) {
             action: event.action,
             resourceType: event.resourceType,
             resourceId: event.resourceId,
-            summary: event.summary,
+            summary: formatActivitySummary(event, t),
           });
         }
         isDone = page.isDone;
@@ -90,6 +101,7 @@ export function useExportClassActivityCsv(classId: Id<"classes">) {
         classId,
         resourceType: "activity",
         summary: "Exported activity log CSV",
+        summaryKey: "activitySummary_exportedActivityLogCsv",
         metadata: { rowCount: String(rows.length) },
       });
     },

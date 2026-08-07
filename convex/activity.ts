@@ -33,6 +33,7 @@ const activityEventValidator = v.object({
   resourceType: v.string(),
   resourceId: v.optional(v.string()),
   summary: v.string(),
+  summaryKey: v.optional(v.string()),
   metadata: v.optional(v.record(v.string(), v.string())),
   createdAt: v.number(),
 });
@@ -74,6 +75,7 @@ export const logAccess = classMutation({
     resourceType: v.string(),
     resourceId: v.optional(v.string()),
     summary: v.string(),
+    summaryKey: v.optional(v.string()),
     metadata: v.optional(v.record(v.string(), v.string())),
   },
   returns: v.null(),
@@ -87,6 +89,7 @@ export const logAccess = classMutation({
     }
 
     const resourceId = args.resourceId?.trim().slice(0, 128);
+    const summaryKey = args.summaryKey?.trim().slice(0, 128);
     const duplicate = await hasRecentMatchingActivity(ctx, {
       classId: ctx.classDoc._id,
       actorUserId: ctx.userId,
@@ -105,6 +108,7 @@ export const logAccess = classMutation({
       resourceType,
       ...(resourceId !== undefined && resourceId.length > 0 ? { resourceId } : {}),
       summary,
+      ...(summaryKey !== undefined && summaryKey.length > 0 ? { summaryKey } : {}),
       ...(args.metadata !== undefined ? { metadata: args.metadata } : {}),
     });
     return null;
@@ -122,6 +126,7 @@ export const recordFromAction = internalMutation({
     resourceType: v.string(),
     resourceId: v.optional(v.string()),
     summary: v.string(),
+    summaryKey: v.optional(v.string()),
     metadata: v.optional(v.record(v.string(), v.string())),
     dedupeRead: v.optional(v.boolean()),
   },
@@ -148,6 +153,7 @@ export const recordFromAction = internalMutation({
       resourceType: args.resourceType,
       resourceId: args.resourceId,
       summary: args.summary,
+      summaryKey: args.summaryKey,
       metadata: args.metadata,
     });
     return null;

@@ -265,6 +265,7 @@ export const renameFile = authedMutation({
         resourceType: "file",
         resourceId: args.fileId,
         summary: `Renamed file "${previousName}" to "${name}"`,
+        summaryKey: "activitySummary_renamedFile",
         metadata: { previousName, name },
       });
     }
@@ -291,6 +292,7 @@ export const deleteFile = authedMutation({
         resourceType: "file",
         resourceId: args.fileId,
         summary: `Deleted file "${file.name}"`,
+        summaryKey: "activitySummary_deletedFile",
         metadata: { name: file.name },
       });
     }

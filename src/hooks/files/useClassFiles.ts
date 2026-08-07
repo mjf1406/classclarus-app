@@ -24,6 +24,7 @@ export function useClassFiles(classId: Id<"classes">) {
             classId,
             resourceType: "file",
             summary: "Viewed class file library",
+            summaryKey: "activitySummary_viewedClassFileLibrary",
           }
         : null,
     [classId, result.data],

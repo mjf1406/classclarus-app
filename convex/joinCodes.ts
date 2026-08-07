@@ -178,6 +178,7 @@ export const create = classMutation({
       resourceType: "joinCode",
       resourceId: joinCodeId,
       summary: `Created invite code for role ${args.role}`,
+      summaryKey: "activitySummary_createdInviteCode",
       metadata: { role: args.role, maxUses: String(maxUses) },
     });
     return toPublicJoinCode(created);
@@ -204,6 +205,7 @@ export const revoke = classMutation({
       resourceType: "joinCode",
       resourceId: args.joinCodeId,
       summary: `Revoked invite code for role ${codeDoc.role}`,
+      summaryKey: "activitySummary_revokedInviteCode",
       metadata: { role: codeDoc.role },
     });
     return null;
@@ -294,6 +296,7 @@ export const redeem = authedMutation({
       resourceType: "member",
       resourceId: ctx.userId,
       summary: `Joined class as ${role}`,
+      summaryKey: "activitySummary_joinedClass",
       metadata: { role, via: "joinCode" },
     });
 

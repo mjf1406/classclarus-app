@@ -135,6 +135,9 @@ export const setSuspended = classMutation({
       resourceType: "member",
       resourceId: args.userId,
       summary: args.suspended ? `Suspended member (${role})` : `Unsuspended member (${role})`,
+      summaryKey: args.suspended
+        ? "activitySummary_suspendedMember"
+        : "activitySummary_unsuspendedMember",
       metadata: { role, suspended: String(args.suspended), targetUserId: args.userId },
     });
     return null;
@@ -300,6 +303,7 @@ export const remove = classMutation({
       resourceType: "member",
       resourceId: args.userId,
       summary: `Removed member (${role})`,
+      summaryKey: "activitySummary_removedMember",
       metadata: { role, targetUserId: args.userId },
     });
     return null;
@@ -370,7 +374,9 @@ export const setGuardianStudentLinks = classMutation({
       resourceType: "guardianLink",
       resourceId: args.guardianUserId,
       summary: `Updated guardian–student links (${uniqueStudentIds.length} student(s))`,
+      summaryKey: "activitySummary_updatedGuardianStudentLinks",
       metadata: {
+        count: String(uniqueStudentIds.length),
         guardianUserId: args.guardianUserId,
         studentCount: String(uniqueStudentIds.length),
       },
@@ -455,6 +461,7 @@ export const setRole = classMutation({
       resourceType: "member",
       resourceId: args.userId,
       summary: `Changed member role from ${fromRole} to ${newRole}`,
+      summaryKey: "activitySummary_changedMemberRole",
       metadata: {
         fromRole,
         toRole: newRole,

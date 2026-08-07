@@ -417,6 +417,7 @@ export function GroupsPage({ classId }: GroupsPageProps) {
         classId,
         resourceType: "groups",
         summary: "Exported groups PDF",
+        summaryKey: "activitySummary_exportedGroupsPdf",
         metadata: {
           groupCount: String(printMatrix.groupNames.length),
           teamRowCount: String(printMatrix.rows.length),

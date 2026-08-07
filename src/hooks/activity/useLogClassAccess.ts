@@ -9,6 +9,7 @@ export type LogClassAccessArgs = {
   classId: Id<"classes">;
   resourceType: string;
   summary: string;
+  summaryKey?: string;
   resourceId?: string;
   metadata?: Record<string, string>;
 };
@@ -38,6 +39,7 @@ export function useLogClassAccessOnce(ready: boolean, args: LogClassAccessArgs |
   const classId = args?.classId;
   const resourceType = args?.resourceType;
   const summary = args?.summary;
+  const summaryKey = args?.summaryKey;
   const resourceId = args?.resourceId;
   const metadataKey = args?.metadata ? JSON.stringify(args.metadata) : "";
 
@@ -45,7 +47,14 @@ export function useLogClassAccessOnce(ready: boolean, args: LogClassAccessArgs |
     if (!ready || !classId || !resourceType || !summary) {
       return;
     }
-    const key = [classId, resourceType, resourceId ?? "", summary, metadataKey].join("|");
+    const key = [
+      classId,
+      resourceType,
+      resourceId ?? "",
+      summary,
+      summaryKey ?? "",
+      metadataKey,
+    ].join("|");
     if (loggedKeyRef.current === key) {
       return;
     }
@@ -54,8 +63,9 @@ export function useLogClassAccessOnce(ready: boolean, args: LogClassAccessArgs |
       classId,
       resourceType,
       summary,
+      ...(summaryKey !== undefined ? { summaryKey } : {}),
       ...(resourceId !== undefined ? { resourceId } : {}),
       ...(metadataKey ? { metadata: JSON.parse(metadataKey) as Record<string, string> } : {}),
     });
-  }, [ready, classId, resourceType, summary, resourceId, metadataKey, mutate]);
+  }, [ready, classId, resourceType, summary, summaryKey, resourceId, metadataKey, mutate]);
 }

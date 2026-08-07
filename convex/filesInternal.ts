@@ -194,6 +194,7 @@ export const registerFinalizedUpload = internalMutation({
         resourceType: "file",
         resourceId: fileId,
         summary: `Uploaded file "${name}"`,
+        summaryKey: "activitySummary_uploadedFile",
         metadata: { name, preset: args.preset, contentType: args.contentType },
       });
     }

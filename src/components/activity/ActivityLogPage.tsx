@@ -32,6 +32,7 @@ export function ActivityLogPage({ classId }: { classId: Id<"classes"> }) {
       classId,
       resourceType: "activity",
       summary: "Viewed activity log",
+      summaryKey: "activitySummary_viewedActivityLog",
     }),
     [classId],
   );

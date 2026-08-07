@@ -269,6 +269,7 @@ export const createGroup = classMutation({
       resourceType: "group",
       resourceId: groupId,
       summary: `Created group “${name}”`,
+      summaryKey: "activitySummary_createdGroup",
       metadata: { name },
     });
 
@@ -311,6 +312,7 @@ export const updateGroup = classMutation({
       resourceType: "group",
       resourceId: args.groupId,
       summary: `Updated group “${name}”`,
+      summaryKey: "activitySummary_updatedGroup",
       metadata: { name },
     });
 
@@ -346,7 +348,8 @@ export const setGroupImage = classMutation({
       resourceType: "group",
       resourceId: args.groupId,
       summary: `Set image for group “${group.name}”`,
-      metadata: { fileId: args.fileId, fileName: file.name },
+      summaryKey: "activitySummary_setGroupImage",
+      metadata: { name: group.name, fileId: args.fileId, fileName: file.name },
     });
 
     return null;
@@ -379,6 +382,8 @@ export const clearGroupImage = classMutation({
       resourceType: "group",
       resourceId: args.groupId,
       summary: `Cleared image for group “${group.name}”`,
+      summaryKey: "activitySummary_clearedGroupImage",
+      metadata: { name: group.name },
     });
 
     return null;
@@ -426,6 +431,7 @@ export const removeGroup = classMutation({
       resourceType: "group",
       resourceId: args.groupId,
       summary: `Deleted group “${group.name}”`,
+      summaryKey: "activitySummary_deletedGroup",
       metadata: { name: group.name },
     });
 
@@ -519,10 +525,14 @@ export const createTeam = classMutation({
         createdCount > 1
           ? `Created team “${name}” in ${createdCount} groups`
           : `Created team “${name}”`,
+      summaryKey:
+        createdCount > 1 ? "activitySummary_createdTeamInGroups" : "activitySummary_createdTeam",
       metadata: {
         name,
         groupId: args.groupId,
-        ...(createdCount > 1 ? { createdCount: String(createdCount) } : {}),
+        ...(createdCount > 1
+          ? { count: String(createdCount), createdCount: String(createdCount) }
+          : {}),
       },
     });
 
@@ -596,9 +606,14 @@ export const copyTeam = classMutation({
         createdCount === 1
           ? `Copied team “${source.name}” to another group`
           : `Copied team “${source.name}” to ${createdCount} groups`,
+      summaryKey:
+        createdCount === 1
+          ? "activitySummary_copiedTeamToGroup"
+          : "activitySummary_copiedTeamToGroups",
       metadata: {
         name: source.name,
         sourceGroupId: source.groupId,
+        count: String(createdCount),
         createdCount: String(createdCount),
       },
     });
@@ -642,6 +657,7 @@ export const updateTeam = classMutation({
       resourceType: "team",
       resourceId: args.teamId,
       summary: `Updated team “${name}”`,
+      summaryKey: "activitySummary_updatedTeam",
       metadata: { name, groupId: team.groupId },
     });
 
@@ -677,7 +693,13 @@ export const setTeamImage = classMutation({
       resourceType: "team",
       resourceId: args.teamId,
       summary: `Set image for team “${team.name}”`,
-      metadata: { fileId: args.fileId, fileName: file.name, groupId: team.groupId },
+      summaryKey: "activitySummary_setTeamImage",
+      metadata: {
+        name: team.name,
+        fileId: args.fileId,
+        fileName: file.name,
+        groupId: team.groupId,
+      },
     });
 
     return null;
@@ -710,7 +732,8 @@ export const clearTeamImage = classMutation({
       resourceType: "team",
       resourceId: args.teamId,
       summary: `Cleared image for team “${team.name}”`,
-      metadata: { groupId: team.groupId },
+      summaryKey: "activitySummary_clearedTeamImage",
+      metadata: { name: team.name, groupId: team.groupId },
     });
 
     return null;
@@ -753,6 +776,7 @@ export const removeTeam = classMutation({
       resourceType: "team",
       resourceId: args.teamId,
       summary: `Deleted team “${team.name}”`,
+      summaryKey: "activitySummary_deletedTeam",
       metadata: { name: team.name, groupId: team.groupId },
     });
 
@@ -798,6 +822,7 @@ export const assignStudent = classMutation({
           resourceType: "groupMembership",
           resourceId: args.studentUserId,
           summary: "Moved student to ungrouped",
+          summaryKey: "activitySummary_movedStudentToUngrouped",
           metadata: { studentUserId: args.studentUserId },
         });
       }
@@ -844,7 +869,11 @@ export const assignStudent = classMutation({
       summary: teamId
         ? `Assigned student to team in group “${group.name}”`
         : `Assigned student to group “${group.name}”`,
+      summaryKey: teamId
+        ? "activitySummary_assignedStudentToTeamInGroup"
+        : "activitySummary_assignedStudentToGroup",
       metadata: {
+        name: group.name,
         studentUserId: args.studentUserId,
         groupId: args.groupId,
         ...(teamId !== undefined ? { teamId } : {}),
@@ -930,7 +959,9 @@ export const assignStudents = classMutation({
       resourceType: "groupMembership",
       resourceId: args.groupId,
       summary: `Moved ${moved.length} students into group “${group.name}”`,
+      summaryKey: "activitySummary_movedStudentsIntoGroup",
       metadata: {
+        name: group.name,
         groupId: args.groupId,
         studentUserIds: moved.join(","),
         count: String(moved.length),

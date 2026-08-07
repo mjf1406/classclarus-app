@@ -63,6 +63,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useActivityLogFilter } from "@/hooks/activity/useActivityLogFilter";
+import { formatActivitySummary } from "@/lib/activity/formatActivitySummary";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 25, 30, 40, 50] as const;
 
@@ -91,8 +92,18 @@ export function ActivityLogDataTable({ columns, data, emptyLabel }: ActivityLogD
   const [actionFilter, setActionFilter] = useState<string[]>([]);
   const [roleFilter, setRoleFilter] = useState<string[]>([]);
 
+  // Filter against localized summaries so search matches what the table shows.
+  const filterRows = useMemo(
+    () =>
+      data.map((row) => ({
+        ...row,
+        summary: formatActivitySummary(row, t),
+      })),
+    [data, t],
+  );
+
   const { filtered, isFiltering } = useActivityLogFilter({
-    rows: data,
+    rows: filterRows,
     emailQuery,
     summaryQuery,
     actions: actionFilter,

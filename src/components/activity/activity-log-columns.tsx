@@ -4,6 +4,7 @@ import type { TFunction } from "i18next";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { DataTableSortableHeader } from "@/components/feedback/DataTableSortableHeader";
 import { formatLocalizedDateTime } from "@/i18n/formatDate";
+import { formatActivitySummary } from "@/lib/activity/formatActivitySummary";
 
 export const ACTIVITY_ACTIONS = ["read", "write", "update", "delete"] as const;
 export type ActivityAction = (typeof ACTIVITY_ACTIONS)[number];
@@ -25,6 +26,8 @@ export type ActivityLogRow = {
   actorRole: string;
   action: ActivityAction;
   summary: string;
+  summaryKey?: string;
+  metadata?: Record<string, string>;
 };
 
 const ACTIVITY_ACTION_LABEL_KEYS = {
@@ -120,7 +123,14 @@ export function createActivityLogColumns(t: TFunction<"classes">): ColumnDef<Act
           onSort={() => column.toggleSorting(column.getIsSorted() === "asc")}
         />
       ),
-      cell: ({ row }) => <span className="max-w-md whitespace-normal">{row.original.summary}</span>,
+      cell: ({ row }) => (
+        <span className="max-w-md whitespace-normal">{formatActivitySummary(row.original, t)}</span>
+      ),
+      sortingFn: (rowA, rowB) => {
+        const a = formatActivitySummary(rowA.original, t);
+        const b = formatActivitySummary(rowB.original, t);
+        return a.localeCompare(b);
+      },
     },
   ];
 }

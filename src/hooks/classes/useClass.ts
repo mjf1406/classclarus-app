@@ -21,6 +21,8 @@ export function useClass(classId: Id<"classes">) {
             resourceType: "class",
             resourceId: classId,
             summary: `Viewed class "${result.data.name}"`,
+            summaryKey: "activitySummary_viewedClass",
+            metadata: { name: result.data.name },
           }
         : null,
     [classId, result.data],
