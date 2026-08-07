@@ -12,6 +12,8 @@ Billing Free card → **Download** dropdown (Windows / Mac / Ubuntu) → direct 
 
 Release landing page (docs / [`CLONE_CHECKLIST.md`](../CLONE_CHECKLIST.md)): [`APP_CONFIG.downloadUrl`](../convex/appConfig.ts) → `…/releases/latest`.
 
+Packaging converts [`public/brand/logo/icon-688.webp`](../public/brand/logo/icon-688.webp) (same mark as `icon-86.webp`) to `build/icon.png` for the Windows exe / Control Panel / NSIS installer icons (and macOS/Linux app icons). WebP cannot be used directly — Windows needs an `.ico` that electron-builder generates from that PNG.
+
 CI (`.github/workflows/electron-release.yml`) builds Windows, macOS (Apple Silicon), and Linux on version tags `v*` and publishes installers. Artifact names are `${APP_CONFIG.name}-…` via [`electron-builder.config.mjs`](../electron-builder.config.mjs):
 
 | Menu label | Artifact                                                        |

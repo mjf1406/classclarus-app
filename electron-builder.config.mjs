@@ -72,6 +72,9 @@ const config = {
   },
   asar: true,
   asarUnpack: ["**/*.node"],
+  // Generated from public/brand/logo/icon-688.webp by scripts/prepare-electron-icons.mjs
+  // (same mark as icon-86.webp). Sets exe / installer / Control Panel icons.
+  icon: "build/icon.png",
   win: {
     target: [
       {
@@ -81,6 +84,7 @@ const config = {
     ],
     // ${productName} / ${ext} are electron-builder macros (not JS interpolation).
     artifactName: "${productName}-Setup-Windows.${ext}",
+    icon: "build/icon.png",
   },
   mac: {
     // zip is required for electron-updater (latest-mac.yml / Squirrel.Mac).
@@ -96,6 +100,7 @@ const config = {
     ],
     artifactName: "${productName}-macOS.${ext}",
     category: "public.app-category.education",
+    icon: "build/icon.png",
     // Unsigned by default; add CSC_* secrets in CI for Gatekeeper-friendly builds.
     // macOS auto-update requires code signing.
     identity: null,
@@ -104,6 +109,7 @@ const config = {
     target: ["AppImage"],
     artifactName: "${productName}-Linux.${ext}",
     category: "Education",
+    icon: "build/icon.png",
   },
   nsis: {
     oneClick: false,

@@ -42,6 +42,7 @@ process.env.DISABLE_REACT_COMPILER = "true";
 // Renderer bundle only — Electron main/preload built next.
 await $`bunx vp build`;
 await $`bun scripts/build-electron.mjs`;
+await $`bun scripts/prepare-electron-icons.mjs`;
 
 const builderPlatform =
   platform === "win" || platform === "win32"
