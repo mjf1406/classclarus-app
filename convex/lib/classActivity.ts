@@ -13,6 +13,9 @@ export const ACTIVITY_RESOURCE_TYPES = [
   "file",
   "guardianLink",
   "activity",
+  "group",
+  "team",
+  "groupMembership",
 ] as const;
 export type ActivityResourceType = (typeof ACTIVITY_RESOURCE_TYPES)[number];
 

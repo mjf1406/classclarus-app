@@ -29,6 +29,7 @@ import {
   getClassRoleForUser,
   listLinkedStudentsForGuardian,
 } from "./lib/guardianLinks.js";
+import { clearGroupMembershipForStudent } from "./lib/groupsCleanup.js";
 import { resolveUserImageUrl } from "./lib/userImage.js";
 import { rateLimiter } from "./lib/rateLimiter.js";
 import { isSelfHosted } from "./lib/selfHosted.js";
@@ -282,6 +283,9 @@ export const remove = classMutation({
     if (role === "guardian" || role === "student") {
       await clearLinksForUser(ctx, ctx.classDoc._id, args.userId);
     }
+    if (role === "student") {
+      await clearGroupMembershipForStudent(ctx, ctx.classDoc._id, args.userId);
+    }
 
     await authz.offboardUser(ctx, args.userId, {
       scope: ctx.scope,
@@ -433,6 +437,9 @@ export const setRole = classMutation({
 
     if (fromRole === "guardian" || fromRole === "student") {
       await clearLinksForUser(ctx, ctx.classDoc._id, args.userId);
+    }
+    if (fromRole === "student") {
+      await clearGroupMembershipForStudent(ctx, ctx.classDoc._id, args.userId);
     }
 
     // Drop every scoped class membership role so the member keeps a single role.

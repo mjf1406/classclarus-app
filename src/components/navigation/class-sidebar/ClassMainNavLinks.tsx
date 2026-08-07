@@ -9,6 +9,7 @@ import {
   Shield,
   UserRound,
   Users,
+  UsersRound,
   type LucideIcon,
 } from "lucide-react";
 import { useState } from "react";
@@ -78,6 +79,12 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
       title: t("navDashboard"),
       icon: LayoutDashboard,
       to: "/class/$classId",
+      permission: "class:read",
+    },
+    {
+      title: t("navGroups"),
+      icon: UsersRound,
+      to: "/class/$classId/groups",
       permission: "class:read",
     },
     {

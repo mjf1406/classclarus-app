@@ -1,10 +1,12 @@
 import { useConvexMutation } from "@convex-dev/react-query";
+import type { QueryKey } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { toast } from "@/components/ui/toast-manager";
 import { classesListQueryKey } from "@/hooks/classes/useClasses";
+import { groupsBoardQueryKey } from "@/hooks/groups/useGroupsBoard";
 import { classMemberCountsQueryKey } from "@/hooks/members/useClassMemberCounts";
 import { classMembersByRoleQueryKey } from "@/hooks/members/useClassMembersByRole";
 import { classPermissionsQueryKey } from "@/hooks/permissions/useClassPermissions";
@@ -72,12 +74,18 @@ export function useSetMemberRole() {
             ];
       return [...listKeys, classMemberCountsQueryKey(args.classId)];
     },
-    invalidateQueryKeys: (args) => [
-      ...JOIN_CODE_ROLES.map((listRole) => classMembersByRoleQueryKey(args.classId, listRole)),
-      classMemberCountsQueryKey(args.classId),
-      classesListQueryKey(),
-      classPermissionsQueryKey(args.classId),
-    ],
+    invalidateQueryKeys: (args) => {
+      const keys: QueryKey[] = [
+        ...JOIN_CODE_ROLES.map((listRole) => classMembersByRoleQueryKey(args.classId, listRole)),
+        classMemberCountsQueryKey(args.classId),
+        classesListQueryKey(),
+        classPermissionsQueryKey(args.classId),
+      ];
+      if (args.fromRole === "student" || args.role === "student") {
+        keys.push(groupsBoardQueryKey(args.classId));
+      }
+      return keys;
+    },
     applyOptimisticUpdate: (queryClient, args) => {
       const fromList = memberListRoleFor(args.fromRole);
       const toList = memberListRoleFor(args.role);

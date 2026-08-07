@@ -17,6 +17,7 @@ import { authedQuery, classMutation, classQuery, entitledMutation } from "./lib/
 import { rateLimiter } from "./lib/rateLimiter.js";
 import { clearLinksForClass } from "./lib/guardianLinks.js";
 import { deleteFilesForClass } from "./lib/filesCleanup.js";
+import { deleteGroupsForClass } from "./lib/groupsCleanup.js";
 import { deleteJoinCodesForClass } from "./lib/joinCodesCleanup.js";
 import { languageValidator, type LanguageCode } from "./lib/languages.js";
 import { resolveUserImageUrl } from "./lib/userImage.js";
@@ -433,6 +434,7 @@ export const remove = classMutation({
     await revokeAllClassMembership(ctx, classId);
     await deleteJoinCodesForClass(ctx, classId);
     await clearLinksForClass(ctx, classId);
+    await deleteGroupsForClass(ctx, classId);
     await deleteFilesForClass(ctx, classId);
     // Purge activity without keeping a delete row (class is gone).
     await ctx.scheduler.runAfter(0, internal.activity.purgeForClass, { classId });

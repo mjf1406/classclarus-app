@@ -6,6 +6,7 @@ import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { toast } from "@/components/ui/toast-manager";
 import { classesListQueryKey } from "@/hooks/classes/useClasses";
+import { groupsBoardQueryKey } from "@/hooks/groups/useGroupsBoard";
 import { classMemberCountsQueryKey } from "@/hooks/members/useClassMemberCounts";
 import { classMembersByRoleQueryKey } from "@/hooks/members/useClassMembersByRole";
 import { classPermissionsQueryKey } from "@/hooks/permissions/useClassPermissions";
@@ -39,6 +40,7 @@ export function useRemoveClassMember(listRole: MemberListRole) {
       const keys: QueryKey[] = [classesListQueryKey(), classPermissionsQueryKey(args.classId)];
       if (listRole === "student") {
         keys.push(classMembersByRoleQueryKey(args.classId, "guardian"));
+        keys.push(groupsBoardQueryKey(args.classId));
       }
       return keys;
     },

@@ -96,6 +96,45 @@ const schema = defineSchema({
     .index("by_storageId", ["storageId"])
     .index("by_classId", ["classId"]),
   /**
+   * Class groups — containers for optional teams and exclusive student membership.
+   */
+  groups: defineTable({
+    classId: v.id("classes"),
+    name: v.string(),
+    description: v.optional(v.string()),
+    /** Font Awesome icon id (`fas:…` / `far:…`), same format as class icons. */
+    icon: v.optional(v.string()),
+    updatedAt: v.number(),
+  }).index("by_class", ["classId"]),
+  /**
+   * Teams nested under a group within a class.
+   */
+  teams: defineTable({
+    classId: v.id("classes"),
+    groupId: v.id("groups"),
+    name: v.string(),
+    description: v.optional(v.string()),
+    icon: v.optional(v.string()),
+    updatedAt: v.number(),
+  })
+    .index("by_group", ["groupId"])
+    .index("by_class", ["classId"]),
+  /**
+   * Exclusive student placement: at most one row per (class, student).
+   * `teamId` omitted = in the group with no team.
+   */
+  groupMemberships: defineTable({
+    classId: v.id("classes"),
+    groupId: v.id("groups"),
+    teamId: v.optional(v.id("teams")),
+    studentUserId: v.id("users"),
+    updatedAt: v.number(),
+  })
+    .index("by_class_student", ["classId", "studentUserId"])
+    .index("by_group", ["groupId"])
+    .index("by_team", ["teamId"])
+    .index("by_class", ["classId"]),
+  /**
    * Many-to-many guardian ↔ student links within a class.
    * Cleared when either side leaves the guardian/student role.
    */
