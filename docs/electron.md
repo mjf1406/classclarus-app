@@ -84,9 +84,11 @@ The first downloadable build requires creating a GitHub Release via CI (there ar
 ```bash
 git checkout master
 git pull
-git tag -f v0.1.0
-git push origin v0.1.0 --force
+vp run tp          # shows latest tag, prompts for next, then tag + force-push
+# or: bun scripts/tag-push.mjs 0.1.0
 ```
+
+Or manually: `git tag -f v0.1.0 && git push origin v0.1.0 --force`.
 
 Or Actions → **Electron Release** → Run workflow → version `0.1.0` (no leading `v`). That builds Windows, macOS (Apple Silicon), and Linux, then attaches the installers to the release.
 

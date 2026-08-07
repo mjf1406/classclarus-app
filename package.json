@@ -25,7 +25,8 @@
     "electron:build-main": "bun scripts/build-electron.mjs",
     "electron:dev": "bun scripts/electron-dev.mjs",
     "electron:pack": "bun scripts/electron-pack.mjs --dir",
-    "electron:dist": "bun scripts/electron-pack.mjs"
+    "electron:dist": "bun scripts/electron-pack.mjs",
+    "tp": "bun scripts/tag-push.mjs"
   },
   "dependencies": {
     "@auth/core": "0.41.3",
