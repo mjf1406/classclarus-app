@@ -42,6 +42,16 @@ export default defineConfig({
         dependsOn: ["dev:web", "dev:convex"],
         cache: false,
       },
+      /** Re-materialize authz role permissions on the configured Convex **dev** deployment. */
+      perms: {
+        command: "bunx convex run internal.authzBackfill.syncCatalogRoles",
+        cache: false,
+      },
+      /** Same as `perms`, against the Convex **prod** deployment (`--prod`). */
+      "perms-prod": {
+        command: "bunx convex run --prod internal.authzBackfill.syncCatalogRoles",
+        cache: false,
+      },
     },
   },
   staged: {

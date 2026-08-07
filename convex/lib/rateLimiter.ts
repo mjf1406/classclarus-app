@@ -96,6 +96,13 @@ const rateLimits = {
   taskUpdate: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 30 },
   taskRemove: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 20 },
   taskSetCompletion: { kind: "token bucket" as const, rate: 240, period: HOUR, capacity: 60 },
+  behaviorFolderCreate: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 20 },
+  behaviorFolderUpdate: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 30 },
+  behaviorFolderRemove: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 20 },
+  behaviorCreate: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 20 },
+  behaviorUpdate: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 30 },
+  behaviorRemove: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 20 },
+  behaviorImport: { kind: "token bucket" as const, rate: 20, period: HOUR, capacity: 5 },
 };
 
 export const rateLimiter = new RateLimiter(components.rateLimiter, rateLimits);

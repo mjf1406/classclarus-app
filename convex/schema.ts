@@ -288,6 +288,54 @@ const schema = defineSchema({
     .index("by_task", ["taskId"])
     .index("by_classId", ["classId"]),
   /**
+   * Behavior folders — flat containers for behaviors within a class.
+   * Separate from reward folders (future); not a shared cross-feature table.
+   */
+  behaviorFolders: defineTable({
+    classId: v.id("classes"),
+    name: v.string(),
+    description: v.optional(v.string()),
+    /** Font Awesome icon id (`fas:…` / `far:…`), same format as class/group icons. */
+    icon: v.optional(v.string()),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_classId", ["classId"]),
+  /**
+   * Behavior catalog entries — point values applied when awarded to students.
+   */
+  behaviors: defineTable({
+    classId: v.id("classes"),
+    folderId: v.optional(v.id("behaviorFolders")),
+    name: v.string(),
+    description: v.optional(v.string()),
+    /** Font Awesome icon id (`fas:…` / `far:…`). */
+    icon: v.optional(v.string()),
+    /** Integer points; may be negative. */
+    points: v.number(),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_classId", ["classId"])
+    .index("by_folderId", ["folderId"]),
+  /**
+   * Per-student behavior awards (ledger). `pointsApplied` is a snapshot at award
+   * time so future catalog edits can leave history alone or rewrite it.
+   */
+  behaviorApplications: defineTable({
+    classId: v.id("classes"),
+    behaviorId: v.id("behaviors"),
+    studentUserId: v.id("users"),
+    pointsApplied: v.number(),
+    awardedBy: v.id("users"),
+    awardedAt: v.number(),
+    note: v.optional(v.string()),
+  })
+    .index("by_behaviorId", ["behaviorId"])
+    .index("by_classId_student", ["classId", "studentUserId"])
+    .index("by_classId", ["classId"]),
+  /**
    * Per-class FERPA activity log (append-only).
    * Purged on class delete and by retention cron (1 year).
    */

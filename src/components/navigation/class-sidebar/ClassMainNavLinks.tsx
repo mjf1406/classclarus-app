@@ -8,6 +8,7 @@ import {
   ListTodo,
   Mail,
   Megaphone,
+  SmilePlus,
   Settings2,
   Shield,
   UserRound,
@@ -61,6 +62,7 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
   const { t: tAnnouncements } = useTranslation("announcements");
   const { t: tAttendance } = useTranslation("attendance");
   const { t: tTasks } = useTranslation("tasks");
+  const { t: tBehaviors } = useTranslation("behaviors");
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const { isMobile, state, setOpenMobile } = useSidebar();
   const { can, isPending } = useCan();
@@ -152,6 +154,12 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
   ];
 
   const manageItems: Array<NavItem> = [
+    {
+      title: tBehaviors("nav"),
+      icon: SmilePlus,
+      to: "/class/$classId/behaviors",
+      permission: "behaviors:manage",
+    },
     {
       title: t("navActivityLog"),
       icon: History,
