@@ -16,6 +16,7 @@ type CreateTeamArgs = {
   name: string;
   description?: string;
   icon?: string;
+  imageFileId?: Id<"files">;
   alsoCreateInGroupIds?: Array<Id<"groups">>;
 };
 
@@ -47,6 +48,7 @@ export function useCreateTeam() {
               name: args.name,
               description: args.description,
               icon: args.icon,
+              imageFileId: args.imageFileId,
               updatedAt: Date.now(),
               students: [],
             };

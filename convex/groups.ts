@@ -28,6 +28,7 @@ const boardTeamValidator = v.object({
   name: v.string(),
   description: v.optional(v.string()),
   icon: v.optional(v.string()),
+  imageFileId: v.optional(v.id("files")),
   updatedAt: v.number(),
   students: v.array(boardStudentValidator),
 });
@@ -37,6 +38,7 @@ const boardGroupValidator = v.object({
   name: v.string(),
   description: v.optional(v.string()),
   icon: v.optional(v.string()),
+  imageFileId: v.optional(v.id("files")),
   updatedAt: v.number(),
   /** Students in the group with no team. */
   students: v.array(boardStudentValidator),
@@ -84,6 +86,22 @@ function normalizeOptionalIcon(icon: string | undefined): string | undefined {
     throw new Error(`Icon must be at most ${MAX_ICON_LENGTH} characters`);
   }
   return trimmed;
+}
+
+async function requireClassImageFile(
+  ctx: MutationCtx,
+  classId: Id<"classes">,
+  fileId: Id<"files">,
+): Promise<{ name: string }> {
+  const file = await ctx.db.get("files", fileId);
+  // Uniform deny for missing vs wrong-class — avoid existence oracle.
+  if (!file || file.classId !== classId) {
+    throw new Error("File not found or access denied");
+  }
+  if (file.preset !== "images") {
+    throw new Error("Image must be an image upload");
+  }
+  return { name: file.name };
 }
 
 async function loadBoardStudent(
@@ -188,6 +206,7 @@ export const board = classQuery({
             name: team.name,
             description: team.description,
             icon: team.icon,
+            imageFileId: team.imageFileId,
             updatedAt: team.updatedAt,
             students: sortStudents(teamStudents.get(team._id) ?? []),
           }));
@@ -196,6 +215,7 @@ export const board = classQuery({
           name: group.name,
           description: group.description,
           icon: group.icon,
+          imageFileId: group.imageFileId,
           updatedAt: group.updatedAt,
           students: sortStudents(groupOnlyByGroup.get(group._id) ?? []),
           teams,
@@ -218,6 +238,7 @@ export const createGroup = classMutation({
     name: v.string(),
     description: v.optional(v.string()),
     icon: v.optional(v.string()),
+    imageFileId: v.optional(v.id("files")),
   },
   returns: v.id("groups"),
   handler: async (ctx, args) => {
@@ -228,12 +249,16 @@ export const createGroup = classMutation({
     const name = normalizeName(args.name);
     const description = normalizeOptionalDescription(args.description);
     const icon = normalizeOptionalIcon(args.icon);
+    if (args.imageFileId !== undefined) {
+      await requireClassImageFile(ctx, ctx.classDoc._id, args.imageFileId);
+    }
 
     const groupId = await ctx.db.insert("groups", {
       classId: ctx.classDoc._id,
       name,
       ...(description !== undefined ? { description } : {}),
       ...(icon !== undefined ? { icon } : {}),
+      ...(args.imageFileId !== undefined ? { imageFileId: args.imageFileId } : {}),
       updatedAt: now,
     });
 
@@ -287,6 +312,73 @@ export const updateGroup = classMutation({
       resourceId: args.groupId,
       summary: `Updated group “${name}”`,
       metadata: { name },
+    });
+
+    return null;
+  },
+});
+
+export const setGroupImage = classMutation({
+  args: {
+    groupId: v.id("groups"),
+    fileId: v.id("files"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await rateLimiter.limit(ctx, "groupUpdate", { key: ctx.userId, throws: true });
+    await ctx.require("groups:manage");
+
+    const group = await ctx.db.get("groups", args.groupId);
+    if (!group || group.classId !== ctx.classDoc._id) {
+      throw new Error("Group not found");
+    }
+
+    const file = await requireClassImageFile(ctx, ctx.classDoc._id, args.fileId);
+    await ctx.db.patch("groups", args.groupId, {
+      imageFileId: args.fileId,
+      updatedAt: Date.now(),
+    });
+
+    await recordClassActivity(ctx, {
+      classId: ctx.classDoc._id,
+      actorUserId: ctx.userId,
+      action: "update",
+      resourceType: "group",
+      resourceId: args.groupId,
+      summary: `Set image for group “${group.name}”`,
+      metadata: { fileId: args.fileId, fileName: file.name },
+    });
+
+    return null;
+  },
+});
+
+export const clearGroupImage = classMutation({
+  args: {
+    groupId: v.id("groups"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await rateLimiter.limit(ctx, "groupUpdate", { key: ctx.userId, throws: true });
+    await ctx.require("groups:manage");
+
+    const group = await ctx.db.get("groups", args.groupId);
+    if (!group || group.classId !== ctx.classDoc._id) {
+      throw new Error("Group not found");
+    }
+
+    await ctx.db.patch("groups", args.groupId, {
+      imageFileId: undefined,
+      updatedAt: Date.now(),
+    });
+
+    await recordClassActivity(ctx, {
+      classId: ctx.classDoc._id,
+      actorUserId: ctx.userId,
+      action: "update",
+      resourceType: "group",
+      resourceId: args.groupId,
+      summary: `Cleared image for group “${group.name}”`,
     });
 
     return null;
@@ -347,6 +439,7 @@ export const createTeam = classMutation({
     name: v.string(),
     description: v.optional(v.string()),
     icon: v.optional(v.string()),
+    imageFileId: v.optional(v.id("files")),
     /** Also create the same team in these other groups (same class). */
     alsoCreateInGroupIds: v.optional(v.array(v.id("groups"))),
   },
@@ -365,6 +458,9 @@ export const createTeam = classMutation({
     const description = normalizeOptionalDescription(args.description);
     const icon = normalizeOptionalIcon(args.icon);
     const classId = ctx.classDoc._id;
+    if (args.imageFileId !== undefined) {
+      await requireClassImageFile(ctx, classId, args.imageFileId);
+    }
 
     const teamId = await ctx.db.insert("teams", {
       classId,
@@ -372,6 +468,7 @@ export const createTeam = classMutation({
       name,
       ...(description !== undefined ? { description } : {}),
       ...(icon !== undefined ? { icon } : {}),
+      ...(args.imageFileId !== undefined ? { imageFileId: args.imageFileId } : {}),
       updatedAt: now,
     });
 
@@ -405,6 +502,7 @@ export const createTeam = classMutation({
           name,
           ...(description !== undefined ? { description } : {}),
           ...(icon !== undefined ? { icon } : {}),
+          ...(args.imageFileId !== undefined ? { imageFileId: args.imageFileId } : {}),
           updatedAt: now,
         });
         createdCount += 1;
@@ -433,7 +531,7 @@ export const createTeam = classMutation({
 });
 
 /**
- * Copy a team's name/description/icon into other groups. Does not copy students.
+ * Copy a team's name/description/icon/image into other groups. Does not copy students.
  */
 export const copyTeam = classMutation({
   args: {
@@ -482,6 +580,7 @@ export const copyTeam = classMutation({
         name: source.name,
         ...(source.description !== undefined ? { description: source.description } : {}),
         ...(source.icon !== undefined ? { icon: source.icon } : {}),
+        ...(source.imageFileId !== undefined ? { imageFileId: source.imageFileId } : {}),
         updatedAt: now,
       });
       createdCount += 1;
@@ -544,6 +643,74 @@ export const updateTeam = classMutation({
       resourceId: args.teamId,
       summary: `Updated team “${name}”`,
       metadata: { name, groupId: team.groupId },
+    });
+
+    return null;
+  },
+});
+
+export const setTeamImage = classMutation({
+  args: {
+    teamId: v.id("teams"),
+    fileId: v.id("files"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await rateLimiter.limit(ctx, "teamUpdate", { key: ctx.userId, throws: true });
+    await ctx.require("groups:manage");
+
+    const team = await ctx.db.get("teams", args.teamId);
+    if (!team || team.classId !== ctx.classDoc._id) {
+      throw new Error("Team not found");
+    }
+
+    const file = await requireClassImageFile(ctx, ctx.classDoc._id, args.fileId);
+    await ctx.db.patch("teams", args.teamId, {
+      imageFileId: args.fileId,
+      updatedAt: Date.now(),
+    });
+
+    await recordClassActivity(ctx, {
+      classId: ctx.classDoc._id,
+      actorUserId: ctx.userId,
+      action: "update",
+      resourceType: "team",
+      resourceId: args.teamId,
+      summary: `Set image for team “${team.name}”`,
+      metadata: { fileId: args.fileId, fileName: file.name, groupId: team.groupId },
+    });
+
+    return null;
+  },
+});
+
+export const clearTeamImage = classMutation({
+  args: {
+    teamId: v.id("teams"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await rateLimiter.limit(ctx, "teamUpdate", { key: ctx.userId, throws: true });
+    await ctx.require("groups:manage");
+
+    const team = await ctx.db.get("teams", args.teamId);
+    if (!team || team.classId !== ctx.classDoc._id) {
+      throw new Error("Team not found");
+    }
+
+    await ctx.db.patch("teams", args.teamId, {
+      imageFileId: undefined,
+      updatedAt: Date.now(),
+    });
+
+    await recordClassActivity(ctx, {
+      classId: ctx.classDoc._id,
+      actorUserId: ctx.userId,
+      action: "update",
+      resourceType: "team",
+      resourceId: args.teamId,
+      summary: `Cleared image for team “${team.name}”`,
+      metadata: { groupId: team.groupId },
     });
 
     return null;

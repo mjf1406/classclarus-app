@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from "react";
+import { FileDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -7,7 +8,7 @@ import {
   type ActivityLogRow,
 } from "@/components/activity/activity-log-columns";
 import { ActivityLogDataTable } from "@/components/activity/ActivityLogDataTable";
-import { Button } from "@/components/ui/button";
+import { ProgressButton } from "@/components/ui/progress-button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useClassActivity } from "@/hooks/activity/useClassActivity";
 import { useExportClassActivityCsv } from "@/hooks/activity/useExportClassActivityCsv";
@@ -47,16 +48,19 @@ export function ActivityLogPage({ classId }: { classId: Id<"classes"> }) {
           <h1 className="text-2xl font-semibold tracking-tight">{t("navActivityLog")}</h1>
           <p className="text-sm text-muted-foreground">{t("activityDescription")}</p>
         </div>
-        <Button
+        <ProgressButton
           type="button"
           variant="outline"
-          disabled={isPending || isLoadingMore || exportCsv.isPending || rows.length === 0}
+          pending={exportCsv.isPending}
+          progress={exportCsv.progress}
+          disabled={isPending || isLoadingMore || rows.length === 0}
           onClick={() => {
-            exportCsv.mutate();
+            void exportCsv.mutateAsync({ expectedTotal: rows.length });
           }}
         >
-          {exportCsv.isPending ? t("activityExporting") : t("activityExportCsv")}
-        </Button>
+          <FileDown data-icon="inline-start" />
+          {t("activityExportCsv")}
+        </ProgressButton>
       </div>
 
       {isPending ? <Skeleton className="h-72 w-full" /> : null}

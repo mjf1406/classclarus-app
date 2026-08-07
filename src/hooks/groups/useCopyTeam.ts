@@ -17,6 +17,7 @@ type CopyTeamArgs = {
   name: string;
   description?: string;
   icon?: string;
+  imageFileId?: Id<"files">;
   targetGroupIds: Array<Id<"groups">>;
 };
 
@@ -52,6 +53,7 @@ export function useCopyTeam() {
               name: args.name,
               description: args.description,
               icon: args.icon,
+              imageFileId: args.imageFileId,
               updatedAt: Date.now(),
               students: [],
             };

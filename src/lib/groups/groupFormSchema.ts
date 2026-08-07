@@ -9,6 +9,8 @@ export const groupFormSchema = z.object({
 });
 
 export type GroupFormSchemaValues = z.infer<typeof groupFormSchema> & {
+  /** Pending image for create mode (edit uses set/clear mutations immediately). */
+  imageFileId?: Id<"files">;
   /** Team create only — also create this team in these other groups. */
   alsoCreateInGroupIds?: Array<Id<"groups">>;
 };

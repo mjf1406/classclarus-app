@@ -21,6 +21,39 @@ export async function clearBannerIfReferencesFile(
 }
 
 /**
+ * Clear `imageFileId` on any groups/teams in the class that reference `fileId`.
+ */
+export async function clearGroupOrTeamImagesIfReferencesFile(
+  ctx: MutationCtx,
+  fileId: Id<"files">,
+  classId: Id<"classes"> | undefined,
+): Promise<void> {
+  if (classId === undefined) {
+    return;
+  }
+  // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded
+  const groups = await ctx.db
+    .query("groups")
+    .withIndex("by_class", (q) => q.eq("classId", classId))
+    .collect();
+  for (const group of groups) {
+    if (group.imageFileId === fileId) {
+      await ctx.db.patch("groups", group._id, { imageFileId: undefined });
+    }
+  }
+  // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded
+  const teams = await ctx.db
+    .query("teams")
+    .withIndex("by_class", (q) => q.eq("classId", classId))
+    .collect();
+  for (const team of teams) {
+    if (team.imageFileId === fileId) {
+      await ctx.db.patch("teams", team._id, { imageFileId: undefined });
+    }
+  }
+}
+
+/**
  * If `fileId` is the user's profile avatar, clear `avatarFileId` / `image`.
  */
 export async function clearAvatarIfReferencesFile(

@@ -270,14 +270,22 @@ export function GroupsPage({ classId }: GroupsPageProps) {
     async (values: GroupFormSchemaValues) => {
       if (!formState) return;
       if (formState.kind === "group" && formState.mode === "create") {
-        await createGroup.mutateAsync({ classId, ...values });
+        await createGroup.mutateAsync({
+          classId,
+          name: values.name,
+          description: values.description,
+          icon: values.icon,
+          imageFileId: values.imageFileId,
+        });
         return;
       }
       if (formState.kind === "group" && formState.mode === "edit") {
         await updateGroup.mutateAsync({
           classId,
           groupId: formState.group._id,
-          ...values,
+          name: values.name,
+          description: values.description,
+          icon: values.icon,
         });
         return;
       }
@@ -288,6 +296,7 @@ export function GroupsPage({ classId }: GroupsPageProps) {
           name: values.name,
           description: values.description,
           icon: values.icon,
+          imageFileId: values.imageFileId,
           alsoCreateInGroupIds: values.alsoCreateInGroupIds,
         });
         return;
@@ -296,7 +305,9 @@ export function GroupsPage({ classId }: GroupsPageProps) {
         await updateTeam.mutateAsync({
           classId,
           teamId: formState.team._id,
-          ...values,
+          name: values.name,
+          description: values.description,
+          icon: values.icon,
         });
       }
     },
@@ -322,6 +333,7 @@ export function GroupsPage({ classId }: GroupsPageProps) {
         name: copyTeamState.team.name,
         description: copyTeamState.team.description,
         icon: copyTeamState.team.icon,
+        imageFileId: copyTeamState.team.imageFileId,
         targetGroupIds,
       });
     },
@@ -347,12 +359,21 @@ export function GroupsPage({ classId }: GroupsPageProps) {
             name: formState.group.name,
             description: formState.group.description,
             icon: formState.group.icon,
+            imageFileId: formState.group.imageFileId,
           }
         : {
             name: formState.team.name,
             description: formState.team.description,
             icon: formState.team.icon,
+            imageFileId: formState.team.imageFileId,
           }
+      : undefined;
+
+  const formEditEntityId =
+    formState?.mode === "edit"
+      ? formState.kind === "group"
+        ? formState.group._id
+        : formState.team._id
       : undefined;
 
   const printMatrix = useMemo(
@@ -539,6 +560,7 @@ export function GroupsPage({ classId }: GroupsPageProps) {
           onOpenChange={(open) => {
             if (!open) setFormState(null);
           }}
+          classId={classId}
           kind={formState.kind}
           mode={formState.mode}
           alsoCreateInGroupOptions={
@@ -549,6 +571,7 @@ export function GroupsPage({ classId }: GroupsPageProps) {
               : undefined
           }
           initialValues={formInitialValues}
+          editEntityId={formEditEntityId}
           onSubmit={handleFormSubmit}
         />
       ) : null}

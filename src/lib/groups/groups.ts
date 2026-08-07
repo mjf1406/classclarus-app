@@ -12,6 +12,7 @@ export type GroupFormValues = {
   name: string;
   description?: string;
   icon?: string;
+  imageFileId?: Id<"files">;
 };
 
 export type DropTarget =

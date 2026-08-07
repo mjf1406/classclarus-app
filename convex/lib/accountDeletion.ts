@@ -5,7 +5,10 @@ import type { MutationCtx, QueryCtx } from "../_generated/server.js";
 import { authz } from "../authz.js";
 import { polar } from "../polar.js";
 import { deleteJoinCodeById } from "./joinCodesCleanup.js";
-import { clearBannerIfReferencesFile } from "./filesCleanup.js";
+import {
+  clearBannerIfReferencesFile,
+  clearGroupOrTeamImagesIfReferencesFile,
+} from "./filesCleanup.js";
 import { isSelfHosted } from "./selfHosted.js";
 
 const ACTIVE_SUBSCRIPTION_STATUSES = new Set(["active", "trialing"]);
@@ -121,6 +124,7 @@ async function deleteFilesForUser(ctx: MutationCtx, userId: Id<"users">): Promis
     .collect();
   for (const file of files) {
     await clearBannerIfReferencesFile(ctx, file._id, file.classId);
+    await clearGroupOrTeamImagesIfReferencesFile(ctx, file._id, file.classId);
     await ctx.storage.delete(file.storageId);
     await ctx.db.delete("files", file._id);
   }

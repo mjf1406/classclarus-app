@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { useForm } from "@tanstack/react-form";
 import { useTranslation } from "react-i18next";
 
+import { GroupImageIcon } from "@/components/groups/GroupImageIcon";
 import { FontAwesomeIconPickerLazy } from "@/components/icons/FontAwesomeIconPickerLazy";
 import { iconDefinitionToId, resolveIconId } from "@/components/icons/fontawesome-icon-catalog";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,11 @@ import {
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { FileDropzone } from "@/components/upload/FileDropzone";
+import { useClearGroupImage } from "@/hooks/groups/useClearGroupImage";
+import { useClearTeamImage } from "@/hooks/groups/useClearTeamImage";
+import { useSetGroupImage } from "@/hooks/groups/useSetGroupImage";
+import { useSetTeamImage } from "@/hooks/groups/useSetTeamImage";
 import {
   groupFormSchema,
   type AlsoCreateInGroupOption,
@@ -43,6 +49,7 @@ export type GroupNamedFormMode = "create" | "edit";
 type GroupNamedFormCredenzaProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  classId: Id<"classes">;
   kind: GroupNamedFormKind;
   mode: GroupNamedFormMode;
   /** Other groups available when creating a team (excludes the source group). */
@@ -51,7 +58,10 @@ type GroupNamedFormCredenzaProps = {
     name: string;
     description?: string;
     icon?: string;
+    imageFileId?: Id<"files">;
   };
+  /** Required in edit mode for immediate image set/clear. */
+  editEntityId?: Id<"groups"> | Id<"teams">;
   onSubmit: (values: GroupFormSchemaValues) => Promise<void>;
 };
 
@@ -76,20 +86,35 @@ function fieldErrorMessage(errors: unknown): string | undefined {
 export function GroupNamedFormCredenza({
   open,
   onOpenChange,
+  classId,
   kind,
   mode,
   alsoCreateInGroupOptions = [],
   initialValues,
+  editEntityId,
   onSubmit,
 }: GroupNamedFormCredenzaProps) {
   const { t } = useTranslation("classes");
   const { t: tCommon } = useTranslation("common");
   const [faIcon, setFaIcon] = useState<IconDefinition | null>(null);
+  const [imageFileId, setImageFileId] = useState<Id<"files"> | undefined>(
+    initialValues?.imageFileId,
+  );
   const [submitError, setSubmitError] = useState<string | null>(null);
   const skipNextResetRef = useRef(false);
   const chipsAnchorRef = useRef<HTMLDivElement | null>(null);
   const showAlsoCreateIn =
     kind === "team" && mode === "create" && alsoCreateInGroupOptions.length > 0;
+
+  const setGroupImage = useSetGroupImage();
+  const clearGroupImage = useClearGroupImage();
+  const setTeamImage = useSetTeamImage();
+  const clearTeamImage = useClearTeamImage();
+  const imageBusy =
+    setGroupImage.isPending ||
+    clearGroupImage.isPending ||
+    setTeamImage.isPending ||
+    clearTeamImage.isPending;
 
   const defaults = useMemo(
     (): FormDefaults => ({
@@ -102,6 +127,8 @@ export function GroupNamedFormCredenza({
   );
   const defaultsRef = useRef(defaults);
   defaultsRef.current = defaults;
+  const initialImageRef = useRef(initialValues?.imageFileId);
+  initialImageRef.current = initialValues?.imageFileId;
 
   const titleKey =
     kind === "group"
@@ -151,6 +178,7 @@ export function GroupNamedFormCredenza({
           name: parsed.name,
           ...(parsed.description ? { description: parsed.description } : {}),
           ...(parsed.icon ? { icon: parsed.icon } : {}),
+          ...(mode === "create" && imageFileId !== undefined ? { imageFileId } : {}),
           ...(alsoIds.length > 0 ? { alsoCreateInGroupIds: alsoIds } : {}),
         });
       } catch (error) {
@@ -168,6 +196,7 @@ export function GroupNamedFormCredenza({
     }
     setSubmitError(null);
     form.reset(defaultsRef.current);
+    setImageFileId(initialImageRef.current);
     const icon = defaultsRef.current.icon;
     if (icon) {
       void resolveIconId(icon).then((resolved) => setFaIcon(resolved));
@@ -175,6 +204,43 @@ export function GroupNamedFormCredenza({
       setFaIcon(null);
     }
   }, [open, form, kind, mode, defaults]);
+
+  const handleImageUploaded = useCallback(
+    (fileId: Id<"files">) => {
+      setImageFileId(fileId);
+      if (mode !== "edit" || editEntityId === undefined) return;
+      if (kind === "group") {
+        setGroupImage.mutate({
+          classId,
+          groupId: editEntityId as Id<"groups">,
+          fileId,
+        });
+        return;
+      }
+      setTeamImage.mutate({
+        classId,
+        teamId: editEntityId as Id<"teams">,
+        fileId,
+      });
+    },
+    [classId, editEntityId, kind, mode, setGroupImage, setTeamImage],
+  );
+
+  const handleClearImage = useCallback(() => {
+    setImageFileId(undefined);
+    if (mode !== "edit" || editEntityId === undefined) return;
+    if (kind === "group") {
+      clearGroupImage.mutate({
+        classId,
+        groupId: editEntityId as Id<"groups">,
+      });
+      return;
+    }
+    clearTeamImage.mutate({
+      classId,
+      teamId: editEntityId as Id<"teams">,
+    });
+  }, [classId, clearGroupImage, clearTeamImage, editEntityId, kind, mode]);
 
   return (
     <Credenza open={open} onOpenChange={onOpenChange}>
@@ -238,6 +304,38 @@ export function GroupNamedFormCredenza({
                 }}
               </form.Field>
 
+              <Field>
+                <FieldLabel>
+                  {t("groupsImageLabel")}
+                  <span className="font-normal text-muted-foreground">({tCommon("optional")})</span>
+                </FieldLabel>
+                <FieldDescription>{t("groupsImageDescription")}</FieldDescription>
+                <div className="flex flex-col gap-3">
+                  {imageFileId !== undefined ? (
+                    <div className="flex items-center gap-3">
+                      <GroupImageIcon imageFileId={imageFileId} alt={t("groupsImagePreviewAlt")} />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={imageBusy}
+                        onClick={handleClearImage}
+                      >
+                        {t("groupsImageRemove")}
+                      </Button>
+                    </div>
+                  ) : null}
+                  <FileDropzone
+                    title={t("groupsImageLabel")}
+                    variant="compact"
+                    presetKey="images"
+                    classId={classId}
+                    multiple={false}
+                    onUploaded={handleImageUploaded}
+                  />
+                </div>
+              </Field>
+
               <form.Field name="icon">
                 {(field) => {
                   const error = fieldErrorMessage(field.state.meta.errors);
@@ -249,6 +347,7 @@ export function GroupNamedFormCredenza({
                           ({tCommon("optional")})
                         </span>
                       </FieldLabel>
+                      <FieldDescription>{t("groupsIconFallbackHint")}</FieldDescription>
                       <div className="flex flex-wrap items-center gap-2">
                         <FontAwesomeIconPickerLazy
                           value={faIcon}

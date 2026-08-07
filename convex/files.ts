@@ -5,7 +5,11 @@ import type { Doc, Id } from "./_generated/dataModel.js";
 import { action } from "./_generated/server.js";
 import { recordClassActivity } from "./lib/classActivity.js";
 import { authedMutation, classQuery } from "./lib/customFunctions.js";
-import { clearAvatarIfReferencesFile, clearBannerIfReferencesFile } from "./lib/filesCleanup.js";
+import {
+  clearAvatarIfReferencesFile,
+  clearBannerIfReferencesFile,
+  clearGroupOrTeamImagesIfReferencesFile,
+} from "./lib/filesCleanup.js";
 import { requireFileOwner } from "./lib/fileAccess.js";
 import { ORPHAN_AGE_MS } from "./filesInternal.js";
 import { rateLimiter } from "./lib/rateLimiter.js";
@@ -291,6 +295,7 @@ export const deleteFile = authedMutation({
       });
     }
     await clearBannerIfReferencesFile(ctx, args.fileId, file.classId);
+    await clearGroupOrTeamImagesIfReferencesFile(ctx, args.fileId, file.classId);
     await clearAvatarIfReferencesFile(ctx, args.fileId, ctx.userId);
     await ctx.storage.delete(file.storageId);
     await ctx.db.delete("files", args.fileId);

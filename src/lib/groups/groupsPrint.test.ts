@@ -13,6 +13,7 @@ function team(partial: Pick<BoardTeam, "_id" | "groupId" | "name" | "students">)
     ...partial,
     description: undefined,
     icon: undefined,
+    imageFileId: undefined,
     updatedAt: 1,
   };
 }
@@ -22,6 +23,7 @@ function group(partial: Pick<BoardGroup, "_id" | "name" | "students" | "teams">)
     ...partial,
     description: undefined,
     icon: undefined,
+    imageFileId: undefined,
     updatedAt: 1,
   };
 }

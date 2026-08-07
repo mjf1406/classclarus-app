@@ -104,6 +104,8 @@ const schema = defineSchema({
     description: v.optional(v.string()),
     /** Font Awesome icon id (`fas:…` / `far:…`), same format as class icons. */
     icon: v.optional(v.string()),
+    /** Class-scoped image file shown as the group avatar (preferred over `icon`). */
+    imageFileId: v.optional(v.id("files")),
     updatedAt: v.number(),
   }).index("by_class", ["classId"]),
   /**
@@ -115,6 +117,8 @@ const schema = defineSchema({
     name: v.string(),
     description: v.optional(v.string()),
     icon: v.optional(v.string()),
+    /** Class-scoped image file shown as the team avatar (preferred over `icon`). */
+    imageFileId: v.optional(v.id("files")),
     updatedAt: v.number(),
   })
     .index("by_group", ["groupId"])

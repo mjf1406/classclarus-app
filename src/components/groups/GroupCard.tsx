@@ -1,7 +1,7 @@
-import { Copy, Pencil, Plus, Trash2, UserPlus, UsersRound } from "lucide-react";
+import { Copy, Pencil, Plus, Trash2, UserPlus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-import { FontAwesomeIconFromId } from "@/components/icons/FontAwesomeIconFromId";
+import { GroupImageIcon } from "@/components/groups/GroupImageIcon";
 import { StudentDropZone } from "@/components/groups/StudentDropZone";
 import { ActionMenu } from "@/components/ui/action-menu";
 import type { BoardGroup, BoardTeam } from "@/lib/groups/groups";
@@ -42,13 +42,11 @@ export function GroupCard({
     <section className="flex flex-col gap-3 rounded-2xl bg-card p-4 ring-1 ring-foreground/10">
       <header className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-start gap-2">
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-            <FontAwesomeIconFromId
-              id={group.icon}
-              className="size-4"
-              fallback={<UsersRound className="size-4" />}
-            />
-          </div>
+          <GroupImageIcon
+            imageFileId={group.imageFileId}
+            icon={group.icon}
+            alt={t("groupsImagePreviewAlt")}
+          />
           <div className="min-w-0">
             <h3 className="truncate font-semibold">{group.name}</h3>
             {group.description ? (
@@ -115,10 +113,12 @@ export function GroupCard({
           <div key={team._id} className="flex flex-col gap-2 rounded-xl bg-muted/40 p-3">
             <div className="flex items-start justify-between gap-2">
               <div className="flex min-w-0 items-center gap-2">
-                <FontAwesomeIconFromId
-                  id={team.icon}
-                  className="size-3.5 text-muted-foreground"
-                  fallback={<UsersRound className="size-3.5 text-muted-foreground" />}
+                <GroupImageIcon
+                  imageFileId={team.imageFileId}
+                  icon={team.icon}
+                  alt={t("groupsImagePreviewAlt")}
+                  className="size-7 rounded-md"
+                  iconClassName="size-3.5 text-muted-foreground"
                 />
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">{team.name}</p>
