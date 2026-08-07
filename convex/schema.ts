@@ -213,6 +213,35 @@ const schema = defineSchema({
     .index("by_class_student", ["classId", "studentUserId"])
     .index("by_class_guardian_student", ["classId", "guardianUserId", "studentUserId"]),
   /**
+   * One attendance session per class per local calendar day (`dateKey` YYYY-MM-DD).
+   */
+  attendanceSessions: defineTable({
+    classId: v.id("classes"),
+    /** Client-local school day key (YYYY-MM-DD), not UTC. */
+    dateKey: v.string(),
+    takenBy: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_classId_dateKey", ["classId", "dateKey"])
+    .index("by_classId", ["classId"]),
+  /**
+   * Per-student attendance status for a session. Unset students have no row.
+   */
+  attendanceRecords: defineTable({
+    classId: v.id("classes"),
+    sessionId: v.id("attendanceSessions"),
+    /** Denormalized from session for history / range queries. */
+    dateKey: v.string(),
+    studentUserId: v.id("users"),
+    status: v.union(v.literal("present"), v.literal("absent"), v.literal("late")),
+    updatedAt: v.number(),
+    updatedBy: v.id("users"),
+  })
+    .index("by_session_student", ["sessionId", "studentUserId"])
+    .index("by_classId_dateKey", ["classId", "dateKey"])
+    .index("by_classId_student", ["classId", "studentUserId"]),
+  /**
    * Class announcements — teacher-authored posts with optional public slug pages.
    */
   announcements: defineTable({

@@ -24,6 +24,8 @@ export const permissions = definePermissions({
   groups: { manage: true },
   /** Class announcements — manage is teacher+; view uses class:read. */
   announcements: { manage: true },
+  /** Attendance — manage is assistant_teacher+; view uses same permission in v1. */
+  attendance: { manage: true },
   /** App-level admin (global / unscoped). Not a class membership role. */
   admin: { syncProducts: true, viewHealth: true, manageUsers: true, viewFeedback: true },
 });
@@ -39,6 +41,7 @@ export const roles = defineRoles(permissions, {
     assistantTeachers: ["read"],
     students: ["read"],
     guardians: ["read"],
+    attendance: ["manage"],
   },
   teacher: {
     inherits: "assistant_teacher",

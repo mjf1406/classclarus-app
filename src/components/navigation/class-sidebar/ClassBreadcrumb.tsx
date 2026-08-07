@@ -16,7 +16,7 @@ type ClassBreadcrumbProps = {
   classDoc: ClassDoc;
 };
 
-function pageLabelKey(pathname: string, classId: string): string {
+function pageLabelKey(pathname: string, classId: string): string | null {
   const base = `/class/${classId}`;
   if (pathname === base || pathname === `${base}/`) {
     return "navDashboard";
@@ -29,14 +29,17 @@ function pageLabelKey(pathname: string, classId: string): string {
   if (pathname === `${base}/students`) return "navStudents";
   if (pathname === `${base}/guardians`) return "navGuardians";
   if (pathname === `${base}/invitations`) return "navInvitations";
+  if (pathname === `${base}/attendance`) return null;
   return "navDashboard";
 }
 
 export function ClassBreadcrumb({ classDoc }: ClassBreadcrumbProps) {
   const { t } = useTranslation("classes");
+  const { t: tAttendance } = useTranslation("attendance");
   const { t: tCommon } = useTranslation("common");
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const pageKey = pageLabelKey(pathname, classDoc._id);
+  const pageLabel = pageKey === null ? tAttendance("nav") : t(pageKey);
 
   return (
     <Breadcrumb aria-label={t("breadcrumb")}>
@@ -63,7 +66,7 @@ export function ClassBreadcrumb({ classDoc }: ClassBreadcrumbProps) {
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
-          <BreadcrumbPage>{t(pageKey)}</BreadcrumbPage>
+          <BreadcrumbPage>{pageLabel}</BreadcrumbPage>
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>

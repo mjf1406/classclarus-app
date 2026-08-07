@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   ChevronRight,
+  ClipboardCheck,
   GraduationCap,
   History,
   LayoutDashboard,
@@ -57,6 +58,7 @@ type NavItem = {
 export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
   const { t } = useTranslation("classes");
   const { t: tAnnouncements } = useTranslation("announcements");
+  const { t: tAttendance } = useTranslation("attendance");
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const { isMobile, state, setOpenMobile } = useSidebar();
   const { can, isPending } = useCan();
@@ -89,6 +91,12 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
       icon: Megaphone,
       to: "/class/$classId/announcements",
       permission: "class:read",
+    },
+    {
+      title: tAttendance("nav"),
+      icon: ClipboardCheck,
+      to: "/class/$classId/attendance",
+      permission: "attendance:manage",
     },
     {
       title: t("navGroups"),

@@ -18,6 +18,7 @@ import { rateLimiter } from "./lib/rateLimiter.js";
 import { clearLinksForClass } from "./lib/guardianLinks.js";
 import { deleteFilesForClass } from "./lib/filesCleanup.js";
 import { deleteAnnouncementsForClass } from "./lib/announcementsCleanup.js";
+import { deleteAttendanceForClass } from "./lib/attendanceCleanup.js";
 import { deleteGroupsForClass } from "./lib/groupsCleanup.js";
 import { deleteJoinCodesForClass } from "./lib/joinCodesCleanup.js";
 import { languageValidator, type LanguageCode } from "./lib/languages.js";
@@ -497,6 +498,7 @@ export const remove = classMutation({
     await deleteJoinCodesForClass(ctx, classId);
     await clearLinksForClass(ctx, classId);
     await deleteGroupsForClass(ctx, classId);
+    await deleteAttendanceForClass(ctx, classId);
     await deleteStudentRostersForClass(ctx, classId);
     await deleteClassUserSettingsForClass(ctx, classId);
     await deleteAnnouncementsForClass(ctx, classId);
