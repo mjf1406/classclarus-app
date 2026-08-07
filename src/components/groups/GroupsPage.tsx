@@ -46,6 +46,7 @@ import { useRemoveTeam } from "@/hooks/groups/useRemoveTeam";
 import { useUpdateGroup } from "@/hooks/groups/useUpdateGroup";
 import { useUpdateTeam } from "@/hooks/groups/useUpdateTeam";
 import { useCan } from "@/hooks/permissions/useCan";
+import { useCurrentUser } from "@/hooks/user/useCurrentUser";
 import type { BoardGroup, BoardStudent, BoardTeam, DropTarget } from "@/lib/groups/groups";
 import { findStudentOnBoard } from "@/lib/groups/groups";
 import type { GroupFormSchemaValues } from "@/lib/groups/groupFormSchema";
@@ -54,6 +55,7 @@ import {
   groupsPrintLogoAlt,
   printGroupsMatrix,
 } from "@/lib/groups/groupsPrint";
+import { cn } from "@/lib/utils";
 import type { Id } from "../../../convex/_generated/dataModel";
 
 type GroupsPageProps = {
@@ -111,8 +113,21 @@ export function GroupsPage({ classId }: GroupsPageProps) {
   const canManage = !permissionsPending && can("groups:manage");
   const { data, isPending, isError, refetch, isAuthLoading } = useGroupsBoard(classId);
   const { data: classDoc } = useClass(classId);
+  const { data: currentUser } = useCurrentUser();
   const logAccess = useLogClassAccess();
   const [exportPending, setExportPending] = useState(false);
+  const viewerUserId = currentUser?._id ?? null;
+  const viewerOnBoard = useMemo(
+    () => (data && viewerUserId ? findStudentOnBoard(data, viewerUserId) != null : false),
+    [data, viewerUserId],
+  );
+  const viewerIsUngrouped = useMemo(
+    () =>
+      Boolean(
+        data && viewerUserId && data.ungrouped.some((student) => student.userId === viewerUserId),
+      ),
+    [data, viewerUserId],
+  );
 
   const createGroup = useCreateGroup();
   const updateGroup = useUpdateGroup();
@@ -484,7 +499,14 @@ export function GroupsPage({ classId }: GroupsPageProps) {
             onDragCancel={clearDragVisuals}
           >
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(14rem,18rem)_1fr]">
-              <aside className="flex flex-col gap-2 rounded-2xl bg-card p-4 ring-1 ring-foreground/10 lg:sticky lg:top-4 lg:self-start">
+              <aside
+                className={cn(
+                  "flex flex-col gap-2 rounded-2xl p-4 lg:sticky lg:top-4 lg:self-start",
+                  viewerIsUngrouped
+                    ? "bg-primary/5 ring-2 ring-primary/50"
+                    : "bg-card ring-1 ring-foreground/10",
+                )}
+              >
                 <h2 className="text-sm font-semibold">{t("groupsUngroupedTitle")}</h2>
                 <p className="text-xs text-muted-foreground">{t("groupsUngroupedHint")}</p>
                 <StudentDropZone
@@ -494,6 +516,7 @@ export function GroupsPage({ classId }: GroupsPageProps) {
                   canManage={canManage}
                   emptyLabel={t("groupsUngroupedEmpty")}
                   hiddenStudentId={hiddenStudentId}
+                  viewerUserId={viewerOnBoard ? viewerUserId : null}
                 />
               </aside>
 
@@ -527,6 +550,7 @@ export function GroupsPage({ classId }: GroupsPageProps) {
                       canManage={canManage}
                       canCopyTeam={data.groups.length > 1}
                       hiddenStudentId={hiddenStudentId}
+                      viewerUserId={viewerOnBoard ? viewerUserId : null}
                       onEditGroup={(item) =>
                         setFormState({ kind: "group", mode: "edit", group: item })
                       }
@@ -548,7 +572,13 @@ export function GroupsPage({ classId }: GroupsPageProps) {
               )}
             </div>
             <DragOverlay dropAnimation={dropAnimation}>
-              {activeStudent ? <StudentChip student={activeStudent} canDrag={false} /> : null}
+              {activeStudent ? (
+                <StudentChip
+                  student={activeStudent}
+                  canDrag={false}
+                  isSelf={viewerUserId != null && activeStudent.userId === viewerUserId}
+                />
+              ) : null}
             </DragOverlay>
           </DndContext>
         )

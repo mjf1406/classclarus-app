@@ -701,6 +701,7 @@ const nl = {
     navInvitations: "Uitnodigingen",
     navGroups: "Groepen",
     groupsDescription: "Organiseer leerlingen in groepen en teams.",
+    groupsYouBadge: "Ik",
     groupsCreateAction: "Nieuwe groep",
     groupsEditAction: "Groep bewerken",
     groupsDeleteAction: "Groep verwijderen",

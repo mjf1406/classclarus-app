@@ -6,6 +6,7 @@ import { StudentDropZone } from "@/components/groups/StudentDropZone";
 import { ActionMenu } from "@/components/ui/action-menu";
 import type { BoardGroup, BoardTeam } from "@/lib/groups/groups";
 import { isOptimisticId } from "@/lib/groups/groupFormSchema";
+import { cn } from "@/lib/utils";
 import type { Id } from "../../../convex/_generated/dataModel";
 
 type GroupCardProps = {
@@ -13,6 +14,7 @@ type GroupCardProps = {
   canManage: boolean;
   canCopyTeam: boolean;
   hiddenStudentId?: Id<"users"> | null;
+  viewerUserId?: Id<"users"> | null;
   onEditGroup: (group: BoardGroup) => void;
   onDeleteGroup: (group: BoardGroup) => void;
   onMoveStudents: (group: BoardGroup) => void;
@@ -22,11 +24,20 @@ type GroupCardProps = {
   onDeleteTeam: (team: BoardTeam) => void;
 };
 
+function groupContainsViewer(group: BoardGroup, viewerUserId: Id<"users"> | null | undefined) {
+  if (!viewerUserId) return false;
+  if (group.students.some((student) => student.userId === viewerUserId)) return true;
+  return group.teams.some((team) =>
+    team.students.some((student) => student.userId === viewerUserId),
+  );
+}
+
 export function GroupCard({
   group,
   canManage,
   canCopyTeam,
   hiddenStudentId = null,
+  viewerUserId = null,
   onEditGroup,
   onDeleteGroup,
   onMoveStudents,
@@ -37,9 +48,15 @@ export function GroupCard({
 }: GroupCardProps) {
   const { t } = useTranslation("classes");
   const pending = isOptimisticId(group._id);
+  const isViewerGroup = groupContainsViewer(group, viewerUserId);
 
   return (
-    <section className="flex flex-col gap-3 rounded-2xl bg-card p-4 ring-1 ring-foreground/10">
+    <section
+      className={cn(
+        "flex flex-col gap-3 rounded-2xl p-4",
+        isViewerGroup ? "bg-primary/5 ring-2 ring-primary/50" : "bg-card ring-1 ring-foreground/10",
+      )}
+    >
       <header className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-start gap-2">
           <GroupImageIcon
@@ -104,13 +121,22 @@ export function GroupCard({
           emptyLabel={t("groupsDropEmpty")}
           disabled={pending}
           hiddenStudentId={hiddenStudentId}
+          viewerUserId={viewerUserId}
         />
       </div>
 
       {group.teams.map((team) => {
         const teamPending = isOptimisticId(team._id);
+        const isViewerTeam =
+          viewerUserId != null && team.students.some((student) => student.userId === viewerUserId);
         return (
-          <div key={team._id} className="flex flex-col gap-2 rounded-xl bg-muted/40 p-3">
+          <div
+            key={team._id}
+            className={cn(
+              "flex flex-col gap-2 rounded-xl p-3",
+              isViewerTeam ? "bg-primary/10 ring-1 ring-primary/40" : "bg-muted/40",
+            )}
+          >
             <div className="flex items-start justify-between gap-2">
               <div className="flex min-w-0 items-center gap-2">
                 <GroupImageIcon
@@ -169,6 +195,7 @@ export function GroupCard({
               emptyLabel={t("groupsDropEmpty")}
               disabled={pending || teamPending}
               hiddenStudentId={hiddenStudentId}
+              viewerUserId={viewerUserId}
             />
           </div>
         );

@@ -691,6 +691,7 @@ const en = {
     navInvitations: "Invitations",
     navGroups: "Groups",
     groupsDescription: "Organize students into groups and teams.",
+    groupsYouBadge: "Me",
     groupsCreateAction: "New group",
     groupsEditAction: "Edit group",
     groupsDeleteAction: "Delete group",

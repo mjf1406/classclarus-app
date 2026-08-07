@@ -714,6 +714,7 @@ const fr = {
     navInvitations: "Invitations",
     navGroups: "Groupes",
     groupsDescription: "Organisez les élèves en groupes et équipes.",
+    groupsYouBadge: "Moi",
     groupsCreateAction: "Nouveau groupe",
     groupsEditAction: "Modifier le groupe",
     groupsDeleteAction: "Supprimer le groupe",

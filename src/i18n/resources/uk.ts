@@ -698,6 +698,7 @@ const uk = {
     navInvitations: "Запрошення",
     navGroups: "Групи",
     groupsDescription: "Організуйте учнів у групи та команди.",
+    groupsYouBadge: "Я",
     groupsCreateAction: "Нова група",
     groupsEditAction: "Редагувати групу",
     groupsDeleteAction: "Видалити групу",

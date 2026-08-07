@@ -706,6 +706,7 @@ const it = {
     navInvitations: "Inviti",
     navGroups: "Gruppi",
     groupsDescription: "Organizza gli studenti in gruppi e squadre.",
+    groupsYouBadge: "Io",
     groupsCreateAction: "Nuovo gruppo",
     groupsEditAction: "Modifica gruppo",
     groupsDeleteAction: "Elimina gruppo",

@@ -698,6 +698,7 @@ const ja = {
     navInvitations: "招待",
     navGroups: "グループ",
     groupsDescription: "生徒をグループとチームに分けます。",
+    groupsYouBadge: "自分",
     groupsCreateAction: "グループを作成",
     groupsEditAction: "グループを編集",
     groupsDeleteAction: "グループを削除",

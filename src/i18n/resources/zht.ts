@@ -675,6 +675,7 @@ const zht = {
     navInvitations: "邀請",
     navGroups: "小組",
     groupsDescription: "將學生組織到小組和團隊中。",
+    groupsYouBadge: "我",
     groupsCreateAction: "新建小組",
     groupsEditAction: "編輯小組",
     groupsDeleteAction: "刪除小組",

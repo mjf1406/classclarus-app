@@ -14,6 +14,8 @@ type StudentDropZoneProps = {
   className?: string;
   disabled?: boolean;
   hiddenStudentId?: Id<"users"> | null;
+  /** Signed-in user id — their chip is highlighted when present. */
+  viewerUserId?: Id<"users"> | null;
 };
 
 export function StudentDropZone({
@@ -25,6 +27,7 @@ export function StudentDropZone({
   className,
   disabled = false,
   hiddenStudentId = null,
+  viewerUserId = null,
 }: StudentDropZoneProps) {
   const { setNodeRef, isOver } = useDroppable({
     id,
@@ -51,6 +54,7 @@ export function StudentDropZone({
             student={student}
             canDrag={canManage}
             hidden={hiddenStudentId === student.userId}
+            isSelf={viewerUserId != null && student.userId === viewerUserId}
           />
         ))
       )}

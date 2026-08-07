@@ -700,6 +700,7 @@ const ru = {
     navInvitations: "Приглашения",
     navGroups: "Группы",
     groupsDescription: "Организуйте учеников в группы и команды.",
+    groupsYouBadge: "Я",
     groupsCreateAction: "Новая группа",
     groupsEditAction: "Изменить группу",
     groupsDeleteAction: "Удалить группу",

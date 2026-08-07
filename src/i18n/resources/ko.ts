@@ -687,6 +687,7 @@ const ko = {
     navInvitations: "초대",
     navGroups: "그룹",
     groupsDescription: "학생을 그룹과 팀으로 구성합니다.",
+    groupsYouBadge: "나",
     groupsCreateAction: "새 그룹",
     groupsEditAction: "그룹 편집",
     groupsDeleteAction: "그룹 삭제",

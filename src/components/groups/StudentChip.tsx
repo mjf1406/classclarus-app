@@ -4,6 +4,7 @@ import { GripVertical } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import type { BoardStudent } from "@/lib/groups/groups";
 import { cn } from "@/lib/utils";
 import { getDisplayName, getInitials } from "@/lib/user/userDisplay";
@@ -13,9 +14,16 @@ type StudentChipProps = {
   canDrag: boolean;
   /** Keep the chip invisible while the drag overlay is still settling after drop. */
   hidden?: boolean;
+  /** Highlight this chip when it represents the signed-in viewer. */
+  isSelf?: boolean;
 };
 
-export function StudentChip({ student, canDrag, hidden = false }: StudentChipProps) {
+export function StudentChip({
+  student,
+  canDrag,
+  hidden = false,
+  isSelf = false,
+}: StudentChipProps) {
   const { t } = useTranslation("classes");
   const displayName = getDisplayName(
     { _id: student.userId, name: student.name, email: student.email },
@@ -36,6 +44,7 @@ export function StudentChip({ student, canDrag, hidden = false }: StudentChipPro
       className={cn(
         "flex items-center gap-2 rounded-lg border bg-background px-2 py-1.5 text-sm shadow-sm",
         canDrag && "cursor-grab active:cursor-grabbing",
+        isSelf && "border-primary bg-primary/10 ring-2 ring-primary/40",
         invisiblyHeld && "opacity-0",
       )}
       {...(canDrag ? { ...listeners, ...attributes } : {})}
@@ -56,6 +65,11 @@ export function StudentChip({ student, canDrag, hidden = false }: StudentChipPro
         </AvatarFallback>
       </Avatar>
       <span className="min-w-0 truncate font-medium">{displayName}</span>
+      {isSelf ? (
+        <Badge variant="default" className="ml-auto shrink-0">
+          {t("groupsYouBadge")}
+        </Badge>
+      ) : null}
     </div>
   );
 }

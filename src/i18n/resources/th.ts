@@ -676,6 +676,7 @@ const th = {
     navInvitations: "คำเชิญ",
     navGroups: "กลุ่ม",
     groupsDescription: "จัดนักเรียนเป็นกลุ่มและทีม",
+    groupsYouBadge: "ฉัน",
     groupsCreateAction: "สร้างกลุ่ม",
     groupsEditAction: "แก้ไขกลุ่ม",
     groupsDeleteAction: "ลบกลุ่ม",

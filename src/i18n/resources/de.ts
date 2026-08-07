@@ -706,6 +706,7 @@ const de = {
     navInvitations: "Einladungen",
     navGroups: "Gruppen",
     groupsDescription: "Organisiere Schüler in Gruppen und Teams.",
+    groupsYouBadge: "Ich",
     groupsCreateAction: "Neue Gruppe",
     groupsEditAction: "Gruppe bearbeiten",
     groupsDeleteAction: "Gruppe löschen",
