@@ -7,7 +7,7 @@ import { toast } from "@/components/ui/toast-manager";
 import { groupsBoardQueryKey } from "@/hooks/groups/useGroupsBoard";
 import { useOptimisticMutation } from "@/hooks/useOptimisticMutation";
 import { messageFromError } from "@/lib/errors/convexError";
-import type { GroupsBoard } from "@/lib/groups/groups";
+import { sortStudents, type GroupsBoard } from "@/lib/groups/groups";
 
 type RemoveGroupArgs = {
   classId: Id<"classes">;
@@ -30,11 +30,7 @@ export function useRemoveGroup() {
         if (!removed) return old;
         const released = [...removed.students, ...removed.teams.flatMap((team) => team.students)];
         return {
-          ungrouped: [...old.ungrouped, ...released].sort((a, b) => {
-            const nameA = (a.name ?? a.email ?? a.userId).toLocaleLowerCase();
-            const nameB = (b.name ?? b.email ?? b.userId).toLocaleLowerCase();
-            return nameA.localeCompare(nameB);
-          }),
+          ungrouped: sortStudents([...old.ungrouped, ...released]),
           groups: old.groups.filter((group) => group._id !== args.groupId),
         };
       });

@@ -23,9 +23,11 @@ import {
 } from "@/lib/members/members";
 import { isJoinCodeRole } from "@/lib/permissions/classPermissions";
 import {
+  DEFAULT_ROSTER_NAME_FORMAT,
   genderLabelKey,
   getRosterDisplayName,
   pronounLabelKey,
+  type RosterNameFormat,
   type StudentRosterEntry,
 } from "@/lib/roster/roster";
 import { getInitials } from "@/lib/user/userDisplay";
@@ -34,6 +36,7 @@ import { sanitizeAvatarUrl } from "../../../convex/lib/avatarUrl";
 type StudentRosterCardProps = {
   student: StudentRosterEntry;
   isSelf: boolean;
+  nameFormat?: RosterNameFormat;
   onRemove: (student: StudentRosterEntry) => void;
   onChangeRole: (student: StudentRosterEntry, role: JoinCodeRole) => void;
 };
@@ -52,12 +55,13 @@ function Field({ label, value }: { label: string; value: string }) {
 export function StudentRosterCard({
   student,
   isSelf,
+  nameFormat = DEFAULT_ROSTER_NAME_FORMAT,
   onRemove,
   onChangeRole,
 }: StudentRosterCardProps) {
   const { t } = useTranslation("classes");
   const { role: actorRole } = useClassPermissionsContext();
-  const displayName = getRosterDisplayName(student, t("unnamedMember"));
+  const displayName = getRosterDisplayName(student, t("unnamedMember"), nameFormat);
   const initials = getInitials({
     _id: student.userId,
     name: displayName,

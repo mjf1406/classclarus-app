@@ -1,0 +1,45 @@
+---
+description: Prefer roster names via getRosterDisplayName when showing student names
+alwaysApply: true
+---
+
+# Student Roster Display Names
+
+When showing a **student** name anywhere in the app (cards, chips, tables, dialogs, print, toasts, confirmations), use `getRosterDisplayName` from `@/lib/roster/roster`.
+
+It prefers roster `firstName`/`lastName` (with the class name format), then falls back to account `name` / email / the unnamed label.
+
+```ts
+import {
+  getRosterDisplayName,
+  type RosterNameFormat,
+} from "@/lib/roster/roster";
+
+const displayName = getRosterDisplayName(
+  student,
+  t("unnamedMember"),
+  nameFormat, // from the class when available
+);
+```
+
+## Do
+
+- Pass the class `RosterNameFormat` when you have it (`resolveRosterNameFormat` / class settings).
+- Use a translated unnamed fallback (e.g. `t("unnamedMember")`).
+- Reuse this helper in print/export paths too (`groupsPrint`, etc.).
+
+## Don't
+
+```ts
+// ❌ BAD — skips roster first/last and class name format
+student.name
+getDisplayName(student, t("unnamedMember"))
+`${student.firstName} ${student.lastName}`
+```
+
+```ts
+// ✅ GOOD
+getRosterDisplayName(student, t("unnamedMember"), nameFormat)
+```
+
+`getDisplayName` from `@/lib/user/userDisplay` is for non-roster users (teachers, generic members). Do not use it as the primary path for students who may have roster name fields.

@@ -55,6 +55,7 @@ import {
   groupsPrintLogoAlt,
   printGroupsMatrix,
 } from "@/lib/groups/groupsPrint";
+import { resolveRosterNameFormat } from "@/lib/roster/roster";
 import { cn } from "@/lib/utils";
 import type { Id } from "../../../convex/_generated/dataModel";
 
@@ -113,6 +114,14 @@ export function GroupsPage({ classId }: GroupsPageProps) {
   const canManage = !permissionsPending && can("groups:manage");
   const { data, isPending, isError, refetch, isAuthLoading } = useGroupsBoard(classId);
   const { data: classDoc } = useClass(classId);
+  const nameFormat = useMemo(
+    () =>
+      resolveRosterNameFormat({
+        rosterNameOrder: classDoc?.rosterNameOrder,
+        rosterNameSpace: classDoc?.rosterNameSpace,
+      }),
+    [classDoc?.rosterNameOrder, classDoc?.rosterNameSpace],
+  );
   const { data: currentUser } = useCurrentUser();
   const logAccess = useLogClassAccess();
   const [exportPending, setExportPending] = useState(false);
@@ -392,8 +401,14 @@ export function GroupsPage({ classId }: GroupsPageProps) {
       : undefined;
 
   const printMatrix = useMemo(
-    () => (data ? buildGroupsPrintMatrix(data, { teamlessLabel: t("groupsNoTeamLabel") }) : null),
-    [data, t],
+    () =>
+      data
+        ? buildGroupsPrintMatrix(data, {
+            teamlessLabel: t("groupsNoTeamLabel"),
+            nameFormat,
+          })
+        : null,
+    [data, nameFormat, t],
   );
   const canExportPdf = Boolean(printMatrix && printMatrix.rows.length > 0);
 
@@ -518,6 +533,7 @@ export function GroupsPage({ classId }: GroupsPageProps) {
                   emptyLabel={t("groupsUngroupedEmpty")}
                   hiddenStudentId={hiddenStudentId}
                   viewerUserId={viewerOnBoard ? viewerUserId : null}
+                  nameFormat={nameFormat}
                 />
               </aside>
 
@@ -552,6 +568,7 @@ export function GroupsPage({ classId }: GroupsPageProps) {
                       canCopyTeam={data.groups.length > 1}
                       hiddenStudentId={hiddenStudentId}
                       viewerUserId={viewerOnBoard ? viewerUserId : null}
+                      nameFormat={nameFormat}
                       onEditGroup={(item) =>
                         setFormState({ kind: "group", mode: "edit", group: item })
                       }
@@ -578,6 +595,7 @@ export function GroupsPage({ classId }: GroupsPageProps) {
                   student={activeStudent}
                   canDrag={false}
                   isSelf={viewerUserId != null && activeStudent.userId === viewerUserId}
+                  nameFormat={nameFormat}
                 />
               ) : null}
             </DragOverlay>
@@ -653,6 +671,7 @@ export function GroupsPage({ classId }: GroupsPageProps) {
           groupId={moveStudentsState.group._id}
           groupName={moveStudentsState.group.name}
           board={data}
+          nameFormat={nameFormat}
           groupOptions={data.groups
             .filter((group) => group._id !== moveStudentsState.group._id)
             .map((group) => ({ value: group._id, label: group.name }))}

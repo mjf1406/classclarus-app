@@ -52,6 +52,7 @@ import type * as lib_polarErrors from "../lib/polarErrors.js";
 import type * as lib_polarSubscription from "../lib/polarSubscription.js";
 import type * as lib_rateLimitActions from "../lib/rateLimitActions.js";
 import type * as lib_rateLimiter from "../lib/rateLimiter.js";
+import type * as lib_rosterNameFormat from "../lib/rosterNameFormat.js";
 import type * as lib_selfHosted from "../lib/selfHosted.js";
 import type * as lib_studentRosters from "../lib/studentRosters.js";
 import type * as lib_trial from "../lib/trial.js";
@@ -117,6 +118,7 @@ declare const fullApi: ApiFromModules<{
   "lib/polarSubscription": typeof lib_polarSubscription;
   "lib/rateLimitActions": typeof lib_rateLimitActions;
   "lib/rateLimiter": typeof lib_rateLimiter;
+  "lib/rosterNameFormat": typeof lib_rosterNameFormat;
   "lib/selfHosted": typeof lib_selfHosted;
   "lib/studentRosters": typeof lib_studentRosters;
   "lib/trial": typeof lib_trial;

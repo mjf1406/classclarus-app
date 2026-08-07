@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { RemoveMemberCredenza } from "@/components/members/RemoveMemberCredenza";
+import { RosterNameFormatControls } from "@/components/students/RosterNameFormatControls";
 import { StudentRosterCard } from "@/components/students/StudentRosterCard";
 import { StudentRosterTable } from "@/components/students/StudentRosterTable";
 import {
@@ -23,6 +24,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Button } from "@/components/ui/button";
+import { useSetRosterNameFormat } from "@/hooks/classes/useSetRosterNameFormat";
 import { useCan } from "@/hooks/permissions/useCan";
 import { useMemberSearch } from "@/hooks/members/useMemberSearch";
 import { useRemoveClassMember } from "@/hooks/members/useRemoveClassMember";
@@ -33,18 +35,23 @@ import { useReorderStudentRoster } from "@/hooks/roster/useReorderStudentRoster"
 import { useStudentRoster } from "@/hooks/roster/useStudentRoster";
 import { useUpdateStudentRosterFields } from "@/hooks/roster/useUpdateStudentRosterFields";
 import { useUpsertStudentsViewPrefs } from "@/hooks/roster/useUpsertStudentsViewPrefs";
+import { useAuthedQuery } from "@/hooks/useAuthedQuery";
 import { useCurrentUser } from "@/hooks/user/useCurrentUser";
 import type { JoinCodeRole } from "@/lib/members/members";
+import { ONE_HOUR } from "@/lib/queryCache";
 import {
   getRosterDisplayName,
   normalizeColumnOrder,
   normalizeColumnVisibility,
+  resolveRosterNameFormat,
   type GenderOption,
   type PronounOption,
   type RosterColumnId,
+  type RosterNameFormat,
   type StudentRosterEntry,
   type StudentsViewMode,
 } from "@/lib/roster/roster";
+import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 
 const GRID_CLASS = "grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4";
@@ -71,8 +78,11 @@ export function StudentsPage({ classId }: StudentsPageProps) {
   const { data: currentUser } = useCurrentUser();
   const { can, isPending: permissionsPending } = useCan();
   const canUpdateRoster = !permissionsPending && can("students:update");
+  const canUpdateClass = !permissionsPending && can("class:update");
 
   const { data, isPending, isError, refetch, isAuthLoading } = useStudentRoster(classId);
+  // Share `classes.get` cache without the access-log side effect from `useClass`.
+  const { data: classDoc } = useAuthedQuery(api.classes.get, { classId }, { gcTime: ONE_HOUR });
   const { data: settings } = useClassUserSettings(classId);
   useEnsureStudentRosters(classId, !isPending && !isAuthLoading && !isError);
 
@@ -81,6 +91,30 @@ export function StudentsPage({ classId }: StudentsPageProps) {
   const updateFieldsMutation = useUpdateStudentRosterFields();
   const reorderMutation = useReorderStudentRoster();
   const upsertPrefsMutation = useUpsertStudentsViewPrefs();
+  const setRosterNameFormat = useSetRosterNameFormat();
+
+  const nameFormat = useMemo(
+    () =>
+      resolveRosterNameFormat({
+        rosterNameOrder: classDoc?.rosterNameOrder,
+        rosterNameSpace: classDoc?.rosterNameSpace,
+      }),
+    [classDoc?.rosterNameOrder, classDoc?.rosterNameSpace],
+  );
+
+  const handleNameFormatChange = useCallback(
+    (next: RosterNameFormat) => {
+      if (next.order === nameFormat.order && next.space === nameFormat.space) {
+        return;
+      }
+      setRosterNameFormat.mutate({
+        classId,
+        rosterNameOrder: next.order,
+        rosterNameSpace: next.space,
+      });
+    },
+    [classId, nameFormat.order, nameFormat.space, setRosterNameFormat],
+  );
 
   const [searchQuery, setSearchQuery] = useState("");
   const [tableEditMode, setTableEditMode] = useState(false);
@@ -194,7 +228,7 @@ export function StudentsPage({ classId }: StudentsPageProps) {
   );
 
   const removeMemberName = memberToRemove
-    ? getRosterDisplayName(memberToRemove, t("unnamedMember"))
+    ? getRosterDisplayName(memberToRemove, t("unnamedMember"), nameFormat)
     : "";
 
   const showLoaded = !isPending && !isAuthLoading && !isError;
@@ -212,38 +246,48 @@ export function StudentsPage({ classId }: StudentsPageProps) {
         </div>
 
         {showLoaded ? (
-          <div className="flex flex-wrap items-center gap-2">
-            {viewMode === "table" && canUpdateRoster ? (
-              <Button
-                type="button"
-                size="sm"
-                variant={tableEditMode ? "default" : "outline"}
-                disabled={searchActive}
-                onClick={() => setTableEditMode((prev) => !prev)}
-              >
-                <PencilIcon data-icon="inline-start" />
-                {tableEditMode ? t("rosterDoneEditingTable") : t("rosterEditTable")}
-              </Button>
-            ) : null}
+          <div className="flex flex-col items-stretch gap-2 sm:items-end">
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              {viewMode === "table" && canUpdateRoster ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={tableEditMode ? "default" : "outline"}
+                  disabled={searchActive}
+                  onClick={() => setTableEditMode((prev) => !prev)}
+                >
+                  <PencilIcon data-icon="inline-start" />
+                  {tableEditMode ? t("rosterDoneEditingTable") : t("rosterEditTable")}
+                </Button>
+              ) : null}
 
-            <ToggleGroup
-              variant="outline"
-              spacing={0}
-              value={[viewMode]}
-              onValueChange={(values) => {
-                const next = values[0];
-                if (next === "grid" || next === "table") {
-                  handleViewModeChange(next);
-                }
-              }}
-            >
-              <ToggleGroupItem value="grid" aria-label={t("viewGrid")}>
-                <LayoutGridIcon />
-              </ToggleGroupItem>
-              <ToggleGroupItem value="table" aria-label={t("viewTable")}>
-                <TableIcon />
-              </ToggleGroupItem>
-            </ToggleGroup>
+              <ToggleGroup
+                variant="outline"
+                spacing={0}
+                value={[viewMode]}
+                onValueChange={(values) => {
+                  const next = values[0];
+                  if (next === "grid" || next === "table") {
+                    handleViewModeChange(next);
+                  }
+                }}
+              >
+                <ToggleGroupItem value="grid" aria-label={t("viewGrid")}>
+                  <LayoutGridIcon />
+                </ToggleGroupItem>
+                <ToggleGroupItem value="table" aria-label={t("viewTable")}>
+                  <TableIcon />
+                </ToggleGroupItem>
+              </ToggleGroup>
+            </div>
+            {canUpdateClass ? (
+              <RosterNameFormatControls
+                variant="inline"
+                value={nameFormat}
+                onChange={handleNameFormatChange}
+                disabled={setRosterNameFormat.isPending}
+              />
+            ) : null}
           </div>
         ) : null}
       </div>
@@ -318,6 +362,7 @@ export function StudentsPage({ classId }: StudentsPageProps) {
               key={student.userId}
               student={student}
               isSelf={currentUser?._id === student.userId}
+              nameFormat={nameFormat}
               onRemove={handleRemoveRequest}
               onChangeRole={handleChangeRole}
             />

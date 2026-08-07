@@ -2,6 +2,7 @@ import { useDroppable } from "@dnd-kit/core";
 
 import { StudentChip } from "@/components/groups/StudentChip";
 import type { BoardStudent, DropTarget } from "@/lib/groups/groups";
+import { DEFAULT_ROSTER_NAME_FORMAT, type RosterNameFormat } from "@/lib/roster/roster";
 import { cn } from "@/lib/utils";
 import type { Id } from "../../../convex/_generated/dataModel";
 
@@ -16,6 +17,7 @@ type StudentDropZoneProps = {
   hiddenStudentId?: Id<"users"> | null;
   /** Signed-in user id — their chip is highlighted when present. */
   viewerUserId?: Id<"users"> | null;
+  nameFormat?: RosterNameFormat;
 };
 
 export function StudentDropZone({
@@ -28,6 +30,7 @@ export function StudentDropZone({
   disabled = false,
   hiddenStudentId = null,
   viewerUserId = null,
+  nameFormat = DEFAULT_ROSTER_NAME_FORMAT,
 }: StudentDropZoneProps) {
   const { setNodeRef, isOver } = useDroppable({
     id,
@@ -55,6 +58,7 @@ export function StudentDropZone({
             canDrag={canManage}
             hidden={hiddenStudentId === student.userId}
             isSelf={viewerUserId != null && student.userId === viewerUserId}
+            nameFormat={nameFormat}
           />
         ))
       )}

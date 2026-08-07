@@ -91,6 +91,12 @@ const schema = defineSchema({
     bannerFileId: v.optional(v.id("files")),
     /** UI language forced for students while inside this class. */
     studentLanguage: languageValidator,
+    /**
+     * How roster first/last names are combined for display.
+     * Defaults to firstLast + space when unset (pre-backfill rows).
+     */
+    rosterNameOrder: v.optional(v.union(v.literal("firstLast"), v.literal("lastFirst"))),
+    rosterNameSpace: v.optional(v.boolean()),
     updatedAt: v.number(),
     archivedAt: v.optional(v.number()),
   }).index("by_owner", ["ownerId"]),

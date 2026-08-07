@@ -1,5 +1,9 @@
 import type { GroupsBoard } from "@/lib/groups/groups";
-import { getDisplayName } from "@/lib/user/userDisplay";
+import {
+  DEFAULT_ROSTER_NAME_FORMAT,
+  getRosterDisplayName,
+  type RosterNameFormat,
+} from "@/lib/roster/roster";
 import { APP_CONFIG } from "@/config/app";
 
 export const GROUPS_PRINT_LOGO_PATH = "/brand/logo/icon-and-text-horizontal.webp";
@@ -31,17 +35,18 @@ function escapeHtml(value: string): string {
     .replaceAll("'", "&#39;");
 }
 
-function studentLabel(student: GroupsBoard["ungrouped"][number]): string {
-  return getDisplayName({
-    _id: student.userId,
-    name: student.name,
-    email: student.email,
-  });
+function studentLabel(
+  student: GroupsBoard["ungrouped"][number],
+  nameFormat: RosterNameFormat,
+): string {
+  // Empty fallback preserves getDisplayName's email / id suffix behavior for print.
+  return getRosterDisplayName(student, "", nameFormat);
 }
 
 export type BuildGroupsPrintMatrixOptions = {
   /** Localized label for students in a group with no team. */
   teamlessLabel: string;
+  nameFormat?: RosterNameFormat;
 };
 
 /**
@@ -53,6 +58,7 @@ export function buildGroupsPrintMatrix(
   board: GroupsBoard,
   options: BuildGroupsPrintMatrixOptions,
 ): GroupsPrintMatrix {
+  const nameFormat = options.nameFormat ?? DEFAULT_ROSTER_NAME_FORMAT;
   const groups = board.groups;
   const groupNames = groups.map((group) => group.name);
 
@@ -70,7 +76,7 @@ export function buildGroupsPrintMatrix(
     const group = groups[groupIndex];
     if (!group) continue;
 
-    const teamlessNames = group.students.map(studentLabel);
+    const teamlessNames = group.students.map((student) => studentLabel(student, nameFormat));
     teamlessCells[groupIndex] = teamlessNames;
     teamlessCount += teamlessNames.length;
 
@@ -85,7 +91,7 @@ export function buildGroupsPrintMatrix(
         };
         byKey.set(key, entry);
       }
-      const names = team.students.map(studentLabel);
+      const names = team.students.map((student) => studentLabel(student, nameFormat));
       entry.cells[groupIndex] = names;
       entry.studentCount += names.length;
     }

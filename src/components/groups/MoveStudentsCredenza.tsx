@@ -34,7 +34,12 @@ import {
   type GroupsBoard,
   type MoveStudentsFilter,
 } from "@/lib/groups/groups";
-import { getDisplayName, getInitials } from "@/lib/user/userDisplay";
+import {
+  DEFAULT_ROSTER_NAME_FORMAT,
+  getRosterDisplayName,
+  type RosterNameFormat,
+} from "@/lib/roster/roster";
+import { getInitials } from "@/lib/user/userDisplay";
 import type { Id } from "../../../convex/_generated/dataModel";
 
 type FilterKind = MoveStudentsFilter["kind"];
@@ -46,6 +51,7 @@ type MoveStudentsCredenzaProps = {
   groupName: string;
   board: GroupsBoard;
   groupOptions: Array<AlsoCreateInGroupOption>;
+  nameFormat?: RosterNameFormat;
   onConfirm: (studentUserIds: Array<Id<"users">>) => Promise<void>;
 };
 
@@ -56,6 +62,7 @@ export function MoveStudentsCredenza({
   groupName,
   board,
   groupOptions,
+  nameFormat = DEFAULT_ROSTER_NAME_FORMAT,
   onConfirm,
 }: MoveStudentsCredenzaProps) {
   const { t } = useTranslation("classes");
@@ -81,8 +88,8 @@ export function MoveStudentsCredenza({
   }, [filterKind, selectedGroupIds]);
 
   const candidates = useMemo(
-    () => filterStudentsForMoveIntoGroup(board, groupId, filter),
-    [board, filter, groupId],
+    () => filterStudentsForMoveIntoGroup(board, groupId, filter, nameFormat),
+    [board, filter, groupId, nameFormat],
   );
 
   useEffect(() => {
@@ -236,6 +243,7 @@ export function MoveStudentsCredenza({
                   <StudentPickRow
                     key={student.userId}
                     student={student}
+                    nameFormat={nameFormat}
                     checked={selectedStudentIds.includes(student.userId)}
                     onCheckedChange={(checked) => toggleStudent(student.userId, checked)}
                   />
@@ -266,18 +274,17 @@ export function MoveStudentsCredenza({
 
 function StudentPickRow({
   student,
+  nameFormat,
   checked,
   onCheckedChange,
 }: {
   student: BoardStudent;
+  nameFormat: RosterNameFormat;
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
 }) {
   const { t } = useTranslation("classes");
-  const displayName = getDisplayName(
-    { _id: student.userId, name: student.name, email: student.email },
-    t("unnamedMember"),
-  );
+  const displayName = getRosterDisplayName(student, t("unnamedMember"), nameFormat);
   const id = `move-student-${student.userId}`;
 
   return (
@@ -298,7 +305,7 @@ function StudentPickRow({
           <AvatarFallback className="text-[10px]">
             {getInitials({
               _id: student.userId,
-              name: student.name,
+              name: displayName,
               email: student.email,
             })}
           </AvatarFallback>

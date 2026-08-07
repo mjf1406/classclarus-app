@@ -6,8 +6,13 @@ import { useTranslation } from "react-i18next";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import type { BoardStudent } from "@/lib/groups/groups";
+import {
+  DEFAULT_ROSTER_NAME_FORMAT,
+  getRosterDisplayName,
+  type RosterNameFormat,
+} from "@/lib/roster/roster";
 import { cn } from "@/lib/utils";
-import { getDisplayName, getInitials } from "@/lib/user/userDisplay";
+import { getInitials } from "@/lib/user/userDisplay";
 
 type StudentChipProps = {
   student: BoardStudent;
@@ -16,6 +21,7 @@ type StudentChipProps = {
   hidden?: boolean;
   /** Highlight this chip when it represents the signed-in viewer. */
   isSelf?: boolean;
+  nameFormat?: RosterNameFormat;
 };
 
 export function StudentChip({
@@ -23,12 +29,10 @@ export function StudentChip({
   canDrag,
   hidden = false,
   isSelf = false,
+  nameFormat = DEFAULT_ROSTER_NAME_FORMAT,
 }: StudentChipProps) {
   const { t } = useTranslation("classes");
-  const displayName = getDisplayName(
-    { _id: student.userId, name: student.name, email: student.email },
-    t("unnamedMember"),
-  );
+  const displayName = getRosterDisplayName(student, t("unnamedMember"), nameFormat);
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `student:${student.userId}`,
     data: { studentUserId: student.userId },
@@ -59,7 +63,7 @@ export function StudentChip({
         <AvatarFallback className="text-[10px]">
           {getInitials({
             _id: student.userId,
-            name: student.name,
+            name: displayName,
             email: student.email,
           })}
         </AvatarFallback>

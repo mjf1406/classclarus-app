@@ -2,6 +2,11 @@ import type { FunctionReturnType } from "convex/server";
 
 import type { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
+import {
+  DEFAULT_ROSTER_NAME_FORMAT,
+  formatRosterNameParts,
+  type RosterNameFormat,
+} from "@/lib/roster/roster";
 
 export type GroupsBoard = FunctionReturnType<typeof api.groups.board>;
 export type BoardGroup = GroupsBoard["groups"][number];
@@ -56,6 +61,7 @@ export function moveStudentOnBoard(
   board: GroupsBoard,
   studentUserId: Id<"users">,
   to: DropTarget,
+  nameFormat: RosterNameFormat = DEFAULT_ROSTER_NAME_FORMAT,
 ): GroupsBoard {
   const found = findStudentOnBoard(board, studentUserId);
   if (!found) return board;
@@ -66,7 +72,7 @@ export function moveStudentOnBoard(
   if (to.kind === "ungrouped") {
     return {
       ...without,
-      ungrouped: sortStudents([...without.ungrouped, student]),
+      ungrouped: sortStudents([...without.ungrouped, student], nameFormat),
     };
   }
 
@@ -77,14 +83,14 @@ export function moveStudentOnBoard(
       if (to.kind === "group") {
         return {
           ...group,
-          students: sortStudents([...group.students, student]),
+          students: sortStudents([...group.students, student], nameFormat),
         };
       }
       return {
         ...group,
         teams: group.teams.map((team) =>
           team._id === to.teamId
-            ? { ...team, students: sortStudents([...team.students, student]) }
+            ? { ...team, students: sortStudents([...team.students, student], nameFormat) }
             : team,
         ),
       };
@@ -96,9 +102,10 @@ export function moveStudentsOnBoard(
   board: GroupsBoard,
   studentUserIds: Array<Id<"users">>,
   to: DropTarget,
+  nameFormat: RosterNameFormat = DEFAULT_ROSTER_NAME_FORMAT,
 ): GroupsBoard {
   return studentUserIds.reduce(
-    (next, studentUserId) => moveStudentOnBoard(next, studentUserId, to),
+    (next, studentUserId) => moveStudentOnBoard(next, studentUserId, to, nameFormat),
     board,
   );
 }
@@ -113,6 +120,7 @@ export function filterStudentsForMoveIntoGroup(
   board: GroupsBoard,
   destinationGroupId: Id<"groups">,
   filter: MoveStudentsFilter,
+  nameFormat: RosterNameFormat = DEFAULT_ROSTER_NAME_FORMAT,
 ): Array<BoardStudent> {
   const inDestination = new Set(
     collectStudentsInGroups(board, [destinationGroupId]).map((student) => student.userId),
@@ -132,7 +140,10 @@ export function filterStudentsForMoveIntoGroup(
     candidates = collectAllStudents(board).filter((student) => !excluded.has(student.userId));
   }
 
-  return sortStudents(candidates.filter((student) => !inDestination.has(student.userId)));
+  return sortStudents(
+    candidates.filter((student) => !inDestination.has(student.userId)),
+    nameFormat,
+  );
 }
 
 function collectStudentsInGroups(
@@ -187,10 +198,16 @@ function removeStudentFromBoard(board: GroupsBoard, studentUserId: Id<"users">):
   };
 }
 
-function sortStudents(students: Array<BoardStudent>): Array<BoardStudent> {
-  return [...students].sort((a, b) => {
-    const nameA = (a.name ?? a.email ?? a.userId).toLocaleLowerCase();
-    const nameB = (b.name ?? b.email ?? b.userId).toLocaleLowerCase();
-    return nameA.localeCompare(nameB);
-  });
+function boardStudentSortKey(student: BoardStudent, format: RosterNameFormat): string {
+  const rosterName = formatRosterNameParts(student.firstName, student.lastName, format);
+  return (rosterName ?? student.name ?? student.email ?? student.userId).toLocaleLowerCase();
+}
+
+export function sortStudents(
+  students: Array<BoardStudent>,
+  nameFormat: RosterNameFormat = DEFAULT_ROSTER_NAME_FORMAT,
+): Array<BoardStudent> {
+  return [...students].sort((a, b) =>
+    boardStudentSortKey(a, nameFormat).localeCompare(boardStudentSortKey(b, nameFormat)),
+  );
 }

@@ -73,14 +73,53 @@ export type ClassUserSettingsPublic = {
   studentsColumnVisibility?: Record<string, boolean>;
 };
 
+export const ROSTER_NAME_ORDERS = ["firstLast", "lastFirst"] as const;
+export type RosterNameOrder = (typeof ROSTER_NAME_ORDERS)[number];
+
+export type RosterNameFormat = {
+  order: RosterNameOrder;
+  space: boolean;
+};
+
+export const DEFAULT_ROSTER_NAME_FORMAT: RosterNameFormat = {
+  order: "firstLast",
+  space: true,
+};
+
+/** Combine roster first/last using class display prefs. Returns undefined if both empty. */
+export function formatRosterNameParts(
+  firstName: string | undefined,
+  lastName: string | undefined,
+  format: RosterNameFormat = DEFAULT_ROSTER_NAME_FORMAT,
+): string | undefined {
+  const first = firstName?.trim() || undefined;
+  const last = lastName?.trim() || undefined;
+  if (!first && !last) return undefined;
+  if (!first) return last;
+  if (!last) return first;
+  const ordered = format.order === "lastFirst" ? [last, first] : [first, last];
+  return ordered.join(format.space ? " " : "");
+}
+
+export function resolveRosterNameFormat(input: {
+  rosterNameOrder?: RosterNameOrder | null;
+  rosterNameSpace?: boolean | null;
+}): RosterNameFormat {
+  return {
+    order: input.rosterNameOrder === "lastFirst" ? "lastFirst" : "firstLast",
+    space: input.rosterNameSpace !== false,
+  };
+}
+
 /** Prefer roster first+last when set; otherwise `users.name` / email fallback. */
 export function getRosterDisplayName(
   student: Pick<StudentRosterEntry, "userId" | "firstName" | "lastName" | "name" | "email">,
   unnamedFallback: string,
+  format: RosterNameFormat = DEFAULT_ROSTER_NAME_FORMAT,
 ): string {
-  const parts = [student.firstName?.trim(), student.lastName?.trim()].filter(Boolean);
-  if (parts.length > 0) {
-    return parts.join(" ");
+  const rosterName = formatRosterNameParts(student.firstName, student.lastName, format);
+  if (rosterName) {
+    return rosterName;
   }
   return getDisplayName(
     { _id: student.userId, name: student.name, email: student.email },

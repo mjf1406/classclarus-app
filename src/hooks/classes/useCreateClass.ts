@@ -44,6 +44,8 @@ export function useCreateClass() {
         description: args.description,
         icon: args.icon,
         studentLanguage: args.studentLanguage,
+        rosterNameOrder: "firstLast",
+        rosterNameSpace: true,
         updatedAt: now,
         role: "owner",
         _pending: true,

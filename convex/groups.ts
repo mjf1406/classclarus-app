@@ -8,6 +8,11 @@ import { recordClassActivity } from "./lib/classActivity.js";
 import { classMutation, classQuery } from "./lib/customFunctions.js";
 import { getClassRoleForUser } from "./lib/guardianLinks.js";
 import { rateLimiter } from "./lib/rateLimiter.js";
+import {
+  formatRosterNameParts,
+  resolveRosterNameFormat,
+  type RosterNameFormat,
+} from "./lib/rosterNameFormat.js";
 import { resolveUserImageUrl } from "./lib/userImage.js";
 
 const MAX_NAME_LENGTH = 100;
@@ -17,6 +22,8 @@ const MAX_BULK_ASSIGN_STUDENTS = 100;
 
 const boardStudentValidator = v.object({
   userId: v.id("users"),
+  firstName: v.optional(v.string()),
+  lastName: v.optional(v.string()),
   name: v.optional(v.string()),
   image: v.optional(v.string()),
   email: v.optional(v.string()),
@@ -52,6 +59,8 @@ const boardValidator = v.object({
 
 type BoardStudent = {
   userId: Id<"users">;
+  firstName?: string;
+  lastName?: string;
   name?: string;
   image?: string;
   email?: string;
@@ -104,26 +113,35 @@ async function requireClassImageFile(
   return { name: file.name };
 }
 
+function rosterDisplaySortKey(student: BoardStudent, format: RosterNameFormat): string {
+  const rosterName = formatRosterNameParts(student.firstName, student.lastName, format);
+  return (rosterName ?? student.name ?? student.email ?? student.userId).toLocaleLowerCase();
+}
+
 async function loadBoardStudent(
   ctx: QueryCtx | MutationCtx,
   userId: Id<"users">,
+  roster?: { firstName?: string; lastName?: string } | null,
 ): Promise<BoardStudent | null> {
   const user = await ctx.db.get("users", userId);
   if (!user) return null;
   return {
     userId: user._id,
+    ...(roster?.firstName !== undefined ? { firstName: roster.firstName } : {}),
+    ...(roster?.lastName !== undefined ? { lastName: roster.lastName } : {}),
     name: user.name,
     image: await resolveUserImageUrl(ctx, user),
     email: user.email,
   };
 }
 
-function sortStudents(students: Array<BoardStudent>): Array<BoardStudent> {
-  return [...students].sort((a, b) => {
-    const nameA = (a.name ?? a.email ?? a.userId).toLocaleLowerCase();
-    const nameB = (b.name ?? b.email ?? b.userId).toLocaleLowerCase();
-    return nameA.localeCompare(nameB);
-  });
+function sortStudents(
+  students: Array<BoardStudent>,
+  format: RosterNameFormat,
+): Array<BoardStudent> {
+  return [...students].sort((a, b) =>
+    rosterDisplaySortKey(a, format).localeCompare(rosterDisplaySortKey(b, format)),
+  );
 }
 
 /**
@@ -135,6 +153,7 @@ export const board = classQuery({
   returns: boardValidator,
   handler: async (ctx) => {
     const classId = ctx.classDoc._id;
+    const nameFormat = resolveRosterNameFormat(ctx.classDoc);
 
     // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded board
     const groupDocs = await ctx.db
@@ -161,9 +180,20 @@ export const board = classQuery({
       (entry: { userId: string }) => entry.userId as Id<"users">,
     );
 
+    // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded roster
+    const rosterRows = await ctx.db
+      .query("studentRosters")
+      .withIndex("by_classId", (q) => q.eq("classId", classId))
+      .collect();
+    const rosterByUserId = new Map(
+      rosterRows.map(
+        (row) => [row.userId, { firstName: row.firstName, lastName: row.lastName }] as const,
+      ),
+    );
+
     const studentById = new Map<string, BoardStudent>();
     for (const userId of studentIds) {
-      const student = await loadBoardStudent(ctx, userId);
+      const student = await loadBoardStudent(ctx, userId, rosterByUserId.get(userId));
       if (student) studentById.set(userId, student);
     }
 
@@ -208,7 +238,7 @@ export const board = classQuery({
             icon: team.icon,
             imageFileId: team.imageFileId,
             updatedAt: team.updatedAt,
-            students: sortStudents(teamStudents.get(team._id) ?? []),
+            students: sortStudents(teamStudents.get(team._id) ?? [], nameFormat),
           }));
         return {
           _id: group._id,
@@ -217,7 +247,7 @@ export const board = classQuery({
           icon: group.icon,
           imageFileId: group.imageFileId,
           updatedAt: group.updatedAt,
-          students: sortStudents(groupOnlyByGroup.get(group._id) ?? []),
+          students: sortStudents(groupOnlyByGroup.get(group._id) ?? [], nameFormat),
           teams,
         };
       });
@@ -227,6 +257,7 @@ export const board = classQuery({
         .filter((userId) => !groupedStudentIds.has(userId))
         .map((userId) => studentById.get(userId))
         .filter((student): student is BoardStudent => student !== undefined),
+      nameFormat,
     );
 
     return { groups, ungrouped };

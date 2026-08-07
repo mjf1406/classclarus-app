@@ -6,6 +6,7 @@ import { StudentDropZone } from "@/components/groups/StudentDropZone";
 import { ActionMenu } from "@/components/ui/action-menu";
 import type { BoardGroup, BoardTeam } from "@/lib/groups/groups";
 import { isOptimisticId } from "@/lib/groups/groupFormSchema";
+import { DEFAULT_ROSTER_NAME_FORMAT, type RosterNameFormat } from "@/lib/roster/roster";
 import { cn } from "@/lib/utils";
 import type { Id } from "../../../convex/_generated/dataModel";
 
@@ -15,6 +16,7 @@ type GroupCardProps = {
   canCopyTeam: boolean;
   hiddenStudentId?: Id<"users"> | null;
   viewerUserId?: Id<"users"> | null;
+  nameFormat?: RosterNameFormat;
   onEditGroup: (group: BoardGroup) => void;
   onDeleteGroup: (group: BoardGroup) => void;
   onMoveStudents: (group: BoardGroup) => void;
@@ -38,6 +40,7 @@ export function GroupCard({
   canCopyTeam,
   hiddenStudentId = null,
   viewerUserId = null,
+  nameFormat = DEFAULT_ROSTER_NAME_FORMAT,
   onEditGroup,
   onDeleteGroup,
   onMoveStudents,
@@ -122,6 +125,7 @@ export function GroupCard({
           disabled={pending}
           hiddenStudentId={hiddenStudentId}
           viewerUserId={viewerUserId}
+          nameFormat={nameFormat}
         />
       </div>
 
@@ -196,6 +200,7 @@ export function GroupCard({
               disabled={pending || teamPending}
               hiddenStudentId={hiddenStudentId}
               viewerUserId={viewerUserId}
+              nameFormat={nameFormat}
             />
           </div>
         );

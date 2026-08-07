@@ -8,625 +8,622 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes/__root'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
-import { Route as PublicRouteRouteImport } from './routes/_public/route'
-import { Route as JoinDisplayRouteImport } from './routes/join-display'
-import { Route as AuthenticatedAppRouteRouteImport } from './routes/_authenticated/_app/route'
-import { Route as AuthenticatedClassRouteRouteImport } from './routes/_authenticated/_class/route'
-import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
-import { Route as PublicSplatRouteImport } from './routes/_public/$'
-import { Route as PublicLoginRouteImport } from './routes/_public/login'
-import { Route as PublicUnauthorizedRouteImport } from './routes/_public/unauthorized'
-import { Route as APublicSlugRouteImport } from './routes/a.$publicSlug'
-import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/_app/index'
-import { Route as AuthenticatedAppAccountRouteImport } from './routes/_authenticated/_app/account'
-import { Route as AuthenticatedAppBillingRouteImport } from './routes/_authenticated/_app/billing'
-import { Route as AuthenticatedAppFeedbackRouteImport } from './routes/_authenticated/_app/feedback'
-import { Route as AuthenticatedAppJoinRouteImport } from './routes/_authenticated/_app/join'
-import { Route as AuthenticatedAppSettingsRouteImport } from './routes/_authenticated/_app/settings'
-import { Route as AuthenticatedAppUiRouteImport } from './routes/_authenticated/_app/ui'
-import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
-import { Route as AuthenticatedAdminFeedbackRouteImport } from './routes/_authenticated/admin/feedback'
-import { Route as AuthenticatedClassClassClassIdRouteRouteImport } from './routes/_authenticated/_class/class/$classId/route'
-import { Route as AuthenticatedClassClassClassIdIndexRouteImport } from './routes/_authenticated/_class/class/$classId/index'
-import { Route as AuthenticatedClassClassClassIdActivityRouteImport } from './routes/_authenticated/_class/class/$classId/activity'
-import { Route as AuthenticatedClassClassClassIdAssistantTeachersRouteImport } from './routes/_authenticated/_class/class/$classId/assistant-teachers'
-import { Route as AuthenticatedClassClassClassIdGroupsRouteImport } from './routes/_authenticated/_class/class/$classId/groups'
-import { Route as AuthenticatedClassClassClassIdGuardiansRouteImport } from './routes/_authenticated/_class/class/$classId/guardians'
-import { Route as AuthenticatedClassClassClassIdInvitationsRouteImport } from './routes/_authenticated/_class/class/$classId/invitations'
-import { Route as AuthenticatedClassClassClassIdSettingsRouteImport } from './routes/_authenticated/_class/class/$classId/settings'
-import { Route as AuthenticatedClassClassClassIdStudentsRouteImport } from './routes/_authenticated/_class/class/$classId/students'
-import { Route as AuthenticatedClassClassClassIdTeachersRouteImport } from './routes/_authenticated/_class/class/$classId/teachers'
-import { Route as AuthenticatedClassClassClassIdAnnouncementsIndexRouteImport } from './routes/_authenticated/_class/class/$classId/announcements/index'
-import { Route as AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRouteImport } from './routes/_authenticated/_class/class/$classId/announcements/$announcementId'
+import { Route as rootRouteImport } from "./routes/__root";
+import { Route as AuthenticatedRouteRouteImport } from "./routes/_authenticated/route";
+import { Route as PublicRouteRouteImport } from "./routes/_public/route";
+import { Route as JoinDisplayRouteImport } from "./routes/join-display";
+import { Route as AuthenticatedAppRouteRouteImport } from "./routes/_authenticated/_app/route";
+import { Route as AuthenticatedClassRouteRouteImport } from "./routes/_authenticated/_class/route";
+import { Route as AuthenticatedAdminRouteRouteImport } from "./routes/_authenticated/admin/route";
+import { Route as PublicSplatRouteImport } from "./routes/_public/$";
+import { Route as PublicLoginRouteImport } from "./routes/_public/login";
+import { Route as PublicUnauthorizedRouteImport } from "./routes/_public/unauthorized";
+import { Route as APublicSlugRouteImport } from "./routes/a.$publicSlug";
+import { Route as AuthenticatedAppIndexRouteImport } from "./routes/_authenticated/_app/index";
+import { Route as AuthenticatedAppAccountRouteImport } from "./routes/_authenticated/_app/account";
+import { Route as AuthenticatedAppBillingRouteImport } from "./routes/_authenticated/_app/billing";
+import { Route as AuthenticatedAppFeedbackRouteImport } from "./routes/_authenticated/_app/feedback";
+import { Route as AuthenticatedAppJoinRouteImport } from "./routes/_authenticated/_app/join";
+import { Route as AuthenticatedAppSettingsRouteImport } from "./routes/_authenticated/_app/settings";
+import { Route as AuthenticatedAppUiRouteImport } from "./routes/_authenticated/_app/ui";
+import { Route as AuthenticatedAdminIndexRouteImport } from "./routes/_authenticated/admin/index";
+import { Route as AuthenticatedAdminFeedbackRouteImport } from "./routes/_authenticated/admin/feedback";
+import { Route as AuthenticatedClassClassClassIdRouteRouteImport } from "./routes/_authenticated/_class/class/$classId/route";
+import { Route as AuthenticatedClassClassClassIdIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/index";
+import { Route as AuthenticatedClassClassClassIdActivityRouteImport } from "./routes/_authenticated/_class/class/$classId/activity";
+import { Route as AuthenticatedClassClassClassIdAssistantTeachersRouteImport } from "./routes/_authenticated/_class/class/$classId/assistant-teachers";
+import { Route as AuthenticatedClassClassClassIdGroupsRouteImport } from "./routes/_authenticated/_class/class/$classId/groups";
+import { Route as AuthenticatedClassClassClassIdGuardiansRouteImport } from "./routes/_authenticated/_class/class/$classId/guardians";
+import { Route as AuthenticatedClassClassClassIdInvitationsRouteImport } from "./routes/_authenticated/_class/class/$classId/invitations";
+import { Route as AuthenticatedClassClassClassIdSettingsRouteImport } from "./routes/_authenticated/_class/class/$classId/settings";
+import { Route as AuthenticatedClassClassClassIdStudentsRouteImport } from "./routes/_authenticated/_class/class/$classId/students";
+import { Route as AuthenticatedClassClassClassIdTeachersRouteImport } from "./routes/_authenticated/_class/class/$classId/teachers";
+import { Route as AuthenticatedClassClassClassIdAnnouncementsIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/announcements/index";
+import { Route as AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRouteImport } from "./routes/_authenticated/_class/class/$classId/announcements/$announcementId";
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
+  id: "/_authenticated",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const PublicRouteRoute = PublicRouteRouteImport.update({
-  id: '/_public',
+  id: "/_public",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const JoinDisplayRoute = JoinDisplayRouteImport.update({
-  id: '/join-display',
-  path: '/join-display',
+  id: "/join-display",
+  path: "/join-display",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const AuthenticatedAppRouteRoute = AuthenticatedAppRouteRouteImport.update({
-  id: '/_app',
+  id: "/_app",
   getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
+} as any);
 const AuthenticatedClassRouteRoute = AuthenticatedClassRouteRouteImport.update({
-  id: '/_class',
+  id: "/_class",
   getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
+} as any);
 const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
-  id: '/admin',
-  path: '/admin',
+  id: "/admin",
+  path: "/admin",
   getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
+} as any);
 const PublicSplatRoute = PublicSplatRouteImport.update({
-  id: '/$',
-  path: '/$',
+  id: "/$",
+  path: "/$",
   getParentRoute: () => PublicRouteRoute,
-} as any)
+} as any);
 const PublicLoginRoute = PublicLoginRouteImport.update({
-  id: '/login',
-  path: '/login',
+  id: "/login",
+  path: "/login",
   getParentRoute: () => PublicRouteRoute,
-} as any)
+} as any);
 const PublicUnauthorizedRoute = PublicUnauthorizedRouteImport.update({
-  id: '/unauthorized',
-  path: '/unauthorized',
+  id: "/unauthorized",
+  path: "/unauthorized",
   getParentRoute: () => PublicRouteRoute,
-} as any)
+} as any);
 const APublicSlugRoute = APublicSlugRouteImport.update({
-  id: '/a/$publicSlug',
-  path: '/a/$publicSlug',
+  id: "/a/$publicSlug",
+  path: "/a/$publicSlug",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
-  id: '/',
-  path: '/',
+  id: "/",
+  path: "/",
   getParentRoute: () => AuthenticatedAppRouteRoute,
-} as any)
+} as any);
 const AuthenticatedAppAccountRoute = AuthenticatedAppAccountRouteImport.update({
-  id: '/account',
-  path: '/account',
+  id: "/account",
+  path: "/account",
   getParentRoute: () => AuthenticatedAppRouteRoute,
-} as any)
+} as any);
 const AuthenticatedAppBillingRoute = AuthenticatedAppBillingRouteImport.update({
-  id: '/billing',
-  path: '/billing',
+  id: "/billing",
+  path: "/billing",
   getParentRoute: () => AuthenticatedAppRouteRoute,
-} as any)
-const AuthenticatedAppFeedbackRoute =
-  AuthenticatedAppFeedbackRouteImport.update({
-    id: '/feedback',
-    path: '/feedback',
-    getParentRoute: () => AuthenticatedAppRouteRoute,
-  } as any)
+} as any);
+const AuthenticatedAppFeedbackRoute = AuthenticatedAppFeedbackRouteImport.update({
+  id: "/feedback",
+  path: "/feedback",
+  getParentRoute: () => AuthenticatedAppRouteRoute,
+} as any);
 const AuthenticatedAppJoinRoute = AuthenticatedAppJoinRouteImport.update({
-  id: '/join',
-  path: '/join',
+  id: "/join",
+  path: "/join",
   getParentRoute: () => AuthenticatedAppRouteRoute,
-} as any)
-const AuthenticatedAppSettingsRoute =
-  AuthenticatedAppSettingsRouteImport.update({
-    id: '/settings',
-    path: '/settings',
-    getParentRoute: () => AuthenticatedAppRouteRoute,
-  } as any)
+} as any);
+const AuthenticatedAppSettingsRoute = AuthenticatedAppSettingsRouteImport.update({
+  id: "/settings",
+  path: "/settings",
+  getParentRoute: () => AuthenticatedAppRouteRoute,
+} as any);
 const AuthenticatedAppUiRoute = AuthenticatedAppUiRouteImport.update({
-  id: '/ui',
-  path: '/ui',
+  id: "/ui",
+  path: "/ui",
   getParentRoute: () => AuthenticatedAppRouteRoute,
-} as any)
+} as any);
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
-  id: '/',
-  path: '/',
+  id: "/",
+  path: "/",
   getParentRoute: () => AuthenticatedAdminRouteRoute,
-} as any)
-const AuthenticatedAdminFeedbackRoute =
-  AuthenticatedAdminFeedbackRouteImport.update({
-    id: '/feedback',
-    path: '/feedback',
-    getParentRoute: () => AuthenticatedAdminRouteRoute,
-  } as any)
+} as any);
+const AuthenticatedAdminFeedbackRoute = AuthenticatedAdminFeedbackRouteImport.update({
+  id: "/feedback",
+  path: "/feedback",
+  getParentRoute: () => AuthenticatedAdminRouteRoute,
+} as any);
 const AuthenticatedClassClassClassIdRouteRoute =
   AuthenticatedClassClassClassIdRouteRouteImport.update({
-    id: '/class/$classId',
-    path: '/class/$classId',
+    id: "/class/$classId",
+    path: "/class/$classId",
     getParentRoute: () => AuthenticatedClassRouteRoute,
-  } as any)
+  } as any);
 const AuthenticatedClassClassClassIdIndexRoute =
   AuthenticatedClassClassClassIdIndexRouteImport.update({
-    id: '/',
-    path: '/',
+    id: "/",
+    path: "/",
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any)
+  } as any);
 const AuthenticatedClassClassClassIdActivityRoute =
   AuthenticatedClassClassClassIdActivityRouteImport.update({
-    id: '/activity',
-    path: '/activity',
+    id: "/activity",
+    path: "/activity",
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any)
+  } as any);
 const AuthenticatedClassClassClassIdAssistantTeachersRoute =
   AuthenticatedClassClassClassIdAssistantTeachersRouteImport.update({
-    id: '/assistant-teachers',
-    path: '/assistant-teachers',
+    id: "/assistant-teachers",
+    path: "/assistant-teachers",
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any)
+  } as any);
 const AuthenticatedClassClassClassIdGroupsRoute =
   AuthenticatedClassClassClassIdGroupsRouteImport.update({
-    id: '/groups',
-    path: '/groups',
+    id: "/groups",
+    path: "/groups",
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any)
+  } as any);
 const AuthenticatedClassClassClassIdGuardiansRoute =
   AuthenticatedClassClassClassIdGuardiansRouteImport.update({
-    id: '/guardians',
-    path: '/guardians',
+    id: "/guardians",
+    path: "/guardians",
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any)
+  } as any);
 const AuthenticatedClassClassClassIdInvitationsRoute =
   AuthenticatedClassClassClassIdInvitationsRouteImport.update({
-    id: '/invitations',
-    path: '/invitations',
+    id: "/invitations",
+    path: "/invitations",
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any)
+  } as any);
 const AuthenticatedClassClassClassIdSettingsRoute =
   AuthenticatedClassClassClassIdSettingsRouteImport.update({
-    id: '/settings',
-    path: '/settings',
+    id: "/settings",
+    path: "/settings",
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any)
+  } as any);
 const AuthenticatedClassClassClassIdStudentsRoute =
   AuthenticatedClassClassClassIdStudentsRouteImport.update({
-    id: '/students',
-    path: '/students',
+    id: "/students",
+    path: "/students",
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any)
+  } as any);
 const AuthenticatedClassClassClassIdTeachersRoute =
   AuthenticatedClassClassClassIdTeachersRouteImport.update({
-    id: '/teachers',
-    path: '/teachers',
+    id: "/teachers",
+    path: "/teachers",
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any)
+  } as any);
 const AuthenticatedClassClassClassIdAnnouncementsIndexRoute =
   AuthenticatedClassClassClassIdAnnouncementsIndexRouteImport.update({
-    id: '/announcements/',
-    path: '/announcements/',
+    id: "/announcements/",
+    path: "/announcements/",
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any)
+  } as any);
 const AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute =
   AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRouteImport.update({
-    id: '/announcements/$announcementId',
-    path: '/announcements/$announcementId',
+    id: "/announcements/$announcementId",
+    path: "/announcements/$announcementId",
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any)
+  } as any);
 
 export interface FileRoutesByFullPath {
-  '/': typeof AuthenticatedAppIndexRoute
-  '/join-display': typeof JoinDisplayRoute
-  '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
-  '/$': typeof PublicSplatRoute
-  '/login': typeof PublicLoginRoute
-  '/unauthorized': typeof PublicUnauthorizedRoute
-  '/a/$publicSlug': typeof APublicSlugRoute
-  '/account': typeof AuthenticatedAppAccountRoute
-  '/billing': typeof AuthenticatedAppBillingRoute
-  '/feedback': typeof AuthenticatedAppFeedbackRoute
-  '/join': typeof AuthenticatedAppJoinRoute
-  '/settings': typeof AuthenticatedAppSettingsRoute
-  '/ui': typeof AuthenticatedAppUiRoute
-  '/admin/feedback': typeof AuthenticatedAdminFeedbackRoute
-  '/admin/': typeof AuthenticatedAdminIndexRoute
-  '/class/$classId': typeof AuthenticatedClassClassClassIdRouteRouteWithChildren
-  '/class/$classId/activity': typeof AuthenticatedClassClassClassIdActivityRoute
-  '/class/$classId/assistant-teachers': typeof AuthenticatedClassClassClassIdAssistantTeachersRoute
-  '/class/$classId/groups': typeof AuthenticatedClassClassClassIdGroupsRoute
-  '/class/$classId/guardians': typeof AuthenticatedClassClassClassIdGuardiansRoute
-  '/class/$classId/invitations': typeof AuthenticatedClassClassClassIdInvitationsRoute
-  '/class/$classId/settings': typeof AuthenticatedClassClassClassIdSettingsRoute
-  '/class/$classId/students': typeof AuthenticatedClassClassClassIdStudentsRoute
-  '/class/$classId/teachers': typeof AuthenticatedClassClassClassIdTeachersRoute
-  '/class/$classId/': typeof AuthenticatedClassClassClassIdIndexRoute
-  '/class/$classId/announcements/$announcementId': typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute
-  '/class/$classId/announcements/': typeof AuthenticatedClassClassClassIdAnnouncementsIndexRoute
+  "/": typeof AuthenticatedAppIndexRoute;
+  "/join-display": typeof JoinDisplayRoute;
+  "/admin": typeof AuthenticatedAdminRouteRouteWithChildren;
+  "/$": typeof PublicSplatRoute;
+  "/login": typeof PublicLoginRoute;
+  "/unauthorized": typeof PublicUnauthorizedRoute;
+  "/a/$publicSlug": typeof APublicSlugRoute;
+  "/account": typeof AuthenticatedAppAccountRoute;
+  "/billing": typeof AuthenticatedAppBillingRoute;
+  "/feedback": typeof AuthenticatedAppFeedbackRoute;
+  "/join": typeof AuthenticatedAppJoinRoute;
+  "/settings": typeof AuthenticatedAppSettingsRoute;
+  "/ui": typeof AuthenticatedAppUiRoute;
+  "/admin/feedback": typeof AuthenticatedAdminFeedbackRoute;
+  "/admin/": typeof AuthenticatedAdminIndexRoute;
+  "/class/$classId": typeof AuthenticatedClassClassClassIdRouteRouteWithChildren;
+  "/class/$classId/activity": typeof AuthenticatedClassClassClassIdActivityRoute;
+  "/class/$classId/assistant-teachers": typeof AuthenticatedClassClassClassIdAssistantTeachersRoute;
+  "/class/$classId/groups": typeof AuthenticatedClassClassClassIdGroupsRoute;
+  "/class/$classId/guardians": typeof AuthenticatedClassClassClassIdGuardiansRoute;
+  "/class/$classId/invitations": typeof AuthenticatedClassClassClassIdInvitationsRoute;
+  "/class/$classId/settings": typeof AuthenticatedClassClassClassIdSettingsRoute;
+  "/class/$classId/students": typeof AuthenticatedClassClassClassIdStudentsRoute;
+  "/class/$classId/teachers": typeof AuthenticatedClassClassClassIdTeachersRoute;
+  "/class/$classId/": typeof AuthenticatedClassClassClassIdIndexRoute;
+  "/class/$classId/announcements/$announcementId": typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute;
+  "/class/$classId/announcements/": typeof AuthenticatedClassClassClassIdAnnouncementsIndexRoute;
 }
 export interface FileRoutesByTo {
-  '/': typeof AuthenticatedAppIndexRoute
-  '/join-display': typeof JoinDisplayRoute
-  '/$': typeof PublicSplatRoute
-  '/login': typeof PublicLoginRoute
-  '/unauthorized': typeof PublicUnauthorizedRoute
-  '/a/$publicSlug': typeof APublicSlugRoute
-  '/account': typeof AuthenticatedAppAccountRoute
-  '/billing': typeof AuthenticatedAppBillingRoute
-  '/feedback': typeof AuthenticatedAppFeedbackRoute
-  '/join': typeof AuthenticatedAppJoinRoute
-  '/settings': typeof AuthenticatedAppSettingsRoute
-  '/ui': typeof AuthenticatedAppUiRoute
-  '/admin/feedback': typeof AuthenticatedAdminFeedbackRoute
-  '/admin': typeof AuthenticatedAdminIndexRoute
-  '/class/$classId/activity': typeof AuthenticatedClassClassClassIdActivityRoute
-  '/class/$classId/assistant-teachers': typeof AuthenticatedClassClassClassIdAssistantTeachersRoute
-  '/class/$classId/groups': typeof AuthenticatedClassClassClassIdGroupsRoute
-  '/class/$classId/guardians': typeof AuthenticatedClassClassClassIdGuardiansRoute
-  '/class/$classId/invitations': typeof AuthenticatedClassClassClassIdInvitationsRoute
-  '/class/$classId/settings': typeof AuthenticatedClassClassClassIdSettingsRoute
-  '/class/$classId/students': typeof AuthenticatedClassClassClassIdStudentsRoute
-  '/class/$classId/teachers': typeof AuthenticatedClassClassClassIdTeachersRoute
-  '/class/$classId': typeof AuthenticatedClassClassClassIdIndexRoute
-  '/class/$classId/announcements/$announcementId': typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute
-  '/class/$classId/announcements': typeof AuthenticatedClassClassClassIdAnnouncementsIndexRoute
+  "/": typeof AuthenticatedAppIndexRoute;
+  "/join-display": typeof JoinDisplayRoute;
+  "/$": typeof PublicSplatRoute;
+  "/login": typeof PublicLoginRoute;
+  "/unauthorized": typeof PublicUnauthorizedRoute;
+  "/a/$publicSlug": typeof APublicSlugRoute;
+  "/account": typeof AuthenticatedAppAccountRoute;
+  "/billing": typeof AuthenticatedAppBillingRoute;
+  "/feedback": typeof AuthenticatedAppFeedbackRoute;
+  "/join": typeof AuthenticatedAppJoinRoute;
+  "/settings": typeof AuthenticatedAppSettingsRoute;
+  "/ui": typeof AuthenticatedAppUiRoute;
+  "/admin/feedback": typeof AuthenticatedAdminFeedbackRoute;
+  "/admin": typeof AuthenticatedAdminIndexRoute;
+  "/class/$classId/activity": typeof AuthenticatedClassClassClassIdActivityRoute;
+  "/class/$classId/assistant-teachers": typeof AuthenticatedClassClassClassIdAssistantTeachersRoute;
+  "/class/$classId/groups": typeof AuthenticatedClassClassClassIdGroupsRoute;
+  "/class/$classId/guardians": typeof AuthenticatedClassClassClassIdGuardiansRoute;
+  "/class/$classId/invitations": typeof AuthenticatedClassClassClassIdInvitationsRoute;
+  "/class/$classId/settings": typeof AuthenticatedClassClassClassIdSettingsRoute;
+  "/class/$classId/students": typeof AuthenticatedClassClassClassIdStudentsRoute;
+  "/class/$classId/teachers": typeof AuthenticatedClassClassClassIdTeachersRoute;
+  "/class/$classId": typeof AuthenticatedClassClassClassIdIndexRoute;
+  "/class/$classId/announcements/$announcementId": typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute;
+  "/class/$classId/announcements": typeof AuthenticatedClassClassClassIdAnnouncementsIndexRoute;
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport
-  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
-  '/_public': typeof PublicRouteRouteWithChildren
-  '/join-display': typeof JoinDisplayRoute
-  '/_authenticated/_app': typeof AuthenticatedAppRouteRouteWithChildren
-  '/_authenticated/_class': typeof AuthenticatedClassRouteRouteWithChildren
-  '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
-  '/_public/$': typeof PublicSplatRoute
-  '/_public/login': typeof PublicLoginRoute
-  '/_public/unauthorized': typeof PublicUnauthorizedRoute
-  '/a/$publicSlug': typeof APublicSlugRoute
-  '/_authenticated/_app/account': typeof AuthenticatedAppAccountRoute
-  '/_authenticated/_app/billing': typeof AuthenticatedAppBillingRoute
-  '/_authenticated/_app/feedback': typeof AuthenticatedAppFeedbackRoute
-  '/_authenticated/_app/join': typeof AuthenticatedAppJoinRoute
-  '/_authenticated/_app/settings': typeof AuthenticatedAppSettingsRoute
-  '/_authenticated/_app/ui': typeof AuthenticatedAppUiRoute
-  '/_authenticated/admin/feedback': typeof AuthenticatedAdminFeedbackRoute
-  '/_authenticated/_app/': typeof AuthenticatedAppIndexRoute
-  '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
-  '/_authenticated/_class/class/$classId': typeof AuthenticatedClassClassClassIdRouteRouteWithChildren
-  '/_authenticated/_class/class/$classId/activity': typeof AuthenticatedClassClassClassIdActivityRoute
-  '/_authenticated/_class/class/$classId/assistant-teachers': typeof AuthenticatedClassClassClassIdAssistantTeachersRoute
-  '/_authenticated/_class/class/$classId/groups': typeof AuthenticatedClassClassClassIdGroupsRoute
-  '/_authenticated/_class/class/$classId/guardians': typeof AuthenticatedClassClassClassIdGuardiansRoute
-  '/_authenticated/_class/class/$classId/invitations': typeof AuthenticatedClassClassClassIdInvitationsRoute
-  '/_authenticated/_class/class/$classId/settings': typeof AuthenticatedClassClassClassIdSettingsRoute
-  '/_authenticated/_class/class/$classId/students': typeof AuthenticatedClassClassClassIdStudentsRoute
-  '/_authenticated/_class/class/$classId/teachers': typeof AuthenticatedClassClassClassIdTeachersRoute
-  '/_authenticated/_class/class/$classId/': typeof AuthenticatedClassClassClassIdIndexRoute
-  '/_authenticated/_class/class/$classId/announcements/$announcementId': typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute
-  '/_authenticated/_class/class/$classId/announcements/': typeof AuthenticatedClassClassClassIdAnnouncementsIndexRoute
+  __root__: typeof rootRouteImport;
+  "/_authenticated": typeof AuthenticatedRouteRouteWithChildren;
+  "/_public": typeof PublicRouteRouteWithChildren;
+  "/join-display": typeof JoinDisplayRoute;
+  "/_authenticated/_app": typeof AuthenticatedAppRouteRouteWithChildren;
+  "/_authenticated/_class": typeof AuthenticatedClassRouteRouteWithChildren;
+  "/_authenticated/admin": typeof AuthenticatedAdminRouteRouteWithChildren;
+  "/_public/$": typeof PublicSplatRoute;
+  "/_public/login": typeof PublicLoginRoute;
+  "/_public/unauthorized": typeof PublicUnauthorizedRoute;
+  "/a/$publicSlug": typeof APublicSlugRoute;
+  "/_authenticated/_app/account": typeof AuthenticatedAppAccountRoute;
+  "/_authenticated/_app/billing": typeof AuthenticatedAppBillingRoute;
+  "/_authenticated/_app/feedback": typeof AuthenticatedAppFeedbackRoute;
+  "/_authenticated/_app/join": typeof AuthenticatedAppJoinRoute;
+  "/_authenticated/_app/settings": typeof AuthenticatedAppSettingsRoute;
+  "/_authenticated/_app/ui": typeof AuthenticatedAppUiRoute;
+  "/_authenticated/admin/feedback": typeof AuthenticatedAdminFeedbackRoute;
+  "/_authenticated/_app/": typeof AuthenticatedAppIndexRoute;
+  "/_authenticated/admin/": typeof AuthenticatedAdminIndexRoute;
+  "/_authenticated/_class/class/$classId": typeof AuthenticatedClassClassClassIdRouteRouteWithChildren;
+  "/_authenticated/_class/class/$classId/activity": typeof AuthenticatedClassClassClassIdActivityRoute;
+  "/_authenticated/_class/class/$classId/assistant-teachers": typeof AuthenticatedClassClassClassIdAssistantTeachersRoute;
+  "/_authenticated/_class/class/$classId/groups": typeof AuthenticatedClassClassClassIdGroupsRoute;
+  "/_authenticated/_class/class/$classId/guardians": typeof AuthenticatedClassClassClassIdGuardiansRoute;
+  "/_authenticated/_class/class/$classId/invitations": typeof AuthenticatedClassClassClassIdInvitationsRoute;
+  "/_authenticated/_class/class/$classId/settings": typeof AuthenticatedClassClassClassIdSettingsRoute;
+  "/_authenticated/_class/class/$classId/students": typeof AuthenticatedClassClassClassIdStudentsRoute;
+  "/_authenticated/_class/class/$classId/teachers": typeof AuthenticatedClassClassClassIdTeachersRoute;
+  "/_authenticated/_class/class/$classId/": typeof AuthenticatedClassClassClassIdIndexRoute;
+  "/_authenticated/_class/class/$classId/announcements/$announcementId": typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute;
+  "/_authenticated/_class/class/$classId/announcements/": typeof AuthenticatedClassClassClassIdAnnouncementsIndexRoute;
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath
+  fileRoutesByFullPath: FileRoutesByFullPath;
   fullPaths:
-    | '/'
-    | '/join-display'
-    | '/admin'
-    | '/$'
-    | '/login'
-    | '/unauthorized'
-    | '/a/$publicSlug'
-    | '/account'
-    | '/billing'
-    | '/feedback'
-    | '/join'
-    | '/settings'
-    | '/ui'
-    | '/admin/feedback'
-    | '/admin/'
-    | '/class/$classId'
-    | '/class/$classId/activity'
-    | '/class/$classId/assistant-teachers'
-    | '/class/$classId/groups'
-    | '/class/$classId/guardians'
-    | '/class/$classId/invitations'
-    | '/class/$classId/settings'
-    | '/class/$classId/students'
-    | '/class/$classId/teachers'
-    | '/class/$classId/'
-    | '/class/$classId/announcements/$announcementId'
-    | '/class/$classId/announcements/'
-  fileRoutesByTo: FileRoutesByTo
+    | "/"
+    | "/join-display"
+    | "/admin"
+    | "/$"
+    | "/login"
+    | "/unauthorized"
+    | "/a/$publicSlug"
+    | "/account"
+    | "/billing"
+    | "/feedback"
+    | "/join"
+    | "/settings"
+    | "/ui"
+    | "/admin/feedback"
+    | "/admin/"
+    | "/class/$classId"
+    | "/class/$classId/activity"
+    | "/class/$classId/assistant-teachers"
+    | "/class/$classId/groups"
+    | "/class/$classId/guardians"
+    | "/class/$classId/invitations"
+    | "/class/$classId/settings"
+    | "/class/$classId/students"
+    | "/class/$classId/teachers"
+    | "/class/$classId/"
+    | "/class/$classId/announcements/$announcementId"
+    | "/class/$classId/announcements/";
+  fileRoutesByTo: FileRoutesByTo;
   to:
-    | '/'
-    | '/join-display'
-    | '/$'
-    | '/login'
-    | '/unauthorized'
-    | '/a/$publicSlug'
-    | '/account'
-    | '/billing'
-    | '/feedback'
-    | '/join'
-    | '/settings'
-    | '/ui'
-    | '/admin/feedback'
-    | '/admin'
-    | '/class/$classId/activity'
-    | '/class/$classId/assistant-teachers'
-    | '/class/$classId/groups'
-    | '/class/$classId/guardians'
-    | '/class/$classId/invitations'
-    | '/class/$classId/settings'
-    | '/class/$classId/students'
-    | '/class/$classId/teachers'
-    | '/class/$classId'
-    | '/class/$classId/announcements/$announcementId'
-    | '/class/$classId/announcements'
+    | "/"
+    | "/join-display"
+    | "/$"
+    | "/login"
+    | "/unauthorized"
+    | "/a/$publicSlug"
+    | "/account"
+    | "/billing"
+    | "/feedback"
+    | "/join"
+    | "/settings"
+    | "/ui"
+    | "/admin/feedback"
+    | "/admin"
+    | "/class/$classId/activity"
+    | "/class/$classId/assistant-teachers"
+    | "/class/$classId/groups"
+    | "/class/$classId/guardians"
+    | "/class/$classId/invitations"
+    | "/class/$classId/settings"
+    | "/class/$classId/students"
+    | "/class/$classId/teachers"
+    | "/class/$classId"
+    | "/class/$classId/announcements/$announcementId"
+    | "/class/$classId/announcements";
   id:
-    | '__root__'
-    | '/_authenticated'
-    | '/_public'
-    | '/join-display'
-    | '/_authenticated/_app'
-    | '/_authenticated/_class'
-    | '/_authenticated/admin'
-    | '/_public/$'
-    | '/_public/login'
-    | '/_public/unauthorized'
-    | '/a/$publicSlug'
-    | '/_authenticated/_app/account'
-    | '/_authenticated/_app/billing'
-    | '/_authenticated/_app/feedback'
-    | '/_authenticated/_app/join'
-    | '/_authenticated/_app/settings'
-    | '/_authenticated/_app/ui'
-    | '/_authenticated/admin/feedback'
-    | '/_authenticated/_app/'
-    | '/_authenticated/admin/'
-    | '/_authenticated/_class/class/$classId'
-    | '/_authenticated/_class/class/$classId/activity'
-    | '/_authenticated/_class/class/$classId/assistant-teachers'
-    | '/_authenticated/_class/class/$classId/groups'
-    | '/_authenticated/_class/class/$classId/guardians'
-    | '/_authenticated/_class/class/$classId/invitations'
-    | '/_authenticated/_class/class/$classId/settings'
-    | '/_authenticated/_class/class/$classId/students'
-    | '/_authenticated/_class/class/$classId/teachers'
-    | '/_authenticated/_class/class/$classId/'
-    | '/_authenticated/_class/class/$classId/announcements/$announcementId'
-    | '/_authenticated/_class/class/$classId/announcements/'
-  fileRoutesById: FileRoutesById
+    | "__root__"
+    | "/_authenticated"
+    | "/_public"
+    | "/join-display"
+    | "/_authenticated/_app"
+    | "/_authenticated/_class"
+    | "/_authenticated/admin"
+    | "/_public/$"
+    | "/_public/login"
+    | "/_public/unauthorized"
+    | "/a/$publicSlug"
+    | "/_authenticated/_app/account"
+    | "/_authenticated/_app/billing"
+    | "/_authenticated/_app/feedback"
+    | "/_authenticated/_app/join"
+    | "/_authenticated/_app/settings"
+    | "/_authenticated/_app/ui"
+    | "/_authenticated/admin/feedback"
+    | "/_authenticated/_app/"
+    | "/_authenticated/admin/"
+    | "/_authenticated/_class/class/$classId"
+    | "/_authenticated/_class/class/$classId/activity"
+    | "/_authenticated/_class/class/$classId/assistant-teachers"
+    | "/_authenticated/_class/class/$classId/groups"
+    | "/_authenticated/_class/class/$classId/guardians"
+    | "/_authenticated/_class/class/$classId/invitations"
+    | "/_authenticated/_class/class/$classId/settings"
+    | "/_authenticated/_class/class/$classId/students"
+    | "/_authenticated/_class/class/$classId/teachers"
+    | "/_authenticated/_class/class/$classId/"
+    | "/_authenticated/_class/class/$classId/announcements/$announcementId"
+    | "/_authenticated/_class/class/$classId/announcements/";
+  fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
-  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
-  PublicRouteRoute: typeof PublicRouteRouteWithChildren
-  JoinDisplayRoute: typeof JoinDisplayRoute
-  APublicSlugRoute: typeof APublicSlugRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren;
+  PublicRouteRoute: typeof PublicRouteRouteWithChildren;
+  JoinDisplayRoute: typeof JoinDisplayRoute;
+  APublicSlugRoute: typeof APublicSlugRoute;
 }
 
-declare module '@tanstack/react-router' {
+declare module "@tanstack/react-router" {
   interface FileRoutesByPath {
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_public': {
-      id: '/_public'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof PublicRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/join-display': {
-      id: '/join-display'
-      path: '/join-display'
-      fullPath: '/join-display'
-      preLoaderRoute: typeof JoinDisplayRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/_app': {
-      id: '/_authenticated/_app'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedAppRouteRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/_class': {
-      id: '/_authenticated/_class'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedClassRouteRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin': {
-      id: '/_authenticated/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AuthenticatedAdminRouteRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_public/$': {
-      id: '/_public/$'
-      path: '/$'
-      fullPath: '/$'
-      preLoaderRoute: typeof PublicSplatRouteImport
-      parentRoute: typeof PublicRouteRoute
-    }
-    '/_public/login': {
-      id: '/_public/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof PublicLoginRouteImport
-      parentRoute: typeof PublicRouteRoute
-    }
-    '/_public/unauthorized': {
-      id: '/_public/unauthorized'
-      path: '/unauthorized'
-      fullPath: '/unauthorized'
-      preLoaderRoute: typeof PublicUnauthorizedRouteImport
-      parentRoute: typeof PublicRouteRoute
-    }
-    '/a/$publicSlug': {
-      id: '/a/$publicSlug'
-      path: '/a/$publicSlug'
-      fullPath: '/a/$publicSlug'
-      preLoaderRoute: typeof APublicSlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/_app/': {
-      id: '/_authenticated/_app/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedAppIndexRouteImport
-      parentRoute: typeof AuthenticatedAppRouteRoute
-    }
-    '/_authenticated/_app/account': {
-      id: '/_authenticated/_app/account'
-      path: '/account'
-      fullPath: '/account'
-      preLoaderRoute: typeof AuthenticatedAppAccountRouteImport
-      parentRoute: typeof AuthenticatedAppRouteRoute
-    }
-    '/_authenticated/_app/billing': {
-      id: '/_authenticated/_app/billing'
-      path: '/billing'
-      fullPath: '/billing'
-      preLoaderRoute: typeof AuthenticatedAppBillingRouteImport
-      parentRoute: typeof AuthenticatedAppRouteRoute
-    }
-    '/_authenticated/_app/feedback': {
-      id: '/_authenticated/_app/feedback'
-      path: '/feedback'
-      fullPath: '/feedback'
-      preLoaderRoute: typeof AuthenticatedAppFeedbackRouteImport
-      parentRoute: typeof AuthenticatedAppRouteRoute
-    }
-    '/_authenticated/_app/join': {
-      id: '/_authenticated/_app/join'
-      path: '/join'
-      fullPath: '/join'
-      preLoaderRoute: typeof AuthenticatedAppJoinRouteImport
-      parentRoute: typeof AuthenticatedAppRouteRoute
-    }
-    '/_authenticated/_app/settings': {
-      id: '/_authenticated/_app/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AuthenticatedAppSettingsRouteImport
-      parentRoute: typeof AuthenticatedAppRouteRoute
-    }
-    '/_authenticated/_app/ui': {
-      id: '/_authenticated/_app/ui'
-      path: '/ui'
-      fullPath: '/ui'
-      preLoaderRoute: typeof AuthenticatedAppUiRouteImport
-      parentRoute: typeof AuthenticatedAppRouteRoute
-    }
-    '/_authenticated/admin/': {
-      id: '/_authenticated/admin/'
-      path: '/'
-      fullPath: '/admin/'
-      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
-      parentRoute: typeof AuthenticatedAdminRouteRoute
-    }
-    '/_authenticated/admin/feedback': {
-      id: '/_authenticated/admin/feedback'
-      path: '/feedback'
-      fullPath: '/admin/feedback'
-      preLoaderRoute: typeof AuthenticatedAdminFeedbackRouteImport
-      parentRoute: typeof AuthenticatedAdminRouteRoute
-    }
-    '/_authenticated/_class/class/$classId': {
-      id: '/_authenticated/_class/class/$classId'
-      path: '/class/$classId'
-      fullPath: '/class/$classId'
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdRouteRouteImport
-      parentRoute: typeof AuthenticatedClassRouteRoute
-    }
-    '/_authenticated/_class/class/$classId/': {
-      id: '/_authenticated/_class/class/$classId/'
-      path: '/'
-      fullPath: '/class/$classId/'
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdIndexRouteImport
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
-    }
-    '/_authenticated/_class/class/$classId/activity': {
-      id: '/_authenticated/_class/class/$classId/activity'
-      path: '/activity'
-      fullPath: '/class/$classId/activity'
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdActivityRouteImport
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
-    }
-    '/_authenticated/_class/class/$classId/assistant-teachers': {
-      id: '/_authenticated/_class/class/$classId/assistant-teachers'
-      path: '/assistant-teachers'
-      fullPath: '/class/$classId/assistant-teachers'
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssistantTeachersRouteImport
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
-    }
-    '/_authenticated/_class/class/$classId/groups': {
-      id: '/_authenticated/_class/class/$classId/groups'
-      path: '/groups'
-      fullPath: '/class/$classId/groups'
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdGroupsRouteImport
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
-    }
-    '/_authenticated/_class/class/$classId/guardians': {
-      id: '/_authenticated/_class/class/$classId/guardians'
-      path: '/guardians'
-      fullPath: '/class/$classId/guardians'
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdGuardiansRouteImport
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
-    }
-    '/_authenticated/_class/class/$classId/invitations': {
-      id: '/_authenticated/_class/class/$classId/invitations'
-      path: '/invitations'
-      fullPath: '/class/$classId/invitations'
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdInvitationsRouteImport
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
-    }
-    '/_authenticated/_class/class/$classId/settings': {
-      id: '/_authenticated/_class/class/$classId/settings'
-      path: '/settings'
-      fullPath: '/class/$classId/settings'
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdSettingsRouteImport
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
-    }
-    '/_authenticated/_class/class/$classId/students': {
-      id: '/_authenticated/_class/class/$classId/students'
-      path: '/students'
-      fullPath: '/class/$classId/students'
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdStudentsRouteImport
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
-    }
-    '/_authenticated/_class/class/$classId/teachers': {
-      id: '/_authenticated/_class/class/$classId/teachers'
-      path: '/teachers'
-      fullPath: '/class/$classId/teachers'
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdTeachersRouteImport
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
-    }
-    '/_authenticated/_class/class/$classId/announcements/': {
-      id: '/_authenticated/_class/class/$classId/announcements/'
-      path: '/announcements'
-      fullPath: '/class/$classId/announcements/'
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdAnnouncementsIndexRouteImport
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
-    }
-    '/_authenticated/_class/class/$classId/announcements/$announcementId': {
-      id: '/_authenticated/_class/class/$classId/announcements/$announcementId'
-      path: '/announcements/$announcementId'
-      fullPath: '/class/$classId/announcements/$announcementId'
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRouteImport
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
-    }
+    "/_authenticated": {
+      id: "/_authenticated";
+      path: "";
+      fullPath: "/";
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/_public": {
+      id: "/_public";
+      path: "";
+      fullPath: "/";
+      preLoaderRoute: typeof PublicRouteRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/join-display": {
+      id: "/join-display";
+      path: "/join-display";
+      fullPath: "/join-display";
+      preLoaderRoute: typeof JoinDisplayRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/_authenticated/_app": {
+      id: "/_authenticated/_app";
+      path: "";
+      fullPath: "/";
+      preLoaderRoute: typeof AuthenticatedAppRouteRouteImport;
+      parentRoute: typeof AuthenticatedRouteRoute;
+    };
+    "/_authenticated/_class": {
+      id: "/_authenticated/_class";
+      path: "";
+      fullPath: "/";
+      preLoaderRoute: typeof AuthenticatedClassRouteRouteImport;
+      parentRoute: typeof AuthenticatedRouteRoute;
+    };
+    "/_authenticated/admin": {
+      id: "/_authenticated/admin";
+      path: "/admin";
+      fullPath: "/admin";
+      preLoaderRoute: typeof AuthenticatedAdminRouteRouteImport;
+      parentRoute: typeof AuthenticatedRouteRoute;
+    };
+    "/_public/$": {
+      id: "/_public/$";
+      path: "/$";
+      fullPath: "/$";
+      preLoaderRoute: typeof PublicSplatRouteImport;
+      parentRoute: typeof PublicRouteRoute;
+    };
+    "/_public/login": {
+      id: "/_public/login";
+      path: "/login";
+      fullPath: "/login";
+      preLoaderRoute: typeof PublicLoginRouteImport;
+      parentRoute: typeof PublicRouteRoute;
+    };
+    "/_public/unauthorized": {
+      id: "/_public/unauthorized";
+      path: "/unauthorized";
+      fullPath: "/unauthorized";
+      preLoaderRoute: typeof PublicUnauthorizedRouteImport;
+      parentRoute: typeof PublicRouteRoute;
+    };
+    "/a/$publicSlug": {
+      id: "/a/$publicSlug";
+      path: "/a/$publicSlug";
+      fullPath: "/a/$publicSlug";
+      preLoaderRoute: typeof APublicSlugRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/_authenticated/_app/": {
+      id: "/_authenticated/_app/";
+      path: "/";
+      fullPath: "/";
+      preLoaderRoute: typeof AuthenticatedAppIndexRouteImport;
+      parentRoute: typeof AuthenticatedAppRouteRoute;
+    };
+    "/_authenticated/_app/account": {
+      id: "/_authenticated/_app/account";
+      path: "/account";
+      fullPath: "/account";
+      preLoaderRoute: typeof AuthenticatedAppAccountRouteImport;
+      parentRoute: typeof AuthenticatedAppRouteRoute;
+    };
+    "/_authenticated/_app/billing": {
+      id: "/_authenticated/_app/billing";
+      path: "/billing";
+      fullPath: "/billing";
+      preLoaderRoute: typeof AuthenticatedAppBillingRouteImport;
+      parentRoute: typeof AuthenticatedAppRouteRoute;
+    };
+    "/_authenticated/_app/feedback": {
+      id: "/_authenticated/_app/feedback";
+      path: "/feedback";
+      fullPath: "/feedback";
+      preLoaderRoute: typeof AuthenticatedAppFeedbackRouteImport;
+      parentRoute: typeof AuthenticatedAppRouteRoute;
+    };
+    "/_authenticated/_app/join": {
+      id: "/_authenticated/_app/join";
+      path: "/join";
+      fullPath: "/join";
+      preLoaderRoute: typeof AuthenticatedAppJoinRouteImport;
+      parentRoute: typeof AuthenticatedAppRouteRoute;
+    };
+    "/_authenticated/_app/settings": {
+      id: "/_authenticated/_app/settings";
+      path: "/settings";
+      fullPath: "/settings";
+      preLoaderRoute: typeof AuthenticatedAppSettingsRouteImport;
+      parentRoute: typeof AuthenticatedAppRouteRoute;
+    };
+    "/_authenticated/_app/ui": {
+      id: "/_authenticated/_app/ui";
+      path: "/ui";
+      fullPath: "/ui";
+      preLoaderRoute: typeof AuthenticatedAppUiRouteImport;
+      parentRoute: typeof AuthenticatedAppRouteRoute;
+    };
+    "/_authenticated/admin/": {
+      id: "/_authenticated/admin/";
+      path: "/";
+      fullPath: "/admin/";
+      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport;
+      parentRoute: typeof AuthenticatedAdminRouteRoute;
+    };
+    "/_authenticated/admin/feedback": {
+      id: "/_authenticated/admin/feedback";
+      path: "/feedback";
+      fullPath: "/admin/feedback";
+      preLoaderRoute: typeof AuthenticatedAdminFeedbackRouteImport;
+      parentRoute: typeof AuthenticatedAdminRouteRoute;
+    };
+    "/_authenticated/_class/class/$classId": {
+      id: "/_authenticated/_class/class/$classId";
+      path: "/class/$classId";
+      fullPath: "/class/$classId";
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdRouteRouteImport;
+      parentRoute: typeof AuthenticatedClassRouteRoute;
+    };
+    "/_authenticated/_class/class/$classId/": {
+      id: "/_authenticated/_class/class/$classId/";
+      path: "/";
+      fullPath: "/class/$classId/";
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdIndexRouteImport;
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
+    };
+    "/_authenticated/_class/class/$classId/activity": {
+      id: "/_authenticated/_class/class/$classId/activity";
+      path: "/activity";
+      fullPath: "/class/$classId/activity";
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdActivityRouteImport;
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
+    };
+    "/_authenticated/_class/class/$classId/assistant-teachers": {
+      id: "/_authenticated/_class/class/$classId/assistant-teachers";
+      path: "/assistant-teachers";
+      fullPath: "/class/$classId/assistant-teachers";
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssistantTeachersRouteImport;
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
+    };
+    "/_authenticated/_class/class/$classId/groups": {
+      id: "/_authenticated/_class/class/$classId/groups";
+      path: "/groups";
+      fullPath: "/class/$classId/groups";
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdGroupsRouteImport;
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
+    };
+    "/_authenticated/_class/class/$classId/guardians": {
+      id: "/_authenticated/_class/class/$classId/guardians";
+      path: "/guardians";
+      fullPath: "/class/$classId/guardians";
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdGuardiansRouteImport;
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
+    };
+    "/_authenticated/_class/class/$classId/invitations": {
+      id: "/_authenticated/_class/class/$classId/invitations";
+      path: "/invitations";
+      fullPath: "/class/$classId/invitations";
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdInvitationsRouteImport;
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
+    };
+    "/_authenticated/_class/class/$classId/settings": {
+      id: "/_authenticated/_class/class/$classId/settings";
+      path: "/settings";
+      fullPath: "/class/$classId/settings";
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdSettingsRouteImport;
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
+    };
+    "/_authenticated/_class/class/$classId/students": {
+      id: "/_authenticated/_class/class/$classId/students";
+      path: "/students";
+      fullPath: "/class/$classId/students";
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdStudentsRouteImport;
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
+    };
+    "/_authenticated/_class/class/$classId/teachers": {
+      id: "/_authenticated/_class/class/$classId/teachers";
+      path: "/teachers";
+      fullPath: "/class/$classId/teachers";
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdTeachersRouteImport;
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
+    };
+    "/_authenticated/_class/class/$classId/announcements/": {
+      id: "/_authenticated/_class/class/$classId/announcements/";
+      path: "/announcements";
+      fullPath: "/class/$classId/announcements/";
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdAnnouncementsIndexRouteImport;
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
+    };
+    "/_authenticated/_class/class/$classId/announcements/$announcementId": {
+      id: "/_authenticated/_class/class/$classId/announcements/$announcementId";
+      path: "/announcements/$announcementId";
+      fullPath: "/class/$classId/announcements/$announcementId";
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRouteImport;
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
+    };
   }
 }
 
 interface AuthenticatedAppRouteRouteChildren {
-  AuthenticatedAppAccountRoute: typeof AuthenticatedAppAccountRoute
-  AuthenticatedAppBillingRoute: typeof AuthenticatedAppBillingRoute
-  AuthenticatedAppFeedbackRoute: typeof AuthenticatedAppFeedbackRoute
-  AuthenticatedAppJoinRoute: typeof AuthenticatedAppJoinRoute
-  AuthenticatedAppSettingsRoute: typeof AuthenticatedAppSettingsRoute
-  AuthenticatedAppUiRoute: typeof AuthenticatedAppUiRoute
-  AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
+  AuthenticatedAppAccountRoute: typeof AuthenticatedAppAccountRoute;
+  AuthenticatedAppBillingRoute: typeof AuthenticatedAppBillingRoute;
+  AuthenticatedAppFeedbackRoute: typeof AuthenticatedAppFeedbackRoute;
+  AuthenticatedAppJoinRoute: typeof AuthenticatedAppJoinRoute;
+  AuthenticatedAppSettingsRoute: typeof AuthenticatedAppSettingsRoute;
+  AuthenticatedAppUiRoute: typeof AuthenticatedAppUiRoute;
+  AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute;
 }
 
 const AuthenticatedAppRouteRouteChildren: AuthenticatedAppRouteRouteChildren = {
@@ -637,126 +634,111 @@ const AuthenticatedAppRouteRouteChildren: AuthenticatedAppRouteRouteChildren = {
   AuthenticatedAppSettingsRoute: AuthenticatedAppSettingsRoute,
   AuthenticatedAppUiRoute: AuthenticatedAppUiRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
-}
+};
 
-const AuthenticatedAppRouteRouteWithChildren =
-  AuthenticatedAppRouteRoute._addFileChildren(
-    AuthenticatedAppRouteRouteChildren,
-  )
+const AuthenticatedAppRouteRouteWithChildren = AuthenticatedAppRouteRoute._addFileChildren(
+  AuthenticatedAppRouteRouteChildren,
+);
 
 interface AuthenticatedClassClassClassIdRouteRouteChildren {
-  AuthenticatedClassClassClassIdActivityRoute: typeof AuthenticatedClassClassClassIdActivityRoute
-  AuthenticatedClassClassClassIdAssistantTeachersRoute: typeof AuthenticatedClassClassClassIdAssistantTeachersRoute
-  AuthenticatedClassClassClassIdGroupsRoute: typeof AuthenticatedClassClassClassIdGroupsRoute
-  AuthenticatedClassClassClassIdGuardiansRoute: typeof AuthenticatedClassClassClassIdGuardiansRoute
-  AuthenticatedClassClassClassIdInvitationsRoute: typeof AuthenticatedClassClassClassIdInvitationsRoute
-  AuthenticatedClassClassClassIdSettingsRoute: typeof AuthenticatedClassClassClassIdSettingsRoute
-  AuthenticatedClassClassClassIdStudentsRoute: typeof AuthenticatedClassClassClassIdStudentsRoute
-  AuthenticatedClassClassClassIdTeachersRoute: typeof AuthenticatedClassClassClassIdTeachersRoute
-  AuthenticatedClassClassClassIdIndexRoute: typeof AuthenticatedClassClassClassIdIndexRoute
-  AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute: typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute
-  AuthenticatedClassClassClassIdAnnouncementsIndexRoute: typeof AuthenticatedClassClassClassIdAnnouncementsIndexRoute
+  AuthenticatedClassClassClassIdActivityRoute: typeof AuthenticatedClassClassClassIdActivityRoute;
+  AuthenticatedClassClassClassIdAssistantTeachersRoute: typeof AuthenticatedClassClassClassIdAssistantTeachersRoute;
+  AuthenticatedClassClassClassIdGroupsRoute: typeof AuthenticatedClassClassClassIdGroupsRoute;
+  AuthenticatedClassClassClassIdGuardiansRoute: typeof AuthenticatedClassClassClassIdGuardiansRoute;
+  AuthenticatedClassClassClassIdInvitationsRoute: typeof AuthenticatedClassClassClassIdInvitationsRoute;
+  AuthenticatedClassClassClassIdSettingsRoute: typeof AuthenticatedClassClassClassIdSettingsRoute;
+  AuthenticatedClassClassClassIdStudentsRoute: typeof AuthenticatedClassClassClassIdStudentsRoute;
+  AuthenticatedClassClassClassIdTeachersRoute: typeof AuthenticatedClassClassClassIdTeachersRoute;
+  AuthenticatedClassClassClassIdIndexRoute: typeof AuthenticatedClassClassClassIdIndexRoute;
+  AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute: typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute;
+  AuthenticatedClassClassClassIdAnnouncementsIndexRoute: typeof AuthenticatedClassClassClassIdAnnouncementsIndexRoute;
 }
 
 const AuthenticatedClassClassClassIdRouteRouteChildren: AuthenticatedClassClassClassIdRouteRouteChildren =
   {
-    AuthenticatedClassClassClassIdActivityRoute:
-      AuthenticatedClassClassClassIdActivityRoute,
+    AuthenticatedClassClassClassIdActivityRoute: AuthenticatedClassClassClassIdActivityRoute,
     AuthenticatedClassClassClassIdAssistantTeachersRoute:
       AuthenticatedClassClassClassIdAssistantTeachersRoute,
-    AuthenticatedClassClassClassIdGroupsRoute:
-      AuthenticatedClassClassClassIdGroupsRoute,
-    AuthenticatedClassClassClassIdGuardiansRoute:
-      AuthenticatedClassClassClassIdGuardiansRoute,
-    AuthenticatedClassClassClassIdInvitationsRoute:
-      AuthenticatedClassClassClassIdInvitationsRoute,
-    AuthenticatedClassClassClassIdSettingsRoute:
-      AuthenticatedClassClassClassIdSettingsRoute,
-    AuthenticatedClassClassClassIdStudentsRoute:
-      AuthenticatedClassClassClassIdStudentsRoute,
-    AuthenticatedClassClassClassIdTeachersRoute:
-      AuthenticatedClassClassClassIdTeachersRoute,
-    AuthenticatedClassClassClassIdIndexRoute:
-      AuthenticatedClassClassClassIdIndexRoute,
+    AuthenticatedClassClassClassIdGroupsRoute: AuthenticatedClassClassClassIdGroupsRoute,
+    AuthenticatedClassClassClassIdGuardiansRoute: AuthenticatedClassClassClassIdGuardiansRoute,
+    AuthenticatedClassClassClassIdInvitationsRoute: AuthenticatedClassClassClassIdInvitationsRoute,
+    AuthenticatedClassClassClassIdSettingsRoute: AuthenticatedClassClassClassIdSettingsRoute,
+    AuthenticatedClassClassClassIdStudentsRoute: AuthenticatedClassClassClassIdStudentsRoute,
+    AuthenticatedClassClassClassIdTeachersRoute: AuthenticatedClassClassClassIdTeachersRoute,
+    AuthenticatedClassClassClassIdIndexRoute: AuthenticatedClassClassClassIdIndexRoute,
     AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute:
       AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute,
     AuthenticatedClassClassClassIdAnnouncementsIndexRoute:
       AuthenticatedClassClassClassIdAnnouncementsIndexRoute,
-  }
+  };
 
 const AuthenticatedClassClassClassIdRouteRouteWithChildren =
   AuthenticatedClassClassClassIdRouteRoute._addFileChildren(
     AuthenticatedClassClassClassIdRouteRouteChildren,
-  )
+  );
 
 interface AuthenticatedClassRouteRouteChildren {
-  AuthenticatedClassClassClassIdRouteRoute: typeof AuthenticatedClassClassClassIdRouteRouteWithChildren
+  AuthenticatedClassClassClassIdRouteRoute: typeof AuthenticatedClassClassClassIdRouteRouteWithChildren;
 }
 
-const AuthenticatedClassRouteRouteChildren: AuthenticatedClassRouteRouteChildren =
-  {
-    AuthenticatedClassClassClassIdRouteRoute:
-      AuthenticatedClassClassClassIdRouteRouteWithChildren,
-  }
+const AuthenticatedClassRouteRouteChildren: AuthenticatedClassRouteRouteChildren = {
+  AuthenticatedClassClassClassIdRouteRoute: AuthenticatedClassClassClassIdRouteRouteWithChildren,
+};
 
-const AuthenticatedClassRouteRouteWithChildren =
-  AuthenticatedClassRouteRoute._addFileChildren(
-    AuthenticatedClassRouteRouteChildren,
-  )
+const AuthenticatedClassRouteRouteWithChildren = AuthenticatedClassRouteRoute._addFileChildren(
+  AuthenticatedClassRouteRouteChildren,
+);
 
 interface AuthenticatedAdminRouteRouteChildren {
-  AuthenticatedAdminFeedbackRoute: typeof AuthenticatedAdminFeedbackRoute
-  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+  AuthenticatedAdminFeedbackRoute: typeof AuthenticatedAdminFeedbackRoute;
+  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute;
 }
 
-const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
-  {
-    AuthenticatedAdminFeedbackRoute: AuthenticatedAdminFeedbackRoute,
-    AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
-  }
+const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren = {
+  AuthenticatedAdminFeedbackRoute: AuthenticatedAdminFeedbackRoute,
+  AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+};
 
-const AuthenticatedAdminRouteRouteWithChildren =
-  AuthenticatedAdminRouteRoute._addFileChildren(
-    AuthenticatedAdminRouteRouteChildren,
-  )
+const AuthenticatedAdminRouteRouteWithChildren = AuthenticatedAdminRouteRoute._addFileChildren(
+  AuthenticatedAdminRouteRouteChildren,
+);
 
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedAppRouteRoute: typeof AuthenticatedAppRouteRouteWithChildren
-  AuthenticatedClassRouteRoute: typeof AuthenticatedClassRouteRouteWithChildren
-  AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
+  AuthenticatedAppRouteRoute: typeof AuthenticatedAppRouteRouteWithChildren;
+  AuthenticatedClassRouteRoute: typeof AuthenticatedClassRouteRouteWithChildren;
+  AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren;
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAppRouteRoute: AuthenticatedAppRouteRouteWithChildren,
   AuthenticatedClassRouteRoute: AuthenticatedClassRouteRouteWithChildren,
   AuthenticatedAdminRouteRoute: AuthenticatedAdminRouteRouteWithChildren,
-}
+};
 
-const AuthenticatedRouteRouteWithChildren =
-  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+const AuthenticatedRouteRouteWithChildren = AuthenticatedRouteRoute._addFileChildren(
+  AuthenticatedRouteRouteChildren,
+);
 
 interface PublicRouteRouteChildren {
-  PublicSplatRoute: typeof PublicSplatRoute
-  PublicLoginRoute: typeof PublicLoginRoute
-  PublicUnauthorizedRoute: typeof PublicUnauthorizedRoute
+  PublicSplatRoute: typeof PublicSplatRoute;
+  PublicLoginRoute: typeof PublicLoginRoute;
+  PublicUnauthorizedRoute: typeof PublicUnauthorizedRoute;
 }
 
 const PublicRouteRouteChildren: PublicRouteRouteChildren = {
   PublicSplatRoute: PublicSplatRoute,
   PublicLoginRoute: PublicLoginRoute,
   PublicUnauthorizedRoute: PublicUnauthorizedRoute,
-}
+};
 
-const PublicRouteRouteWithChildren = PublicRouteRoute._addFileChildren(
-  PublicRouteRouteChildren,
-)
+const PublicRouteRouteWithChildren = PublicRouteRoute._addFileChildren(PublicRouteRouteChildren);
 
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   PublicRouteRoute: PublicRouteRouteWithChildren,
   JoinDisplayRoute: JoinDisplayRoute,
   APublicSlugRoute: APublicSlugRoute,
-}
+};
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>()
+  ._addFileTypes<FileRouteTypes>();

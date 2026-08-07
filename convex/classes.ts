@@ -42,6 +42,8 @@ const classRoleValidator = v.union(
   v.literal("class_member"),
 );
 
+const rosterNameOrderValidator = v.union(v.literal("firstLast"), v.literal("lastFirst"));
+
 const classValidator = v.object({
   _id: v.id("classes"),
   _creationTime: v.number(),
@@ -52,17 +54,25 @@ const classValidator = v.object({
   icon: v.optional(v.string()),
   bannerFileId: v.optional(v.id("files")),
   studentLanguage: languageValidator,
+  rosterNameOrder: rosterNameOrderValidator,
+  rosterNameSpace: v.boolean(),
   updatedAt: v.number(),
   archivedAt: v.optional(v.number()),
 });
 
-/** API always returns a language; pre-backfill rows default to English. */
-function withStudentLanguage(
-  classDoc: Doc<"classes">,
-): Doc<"classes"> & { studentLanguage: LanguageCode } {
+type ClassPublicDefaults = {
+  studentLanguage: LanguageCode;
+  rosterNameOrder: "firstLast" | "lastFirst";
+  rosterNameSpace: boolean;
+};
+
+/** API always returns resolved defaults for optional/legacy class fields. */
+function withClassDefaults(classDoc: Doc<"classes">): Doc<"classes"> & ClassPublicDefaults {
   return {
     ...classDoc,
     studentLanguage: classDoc.studentLanguage ?? "en",
+    rosterNameOrder: classDoc.rosterNameOrder === "lastFirst" ? "lastFirst" : "firstLast",
+    rosterNameSpace: classDoc.rosterNameSpace !== false,
   };
 }
 
@@ -169,7 +179,7 @@ export const listMine = authedQuery({
       rolesByClassId.set(classId, existing);
     }
 
-    const results: Array<Doc<"classes"> & { studentLanguage: LanguageCode; role: ClassRole }> = [];
+    const results: Array<Doc<"classes"> & ClassPublicDefaults & { role: ClassRole }> = [];
 
     for (const [classId, roleNames] of rolesByClassId) {
       const scope = classScope(classId);
@@ -182,7 +192,7 @@ export const listMine = authedQuery({
       const classDoc = await ctx.db.get("classes", classId as Id<"classes">);
       if (!classDoc) continue;
 
-      results.push({ ...withStudentLanguage(classDoc), role });
+      results.push({ ...withClassDefaults(classDoc), role });
     }
 
     return results;
@@ -203,7 +213,7 @@ export const listOwned = authedQuery({
       .query("classes")
       .withIndex("by_owner", (q) => q.eq("ownerId", ctx.userId))
       .collect();
-    return owned.map(withStudentLanguage);
+    return owned.map(withClassDefaults);
   },
 });
 
@@ -219,7 +229,7 @@ export const get = authedQuery({
     if (!canRead) {
       return null;
     }
-    return withStudentLanguage(classDoc);
+    return withClassDefaults(classDoc);
   },
 });
 
@@ -260,7 +270,7 @@ export const create = entitledMutation({
       summaryKey: "activitySummary_createdClass",
       metadata: { name: created.name, year: String(created.year) },
     });
-    return withStudentLanguage(created);
+    return withClassDefaults(created);
   },
 });
 
@@ -296,7 +306,7 @@ export const update = classMutation({
       summaryKey: "activitySummary_updatedClassSettings",
       metadata: { name: updated.name, year: String(updated.year) },
     });
-    return withStudentLanguage(updated);
+    return withClassDefaults(updated);
   },
 });
 
@@ -330,7 +340,7 @@ export const setArchived = classMutation({
         : "activitySummary_unarchivedClass",
       metadata: { name: ctx.classDoc.name, archived: String(args.archived) },
     });
-    return withStudentLanguage(updated);
+    return withClassDefaults(updated);
   },
 });
 
@@ -370,7 +380,7 @@ export const setBanner = classMutation({
       summaryKey: "activitySummary_setDashboardBanner",
       metadata: { name: ctx.classDoc.name, fileId: args.fileId, fileName: file.name },
     });
-    return withStudentLanguage(updated);
+    return withClassDefaults(updated);
   },
 });
 
@@ -400,7 +410,45 @@ export const setStudentLanguage = classMutation({
       summaryKey: "activitySummary_setStudentLanguage",
       metadata: { studentLanguage: args.studentLanguage },
     });
-    return withStudentLanguage(updated);
+    return withClassDefaults(updated);
+  },
+});
+
+/**
+ * Class-wide roster name display: first/last order and whether to insert a space.
+ */
+export const setRosterNameFormat = classMutation({
+  args: {
+    rosterNameOrder: rosterNameOrderValidator,
+    rosterNameSpace: v.boolean(),
+  },
+  returns: classValidator,
+  handler: async (ctx, args) => {
+    await rateLimiter.limit(ctx, "classUpdate", { key: ctx.userId, throws: true });
+    await ctx.require("class:update");
+    await ctx.db.patch("classes", ctx.classDoc._id, {
+      rosterNameOrder: args.rosterNameOrder,
+      rosterNameSpace: args.rosterNameSpace,
+      updatedAt: Date.now(),
+    });
+    const updated = await ctx.db.get("classes", ctx.classDoc._id);
+    if (!updated) {
+      throw new Error("Failed to update roster name format");
+    }
+    await recordClassActivity(ctx, {
+      classId: ctx.classDoc._id,
+      actorUserId: ctx.userId,
+      action: "update",
+      resourceType: "class",
+      resourceId: ctx.classDoc._id,
+      summary: "Updated how roster names are displayed",
+      summaryKey: "activitySummary_setRosterNameFormat",
+      metadata: {
+        rosterNameOrder: args.rosterNameOrder,
+        rosterNameSpace: String(args.rosterNameSpace),
+      },
+    });
+    return withClassDefaults(updated);
   },
 });
 
@@ -428,7 +476,7 @@ export const clearBanner = classMutation({
       summaryKey: "activitySummary_clearedDashboardBanner",
       metadata: { name: ctx.classDoc.name },
     });
-    return withStudentLanguage(updated);
+    return withClassDefaults(updated);
   },
 });
 
@@ -585,6 +633,6 @@ export const transferOwnership = classMutation({
       summaryKey: "activitySummary_transferredOwnership",
       metadata: { name: ctx.classDoc.name, toUserId: args.toUserId },
     });
-    return withStudentLanguage(updated);
+    return withClassDefaults(updated);
   },
 });
