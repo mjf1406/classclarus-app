@@ -76,7 +76,7 @@ export const Route = createFileRoute("/_authenticated/_class/class/$classId")({
           <SidebarProvider>
             {classDoc ? <ClassAppSidebar classDoc={classDoc} /> : <ClassSidebarSkeleton />}
             <SidebarInset>
-              <div className="flex min-h-svh flex-col">
+              <div className="flex min-h-svh min-w-0 flex-col">
                 <header className="sticky top-0 z-40 flex h-12 shrink-0 items-center gap-2 border-b bg-background px-4">
                   <SidebarTrigger className="-ml-1" />
                   <Separator orientation="vertical" className="mr-2 h-4" />
@@ -94,7 +94,7 @@ export const Route = createFileRoute("/_authenticated/_class/class/$classId")({
                 </header>
                 <SelfHostUpdateBanner />
                 <TrialBanner />
-                <div className="flex flex-1 flex-col">
+                <div className="flex min-w-0 flex-1 flex-col">
                   <ClassContent classPending={isPending || !classDoc} />
                 </div>
               </div>

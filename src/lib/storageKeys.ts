@@ -16,3 +16,8 @@ export const STORAGE_KEYS = {
   /** sessionStorage: hide PWA reload banner until the tab session ends. */
   pwaUpdateLater: appStorageKey("pwa-update-later"),
 } as const;
+
+/** sessionStorage: per-class group/team filter selection for the current tab session. */
+export function groupTeamFiltersStorageKey(classId: string): string {
+  return appStorageKey(`group-team-filters:${classId}`);
+}

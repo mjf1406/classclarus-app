@@ -659,7 +659,7 @@ export function StudentRosterTable({
   return (
     <RosterEditContext.Provider value={editContextValue}>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <div className="overflow-x-auto rounded-xl border">
+        <div className="min-w-0 overflow-hidden rounded-xl border">
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (

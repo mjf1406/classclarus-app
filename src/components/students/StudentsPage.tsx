@@ -2,6 +2,7 @@ import { LayoutGridIcon, PencilIcon, SearchIcon, TableIcon, UsersIcon, XIcon } f
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { GroupTeamFilterButtons } from "@/components/groups/GroupTeamFilterButtons";
 import { RemoveMemberCredenza } from "@/components/members/RemoveMemberCredenza";
 import { RosterNameFormatControls } from "@/components/students/RosterNameFormatControls";
 import { StudentRosterCard } from "@/components/students/StudentRosterCard";
@@ -26,7 +27,8 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Button } from "@/components/ui/button";
 import { useSetRosterNameFormat } from "@/hooks/classes/useSetRosterNameFormat";
 import { useCan } from "@/hooks/permissions/useCan";
-import { useMemberSearch } from "@/hooks/members/useMemberSearch";
+import { useGroupsBoard } from "@/hooks/groups/useGroupsBoard";
+import { useGroupTeamFilterState } from "@/hooks/groups/useGroupTeamFilterState";
 import { useRemoveClassMember } from "@/hooks/members/useRemoveClassMember";
 import { useSetMemberRole } from "@/hooks/members/useSetMemberRole";
 import { useClassUserSettings } from "@/hooks/roster/useClassUserSettings";
@@ -35,8 +37,10 @@ import { useReorderStudentRoster } from "@/hooks/roster/useReorderStudentRoster"
 import { useStudentRoster } from "@/hooks/roster/useStudentRoster";
 import { useUpdateStudentRosterFields } from "@/hooks/roster/useUpdateStudentRosterFields";
 import { useUpsertStudentsViewPrefs } from "@/hooks/roster/useUpsertStudentsViewPrefs";
+import { useStudentRosterFilter } from "@/hooks/students/useStudentRosterFilter";
 import { useAuthedQuery } from "@/hooks/useAuthedQuery";
 import { useCurrentUser } from "@/hooks/user/useCurrentUser";
+import { buildMembershipIndex, hasGroupTeamMembershipFilters } from "@/lib/groups/groupTeamFilters";
 import type { JoinCodeRole } from "@/lib/members/members";
 import { ONE_HOUR } from "@/lib/queryCache";
 import {
@@ -84,6 +88,8 @@ export function StudentsPage({ classId }: StudentsPageProps) {
   // Share `classes.get` cache without the access-log side effect from `useClass`.
   const { data: classDoc } = useAuthedQuery(api.classes.get, { classId }, { gcTime: ONE_HOUR });
   const { data: settings } = useClassUserSettings(classId);
+  const { data: groupsBoard } = useGroupsBoard(classId);
+  const groupTeamFilterState = useGroupTeamFilterState(classId);
   useEnsureStudentRosters(classId, !isPending && !isAuthLoading && !isError);
 
   const removeMutation = useRemoveClassMember("student");
@@ -132,15 +138,38 @@ export function StudentsPage({ classId }: StudentsPageProps) {
   );
 
   const students = data ?? [];
-  const { filtered } = useMemberSearch({ members: data, query: searchQuery });
+  const membershipByUserId = useMemo(
+    () => (groupsBoard ? buildMembershipIndex(groupsBoard) : {}),
+    [groupsBoard],
+  );
+  const filterState = useMemo(
+    () => ({
+      groupIds: groupTeamFilterState.groupIds,
+      teamIds: groupTeamFilterState.teamIds,
+      includeUngrouped: groupTeamFilterState.includeUngrouped,
+    }),
+    [
+      groupTeamFilterState.groupIds,
+      groupTeamFilterState.teamIds,
+      groupTeamFilterState.includeUngrouped,
+    ],
+  );
+  const { filtered } = useStudentRosterFilter({
+    members: data,
+    query: searchQuery,
+    membershipByUserId,
+    filterState,
+  });
+  const membershipFiltersActive = hasGroupTeamMembershipFilters(filterState);
   const searchActive = searchQuery.trim().length > 0;
+  const listFiltered = searchActive || membershipFiltersActive;
 
   // Row reorder must include every student; leave table layout editing while filtered.
   useEffect(() => {
-    if (searchActive && tableEditMode) {
+    if (listFiltered && tableEditMode) {
       setTableEditMode(false);
     }
-  }, [searchActive, tableEditMode]);
+  }, [listFiltered, tableEditMode]);
 
   const handleViewModeChange = useCallback(
     (mode: StudentsViewMode) => {
@@ -233,12 +262,13 @@ export function StudentsPage({ classId }: StudentsPageProps) {
 
   const showLoaded = !isPending && !isAuthLoading && !isError;
   const showSearch = showLoaded && (students.length > 0 || searchQuery.trim().length > 0);
+  const showFilters = showLoaded && students.length > 0;
   const showEmpty = showLoaded && students.length === 0;
   const showNoMatches = showLoaded && students.length > 0 && filtered.length === 0;
   const showContent = showLoaded && filtered.length > 0;
 
   return (
-    <div className="flex w-full flex-col gap-6 px-4 py-8 sm:px-8">
+    <div className="flex w-full min-w-0 flex-col gap-6 px-4 py-8 sm:px-8">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-semibold tracking-tight">{t("navStudents")}</h1>
@@ -253,7 +283,7 @@ export function StudentsPage({ classId }: StudentsPageProps) {
                   type="button"
                   size="sm"
                   variant={tableEditMode ? "default" : "outline"}
-                  disabled={searchActive}
+                  disabled={listFiltered}
                   onClick={() => setTableEditMode((prev) => !prev)}
                 >
                   <PencilIcon data-icon="inline-start" />
@@ -291,6 +321,8 @@ export function StudentsPage({ classId }: StudentsPageProps) {
           </div>
         ) : null}
       </div>
+
+      {showFilters ? <GroupTeamFilterButtons classId={classId} /> : null}
 
       {showSearch ? (
         <InputGroup className="max-w-md">

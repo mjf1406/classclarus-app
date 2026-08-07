@@ -44,13 +44,16 @@ export function GroupImageIcon({
     // Fall through to FA / default if the image fails to load.
   }
 
+  const decorative = alt.trim().length === 0;
+
   return (
     <div
       className={cn(
         "flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground",
         className,
       )}
-      aria-label={imageFileId !== undefined ? t("groupsImageLoadFailed") : undefined}
+      aria-hidden={decorative ? true : undefined}
+      aria-label={!decorative && imageFileId !== undefined ? t("groupsImageLoadFailed") : undefined}
     >
       <FontAwesomeIconFromId
         id={icon}

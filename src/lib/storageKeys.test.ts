@@ -2,7 +2,7 @@ import { describe, expect, test } from "vite-plus/test";
 
 import { APP_CONFIG } from "@/config/app";
 
-import { STORAGE_KEYS, appStorageKey } from "./storageKeys";
+import { STORAGE_KEYS, appStorageKey, groupTeamFiltersStorageKey } from "./storageKeys";
 
 describe("storageKeys", () => {
   test("appStorageKey prefixes with APP_CONFIG.slug", () => {
@@ -26,6 +26,12 @@ describe("storageKeys", () => {
     );
     expect(STORAGE_KEYS.selfHostUpdateRemindLater).toBe(
       `${APP_CONFIG.slug}-self-host-update-remind-later`,
+    );
+  });
+
+  test("groupTeamFiltersStorageKey scopes per class id", () => {
+    expect(groupTeamFiltersStorageKey("class123")).toBe(
+      `${APP_CONFIG.slug}-group-team-filters:class123`,
     );
   });
 });
