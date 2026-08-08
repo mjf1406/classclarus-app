@@ -1,17 +1,18 @@
 import { Link, useNavigate } from "@tanstack/react-router";
+import type { ColumnDef } from "@tanstack/react-table";
 import { ArrowLeft, ListTodo, Pencil, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { DataTableSortableHeader } from "@/components/feedback/DataTableSortableHeader";
 import { DeleteNamedCredenza } from "@/components/groups/DeleteNamedCredenza";
 import { GroupTeamFilterButtons } from "@/components/groups/GroupTeamFilterButtons";
-import {
-  TaskCompletionTable,
-  type TaskCompletionStudent,
-} from "@/components/tasks/TaskCompletionTable";
+import { RosterColumnVisibilityMenu } from "@/components/roster/RosterColumnVisibilityMenu";
+import { RosterTable } from "@/components/roster/RosterTable";
 import { TaskCompletionStatusBadge } from "@/components/tasks/TaskCompletionStatusBadge";
 import { TaskFormCredenza } from "@/components/tasks/TaskFormCredenza";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Empty,
   EmptyDescription,
@@ -24,7 +25,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useGroupTeamFilterState } from "@/hooks/groups/useGroupTeamFilterState";
 import { useGroupsBoard } from "@/hooks/groups/useGroupsBoard";
 import { useCan } from "@/hooks/permissions/useCan";
+import { useClassUserSettings } from "@/hooks/roster/useClassUserSettings";
 import { useEnsureStudentRosters } from "@/hooks/roster/useEnsureStudentRosters";
+import { useRosterConsumerColumnVisibility } from "@/hooks/roster/useRosterConsumerColumnVisibility";
 import { useStudentRoster } from "@/hooks/roster/useStudentRoster";
 import { useStudentRosterFilter } from "@/hooks/students/useStudentRosterFilter";
 import { useRemoveTask } from "@/hooks/tasks/useRemoveTask";
@@ -36,7 +39,13 @@ import { formatLocalizedDateTime } from "@/i18n/formatDate";
 import { buildMembershipIndex } from "@/lib/groups/groupTeamFilters";
 import { collectAllStudents, sortStudents } from "@/lib/groups/groups";
 import { ONE_HOUR } from "@/lib/queryCache";
-import { getRosterDisplayName, resolveRosterNameFormat } from "@/lib/roster/roster";
+import {
+  getRosterDisplayName,
+  normalizeColumnOrder,
+  normalizeColumnVisibility,
+  resolveRosterNameFormat,
+  type StudentRosterEntry,
+} from "@/lib/roster/roster";
 import {
   isClassTaskDetail,
   isPersonalTaskDetail,
@@ -46,6 +55,8 @@ import {
 } from "@/lib/tasks/tasks";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
+
+const TASKS_ROSTER_SURFACE = "tasks";
 
 type TaskDetailPageProps = {
   classId: Id<"classes">;
@@ -89,11 +100,13 @@ function TaskDetailBackLink({ classId }: { classId: Id<"classes"> }) {
 
 function StaffTaskDetailPage({ classId, taskId }: TaskDetailPageProps) {
   const { t } = useTranslation("tasks");
+  const { t: tClasses } = useTranslation("classes");
   const navigate = useNavigate();
   const { can } = useCan();
   const canManage = can("tasks:manage");
   const canComplete = can("tasks:complete");
   const canReadStudents = can("students:read");
+  const unnamed = tClasses("unnamedMember");
 
   const { data, isPending, isError, refetch } = useTask(classId, taskId);
   const { data: classDoc } = useAuthedQuery(api.classes.get, { classId }, { gcTime: ONE_HOUR });
@@ -110,6 +123,7 @@ function StaffTaskDetailPage({ classId, taskId }: TaskDetailPageProps) {
     refetch: refetchRoster,
     isAuthLoading,
   } = useStudentRoster(classId);
+  const { data: settings } = useClassUserSettings(classId);
   const groupTeamFilterState = useGroupTeamFilterState(classId);
   const updateTask = useUpdateTask();
   const removeTask = useRemoveTask();
@@ -132,24 +146,33 @@ function StaffTaskDetailPage({ classId, taskId }: TaskDetailPageProps) {
     [classDoc?.rosterNameOrder, classDoc?.rosterNameSpace],
   );
 
-  const students = useMemo((): TaskCompletionStudent[] => {
+  const columnOrder = useMemo(
+    () => normalizeColumnOrder(settings?.studentsColumnOrder),
+    [settings?.studentsColumnOrder],
+  );
+  const baseColumnVisibility = useMemo(
+    () => normalizeColumnVisibility(settings?.studentsColumnVisibility),
+    [settings?.studentsColumnVisibility],
+  );
+  const { columnVisibility, setColumnVisibility } = useRosterConsumerColumnVisibility(
+    classId,
+    TASKS_ROSTER_SURFACE,
+    baseColumnVisibility,
+  );
+
+  const students = useMemo((): StudentRosterEntry[] => {
     if (roster !== undefined) {
-      return roster.map((student) => ({
-        userId: student.userId,
-        rosterNumber: student.rosterNumber,
-        firstName: student.firstName,
-        lastName: student.lastName,
-        name: student.name,
-        email: student.email,
-      }));
+      return roster;
     }
     if (!groupsBoard) return [];
-    return sortStudents(collectAllStudents(groupsBoard), nameFormat).map((student) => ({
+    return sortStudents(collectAllStudents(groupsBoard), nameFormat).map((student, index) => ({
       userId: student.userId,
+      rosterNumber: index + 1,
       firstName: student.firstName,
       lastName: student.lastName,
       name: student.name,
       email: student.email,
+      role: "student" as const,
     }));
   }, [groupsBoard, nameFormat, roster]);
 
@@ -181,6 +204,53 @@ function StaffTaskDetailPage({ classId, taskId }: TaskDetailPageProps) {
     () => new Set(classDetail?.completedStudentIds ?? []),
     [classDetail?.completedStudentIds],
   );
+
+  const completionColumns = useMemo((): ColumnDef<StudentRosterEntry, unknown>[] => {
+    return [
+      {
+        id: "taskCompleted",
+        accessorFn: (student) => completedSet.has(student.userId),
+        header: ({ column }) => (
+          <div className="flex justify-center">
+            <DataTableSortableHeader
+              label={t("columnDone")}
+              sorted={column.getIsSorted()}
+              onSort={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            />
+          </div>
+        ),
+        cell: ({ row }) => {
+          const student = row.original;
+          const completed = completedSet.has(student.userId);
+          const displayName = getRosterDisplayName(student, unnamed, nameFormat);
+          return (
+            <div className="flex justify-center">
+              <Checkbox
+                checked={completed}
+                disabled={!canComplete || setCompletion.isPending}
+                aria-label={t("completeAria", { name: displayName })}
+                onCheckedChange={(value) => {
+                  if (!canComplete) return;
+                  const next = value === true;
+                  if (next === completed) return;
+                  void setCompletion.mutateAsync({
+                    classId,
+                    taskId,
+                    studentUserId: student.userId,
+                    completed: next,
+                  });
+                }}
+              />
+            </div>
+          );
+        },
+        sortingFn: (rowA, rowB) =>
+          Number(completedSet.has(rowA.original.userId)) -
+          Number(completedSet.has(rowB.original.userId)),
+        enableSorting: true,
+      },
+    ];
+  }, [canComplete, classId, completedSet, nameFormat, setCompletion, t, taskId, unnamed]);
 
   const studentsPending =
     boardPending || (canReadStudents && rosterPending && roster === undefined);
@@ -243,21 +313,21 @@ function StaffTaskDetailPage({ classId, taskId }: TaskDetailPageProps) {
           </EmptyHeader>
         </Empty>
       ) : (
-        <TaskCompletionTable
-          students={filtered}
-          completedStudentIds={completedSet}
-          nameFormat={nameFormat}
-          canComplete={canComplete}
-          isToggling={setCompletion.isPending}
-          onToggle={(studentUserId, completed) => {
-            void setCompletion.mutateAsync({
-              classId,
-              taskId,
-              studentUserId,
-              completed,
-            });
-          }}
-        />
+        <div className="flex min-w-0 flex-col gap-3">
+          <div className="flex justify-end">
+            <RosterColumnVisibilityMenu
+              columnOrder={columnOrder}
+              columnVisibility={columnVisibility}
+              onColumnVisibilityChange={setColumnVisibility}
+            />
+          </div>
+          <RosterTable
+            data={filtered}
+            columnOrder={columnOrder}
+            columnVisibility={columnVisibility}
+            extraColumns={completionColumns}
+          />
+        </div>
       )}
 
       {canManage ? (

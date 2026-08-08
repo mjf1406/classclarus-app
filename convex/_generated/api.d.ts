@@ -25,6 +25,7 @@ import type * as classUserSettings from "../classUserSettings.js";
 import type * as classes from "../classes.js";
 import type * as classesBackfill from "../classesBackfill.js";
 import type * as crons from "../crons.js";
+import type * as expectations from "../expectations.js";
 import type * as feedback from "../feedback.js";
 import type * as files from "../files.js";
 import type * as filesInternal from "../filesInternal.js";
@@ -45,6 +46,7 @@ import type * as lib_billingGuards from "../lib/billingGuards.js";
 import type * as lib_classActivity from "../lib/classActivity.js";
 import type * as lib_customFunctions from "../lib/customFunctions.js";
 import type * as lib_entitlement from "../lib/entitlement.js";
+import type * as lib_expectationsCleanup from "../lib/expectationsCleanup.js";
 import type * as lib_fileAccess from "../lib/fileAccess.js";
 import type * as lib_filesCleanup from "../lib/filesCleanup.js";
 import type * as lib_groupsCleanup from "../lib/groupsCleanup.js";
@@ -85,7 +87,11 @@ import type * as trialBackfill from "../trialBackfill.js";
 import type * as usage from "../usage.js";
 import type * as users from "../users.js";
 
-import type { ApiFromModules, FilterApi, FunctionReference } from "convex/server";
+import type {
+  ApiFromModules,
+  FilterApi,
+  FunctionReference,
+} from "convex/server";
 
 declare const fullApi: ApiFromModules<{
   account: typeof account;
@@ -105,6 +111,7 @@ declare const fullApi: ApiFromModules<{
   classes: typeof classes;
   classesBackfill: typeof classesBackfill;
   crons: typeof crons;
+  expectations: typeof expectations;
   feedback: typeof feedback;
   files: typeof files;
   filesInternal: typeof filesInternal;
@@ -125,6 +132,7 @@ declare const fullApi: ApiFromModules<{
   "lib/classActivity": typeof lib_classActivity;
   "lib/customFunctions": typeof lib_customFunctions;
   "lib/entitlement": typeof lib_entitlement;
+  "lib/expectationsCleanup": typeof lib_expectationsCleanup;
   "lib/fileAccess": typeof lib_fileAccess;
   "lib/filesCleanup": typeof lib_filesCleanup;
   "lib/groupsCleanup": typeof lib_groupsCleanup;
@@ -174,7 +182,10 @@ declare const fullApi: ApiFromModules<{
  * const myFunctionReference = api.myModule.myFunction;
  * ```
  */
-export declare const api: FilterApi<typeof fullApi, FunctionReference<any, "public">>;
+export declare const api: FilterApi<
+  typeof fullApi,
+  FunctionReference<any, "public">
+>;
 
 /**
  * A utility for referencing Convex functions in your app's internal API.
@@ -184,7 +195,10 @@ export declare const api: FilterApi<typeof fullApi, FunctionReference<any, "publ
  * const myFunctionReference = internal.myModule.myFunction;
  * ```
  */
-export declare const internal: FilterApi<typeof fullApi, FunctionReference<any, "internal">>;
+export declare const internal: FilterApi<
+  typeof fullApi,
+  FunctionReference<any, "internal">
+>;
 
 export declare const components: {
   authz: import("@djpanda/convex-authz/_generated/component.js").ComponentApi<"authz">;

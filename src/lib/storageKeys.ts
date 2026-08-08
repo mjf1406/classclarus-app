@@ -21,7 +21,17 @@ export const STORAGE_KEYS = {
   pointsCatalogView: appStorageKey("points-catalog-view"),
 } as const;
 
+/** localStorage: per-class expectations grid/table view. */
+export function expectationsViewModeStorageKey(classId: string): string {
+  return appStorageKey(`expectations-view-mode:${classId}`);
+}
+
 /** localStorage: per-class group/team filter selection. */
 export function groupTeamFiltersStorageKey(classId: string): string {
   return appStorageKey(`group-team-filters:${classId}`);
+}
+
+/** localStorage: per-class consumer roster table column visibility (e.g. tasks). */
+export function rosterConsumerVisibilityStorageKey(classId: string, surface: string): string {
+  return appStorageKey(`roster-col-vis:${surface}:${classId}`);
 }

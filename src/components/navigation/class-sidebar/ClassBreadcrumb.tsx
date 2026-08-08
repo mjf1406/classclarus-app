@@ -11,6 +11,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useExpectation } from "@/hooks/expectations/useExpectation";
 import { useTask } from "@/hooks/tasks/useTask";
 import type { ClassDoc } from "@/lib/classes/classes";
 import type { Id } from "../../../../convex/_generated/dataModel";
@@ -27,7 +28,9 @@ type BreadcrumbTarget =
   | { kind: "taskDetail"; taskId: Id<"tasks"> }
   | { kind: "points" }
   | { kind: "behaviors" }
-  | { kind: "rewards" };
+  | { kind: "rewards" }
+  | { kind: "expectations" }
+  | { kind: "expectationDetail"; expectationId: Id<"expectations"> };
 
 function breadcrumbTarget(pathname: string, classId: string): BreadcrumbTarget {
   const base = `/class/${classId}`;
@@ -65,6 +68,18 @@ function breadcrumbTarget(pathname: string, classId: string): BreadcrumbTarget {
   }
   if (pathname === `${base}/rewards` || pathname === `${base}/rewards/`) {
     return { kind: "rewards" };
+  }
+  if (pathname.startsWith(`${base}/expectations/`)) {
+    const expectationId = pathname.slice(`${base}/expectations/`.length).split("/")[0];
+    if (expectationId) {
+      return {
+        kind: "expectationDetail",
+        expectationId: expectationId as Id<"expectations">,
+      };
+    }
+  }
+  if (pathname === `${base}/expectations` || pathname === `${base}/expectations/`) {
+    return { kind: "expectations" };
   }
   return { kind: "classesKey", key: "navDashboard" };
 }
@@ -104,6 +119,46 @@ function TaskDetailBreadcrumbItems({
   );
 }
 
+function ExpectationDetailBreadcrumbItems({
+  classId,
+  expectationId,
+  expectationsLabel,
+}: {
+  classId: Id<"classes">;
+  expectationId: Id<"expectations">;
+  expectationsLabel: string;
+}) {
+  const { t: tExpectations } = useTranslation("expectations");
+  const { data: expectation, isPending } = useExpectation(classId, expectationId);
+
+  const expectationLabel =
+    isPending && !expectation ? null : (expectation?.name ?? tExpectations("notFoundTitle"));
+
+  return (
+    <>
+      <BreadcrumbItem className="min-w-0">
+        <BreadcrumbLink
+          render={<Link to="/class/$classId/expectations" params={{ classId }} />}
+          className="block truncate"
+          title={expectationsLabel}
+        >
+          {expectationsLabel}
+        </BreadcrumbLink>
+      </BreadcrumbItem>
+      <BreadcrumbSeparator className="shrink-0" />
+      <BreadcrumbItem className="min-w-0">
+        <BreadcrumbPage className="block truncate" title={expectationLabel ?? undefined}>
+          {expectationLabel === null ? (
+            <Skeleton className="inline-block h-4 w-24" />
+          ) : (
+            expectationLabel
+          )}
+        </BreadcrumbPage>
+      </BreadcrumbItem>
+    </>
+  );
+}
+
 export function ClassBreadcrumb({ classDoc }: ClassBreadcrumbProps) {
   const { t } = useTranslation("classes");
   const { t: tAttendance } = useTranslation("attendance");
@@ -112,6 +167,7 @@ export function ClassBreadcrumb({ classDoc }: ClassBreadcrumbProps) {
   const { t: tPoints } = useTranslation("points");
   const { t: tBehaviors } = useTranslation("behaviors");
   const { t: tRewards } = useTranslation("rewards");
+  const { t: tExpectations } = useTranslation("expectations");
   const { t: tCommon } = useTranslation("common");
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const target = breadcrumbTarget(pathname, classDoc._id);
@@ -129,7 +185,9 @@ export function ClassBreadcrumb({ classDoc }: ClassBreadcrumbProps) {
               ? tBehaviors("nav")
               : target.kind === "rewards"
                 ? tRewards("nav")
-                : t(target.key);
+                : target.kind === "expectations" || target.kind === "expectationDetail"
+                  ? tExpectations("nav")
+                  : t(target.key);
 
   return (
     <Breadcrumb aria-label={t("breadcrumb")} className="min-w-0">
@@ -156,6 +214,12 @@ export function ClassBreadcrumb({ classDoc }: ClassBreadcrumbProps) {
             classId={classDoc._id}
             taskId={target.taskId}
             tasksLabel={pageLabel}
+          />
+        ) : target.kind === "expectationDetail" ? (
+          <ExpectationDetailBreadcrumbItems
+            classId={classDoc._id}
+            expectationId={target.expectationId}
+            expectationsLabel={pageLabel}
           />
         ) : (
           <BreadcrumbItem className="min-w-0">

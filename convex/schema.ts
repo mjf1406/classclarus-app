@@ -297,6 +297,39 @@ const schema = defineSchema({
     .index("by_task", ["taskId"])
     .index("by_classId", ["classId"]),
   /**
+   * Class expectations — teacher-defined numeric (or range) measures with a unit.
+   */
+  expectations: defineTable({
+    classId: v.id("classes"),
+    name: v.string(),
+    description: v.optional(v.string()),
+    inputType: v.union(v.literal("number"), v.literal("numberRange")),
+    unit: v.string(),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_classId", ["classId"])
+    .index("by_classId_updatedAt", ["classId", "updatedAt"]),
+  /**
+   * Sparse per-student expectation values. Missing row = unset.
+   * `number` uses numberValue; `numberRange` uses rangeMin + rangeMax.
+   */
+  expectationValues: defineTable({
+    classId: v.id("classes"),
+    expectationId: v.id("expectations"),
+    studentUserId: v.id("users"),
+    numberValue: v.optional(v.number()),
+    rangeMin: v.optional(v.number()),
+    rangeMax: v.optional(v.number()),
+    updatedAt: v.number(),
+    updatedBy: v.id("users"),
+  })
+    .index("by_expectation_student", ["expectationId", "studentUserId"])
+    .index("by_expectation", ["expectationId"])
+    .index("by_classId", ["classId"])
+    .index("by_class_student", ["classId", "studentUserId"]),
+  /**
    * Behavior folders — flat containers for behaviors within a class.
    * Separate from reward folders; not a shared cross-feature table.
    */

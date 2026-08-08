@@ -13,6 +13,7 @@ import {
   SmilePlus,
   Settings2,
   Shield,
+  Target,
   UserRound,
   Users,
   UsersRound,
@@ -67,6 +68,7 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
   const { t: tPoints } = useTranslation("points");
   const { t: tBehaviors } = useTranslation("behaviors");
   const { t: tRewards } = useTranslation("rewards");
+  const { t: tExpectations } = useTranslation("expectations");
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const { isMobile, state, setOpenMobile } = useSidebar();
   const { can, isPending } = useCan();
@@ -164,6 +166,12 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
       icon: SmilePlus,
       to: "/class/$classId/behaviors",
       permission: "behaviors:manage",
+    },
+    {
+      title: tExpectations("nav"),
+      icon: Target,
+      to: "/class/$classId/expectations",
+      permission: "expectations:manage",
     },
     {
       title: t("navGroups"),
