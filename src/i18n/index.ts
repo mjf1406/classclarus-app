@@ -114,6 +114,7 @@ export function getInitialLanguage(): AppLanguage {
 }
 
 export function updateDocumentLanguage(language: AppLanguage): void {
+  if (typeof document === "undefined") return;
   const option = getLanguageOption(language);
   document.documentElement.lang = option.htmlLang;
   document.documentElement.dir = "ltr";
