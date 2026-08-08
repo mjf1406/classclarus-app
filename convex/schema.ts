@@ -355,6 +355,13 @@ const schema = defineSchema({
       }),
     ),
     expectationIds: v.array(v.id("expectations")),
+    /**
+     * When false, students cannot submit hand-in URLs for this assignment.
+     * Omitted/undefined means true (legacy rows).
+     */
+    acceptLinkSubmissions: v.optional(v.boolean()),
+    /** When true, saved scores are visible to students/guardians. */
+    scoresReleased: v.optional(v.boolean()),
     createdBy: v.id("users"),
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -373,6 +380,34 @@ const schema = defineSchema({
     handedIn: v.boolean(),
     createdAt: v.number(),
     updatedAt: v.number(),
+  })
+    .index("by_assignment", ["assignmentId"])
+    .index("by_assignment_student", ["assignmentId", "studentUserId"])
+    .index("by_classId", ["classId"]),
+  /**
+   * Per-student assignment scores (staff-entered). Visibility gated by assignments.scoresReleased.
+   */
+  assignmentScores: defineTable({
+    classId: v.id("classes"),
+    assignmentId: v.id("assignments"),
+    studentUserId: v.id("users"),
+    /** Present when scoringMode === "total" */
+    totalPointsEarned: v.optional(v.number()),
+    /** Present when scoringMode === "sections" */
+    sectionScores: v.optional(
+      v.array(
+        v.object({
+          sectionKey: v.string(),
+          pointsEarned: v.optional(v.number()),
+          selectedLevelKey: v.optional(v.string()),
+          checkedItemKeys: v.optional(v.array(v.string())),
+        }),
+      ),
+    ),
+    /** When true, the student is excused from this assignment. */
+    excused: v.optional(v.boolean()),
+    updatedAt: v.number(),
+    updatedBy: v.id("users"),
   })
     .index("by_assignment", ["assignmentId"])
     .index("by_assignment_student", ["assignmentId", "studentUserId"])

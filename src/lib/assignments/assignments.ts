@@ -88,6 +88,7 @@ export type AssignmentFormValues = {
   sections: AssignmentFormSection[];
   procedureSteps: AssignmentFormProcedureStep[];
   expectationIds: Array<Id<"expectations">>;
+  acceptLinkSubmissions: boolean;
 };
 
 export function createEmptyRubricEntry(): AssignmentFormRubricEntry {
@@ -129,6 +130,7 @@ export function emptyAssignmentFormValues(): AssignmentFormValues {
     sections: [],
     procedureSteps: [],
     expectationIds: [],
+    acceptLinkSubmissions: true,
   };
 }
 
@@ -166,6 +168,7 @@ export function assignmentFormValuesFromDetail(
       ...(step.taskId ? { taskId: step.taskId } : {}),
     })),
     expectationIds: [...detail.expectationIds],
+    acceptLinkSubmissions: detail.acceptLinkSubmissions !== false,
   };
 }
 
@@ -192,6 +195,7 @@ export type AssignmentMutationPayload = {
     taskId?: Id<"tasks">;
   }>;
   expectationIds: Array<Id<"expectations">>;
+  acceptLinkSubmissions: boolean;
 };
 
 export function assignmentMutationPayloadFromForm(
@@ -216,6 +220,7 @@ export function assignmentMutationPayloadFromForm(
       ...(step.taskId ? { taskId: step.taskId } : {}),
     })),
     expectationIds: values.expectationIds,
+    acceptLinkSubmissions: values.acceptLinkSubmissions,
   };
 
   if (values.scoringMode === "total") {

@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Eye, Pencil, Trash2 } from "lucide-react";
+import { ClipboardPen, Eye, Pencil, Trash2 } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -13,7 +13,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useCan } from "@/hooks/permissions/useCan";
 import { formatLocalizedDateTime, formatLocalizedDueDate } from "@/i18n/formatDate";
+import {
+  computeScoreTotals,
+  draftFromScore,
+  formatScoreFraction,
+  formatScorePercent,
+} from "@/lib/assignments/assignmentScores";
 import { isAssignmentPastDue, type AssignmentListItem } from "@/lib/assignments/assignments";
 import { cn } from "@/lib/utils";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -24,9 +31,48 @@ type AssignmentCardProps = {
   onDelete: (assignment: AssignmentListItem) => void;
 };
 
+function ViewerReleasedScoreLine({ assignment }: { assignment: AssignmentListItem }) {
+  const { t } = useTranslation("assignments");
+  const scores = assignment.viewerReleasedScores ?? [];
+
+  if (scores.length === 0) {
+    return <p className="font-medium text-foreground">{t("noScoreYet")}</p>;
+  }
+
+  if (scores.length > 1) {
+    return (
+      <p className="font-medium text-foreground">
+        {t("scoresReleasedCardMulti", { count: scores.length })}
+      </p>
+    );
+  }
+
+  const score = scores[0]!;
+  if (score.excused) {
+    return <p className="font-medium text-foreground">{t("scoreExcused")}</p>;
+  }
+
+  const totals = computeScoreTotals(assignment, draftFromScore(score));
+  if (!totals.hasScore) {
+    return <p className="font-medium text-foreground">{t("noScoreYet")}</p>;
+  }
+
+  return (
+    <p className="font-medium text-foreground tabular-nums">
+      {t("scoreCardSummary", {
+        score: formatScoreFraction(totals, t("scoreUnset")),
+        grade: formatScorePercent(totals, t("scoreUnset")),
+      })}
+    </p>
+  );
+}
+
 export function AssignmentCard({ classId, assignment, onDelete }: AssignmentCardProps) {
   const { t } = useTranslation("assignments");
   const navigate = useNavigate();
+  const { can, isPending: permissionsPending } = useCan();
+  const personalView = !permissionsPending && !can("students:read");
+  const showViewerScore = personalView && assignment.scoresReleased === true;
   const pastDue = isAssignmentPastDue(assignment.dueDateKey);
 
   const menuItems = useMemo<Array<ActionMenuItem>>(
@@ -39,6 +85,19 @@ export function AssignmentCard({ classId, assignment, onDelete }: AssignmentCard
         onSelect: () => {
           void navigate({
             to: "/class/$classId/assignments/$assignmentId",
+            params: { classId, assignmentId: assignment._id },
+          });
+        },
+      },
+      {
+        id: "grade",
+        label: t("gradeAction"),
+        icon: <ClipboardPen />,
+        permission: "assignments:manage",
+        group: "manage",
+        onSelect: () => {
+          void navigate({
+            to: "/class/$classId/assignments/$assignmentId/grade",
             params: { classId, assignmentId: assignment._id },
           });
         },
@@ -91,13 +150,18 @@ export function AssignmentCard({ classId, assignment, onDelete }: AssignmentCard
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-2 text-sm text-muted-foreground">
-        <p>
-          {t("statsHandedIn", {
-            handedIn: assignment.handedInStudentCount,
-            total: assignment.studentCount,
-          })}
-        </p>
-        <p>{t("statsLinks", { count: assignment.linkCount })}</p>
+        {showViewerScore ? <ViewerReleasedScoreLine assignment={assignment} /> : null}
+        {assignment.acceptLinkSubmissions ? (
+          <>
+            <p>
+              {t("statsHandedIn", {
+                handedIn: assignment.handedInStudentCount,
+                total: assignment.studentCount,
+              })}
+            </p>
+            <p>{t("statsLinks", { count: assignment.linkCount })}</p>
+          </>
+        ) : null}
         {assignment.dueDateKey ? (
           <p className={cn(pastDue && "text-destructive")}>
             {t("dueDateValue", { date: formatLocalizedDueDate(assignment.dueDateKey) })}

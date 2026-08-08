@@ -10,6 +10,7 @@ import { classMutation, classQuery } from "./lib/customFunctions.js";
 import { getClassRoleForUser, listLinkedStudentsForGuardian } from "./lib/guardianLinks.js";
 import { normalizeOptionalDueDateKey } from "./lib/dueDateKey.js";
 import { rateLimiter } from "./lib/rateLimiter.js";
+import { deleteScoresForAssignment } from "./lib/assignmentScoresCleanup.js";
 import { deleteTaskWithCompletions } from "./lib/tasksCleanup.js";
 
 const MAX_NAME_LENGTH = 100;
@@ -69,10 +70,28 @@ const assignmentBaseFields = {
   sections: v.optional(v.array(sectionValidator)),
   procedureSteps: v.array(procedureStepValidator),
   expectationIds: v.array(v.id("expectations")),
+  acceptLinkSubmissions: v.boolean(),
+  scoresReleased: v.boolean(),
   createdBy: v.id("users"),
   createdAt: v.number(),
   updatedAt: v.number(),
 };
+
+const viewerReleasedScoreValidator = v.object({
+  studentUserId: v.id("users"),
+  totalPointsEarned: v.optional(v.number()),
+  sectionScores: v.optional(
+    v.array(
+      v.object({
+        sectionKey: v.string(),
+        pointsEarned: v.optional(v.number()),
+        selectedLevelKey: v.optional(v.string()),
+        checkedItemKeys: v.optional(v.array(v.string())),
+      }),
+    ),
+  ),
+  excused: v.boolean(),
+});
 
 const assignmentListItemValidator = v.object({
   ...assignmentBaseFields,
@@ -81,6 +100,8 @@ const assignmentListItemValidator = v.object({
   linkCount: v.number(),
   hasInstructions: v.boolean(),
   hasProcedure: v.boolean(),
+  /** Personal audience only, when scoresReleased — scores for the viewer's students. */
+  viewerReleasedScores: v.optional(v.array(viewerReleasedScoreValidator)),
 });
 
 const studentLinkValidator = v.object({
@@ -686,10 +707,22 @@ function toPublicAssignmentBase(assignment: Doc<"assignments">) {
     sections: assignment.sections,
     procedureSteps: assignment.procedureSteps,
     expectationIds: assignment.expectationIds,
+    acceptLinkSubmissions: assignment.acceptLinkSubmissions !== false,
+    scoresReleased: assignment.scoresReleased === true,
     createdBy: assignment.createdBy,
     createdAt: assignment.createdAt,
     updatedAt: assignment.updatedAt,
   };
+}
+
+function assignmentAcceptsLinkSubmissions(assignment: Doc<"assignments">): boolean {
+  return assignment.acceptLinkSubmissions !== false;
+}
+
+function assertAssignmentAcceptsLinkSubmissions(assignment: Doc<"assignments">): void {
+  if (!assignmentAcceptsLinkSubmissions(assignment)) {
+    throw new Error("This assignment does not accept submission links");
+  }
 }
 
 function hasInstructions(assignment: Doc<"assignments">): boolean {
@@ -734,6 +767,33 @@ export const list = classQuery({
       const handedInStudents = new Set(
         audienceLinks.filter((link) => link.handedIn).map((link) => link.studentUserId),
       );
+
+      let viewerReleasedScores:
+        | Array<{
+            studentUserId: Id<"users">;
+            totalPointsEarned?: number;
+            sectionScores?: Doc<"assignmentScores">["sectionScores"];
+            excused: boolean;
+          }>
+        | undefined;
+      if (audience.scope === "personal" && doc.scoresReleased === true) {
+        // eslint-disable-next-line @convex-dev/no-collect-in-query -- assignment-scoped scores
+        const scores = await ctx.db
+          .query("assignmentScores")
+          .withIndex("by_assignment", (q) => q.eq("assignmentId", doc._id))
+          .collect();
+        viewerReleasedScores = scores
+          .filter((score) => studentSet.has(score.studentUserId))
+          .map((score) => ({
+            studentUserId: score.studentUserId,
+            ...(score.totalPointsEarned !== undefined
+              ? { totalPointsEarned: score.totalPointsEarned }
+              : {}),
+            ...(score.sectionScores !== undefined ? { sectionScores: score.sectionScores } : {}),
+            excused: score.excused === true,
+          }));
+      }
+
       result.push({
         ...toPublicAssignmentBase(doc),
         handedInStudentCount: handedInStudents.size,
@@ -741,6 +801,7 @@ export const list = classQuery({
         linkCount: audienceLinks.length,
         hasInstructions: hasInstructions(doc),
         hasProcedure: hasProcedure(doc),
+        ...(viewerReleasedScores !== undefined ? { viewerReleasedScores } : {}),
       });
     }
     return result;
@@ -872,6 +933,7 @@ export const create = classMutation({
     sections: v.optional(v.array(sectionInputValidator)),
     procedureSteps: v.optional(v.array(procedureStepInputValidator)),
     expectationIds: v.optional(v.array(v.id("expectations"))),
+    acceptLinkSubmissions: v.boolean(),
   },
   returns: v.id("assignments"),
   handler: async (ctx, args) => {
@@ -901,6 +963,8 @@ export const create = classMutation({
       ...(scoring.sections !== undefined ? { sections: scoring.sections } : {}),
       procedureSteps,
       expectationIds,
+      acceptLinkSubmissions: args.acceptLinkSubmissions,
+      scoresReleased: false,
       createdBy: ctx.userId,
       createdAt: now,
       updatedAt: now,
@@ -945,6 +1009,7 @@ export const update = classMutation({
     sections: v.optional(v.array(sectionInputValidator)),
     procedureSteps: v.optional(v.array(procedureStepInputValidator)),
     expectationIds: v.optional(v.array(v.id("expectations"))),
+    acceptLinkSubmissions: v.boolean(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -980,6 +1045,7 @@ export const update = classMutation({
       sections: scoring.sections,
       procedureSteps: syncedSteps,
       expectationIds,
+      acceptLinkSubmissions: args.acceptLinkSubmissions,
       updatedAt: Date.now(),
     });
 
@@ -1010,6 +1076,7 @@ export const remove = classMutation({
     const classId = ctx.classDoc._id;
     const existing = await requireAssignmentInClass(ctx, classId, args.assignmentId);
     await deleteLinksForAssignment(ctx, args.assignmentId);
+    await deleteScoresForAssignment(ctx, args.assignmentId);
 
     // eslint-disable-next-line @convex-dev/no-collect-in-query -- assignment-scoped linked tasks
     const linkedTasks = await ctx.db
@@ -1048,7 +1115,8 @@ export const addLink = classMutation({
     await rateLimiter.limit(ctx, "assignmentLinkAdd", { key: ctx.userId, throws: true });
 
     const classId = ctx.classDoc._id;
-    await requireAssignmentInClass(ctx, classId, args.assignmentId);
+    const assignment = await requireAssignmentInClass(ctx, classId, args.assignmentId);
+    assertAssignmentAcceptsLinkSubmissions(assignment);
     await requireStudentInClass(ctx, classId, ctx.userId);
 
     const url = normalizeUrl(args.url);
@@ -1089,6 +1157,8 @@ export const updateLink = classMutation({
     if (link.studentUserId !== ctx.userId) {
       throw new Error("You can only edit your own links");
     }
+    const assignment = await requireAssignmentInClass(ctx, classId, link.assignmentId);
+    assertAssignmentAcceptsLinkSubmissions(assignment);
 
     const url = normalizeUrl(args.url);
     const label = normalizeOptionalLabel(args.label, "Label", MAX_LINK_LABEL_LENGTH);
@@ -1151,6 +1221,8 @@ export const setLinkHandedIn = classMutation({
     if (link.studentUserId !== ctx.userId) {
       throw new Error("You can only update your own links");
     }
+    const assignment = await requireAssignmentInClass(ctx, classId, link.assignmentId);
+    assertAssignmentAcceptsLinkSubmissions(assignment);
 
     await ctx.db.patch("assignmentStudentLinks", args.linkId, {
       handedIn: args.handedIn,

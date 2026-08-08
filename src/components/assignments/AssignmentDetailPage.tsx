@@ -1,6 +1,15 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
-import { ArrowLeft, ClipboardList, ExternalLink, Pencil, Plus, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Check,
+  ClipboardList,
+  ExternalLink,
+  ClipboardPen,
+  Pencil,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Trans, useTranslation } from "react-i18next";
 
@@ -28,6 +37,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAddAssignmentLink } from "@/hooks/assignments/useAddAssignmentLink";
 import { useAssignment } from "@/hooks/assignments/useAssignment";
 import { useCheckAssignmentLinkAccessibility } from "@/hooks/assignments/useCheckAssignmentLinkAccessibility";
+import { useReleasedAssignmentScore } from "@/hooks/assignments/useReleasedAssignmentScore";
 import { useRemoveAssignment } from "@/hooks/assignments/useRemoveAssignment";
 import { useRemoveAssignmentLink } from "@/hooks/assignments/useRemoveAssignmentLink";
 import { useSetAssignmentLinkHandedIn } from "@/hooks/assignments/useSetAssignmentLinkHandedIn";
@@ -53,6 +63,13 @@ import {
   type AssignmentDetailPersonal,
   type AssignmentStudentLink,
 } from "@/lib/assignments/assignments";
+import {
+  computeScoreTotals,
+  draftFromScore,
+  formatScoreFraction,
+  formatScorePercent,
+  type StudentScoreDraft,
+} from "@/lib/assignments/assignmentScores";
 import { needsPublicAccessCheck } from "../../../convex/lib/linkAccessibility";
 import {
   formatExpectationValue,
@@ -177,16 +194,65 @@ function AssignmentMeta({
   );
 }
 
+function ReleasedScoreSummary({
+  assignment,
+  scoreDraft,
+  isPending,
+}: {
+  assignment: AssignmentDetailClass | AssignmentDetailPersonal;
+  scoreDraft: StudentScoreDraft | null;
+  isPending: boolean;
+}) {
+  const { t } = useTranslation("assignments");
+
+  if (!assignment.scoresReleased) {
+    return null;
+  }
+
+  if (isPending) {
+    return <Skeleton className="h-24 w-full" />;
+  }
+
+  const draft = scoreDraft ?? draftFromScore(undefined);
+  const totals = computeScoreTotals(assignment, draft);
+
+  return (
+    <section className="rounded-lg border border-border bg-muted/30 p-4">
+      <h2 className="text-sm font-medium text-muted-foreground">{t("yourScoreHeading")}</h2>
+      {draft.excused ? (
+        <p className="mt-1 text-2xl font-semibold tracking-tight">{t("scoreExcused")}</p>
+      ) : null}
+      {totals.hasScore ? (
+        <p className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span className="text-2xl font-semibold tracking-tight tabular-nums">
+            {formatScoreFraction(totals, t("scoreUnset"))}
+          </span>
+          <span className="text-lg font-medium text-muted-foreground tabular-nums">
+            {formatScorePercent(totals, t("scoreUnset"))}
+          </span>
+        </p>
+      ) : !draft.excused ? (
+        <p className="mt-1 text-base text-muted-foreground">{t("noScoreYet")}</p>
+      ) : null}
+    </section>
+  );
+}
+
 function AssignmentContentSections({
   classId,
   assignment,
+  scoreDraft,
+  highlightReleasedScore,
 }: {
   classId: Id<"classes">;
   assignment: AssignmentDetailClass | AssignmentDetailPersonal;
+  scoreDraft?: StudentScoreDraft | null;
+  highlightReleasedScore?: boolean;
 }) {
   const { t } = useTranslation("assignments");
   const { t: tTasks } = useTranslation("tasks");
   const isStaffView = assignment.scope === "class";
+  const showSelections = highlightReleasedScore === true && scoreDraft != null;
 
   return (
     <div className="flex flex-col gap-6">
@@ -253,46 +319,112 @@ function AssignmentContentSections({
         <section className="flex flex-col gap-2">
           <h2 className="text-lg font-medium">{t("scoringHeading")}</h2>
           <ul className="space-y-3 text-sm">
-            {assignment.sections.map((section) => (
-              <li key={section.key} className="rounded-lg border border-border p-3">
-                <p className="font-medium">
-                  {section.name}{" "}
-                  <span className="font-normal text-muted-foreground">
-                    (
-                    {section.type === "points"
-                      ? t("sectionTypePoints")
-                      : section.type === "rubricLevels"
-                        ? t("sectionTypeRubricLevels")
-                        : t("sectionTypeRubricCheckboxes")}
-                    )
-                  </span>
-                </p>
-                {section.type === "points" ? (
-                  <p className="text-muted-foreground">
-                    {t("sectionMaxPointsLabel")}: {section.maxPoints}
+            {assignment.sections.map((section) => {
+              const sectionDraft = scoreDraft?.sectionScores[section.key];
+              const earnedPoints = sectionDraft?.pointsEarned;
+              const selectedLevelKey = sectionDraft?.selectedLevelKey;
+              const checkedKeys = new Set(sectionDraft?.checkedItemKeys ?? []);
+
+              return (
+                <li key={section.key} className="rounded-lg border border-border p-3">
+                  <p className="font-medium">
+                    {section.name}{" "}
+                    <span className="font-normal text-muted-foreground">
+                      (
+                      {section.type === "points"
+                        ? t("sectionTypePoints")
+                        : section.type === "rubricLevels"
+                          ? t("sectionTypeRubricLevels")
+                          : t("sectionTypeRubricCheckboxes")}
+                      )
+                    </span>
                   </p>
-                ) : null}
-                {section.type === "rubricLevels" ? (
-                  <ul className="mt-2 list-disc space-y-1 pl-5 text-muted-foreground">
-                    {(section.levels ?? []).map((level) => (
-                      <li key={level.key}>
-                        {level.description} ({level.points})
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-                {section.type === "rubricCheckboxes" ? (
-                  <ul className="mt-2 list-disc space-y-1 pl-5 text-muted-foreground">
-                    {(section.items ?? []).map((item) => (
-                      <li key={item.key}>
-                        {item.description} ({item.points})
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-              </li>
-            ))}
+                  {section.type === "points" ? (
+                    showSelections && earnedPoints !== undefined ? (
+                      <p className="mt-1 font-medium tabular-nums text-foreground">
+                        {earnedPoints} / {section.maxPoints}
+                      </p>
+                    ) : (
+                      <p className="text-muted-foreground">
+                        {t("sectionMaxPointsLabel")}: {section.maxPoints}
+                      </p>
+                    )
+                  ) : null}
+                  {section.type === "rubricLevels" ? (
+                    <ul className="mt-2 space-y-1">
+                      {(section.levels ?? []).map((level) => {
+                        const selected = showSelections && selectedLevelKey === level.key;
+                        return (
+                          <li
+                            key={level.key}
+                            className={cn(
+                              "flex items-start gap-2 rounded-md px-2 py-1.5",
+                              selected
+                                ? "bg-primary/10 font-medium text-foreground ring-1 ring-primary/30"
+                                : "text-muted-foreground",
+                            )}
+                          >
+                            {selected ? (
+                              <Check
+                                className="mt-0.5 size-3.5 shrink-0 text-primary"
+                                aria-label={t("scoreSelectedLabel")}
+                              />
+                            ) : (
+                              <span className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+                            )}
+                            <span>
+                              {level.description} ({level.points})
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : null}
+                  {section.type === "rubricCheckboxes" ? (
+                    <ul className="mt-2 space-y-1">
+                      {(section.items ?? []).map((item) => {
+                        const selected = showSelections && checkedKeys.has(item.key);
+                        return (
+                          <li
+                            key={item.key}
+                            className={cn(
+                              "flex items-start gap-2 rounded-md px-2 py-1.5",
+                              selected
+                                ? "bg-primary/10 font-medium text-foreground ring-1 ring-primary/30"
+                                : "text-muted-foreground",
+                            )}
+                          >
+                            {selected ? (
+                              <Check
+                                className="mt-0.5 size-3.5 shrink-0 text-primary"
+                                aria-label={t("scoreSelectedLabel")}
+                              />
+                            ) : (
+                              <span className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+                            )}
+                            <span>
+                              {item.description} ({item.points})
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : null}
+                </li>
+              );
+            })}
           </ul>
+        </section>
+      ) : null}
+
+      {assignment.scoringMode === "total" &&
+      showSelections &&
+      scoreDraft?.totalPointsEarned !== undefined ? (
+        <section className="flex flex-col gap-2">
+          <h2 className="text-lg font-medium">{t("scoringHeading")}</h2>
+          <p className="text-sm font-medium tabular-nums">
+            {scoreDraft.totalPointsEarned} / {assignment.totalPoints ?? 0}
+          </p>
         </section>
       ) : null}
     </div>
@@ -472,54 +604,65 @@ function StaffAssignmentDetailPage({ classId, assignmentId }: AssignmentDetailPa
       enableSorting: true,
     }));
 
-    return [
-      {
-        id: "handedInLinks",
-        accessorFn: (row) =>
-          (linksByStudent.get(row.userId) ?? []).filter((link) => link.handedIn).length,
-        header: ({ column }) => (
-          <DataTableSortableHeader
-            label={t("columnHandedInLinks")}
-            sorted={column.getIsSorted()}
-            onSort={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          />
-        ),
-        cell: ({ row }) => {
-          const links = (linksByStudent.get(row.original.userId) ?? []).filter(
-            (link) => link.handedIn,
-          );
-          if (links.length === 0) {
-            return <span className="text-muted-foreground">—</span>;
-          }
-          return <LinkList links={links} />;
-        },
-        enableSorting: true,
-      },
-      {
-        id: "otherLinks",
-        accessorFn: (row) =>
-          (linksByStudent.get(row.userId) ?? []).filter((link) => !link.handedIn).length,
-        header: ({ column }) => (
-          <DataTableSortableHeader
-            label={t("columnOtherLinks")}
-            sorted={column.getIsSorted()}
-            onSort={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          />
-        ),
-        cell: ({ row }) => {
-          const links = (linksByStudent.get(row.original.userId) ?? []).filter(
-            (link) => !link.handedIn,
-          );
-          if (links.length === 0) {
-            return <span className="text-muted-foreground">—</span>;
-          }
-          return <LinkList links={links} />;
-        },
-        enableSorting: true,
-      },
-      ...expectationColumns,
-    ];
-  }, [assignment?.expectations, expectationValueMap, linksByStudent, t, tExpectations]);
+    const linkColumns: ColumnDef<StudentRosterEntry, unknown>[] =
+      assignment?.acceptLinkSubmissions === false
+        ? []
+        : [
+            {
+              id: "handedInLinks",
+              accessorFn: (row) =>
+                (linksByStudent.get(row.userId) ?? []).filter((link) => link.handedIn).length,
+              header: ({ column }) => (
+                <DataTableSortableHeader
+                  label={t("columnHandedInLinks")}
+                  sorted={column.getIsSorted()}
+                  onSort={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                />
+              ),
+              cell: ({ row }) => {
+                const links = (linksByStudent.get(row.original.userId) ?? []).filter(
+                  (link) => link.handedIn,
+                );
+                if (links.length === 0) {
+                  return <span className="text-muted-foreground">—</span>;
+                }
+                return <LinkList links={links} />;
+              },
+              enableSorting: true,
+            },
+            {
+              id: "otherLinks",
+              accessorFn: (row) =>
+                (linksByStudent.get(row.userId) ?? []).filter((link) => !link.handedIn).length,
+              header: ({ column }) => (
+                <DataTableSortableHeader
+                  label={t("columnOtherLinks")}
+                  sorted={column.getIsSorted()}
+                  onSort={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                />
+              ),
+              cell: ({ row }) => {
+                const links = (linksByStudent.get(row.original.userId) ?? []).filter(
+                  (link) => !link.handedIn,
+                );
+                if (links.length === 0) {
+                  return <span className="text-muted-foreground">—</span>;
+                }
+                return <LinkList links={links} />;
+              },
+              enableSorting: true,
+            },
+          ];
+
+    return [...linkColumns, ...expectationColumns];
+  }, [
+    assignment?.acceptLinkSubmissions,
+    assignment?.expectations,
+    expectationValueMap,
+    linksByStudent,
+    t,
+    tExpectations,
+  ]);
 
   const studentsPending =
     boardPending || (canReadStudents && rosterPending && roster === undefined);
@@ -571,6 +714,19 @@ function StaffAssignmentDetailPage({ classId, assignmentId }: AssignmentDetailPa
               variant="outline"
               render={
                 <Link
+                  to="/class/$classId/assignments/$assignmentId/grade"
+                  params={{ classId, assignmentId }}
+                />
+              }
+            >
+              <ClipboardPen className="size-4" />
+              {t("gradeAction")}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              render={
+                <Link
                   to="/class/$classId/assignments/$assignmentId/edit"
                   params={{ classId, assignmentId }}
                 />
@@ -603,7 +759,9 @@ function StaffAssignmentDetailPage({ classId, assignmentId }: AssignmentDetailPa
       ) : null}
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-medium">{t("linksHeading")}</h2>
+        <h2 className="text-lg font-medium">
+          {assignment.acceptLinkSubmissions ? t("linksHeading") : t("studentsHeading")}
+        </h2>
         <GroupTeamFilterButtons classId={classId} />
         {filtered.length === 0 ? (
           <Empty className="border border-dashed">
@@ -698,6 +856,7 @@ function PersonalAssignmentDetailPage({ classId, assignmentId }: AssignmentDetai
 
   const assignment = data && isPersonalAssignmentDetail(data) ? data : null;
   const students = useMemo(() => assignment?.students ?? [], [assignment?.students]);
+  const scoresReleased = assignment?.scoresReleased === true;
 
   const nameFormat = useMemo(
     () =>
@@ -738,6 +897,18 @@ function PersonalAssignmentDetailPage({ classId, assignmentId }: AssignmentDetai
 
   const activeStudent =
     students.find((student) => student.userId === selectedUserId) ?? students[0];
+
+  const { data: releasedScore, isPending: releasedScorePending } = useReleasedAssignmentScore(
+    classId,
+    assignmentId,
+    activeStudent?.userId ?? selectedUserId,
+    scoresReleased && Boolean(activeStudent?.userId ?? selectedUserId),
+  );
+
+  const scoreDraft = useMemo(
+    () => (scoresReleased ? draftFromScore(releasedScore ?? undefined) : null),
+    [releasedScore, scoresReleased],
+  );
 
   const linkedExpectations = useMemo(() => {
     if (!assignment) return [] as ExpectationListItem[];
@@ -823,7 +994,6 @@ function PersonalAssignmentDetailPage({ classId, assignmentId }: AssignmentDetai
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:px-8">
       <AssignmentDetailBackLink classId={classId} />
       <AssignmentMeta assignment={assignment} />
-      <AssignmentContentSections classId={classId} assignment={assignment} />
 
       {selectedUserId ? (
         <PersonalStudentPicker
@@ -839,6 +1009,21 @@ function PersonalAssignmentDetailPage({ classId, assignmentId }: AssignmentDetai
           {tExpectations("personalStudentLabel", { name: activeName })}
         </p>
       ) : null}
+
+      {scoresReleased ? (
+        <ReleasedScoreSummary
+          assignment={assignment}
+          scoreDraft={scoreDraft}
+          isPending={releasedScorePending}
+        />
+      ) : null}
+
+      <AssignmentContentSections
+        classId={classId}
+        assignment={assignment}
+        scoreDraft={scoreDraft}
+        highlightReleasedScore={scoresReleased && !releasedScorePending}
+      />
 
       {assignment.expectationIds.length > 0 ? (
         <section className="flex flex-col gap-2">
@@ -877,167 +1062,169 @@ function PersonalAssignmentDetailPage({ classId, assignmentId }: AssignmentDetai
         </section>
       ) : null}
 
-      <section className="flex flex-col gap-3">
-        <div>
-          <h2 className="text-lg font-medium">{t("linksHeading")}</h2>
-          <AssignmentLinksDescription />
-        </div>
+      {assignment.acceptLinkSubmissions ? (
+        <section className="flex flex-col gap-3">
+          <div>
+            <h2 className="text-lg font-medium">{t("linksHeading")}</h2>
+            <AssignmentLinksDescription />
+          </div>
 
-        {activeStudent.links.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t("linksEmpty")}</p>
-        ) : (
-          <ul className="flex flex-col gap-2">
-            {activeStudent.links.map((link) => (
-              <li
-                key={link._id}
-                className="flex flex-col gap-2 rounded-lg border border-border p-3 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <a
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-sm text-primary underline-offset-2 hover:underline"
+          {activeStudent.links.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t("linksEmpty")}</p>
+          ) : (
+            <ul className="flex flex-col gap-2">
+              {activeStudent.links.map((link) => (
+                <li
+                  key={link._id}
+                  className="flex flex-col gap-2 rounded-lg border border-border p-3 sm:flex-row sm:items-center sm:justify-between"
                 >
-                  {link.label?.trim() || link.url}
-                  <ExternalLink className="size-3.5" />
-                </a>
-                <div className="flex items-center gap-3">
-                  {activeStudent.canEditLinks ? (
-                    <>
-                      <label className="flex items-center gap-2 text-sm">
-                        <Checkbox
-                          checked={link.handedIn}
-                          onCheckedChange={(checked) => {
-                            void setHandedIn.mutateAsync({
-                              classId,
-                              assignmentId,
-                              linkId: link._id,
-                              handedIn: checked === true,
-                              studentUserId: activeStudent.userId,
-                            });
-                          }}
-                        />
-                        {t("linksHandIn")}
-                      </label>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label={t("deleteAction")}
-                        onClick={() => setDeletingLinkId(link._id)}
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
-                    </>
-                  ) : (
-                    <span className="text-sm text-muted-foreground">
-                      {link.handedIn ? t("linksHandedIn") : t("linksNotHandedIn")}
-                    </span>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
+                  <a
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-sm text-primary underline-offset-2 hover:underline"
+                  >
+                    {link.label?.trim() || link.url}
+                    <ExternalLink className="size-3.5" />
+                  </a>
+                  <div className="flex items-center gap-3">
+                    {activeStudent.canEditLinks ? (
+                      <>
+                        <label className="flex items-center gap-2 text-sm">
+                          <Checkbox
+                            checked={link.handedIn}
+                            onCheckedChange={(checked) => {
+                              void setHandedIn.mutateAsync({
+                                classId,
+                                assignmentId,
+                                linkId: link._id,
+                                handedIn: checked === true,
+                                studentUserId: activeStudent.userId,
+                              });
+                            }}
+                          />
+                          {t("linksHandIn")}
+                        </label>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={t("deleteAction")}
+                          onClick={() => setDeletingLinkId(link._id)}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">
+                        {link.handedIn ? t("linksHandedIn") : t("linksNotHandedIn")}
+                      </span>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
 
-        {activeStudent.canEditLinks ? (
-          <form
-            className="flex flex-col gap-3 rounded-xl border border-dashed border-border p-4"
-            onSubmit={(event) => {
-              event.preventDefault();
-              if (checkingLinkAccess || addLink.isPending) return;
-              setLinkError(null);
-              const trimmedUrl = url.trim();
-              if (!trimmedUrl) {
-                setLinkError(t("linksUrlRequired"));
-                return;
-              }
-              try {
-                const parsed = new URL(trimmedUrl);
-                if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+          {activeStudent.canEditLinks ? (
+            <form
+              className="flex flex-col gap-3 rounded-xl border border-dashed border-border p-4"
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (checkingLinkAccess || addLink.isPending) return;
+                setLinkError(null);
+                const trimmedUrl = url.trim();
+                if (!trimmedUrl) {
+                  setLinkError(t("linksUrlRequired"));
+                  return;
+                }
+                try {
+                  const parsed = new URL(trimmedUrl);
+                  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+                    setLinkError(t("linksUrlInvalid"));
+                    return;
+                  }
+                } catch {
                   setLinkError(t("linksUrlInvalid"));
                   return;
                 }
-              } catch {
-                setLinkError(t("linksUrlInvalid"));
-                return;
-              }
 
-              void (async () => {
-                if (needsPublicAccessCheck(trimmedUrl)) {
-                  setCheckingLinkAccess(true);
-                  try {
-                    const result = await checkLinkAccess(trimmedUrl);
-                    if (result.access === "private") {
+                void (async () => {
+                  if (needsPublicAccessCheck(trimmedUrl)) {
+                    setCheckingLinkAccess(true);
+                    try {
+                      const result = await checkLinkAccess(trimmedUrl);
+                      if (result.access === "private") {
+                        setLinkError(
+                          result.provider === "canva"
+                            ? t("linksAccessPrivateCanva")
+                            : t("linksAccessPrivateGoogle"),
+                        );
+                        return;
+                      }
+                      if (result.access === "unknown") {
+                        setLinkError(t("linksAccessUnverified"));
+                        return;
+                      }
+                    } catch (error: unknown) {
                       setLinkError(
-                        result.provider === "canva"
-                          ? t("linksAccessPrivateCanva")
-                          : t("linksAccessPrivateGoogle"),
+                        error instanceof Error ? error.message : t("linksAccessCheckFailed"),
                       );
                       return;
+                    } finally {
+                      setCheckingLinkAccess(false);
                     }
-                    if (result.access === "unknown") {
-                      setLinkError(t("linksAccessUnverified"));
-                      return;
-                    }
-                  } catch (error: unknown) {
-                    setLinkError(
-                      error instanceof Error ? error.message : t("linksAccessCheckFailed"),
-                    );
-                    return;
-                  } finally {
-                    setCheckingLinkAccess(false);
                   }
-                }
 
-                try {
-                  await addLink.mutateAsync({
-                    classId,
-                    assignmentId,
-                    url: trimmedUrl,
-                    label: label.trim() || undefined,
-                    studentUserId: activeStudent.userId,
-                  });
-                  setUrl("");
-                  setLabel("");
-                } catch (error: unknown) {
-                  setLinkError(error instanceof Error ? error.message : t("linkSaveFailed"));
-                }
-              })();
-            }}
-          >
-            <Field>
-              <FieldLabel htmlFor="assignment-link-url">{t("linksUrlLabel")}</FieldLabel>
-              <Input
-                id="assignment-link-url"
-                value={url}
-                onChange={(event) => setUrl(event.target.value)}
-                placeholder="https://"
-                disabled={checkingLinkAccess || addLink.isPending}
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="assignment-link-label">{t("linksLabelLabel")}</FieldLabel>
-              <Input
-                id="assignment-link-label"
-                value={label}
-                onChange={(event) => setLabel(event.target.value)}
-                placeholder={t("linksLabelOptional")}
-                disabled={checkingLinkAccess || addLink.isPending}
-              />
-            </Field>
-            {linkError ? <FieldError>{linkError}</FieldError> : null}
-            <Button
-              type="submit"
-              className="w-fit"
-              disabled={checkingLinkAccess || addLink.isPending}
+                  try {
+                    await addLink.mutateAsync({
+                      classId,
+                      assignmentId,
+                      url: trimmedUrl,
+                      label: label.trim() || undefined,
+                      studentUserId: activeStudent.userId,
+                    });
+                    setUrl("");
+                    setLabel("");
+                  } catch (error: unknown) {
+                    setLinkError(error instanceof Error ? error.message : t("linkSaveFailed"));
+                  }
+                })();
+              }}
             >
-              <Plus className="size-4" />
-              {checkingLinkAccess ? t("linksAccessChecking") : t("linksAdd")}
-            </Button>
-          </form>
-        ) : null}
-      </section>
+              <Field>
+                <FieldLabel htmlFor="assignment-link-url">{t("linksUrlLabel")}</FieldLabel>
+                <Input
+                  id="assignment-link-url"
+                  value={url}
+                  onChange={(event) => setUrl(event.target.value)}
+                  placeholder="https://"
+                  disabled={checkingLinkAccess || addLink.isPending}
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="assignment-link-label">{t("linksLabelLabel")}</FieldLabel>
+                <Input
+                  id="assignment-link-label"
+                  value={label}
+                  onChange={(event) => setLabel(event.target.value)}
+                  placeholder={t("linksLabelOptional")}
+                  disabled={checkingLinkAccess || addLink.isPending}
+                />
+              </Field>
+              {linkError ? <FieldError>{linkError}</FieldError> : null}
+              <Button
+                type="submit"
+                className="w-fit"
+                disabled={checkingLinkAccess || addLink.isPending}
+              >
+                <Plus className="size-4" />
+                {checkingLinkAccess ? t("linksAccessChecking") : t("linksAdd")}
+              </Button>
+            </form>
+          ) : null}
+        </section>
+      ) : null}
 
       <DeleteNamedCredenza
         open={deletingLinkId !== null}

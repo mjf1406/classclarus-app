@@ -55,6 +55,7 @@ export function useUpdateAssignment() {
                 sections: args.sections,
                 procedureSteps: args.procedureSteps,
                 expectationIds: args.expectationIds,
+                acceptLinkSubmissions: args.acceptLinkSubmissions,
                 hasInstructions,
                 hasProcedure,
                 updatedAt: now,
@@ -77,6 +78,7 @@ export function useUpdateAssignment() {
           sections: args.sections,
           procedureSteps: args.procedureSteps,
           expectationIds: args.expectationIds,
+          acceptLinkSubmissions: args.acceptLinkSubmissions,
           updatedAt: now,
         };
       });

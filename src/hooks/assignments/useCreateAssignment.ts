@@ -45,6 +45,8 @@ export function useCreateAssignment() {
           sections: args.sections,
           procedureSteps: args.procedureSteps,
           expectationIds: args.expectationIds,
+          acceptLinkSubmissions: args.acceptLinkSubmissions,
+          scoresReleased: false,
           createdBy: `optimistic:${randomClientId()}` as Id<"users">,
           createdAt: now,
           updatedAt: now,

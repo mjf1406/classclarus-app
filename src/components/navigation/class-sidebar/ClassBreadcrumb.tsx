@@ -31,6 +31,7 @@ type BreadcrumbTarget =
   | { kind: "assignmentNew" }
   | { kind: "assignmentDetail"; assignmentId: Id<"assignments"> }
   | { kind: "assignmentEdit"; assignmentId: Id<"assignments"> }
+  | { kind: "assignmentGrade"; assignmentId: Id<"assignments"> }
   | { kind: "points" }
   | { kind: "behaviors" }
   | { kind: "rewards" }
@@ -75,6 +76,12 @@ function breadcrumbTarget(pathname: string, classId: string): BreadcrumbTarget {
       if (action === "edit") {
         return {
           kind: "assignmentEdit",
+          assignmentId: assignmentId as Id<"assignments">,
+        };
+      }
+      if (action === "grade") {
+        return {
+          kind: "assignmentGrade",
           assignmentId: assignmentId as Id<"assignments">,
         };
       }
@@ -226,14 +233,19 @@ function AssignmentDetailBreadcrumbItems({
   classId: Id<"classes">;
   assignmentId: Id<"assignments">;
   assignmentsLabel: string;
-  mode: "detail" | "edit";
+  mode: "detail" | "edit" | "grade";
 }) {
   const { t: tAssignments } = useTranslation("assignments");
   const { data: assignment, isPending } = useAssignment(classId, assignmentId);
 
   const assignmentLabel =
     isPending && !assignment ? null : (assignment?.name ?? tAssignments("notFoundTitle"));
-  const editLabel = tAssignments("editTitle");
+  const actionLabel =
+    mode === "edit"
+      ? tAssignments("editTitle")
+      : mode === "grade"
+        ? tAssignments("gradeTitle")
+        : null;
 
   return (
     <>
@@ -247,7 +259,7 @@ function AssignmentDetailBreadcrumbItems({
         </BreadcrumbLink>
       </BreadcrumbItem>
       <BreadcrumbSeparator className="shrink-0" />
-      {mode === "edit" ? (
+      {actionLabel ? (
         <>
           <BreadcrumbItem className="min-w-0">
             {assignmentLabel === null ? (
@@ -271,8 +283,8 @@ function AssignmentDetailBreadcrumbItems({
           </BreadcrumbItem>
           <BreadcrumbSeparator className="shrink-0" />
           <BreadcrumbItem className="min-w-0">
-            <BreadcrumbPage className="block truncate" title={editLabel}>
-              {editLabel}
+            <BreadcrumbPage className="block truncate" title={actionLabel}>
+              {actionLabel}
             </BreadcrumbPage>
           </BreadcrumbItem>
         </>
@@ -315,7 +327,8 @@ export function ClassBreadcrumb({ classDoc }: ClassBreadcrumbProps) {
           : target.kind === "assignments" ||
               target.kind === "assignmentNew" ||
               target.kind === "assignmentDetail" ||
-              target.kind === "assignmentEdit"
+              target.kind === "assignmentEdit" ||
+              target.kind === "assignmentGrade"
             ? tAssignments("nav")
             : target.kind === "points"
               ? tPoints("nav")
@@ -361,12 +374,20 @@ export function ClassBreadcrumb({ classDoc }: ClassBreadcrumbProps) {
           />
         ) : target.kind === "assignmentNew" ? (
           <AssignmentNewBreadcrumbItems classId={classDoc._id} assignmentsLabel={pageLabel} />
-        ) : target.kind === "assignmentDetail" || target.kind === "assignmentEdit" ? (
+        ) : target.kind === "assignmentDetail" ||
+          target.kind === "assignmentEdit" ||
+          target.kind === "assignmentGrade" ? (
           <AssignmentDetailBreadcrumbItems
             classId={classDoc._id}
             assignmentId={target.assignmentId}
             assignmentsLabel={pageLabel}
-            mode={target.kind === "assignmentEdit" ? "edit" : "detail"}
+            mode={
+              target.kind === "assignmentEdit"
+                ? "edit"
+                : target.kind === "assignmentGrade"
+                  ? "grade"
+                  : "detail"
+            }
           />
         ) : (
           <BreadcrumbItem className="min-w-0">

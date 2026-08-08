@@ -48,6 +48,7 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  --animate-grade-shake: grade-shake 0.35s ease-in-out;
 }
 
 :root {
@@ -137,5 +138,20 @@
   html {
     @apply font-sans;
     scrollbar-gutter: stable;
+  }
+}
+
+@keyframes grade-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20%,
+  60% {
+    transform: translateX(-3px);
+  }
+  40%,
+  80% {
+    transform: translateX(3px);
   }
 }

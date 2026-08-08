@@ -1,11 +1,14 @@
 import type { Id } from "../_generated/dataModel.js";
 import type { MutationCtx } from "../_generated/server.js";
+import { deleteAssignmentScoresForClass } from "./assignmentScoresCleanup.js";
 
-/** Cascade-delete assignments and student links for a class. Linked tasks are left intact. */
+/** Cascade-delete assignments, student links, and scores for a class. Linked tasks are left intact. */
 export async function deleteAssignmentsForClass(
   ctx: MutationCtx,
   classId: Id<"classes">,
 ): Promise<void> {
+  await deleteAssignmentScoresForClass(ctx, classId);
+
   // eslint-disable-next-line @convex-dev/no-collect-in-query -- class delete cleanup, classroom-bounded
   const links = await ctx.db
     .query("assignmentStudentLinks")

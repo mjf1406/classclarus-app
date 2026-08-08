@@ -108,6 +108,14 @@ const rateLimits = {
     period: HOUR,
     capacity: 60,
   },
+  assignmentScoreUpsert: { kind: "token bucket" as const, rate: 240, period: HOUR, capacity: 80 },
+  assignmentScoreClear: { kind: "token bucket" as const, rate: 120, period: HOUR, capacity: 40 },
+  assignmentScoresSetReleased: {
+    kind: "token bucket" as const,
+    rate: 60,
+    period: HOUR,
+    capacity: 30,
+  },
   /** Outbound Google/Canva public-share probes before students add links. */
   assignmentLinkAccessCheck: {
     kind: "token bucket" as const,
