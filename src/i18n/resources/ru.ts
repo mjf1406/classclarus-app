@@ -1183,6 +1183,15 @@ const ru = {
     emptyDescriptionPreview: "No description",
     emptyTitle: "No expectations yet",
     emptyDescription: "Create an expectation to track numeric values across the class.",
+    emptyDescriptionReader: "Для этого класса ещё не заданы ожидания.",
+    personalTitle: "Ожидания",
+    personalDescription: "Ваши значения ожиданий для этого класса.",
+    personalStudentsEmptyTitle: "Нет связанных учеников",
+    personalStudentsEmptyDescription:
+      "Попросите учителя связать вас с учеником, чтобы видеть ожидания.",
+    personalStudentLabel: "Значения для {{name}}",
+    personalReadOnlyHint: "Ожидания доступны только для просмотра.",
+
     searchPlaceholder: "Search expectations…",
     searchLabel: "Search expectations",
     searchResults: "{{count}} results",

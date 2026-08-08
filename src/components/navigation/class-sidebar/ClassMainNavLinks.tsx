@@ -89,6 +89,11 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
     }
   };
 
+  // Staff (assistant teacher+) see Expectations under Manage; students/guardians
+  // see it in the main area with other personal reads.
+  const expectationsInMainNav = can("expectations:read") && !can("students:read");
+  const expectationsInManageNav = can("expectations:read") && can("students:read");
+
   // Dashboard first, then alphabetize remaining main-area items.
   const topItems: Array<NavItem> = [
     {
@@ -109,6 +114,16 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
       to: "/class/$classId/attendance",
       permission: "attendance:read",
     },
+    ...(expectationsInMainNav
+      ? [
+          {
+            title: tExpectations("nav"),
+            icon: Target,
+            to: "/class/$classId/expectations" as const,
+            permission: "expectations:read" as const,
+          },
+        ]
+      : []),
     {
       title: tPoints("nav"),
       icon: Coins,
@@ -167,12 +182,16 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
       to: "/class/$classId/behaviors",
       permission: "behaviors:manage",
     },
-    {
-      title: tExpectations("nav"),
-      icon: Target,
-      to: "/class/$classId/expectations",
-      permission: "expectations:manage",
-    },
+    ...(expectationsInManageNav
+      ? [
+          {
+            title: tExpectations("nav"),
+            icon: Target,
+            to: "/class/$classId/expectations" as const,
+            permission: "expectations:read" as const,
+          },
+        ]
+      : []),
     {
       title: t("navGroups"),
       icon: UsersRound,

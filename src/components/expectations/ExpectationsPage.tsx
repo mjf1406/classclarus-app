@@ -6,8 +6,10 @@ import { ExpectationCard } from "@/components/expectations/ExpectationCard";
 import { ExpectationFormCredenza } from "@/components/expectations/ExpectationFormCredenza";
 import { ExpectationsRosterTable } from "@/components/expectations/ExpectationsRosterTable";
 import { ExpectationsToolbar } from "@/components/expectations/ExpectationsToolbar";
+import { PersonalExpectationsPage } from "@/components/expectations/PersonalExpectationsPage";
 import { DeleteNamedCredenza } from "@/components/groups/DeleteNamedCredenza";
 import { GroupTeamFilterButtons } from "@/components/groups/GroupTeamFilterButtons";
+import PendingComponent from "@/components/loading/PendingComponent";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -45,6 +47,22 @@ type ExpectationsPageProps = {
 };
 
 export function ExpectationsPage({ classId }: ExpectationsPageProps) {
+  const { can, isPending: permissionsPending } = useCan();
+
+  if (permissionsPending) {
+    return <PendingComponent />;
+  }
+
+  // Assistant teachers (students:read) get the staff roster UI read-only.
+  // Students/guardians get the personal scoped view.
+  if (!can("expectations:manage") && !can("students:read")) {
+    return <PersonalExpectationsPage classId={classId} />;
+  }
+
+  return <StaffExpectationsPage classId={classId} />;
+}
+
+function StaffExpectationsPage({ classId }: ExpectationsPageProps) {
   const { t } = useTranslation("expectations");
   const { can } = useCan();
   const canManage = can("expectations:manage");
@@ -168,7 +186,9 @@ export function ExpectationsPage({ classId }: ExpectationsPageProps) {
               <Target />
             </EmptyMedia>
             <EmptyTitle>{t("emptyTitle")}</EmptyTitle>
-            <EmptyDescription>{t("emptyDescription")}</EmptyDescription>
+            <EmptyDescription>
+              {canManage ? t("emptyDescription") : t("emptyDescriptionReader")}
+            </EmptyDescription>
           </EmptyHeader>
           {canManage ? (
             <EmptyContent>
@@ -233,6 +253,7 @@ export function ExpectationsPage({ classId }: ExpectationsPageProps) {
               classStudentCount={roster?.length ?? filteredStudents.length}
               expectations={filtered}
               values={values ?? []}
+              canManage={canManage}
             />
           )}
         </div>

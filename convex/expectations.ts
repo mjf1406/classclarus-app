@@ -4,10 +4,12 @@ import { APP_CONFIG } from "./appConfig.js";
 import { components } from "./_generated/api.js";
 import type { Doc, Id } from "./_generated/dataModel.js";
 import type { MutationCtx, QueryCtx } from "./_generated/server.js";
-import { classScope } from "./lib/authzModel.js";
+import { classScope, type ClassPermission } from "./lib/authzModel.js";
 import { recordClassActivity } from "./lib/classActivity.js";
 import { classMutation, classQuery } from "./lib/customFunctions.js";
+import { resolvePersonalStudentIds } from "./lib/guardianLinks.js";
 import { rateLimiter } from "./lib/rateLimiter.js";
+import { resolveUserImageUrl } from "./lib/userImage.js";
 
 const MAX_NAME_LENGTH = 100;
 const MAX_DESCRIPTION_LENGTH = 500;
@@ -42,6 +44,22 @@ const expectationValueValidator = v.object({
   updatedAt: v.number(),
   updatedBy: v.id("users"),
 });
+
+const personalStudentValidator = v.object({
+  userId: v.id("users"),
+  rosterNumber: v.number(),
+  firstName: v.optional(v.string()),
+  lastName: v.optional(v.string()),
+  name: v.optional(v.string()),
+  image: v.optional(v.string()),
+  email: v.optional(v.string()),
+});
+
+type ClassAuthCtx = (QueryCtx | MutationCtx) & {
+  userId: Id<"users">;
+  can: (permission: ClassPermission) => Promise<boolean>;
+  require: (permission: ClassPermission) => Promise<void>;
+};
 
 const bulkOperationValidator = v.union(
   v.literal("set"),
@@ -227,6 +245,39 @@ async function requireExpectationInClass(
   return expectation;
 }
 
+/** Teachers (manage) and assistant teachers (students:read) see the full class roster. */
+async function canViewClassExpectationValues(ctx: ClassAuthCtx): Promise<boolean> {
+  return (await ctx.can("expectations:manage")) || (await ctx.can("students:read"));
+}
+
+/**
+ * `null` = full class values; otherwise only values for these student user IDs.
+ * Call after `expectations:read` (or manage).
+ */
+async function resolveExpectationValueAudience(
+  ctx: ClassAuthCtx,
+  classId: Id<"classes">,
+): Promise<ReadonlySet<Id<"users">> | null> {
+  if (await canViewClassExpectationValues(ctx)) {
+    return null;
+  }
+  return new Set(await resolvePersonalStudentIds(ctx, classId));
+}
+
+function countValuesForExpectation(
+  values: ReadonlyArray<Doc<"expectationValues">>,
+  expectationId: Id<"expectations">,
+  audience: ReadonlySet<Id<"users">> | null,
+): number {
+  let count = 0;
+  for (const value of values) {
+    if (value.expectationId !== expectationId) continue;
+    if (audience !== null && !audience.has(value.studentUserId)) continue;
+    count += 1;
+  }
+  return count;
+}
+
 async function listStudentUserIds(
   ctx: QueryCtx | MutationCtx,
   classId: Id<"classes">,
@@ -295,8 +346,9 @@ export const list = classQuery({
   args: {},
   returns: v.array(expectationValidator),
   handler: async (ctx) => {
-    await ctx.require("expectations:manage");
+    await ctx.require("expectations:read");
     const classId = ctx.classDoc._id;
+    const audience = await resolveExpectationValueAudience(ctx, classId);
 
     // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded list
     const expectations = await ctx.db
@@ -312,6 +364,7 @@ export const list = classQuery({
 
     const counts = new Map<Id<"expectations">, number>();
     for (const value of values) {
+      if (audience !== null && !audience.has(value.studentUserId)) continue;
       counts.set(value.expectationId, (counts.get(value.expectationId) ?? 0) + 1);
     }
 
@@ -330,13 +383,14 @@ export const get = classQuery({
   },
   returns: v.union(expectationValidator, v.null()),
   handler: async (ctx, args) => {
-    await ctx.require("expectations:manage");
+    await ctx.require("expectations:read");
     const classId = ctx.classDoc._id;
     const expectation = await ctx.db.get("expectations", args.expectationId);
     if (!expectation || expectation.classId !== classId) {
       return null;
     }
 
+    const audience = await resolveExpectationValueAudience(ctx, classId);
     // eslint-disable-next-line @convex-dev/no-collect-in-query -- expectation-bounded count
     const values = await ctx.db
       .query("expectationValues")
@@ -345,7 +399,7 @@ export const get = classQuery({
 
     return {
       ...expectation,
-      valueCount: values.length,
+      valueCount: countValuesForExpectation(values, args.expectationId, audience),
     };
   },
 });
@@ -354,13 +408,16 @@ export const listValues = classQuery({
   args: {},
   returns: v.array(expectationValueValidator),
   handler: async (ctx) => {
-    await ctx.require("expectations:manage");
+    await ctx.require("expectations:read");
     const classId = ctx.classDoc._id;
+    const audience = await resolveExpectationValueAudience(ctx, classId);
     // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded list
-    return await ctx.db
+    const values = await ctx.db
       .query("expectationValues")
       .withIndex("by_classId", (q) => q.eq("classId", classId))
       .collect();
+    if (audience === null) return values;
+    return values.filter((value) => audience.has(value.studentUserId));
   },
 });
 
@@ -370,14 +427,95 @@ export const listValuesForExpectation = classQuery({
   },
   returns: v.array(expectationValueValidator),
   handler: async (ctx, args) => {
-    await ctx.require("expectations:manage");
+    await ctx.require("expectations:read");
     const classId = ctx.classDoc._id;
     await requireExpectationInClass(ctx, classId, args.expectationId);
+    const audience = await resolveExpectationValueAudience(ctx, classId);
     // eslint-disable-next-line @convex-dev/no-collect-in-query -- expectation-bounded list
-    return await ctx.db
+    const values = await ctx.db
       .query("expectationValues")
       .withIndex("by_expectation", (q) => q.eq("expectationId", args.expectationId))
       .collect();
+    if (audience === null) return values;
+    return values.filter((value) => audience.has(value.studentUserId));
+  },
+});
+
+/** Personal/read audience: self (student) or linked students (guardian). */
+export const forAudience = classQuery({
+  args: {},
+  returns: v.object({
+    students: v.array(personalStudentValidator),
+    expectations: v.array(expectationValidator),
+    values: v.array(expectationValueValidator),
+  }),
+  handler: async (ctx) => {
+    await ctx.require("expectations:read");
+    const classId = ctx.classDoc._id;
+    const studentUserIds = await resolvePersonalStudentIds(ctx, classId);
+    if (studentUserIds.length === 0) {
+      return { students: [], expectations: [], values: [] };
+    }
+
+    const audience = new Set(studentUserIds);
+    const students: Array<{
+      userId: Id<"users">;
+      rosterNumber: number;
+      firstName?: string;
+      lastName?: string;
+      name?: string;
+      image?: string;
+      email?: string;
+    }> = [];
+
+    for (const studentUserId of studentUserIds) {
+      const row = await ctx.db
+        .query("studentRosters")
+        .withIndex("by_classId_userId", (q) => q.eq("classId", classId).eq("userId", studentUserId))
+        .unique();
+      if (!row) continue;
+      const user = await ctx.db.get("users", studentUserId);
+      if (!user) continue;
+      students.push({
+        userId: studentUserId,
+        rosterNumber: row.rosterNumber,
+        firstName: row.firstName,
+        lastName: row.lastName,
+        name: user.name,
+        image: await resolveUserImageUrl(ctx, user),
+        email: user.email,
+      });
+    }
+    students.sort((a, b) => a.rosterNumber - b.rosterNumber);
+
+    // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded list
+    const expectations = await ctx.db
+      .query("expectations")
+      .withIndex("by_classId", (q) => q.eq("classId", classId))
+      .collect();
+
+    // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded list
+    const allValues = await ctx.db
+      .query("expectationValues")
+      .withIndex("by_classId", (q) => q.eq("classId", classId))
+      .collect();
+    const values = allValues.filter((value) => audience.has(value.studentUserId));
+
+    const counts = new Map<Id<"expectations">, number>();
+    for (const value of values) {
+      counts.set(value.expectationId, (counts.get(value.expectationId) ?? 0) + 1);
+    }
+
+    return {
+      students,
+      expectations: expectations
+        .map((expectation) => ({
+          ...expectation,
+          valueCount: counts.get(expectation._id) ?? 0,
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name) || a._creationTime - b._creationTime),
+      values,
+    };
   },
 });
 

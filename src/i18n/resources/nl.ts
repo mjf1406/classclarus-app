@@ -1185,6 +1185,15 @@ const nl = {
     emptyDescriptionPreview: "No description",
     emptyTitle: "No expectations yet",
     emptyDescription: "Create an expectation to track numeric values across the class.",
+    emptyDescriptionReader: "Er zijn nog geen verwachtingen voor deze klas gedefinieerd.",
+    personalTitle: "Verwachtingen",
+    personalDescription: "Jouw verwachtingswaarden voor deze klas.",
+    personalStudentsEmptyTitle: "Geen leerlingen gekoppeld",
+    personalStudentsEmptyDescription:
+      "Vraag een leraar om je aan een leerling te koppelen om verwachtingen te bekijken.",
+    personalStudentLabel: "Waarden voor {{name}}",
+    personalReadOnlyHint: "Verwachtingen zijn alleen-lezen.",
+
     searchPlaceholder: "Search expectations…",
     searchLabel: "Search expectations",
     searchResults: "{{count}} results",

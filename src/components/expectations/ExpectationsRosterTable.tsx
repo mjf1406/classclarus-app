@@ -52,6 +52,8 @@ type ExpectationsRosterTableProps = {
   values: ExpectationValueList;
   /** When set, only this expectation column is shown (detail page). */
   singleExpectationMode?: boolean;
+  /** When false, values are display-only (no row edit / bulk set). */
+  canManage?: boolean;
 };
 
 function draftFromValue(
@@ -74,6 +76,7 @@ export function ExpectationsRosterTable({
   expectations,
   values,
   singleExpectationMode = false,
+  canManage = true,
 }: ExpectationsRosterTableProps) {
   const { t } = useTranslation("expectations");
   const { data: settings } = useClassUserSettings(classId);
@@ -220,25 +223,27 @@ export function ExpectationsRosterTable({
             sorted={column.getIsSorted()}
             onSort={() => column.toggleSorting(column.getIsSorted() === "asc")}
           />
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button
-                  type="button"
-                  size="icon-sm"
-                  variant="ghost"
-                  aria-label={t("columnActions")}
-                />
-              }
-            >
-              <MoreHorizontal className="size-4" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setBulkExpectation(expectation)}>
-                {t("bulkSetAction")}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {canManage ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    type="button"
+                    size="icon-sm"
+                    variant="ghost"
+                    aria-label={t("columnActions")}
+                  />
+                }
+              >
+                <MoreHorizontal className="size-4" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setBulkExpectation(expectation)}>
+                  {t("bulkSetAction")}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : null}
         </div>
       ),
       cell: ({ row }) => (
@@ -264,11 +269,12 @@ export function ExpectationsRosterTable({
       },
       enableSorting: true,
     }));
-  }, [expectations, t, valueMap]);
+  }, [canManage, expectations, t, valueMap]);
 
   const renderRowActions = useCallback(
-    ({ student }: { student: StudentRosterEntry }) => <ExpectationRowActions student={student} />,
-    [],
+    ({ student }: { student: StudentRosterEntry }) =>
+      canManage ? <ExpectationRowActions student={student} /> : null,
+    [canManage],
   );
 
   return (
@@ -286,26 +292,28 @@ export function ExpectationsRosterTable({
           columnOrder={columnOrder}
           columnVisibility={columnVisibility}
           extraColumns={extraColumns}
-          renderRowActions={renderRowActions}
+          renderRowActions={canManage ? renderRowActions : undefined}
         />
 
-        <ExpectationBulkSetCredenza
-          open={bulkExpectation != null}
-          onOpenChange={(open) => {
-            if (!open) setBulkExpectation(null);
-          }}
-          expectation={bulkExpectation}
-          studentCount={classStudentCount}
-          onSubmit={async (args) => {
-            if (!bulkExpectation) return;
-            await bulkApply.mutateAsync({
-              classId,
-              expectationId: bulkExpectation._id,
-              ...args,
-            });
-            setBulkExpectation(null);
-          }}
-        />
+        {canManage ? (
+          <ExpectationBulkSetCredenza
+            open={bulkExpectation != null}
+            onOpenChange={(open) => {
+              if (!open) setBulkExpectation(null);
+            }}
+            expectation={bulkExpectation}
+            studentCount={classStudentCount}
+            onSubmit={async (args) => {
+              if (!bulkExpectation) return;
+              await bulkApply.mutateAsync({
+                classId,
+                expectationId: bulkExpectation._id,
+                ...args,
+              });
+              setBulkExpectation(null);
+            }}
+          />
+        ) : null}
       </div>
     </ExpectationRowEditProvider>
   );

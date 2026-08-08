@@ -1181,6 +1181,15 @@ const pt = {
     emptyDescriptionPreview: "No description",
     emptyTitle: "No expectations yet",
     emptyDescription: "Create an expectation to track numeric values across the class.",
+    emptyDescriptionReader: "Ainda não foram definidas expectativas para esta turma.",
+    personalTitle: "Expectativas",
+    personalDescription: "Os seus valores de expectativas para esta turma.",
+    personalStudentsEmptyTitle: "Nenhum aluno vinculado",
+    personalStudentsEmptyDescription:
+      "Peça a um professor para o vincular a um aluno para ver as expectativas.",
+    personalStudentLabel: "A mostrar valores de {{name}}",
+    personalReadOnlyHint: "As expectativas são apenas de leitura.",
+
     searchPlaceholder: "Search expectations…",
     searchLabel: "Search expectations",
     searchResults: "{{count}} results",

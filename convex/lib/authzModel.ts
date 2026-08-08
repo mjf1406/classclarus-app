@@ -35,8 +35,11 @@ export const permissions = definePermissions({
   behaviors: { manage: true },
   /** Rewards catalog & folders — manage is teacher+; reserved for /rewards. */
   rewards: { manage: true },
-  /** Class expectations catalog & per-student values — manage is teacher+. */
-  expectations: { manage: true },
+  /**
+   * Class expectations catalog & per-student values — manage is teacher+;
+   * read is student/guardian (scoped) and assistant_teacher (full roster, read-only).
+   */
+  expectations: { read: true, manage: true },
   /** Points board — manage is assistant_teacher+; read is student/guardian (scoped). */
   points: { read: true, manage: true },
   /** App-level admin (global / unscoped). Not a class membership role. */
@@ -49,11 +52,13 @@ export const roles = defineRoles(permissions, {
     inherits: "class_member",
     attendance: ["read"],
     points: ["read"],
+    expectations: ["read"],
   },
   guardian: {
     inherits: "class_member",
     attendance: ["read"],
     points: ["read"],
+    expectations: ["read"],
   },
   assistant_teacher: {
     inherits: "class_member",
@@ -65,6 +70,7 @@ export const roles = defineRoles(permissions, {
     attendance: ["read", "manage"],
     tasks: ["complete"],
     points: ["read", "manage"],
+    expectations: ["read"],
   },
   teacher: {
     inherits: "assistant_teacher",

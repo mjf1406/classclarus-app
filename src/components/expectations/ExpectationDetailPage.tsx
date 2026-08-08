@@ -5,8 +5,10 @@ import { useTranslation } from "react-i18next";
 
 import { ExpectationFormCredenza } from "@/components/expectations/ExpectationFormCredenza";
 import { ExpectationsRosterTable } from "@/components/expectations/ExpectationsRosterTable";
+import { PersonalExpectationDetailPage } from "@/components/expectations/PersonalExpectationDetailPage";
 import { DeleteNamedCredenza } from "@/components/groups/DeleteNamedCredenza";
 import { GroupTeamFilterButtons } from "@/components/groups/GroupTeamFilterButtons";
+import PendingComponent from "@/components/loading/PendingComponent";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -36,6 +38,20 @@ type ExpectationDetailPageProps = {
 };
 
 export function ExpectationDetailPage({ classId, expectationId }: ExpectationDetailPageProps) {
+  const { can, isPending: permissionsPending } = useCan();
+
+  if (permissionsPending) {
+    return <PendingComponent />;
+  }
+
+  if (!can("expectations:manage") && !can("students:read")) {
+    return <PersonalExpectationDetailPage classId={classId} expectationId={expectationId} />;
+  }
+
+  return <StaffExpectationDetailPage classId={classId} expectationId={expectationId} />;
+}
+
+function StaffExpectationDetailPage({ classId, expectationId }: ExpectationDetailPageProps) {
   const { t } = useTranslation("expectations");
   const navigate = useNavigate();
   const { can } = useCan();
@@ -204,6 +220,7 @@ export function ExpectationDetailPage({ classId, expectationId }: ExpectationDet
           expectations={[data]}
           values={values ?? []}
           singleExpectationMode
+          canManage={canManage}
         />
       )}
 

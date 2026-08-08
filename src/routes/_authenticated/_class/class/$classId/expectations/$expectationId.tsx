@@ -13,7 +13,7 @@ export const Route = createFileRoute(
     const typedExpectationId = expectationId as Id<"expectations">;
 
     return (
-      <RequirePermission permission="expectations:manage">
+      <RequirePermission permission="expectations:read">
         <ExpectationDetailPage classId={typedClassId} expectationId={typedExpectationId} />
       </RequirePermission>
     );

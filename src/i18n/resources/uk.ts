@@ -1180,6 +1180,15 @@ const uk = {
     emptyDescriptionPreview: "No description",
     emptyTitle: "No expectations yet",
     emptyDescription: "Create an expectation to track numeric values across the class.",
+    emptyDescriptionReader: "Для цього класу ще не визначено очікувань.",
+    personalTitle: "Очікування",
+    personalDescription: "Ваші значення очікувань для цього класу.",
+    personalStudentsEmptyTitle: "Немає пов’язаних учнів",
+    personalStudentsEmptyDescription:
+      "Попросіть вчителя пов’язати вас з учнем, щоб переглядати очікування.",
+    personalStudentLabel: "Значення для {{name}}",
+    personalReadOnlyHint: "Очікування доступні лише для перегляду.",
+
     searchPlaceholder: "Search expectations…",
     searchLabel: "Search expectations",
     searchResults: "{{count}} results",

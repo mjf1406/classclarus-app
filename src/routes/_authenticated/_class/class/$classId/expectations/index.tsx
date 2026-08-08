@@ -10,7 +10,7 @@ export const Route = createFileRoute("/_authenticated/_class/class/$classId/expe
     const typedClassId = classId as Id<"classes">;
 
     return (
-      <RequirePermission permission="expectations:manage">
+      <RequirePermission permission="expectations:read">
         <ExpectationsPage classId={typedClassId} />
       </RequirePermission>
     );
