@@ -7,6 +7,7 @@ import {
   GraduationCap,
   History,
   LayoutDashboard,
+  ClipboardList,
   ListTodo,
   Mail,
   Megaphone,
@@ -65,6 +66,7 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
   const { t: tAnnouncements } = useTranslation("announcements");
   const { t: tAttendance } = useTranslation("attendance");
   const { t: tTasks } = useTranslation("tasks");
+  const { t: tAssignments } = useTranslation("assignments");
   const { t: tPoints } = useTranslation("points");
   const { t: tBehaviors } = useTranslation("behaviors");
   const { t: tRewards } = useTranslation("rewards");
@@ -109,6 +111,12 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
       title: tAnnouncements("nav"),
       icon: Megaphone,
       to: "/class/$classId/announcements",
+      permission: "class:read",
+    },
+    {
+      title: tAssignments("nav"),
+      icon: ClipboardList,
+      to: "/class/$classId/assignments",
       permission: "class:read",
     },
     {

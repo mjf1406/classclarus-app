@@ -48,7 +48,7 @@ export function PersonalExpectationDetailPage({
     [classDoc?.rosterNameOrder, classDoc?.rosterNameSpace],
   );
 
-  const students = data?.students ?? [];
+  const students = useMemo(() => data?.students ?? [], [data?.students]);
   const expectation = data?.expectations.find((item) => item._id === expectationId);
   const valueMap = useMemo(() => valuesByExpectationAndStudent(data?.values), [data?.values]);
 

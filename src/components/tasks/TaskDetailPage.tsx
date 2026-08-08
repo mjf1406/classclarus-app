@@ -35,7 +35,7 @@ import { useSetTaskCompletion } from "@/hooks/tasks/useSetTaskCompletion";
 import { useTask } from "@/hooks/tasks/useTask";
 import { useUpdateTask } from "@/hooks/tasks/useUpdateTask";
 import { useAuthedQuery } from "@/hooks/useAuthedQuery";
-import { formatLocalizedDateTime } from "@/i18n/formatDate";
+import { formatLocalizedDateTime, formatLocalizedDueDate } from "@/i18n/formatDate";
 import { buildMembershipIndex } from "@/lib/groups/groupTeamFilters";
 import { collectAllStudents, sortStudents } from "@/lib/groups/groups";
 import { ONE_HOUR } from "@/lib/queryCache";
@@ -386,8 +386,21 @@ function StaffTaskHeader({
         {task.description ? (
           <p className="text-sm text-muted-foreground whitespace-pre-wrap">{task.description}</p>
         ) : null}
+        {task.assignmentId && task.assignmentName ? (
+          <p className="text-sm">
+            <Link
+              to="/class/$classId/assignments/$assignmentId"
+              params={{ classId, assignmentId: task.assignmentId }}
+              className="rounded-sm text-muted-foreground outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {t("linkedAssignment", { name: task.assignmentName })}
+            </Link>
+          </p>
+        ) : null}
         <p className="text-sm text-muted-foreground">
-          {task.dueDateKey ? `${t("dueDateValue", { date: task.dueDateKey })} · ` : null}
+          {task.dueDateKey
+            ? `${t("dueDateValue", { date: formatLocalizedDueDate(task.dueDateKey) })} · `
+            : null}
           {t("statsCompleted", {
             completed: task.completedStudentIds.length,
             total: task.studentCount,
@@ -477,8 +490,21 @@ function PersonalTaskDetailContent({
         {task.description ? (
           <p className="text-sm text-muted-foreground whitespace-pre-wrap">{task.description}</p>
         ) : null}
+        {task.assignmentId && task.assignmentName ? (
+          <p className="text-sm">
+            <Link
+              to="/class/$classId/assignments/$assignmentId"
+              params={{ classId, assignmentId: task.assignmentId }}
+              className="rounded-sm text-muted-foreground outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {t("linkedAssignment", { name: task.assignmentName })}
+            </Link>
+          </p>
+        ) : null}
         <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-          {task.dueDateKey ? <span>{t("dueDateValue", { date: task.dueDateKey })}</span> : null}
+          {task.dueDateKey ? (
+            <span>{t("dueDateValue", { date: formatLocalizedDueDate(task.dueDateKey) })}</span>
+          ) : null}
           {total > 0 ? (
             <TaskCompletionStatusBadge
               completed={allDone}

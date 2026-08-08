@@ -1,9 +1,11 @@
 import { useConvexMutation } from "@convex-dev/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { toast } from "@/components/ui/toast-manager";
+import { assignmentDetailQueryKey } from "@/hooks/assignments/useAssignment";
 import { taskDetailQueryKey } from "@/hooks/tasks/useTask";
 import { tasksListQueryKey } from "@/hooks/tasks/useTasks";
 import { useOptimisticMutation } from "@/hooks/useOptimisticMutation";
@@ -20,6 +22,7 @@ type SetTaskCompletionArgs = {
 export function useSetTaskCompletion() {
   const { t } = useTranslation("tasks");
   const { t: tCommon } = useTranslation("common");
+  const queryClient = useQueryClient();
   const mutationFn = useConvexMutation(api.tasks.setCompletion);
 
   return useOptimisticMutation({
@@ -28,6 +31,13 @@ export function useSetTaskCompletion() {
       tasksListQueryKey(args.classId),
       taskDetailQueryKey(args.classId, args.taskId),
     ],
+    invalidateQueryKeys: (args) => {
+      const detail = queryClient.getQueryData<TaskDetail | null>(
+        taskDetailQueryKey(args.classId, args.taskId),
+      );
+      if (!detail?.assignmentId) return [];
+      return [assignmentDetailQueryKey(args.classId, detail.assignmentId)];
+    },
     applyOptimisticUpdate: (queryClient, args) => {
       const listKey = tasksListQueryKey(args.classId);
       const detailKey = taskDetailQueryKey(args.classId, args.taskId);

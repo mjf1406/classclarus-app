@@ -21,6 +21,7 @@ import { deleteAnnouncementsForClass } from "./lib/announcementsCleanup.js";
 import { deleteAttendanceForClass } from "./lib/attendanceCleanup.js";
 import { deleteGroupsForClass } from "./lib/groupsCleanup.js";
 import { deleteTasksForClass } from "./lib/tasksCleanup.js";
+import { deleteAssignmentsForClass } from "./lib/assignmentsCleanup.js";
 import { deleteExpectationsForClass } from "./lib/expectationsCleanup.js";
 import { deleteBehaviorsForClass } from "./lib/behaviorsCleanup.js";
 import { deleteRewardsForClass } from "./lib/rewardsCleanup.js";
@@ -508,6 +509,7 @@ export const remove = classMutation({
     await deleteClassUserSettingsForClass(ctx, classId);
     await deleteAnnouncementsForClass(ctx, classId);
     await deleteTasksForClass(ctx, classId);
+    await deleteAssignmentsForClass(ctx, classId);
     await deleteExpectationsForClass(ctx, classId);
     await deleteBehaviorsForClass(ctx, classId);
     await deleteRewardsForClass(ctx, classId);

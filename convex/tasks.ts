@@ -8,11 +8,12 @@ import { classScope, type ClassPermission } from "./lib/authzModel.js";
 import { recordClassActivity } from "./lib/classActivity.js";
 import { classMutation, classQuery } from "./lib/customFunctions.js";
 import { getClassRoleForUser, listLinkedStudentsForGuardian } from "./lib/guardianLinks.js";
+import { normalizeOptionalDueDateKey } from "./lib/dueDateKey.js";
 import { rateLimiter } from "./lib/rateLimiter.js";
+import { deleteTaskWithCompletions } from "./lib/tasksCleanup.js";
 
 const MAX_NAME_LENGTH = 100;
 const MAX_DESCRIPTION_LENGTH = 500;
-const DATE_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 const taskBaseFields = {
   _id: v.id("tasks"),
@@ -21,6 +22,12 @@ const taskBaseFields = {
   name: v.string(),
   description: v.optional(v.string()),
   dueDateKey: v.optional(v.string()),
+  assignmentId: v.optional(v.id("assignments")),
+  assignmentName: v.optional(v.string()),
+  assignmentSubject: v.optional(v.string()),
+  assignmentUnit: v.optional(v.string()),
+  /** 1-based procedure step index when linked from an assignment. */
+  procedureStepNumber: v.optional(v.number()),
   createdBy: v.id("users"),
   createdAt: v.number(),
   updatedAt: v.number(),
@@ -82,16 +89,6 @@ function normalizeOptionalDescription(description: string | undefined): string |
   if (!trimmed) return undefined;
   if (trimmed.length > MAX_DESCRIPTION_LENGTH) {
     throw new Error(`Description must be at most ${MAX_DESCRIPTION_LENGTH} characters`);
-  }
-  return trimmed;
-}
-
-function normalizeOptionalDueDateKey(dueDateKey: string | undefined): string | undefined {
-  if (dueDateKey === undefined) return undefined;
-  const trimmed = dueDateKey.trim();
-  if (!trimmed) return undefined;
-  if (!DATE_KEY_RE.test(trimmed)) {
-    throw new Error("Invalid due date");
   }
   return trimmed;
 }
@@ -163,21 +160,76 @@ async function requireStudentInClass(
   }
 }
 
-async function deleteCompletionsForTask(ctx: MutationCtx, taskId: Id<"tasks">): Promise<void> {
-  // eslint-disable-next-line @convex-dev/no-collect-in-query -- task-scoped cleanup
-  const completions = await ctx.db
-    .query("taskCompletions")
-    .withIndex("by_task", (q) => q.eq("taskId", taskId))
+type TaskAssignmentMeta = {
+  assignmentId: Id<"assignments">;
+  assignmentName: string;
+  assignmentSubject?: string;
+  assignmentUnit?: string;
+  procedureStepNumber?: number;
+};
+
+function toAssignmentMeta(assignment: Doc<"assignments">): TaskAssignmentMeta {
+  return {
+    assignmentId: assignment._id,
+    assignmentName: assignment.name,
+    ...(assignment.subject ? { assignmentSubject: assignment.subject } : {}),
+    ...(assignment.unit ? { assignmentUnit: assignment.unit } : {}),
+  };
+}
+
+/** Resolve assignment linkage from task.assignmentId and/or procedure step taskIds. */
+async function buildTaskAssignmentIndex(
+  ctx: QueryCtx | MutationCtx,
+  classId: Id<"classes">,
+): Promise<{
+  byAssignmentId: Map<Id<"assignments">, TaskAssignmentMeta>;
+  byTaskId: Map<Id<"tasks">, TaskAssignmentMeta>;
+}> {
+  // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded assignments
+  const assignments = await ctx.db
+    .query("assignments")
+    .withIndex("by_classId", (q) => q.eq("classId", classId))
     .collect();
-  for (const completion of completions) {
-    await ctx.db.delete("taskCompletions", completion._id);
+
+  const byAssignmentId = new Map<Id<"assignments">, TaskAssignmentMeta>();
+  const byTaskId = new Map<Id<"tasks">, TaskAssignmentMeta>();
+
+  for (const assignment of assignments) {
+    const meta = toAssignmentMeta(assignment);
+    byAssignmentId.set(assignment._id, meta);
+    assignment.procedureSteps.forEach((step, index) => {
+      if (step.taskId) {
+        byTaskId.set(step.taskId, {
+          ...meta,
+          procedureStepNumber: index + 1,
+        });
+      }
+    });
   }
+
+  return { byAssignmentId, byTaskId };
+}
+
+function resolveTaskAssignment(
+  task: Doc<"tasks">,
+  index: {
+    byAssignmentId: Map<Id<"assignments">, TaskAssignmentMeta>;
+    byTaskId: Map<Id<"tasks">, TaskAssignmentMeta>;
+  },
+): TaskAssignmentMeta | undefined {
+  const fromStep = index.byTaskId.get(task._id);
+  if (fromStep) return fromStep;
+  if (task.assignmentId) {
+    return index.byAssignmentId.get(task.assignmentId);
+  }
+  return undefined;
 }
 
 function toPublicTask(
   task: Doc<"tasks">,
   completedCount: number,
   studentCount: number,
+  assignment: TaskAssignmentMeta | undefined,
 ): {
   _id: Id<"tasks">;
   _creationTime: number;
@@ -185,6 +237,11 @@ function toPublicTask(
   name: string;
   description?: string;
   dueDateKey?: string;
+  assignmentId?: Id<"assignments">;
+  assignmentName?: string;
+  assignmentSubject?: string;
+  assignmentUnit?: string;
+  procedureStepNumber?: number;
   createdBy: Id<"users">;
   createdAt: number;
   updatedAt: number;
@@ -198,6 +255,19 @@ function toPublicTask(
     name: task.name,
     description: task.description,
     dueDateKey: task.dueDateKey,
+    ...(assignment
+      ? {
+          assignmentId: assignment.assignmentId,
+          assignmentName: assignment.assignmentName,
+          ...(assignment.assignmentSubject
+            ? { assignmentSubject: assignment.assignmentSubject }
+            : {}),
+          ...(assignment.assignmentUnit ? { assignmentUnit: assignment.assignmentUnit } : {}),
+          ...(assignment.procedureStepNumber !== undefined
+            ? { procedureStepNumber: assignment.procedureStepNumber }
+            : {}),
+        }
+      : {}),
     createdBy: task.createdBy,
     createdAt: task.createdAt,
     updatedAt: task.updatedAt,
@@ -229,6 +299,8 @@ export const list = classQuery({
       .order("desc")
       .collect();
 
+    const assignmentIndex = await buildTaskAssignmentIndex(ctx, classId);
+
     const result = [];
     for (const doc of docs) {
       // eslint-disable-next-line @convex-dev/no-collect-in-query -- task-scoped completions
@@ -237,7 +309,14 @@ export const list = classQuery({
         .withIndex("by_task", (q) => q.eq("taskId", doc._id))
         .collect();
       const completedCount = completions.filter((row) => studentSet.has(row.studentUserId)).length;
-      result.push(toPublicTask(doc, completedCount, studentCount));
+      result.push(
+        toPublicTask(
+          doc,
+          completedCount,
+          studentCount,
+          resolveTaskAssignment(doc, assignmentIndex),
+        ),
+      );
     }
     return result;
   },
@@ -267,6 +346,8 @@ export const get = classQuery({
       .withIndex("by_task", (q) => q.eq("taskId", args.taskId))
       .collect();
 
+    const assignmentIndex = await buildTaskAssignmentIndex(ctx, classId);
+    const assignment = resolveTaskAssignment(task, assignmentIndex);
     const base = {
       _id: task._id,
       _creationTime: task._creationTime,
@@ -274,6 +355,19 @@ export const get = classQuery({
       name: task.name,
       description: task.description,
       dueDateKey: task.dueDateKey,
+      ...(assignment
+        ? {
+            assignmentId: assignment.assignmentId,
+            assignmentName: assignment.assignmentName,
+            ...(assignment.assignmentSubject
+              ? { assignmentSubject: assignment.assignmentSubject }
+              : {}),
+            ...(assignment.assignmentUnit ? { assignmentUnit: assignment.assignmentUnit } : {}),
+            ...(assignment.procedureStepNumber !== undefined
+              ? { procedureStepNumber: assignment.procedureStepNumber }
+              : {}),
+          }
+        : {}),
       createdBy: task.createdBy,
       createdAt: task.createdAt,
       updatedAt: task.updatedAt,
@@ -402,8 +496,7 @@ export const remove = classMutation({
 
     const classId = ctx.classDoc._id;
     const existing = await requireTaskInClass(ctx, classId, args.taskId);
-    await deleteCompletionsForTask(ctx, args.taskId);
-    await ctx.db.delete("tasks", args.taskId);
+    await deleteTaskWithCompletions(ctx, args.taskId);
 
     await recordClassActivity(ctx, {
       classId,

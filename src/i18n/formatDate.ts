@@ -1,5 +1,6 @@
 import i18n from "@/i18n";
 import { pickCountdownUnit } from "@/i18n/countdown";
+import { dueDateKeyHasTime, parseDueDateKey } from "@/lib/dueDate/dueDateKey";
 import { getLanguageOption, isAppLanguage } from "@/lib/languages";
 
 function getAppLocale(): string {
@@ -11,6 +12,24 @@ export function formatLocalizedDateTime(timestampMs: number): string {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(timestampMs));
+}
+
+/**
+ * Localized due date for tasks/assignments, e.g. "Saturday, August 8, 2026"
+ * (or with time when the key includes HH:mm).
+ */
+export function formatLocalizedDueDate(dueDateKey: string): string {
+  const date = parseDueDateKey(dueDateKey);
+  if (!date) return dueDateKey;
+  return new Intl.DateTimeFormat(getAppLocale(), {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    ...(dueDateKeyHasTime(dueDateKey)
+      ? { hour: "numeric" as const, minute: "2-digit" as const }
+      : {}),
+  }).format(date);
 }
 
 /**

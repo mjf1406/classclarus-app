@@ -17,6 +17,7 @@ import {
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { coerceDueDateKeyForInput, normalizeDueDateKey } from "@/lib/dueDate/dueDateKey";
 import {
   MAX_TASK_DESCRIPTION_LENGTH,
   MAX_TASK_NAME_LENGTH,
@@ -70,7 +71,7 @@ export function TaskFormCredenza({
     (): FormDefaults => ({
       name: initial?.name ?? "",
       description: initial?.description ?? "",
-      dueDateKey: initial?.dueDateKey ?? "",
+      dueDateKey: coerceDueDateKeyForInput(initial?.dueDateKey),
     }),
     [initial],
   );
@@ -116,7 +117,8 @@ export function TaskFormCredenza({
       setSubmitError(null);
       const parsed = schema.parse(value);
       const description = parsed.description.trim() || undefined;
-      const dueDateKey = parsed.dueDateKey.trim() || undefined;
+      const trimmedDue = parsed.dueDateKey.trim();
+      const dueDateKey = trimmedDue ? (normalizeDueDateKey(trimmedDue) ?? undefined) : undefined;
       skipNextResetRef.current = true;
       onOpenChange(false);
       try {
@@ -216,7 +218,7 @@ export function TaskFormCredenza({
                       <Input
                         id={field.name}
                         name={field.name}
-                        type="date"
+                        type="datetime-local"
                         value={field.state.value}
                         onBlur={field.handleBlur}
                         onChange={(event) => field.handleChange(event.target.value)}

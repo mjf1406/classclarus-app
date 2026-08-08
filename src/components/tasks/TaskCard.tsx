@@ -17,7 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { formatLocalizedDateTime } from "@/i18n/formatDate";
+import { formatLocalizedDateTime, formatLocalizedDueDate } from "@/i18n/formatDate";
 import { isTaskPastDue, type TaskListItem } from "@/lib/tasks/tasks";
 import { cn } from "@/lib/utils";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -26,11 +26,23 @@ type TaskCardProps = {
   classId: Id<"classes">;
   task: TaskListItem;
   personalView: boolean;
+  /** When true, omit the assignment link (e.g. already shown as a folder header). */
+  hideAssignmentLink?: boolean;
+  /** When set, prefix the title with the procedure step number (e.g. "1. Name"). */
+  showProcedureStepNumber?: boolean;
   onEdit: (task: TaskListItem) => void;
   onDelete: (task: TaskListItem) => void;
 };
 
-export function TaskCard({ classId, task, personalView, onEdit, onDelete }: TaskCardProps) {
+export function TaskCard({
+  classId,
+  task,
+  personalView,
+  hideAssignmentLink = false,
+  showProcedureStepNumber = false,
+  onEdit,
+  onDelete,
+}: TaskCardProps) {
   const { t } = useTranslation("tasks");
   const navigate = useNavigate();
 
@@ -74,6 +86,10 @@ export function TaskCard({ classId, task, personalView, onEdit, onDelete }: Task
   const pastDue = isTaskPastDue(task.dueDateKey);
   const personalTone =
     personalView && task.studentCount > 0 ? completionTone(allDone, pastDue) : null;
+  const title =
+    showProcedureStepNumber && task.procedureStepNumber !== undefined
+      ? t("procedureStepTaskName", { number: task.procedureStepNumber, name: task.name })
+      : task.name;
 
   return (
     <Card
@@ -91,7 +107,7 @@ export function TaskCard({ classId, task, personalView, onEdit, onDelete }: Task
               params={{ classId, taskId: task._id }}
               className="rounded-sm outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
             >
-              {task.name}
+              {title}
             </Link>
           </CardTitle>
           <CardDescription className="mt-1 line-clamp-2">{description}</CardDescription>
@@ -122,7 +138,20 @@ export function TaskCard({ classId, task, personalView, onEdit, onDelete }: Task
             })}
           </p>
         )}
-        {task.dueDateKey ? <p>{t("dueDateValue", { date: task.dueDateKey })}</p> : null}
+        {task.dueDateKey ? (
+          <p>{t("dueDateValue", { date: formatLocalizedDueDate(task.dueDateKey) })}</p>
+        ) : null}
+        {!hideAssignmentLink && task.assignmentId && task.assignmentName ? (
+          <p>
+            <Link
+              to="/class/$classId/assignments/$assignmentId"
+              params={{ classId, assignmentId: task.assignmentId }}
+              className="rounded-sm outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {t("linkedAssignment", { name: task.assignmentName })}
+            </Link>
+          </p>
+        ) : null}
       </CardContent>
       <CardFooter className="border-t text-xs text-muted-foreground">
         {t("updatedAt", { date: formatLocalizedDateTime(task.updatedAt) })}

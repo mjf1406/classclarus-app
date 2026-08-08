@@ -275,14 +275,17 @@ const schema = defineSchema({
     classId: v.id("classes"),
     name: v.string(),
     description: v.optional(v.string()),
-    /** Optional local school-day due date (YYYY-MM-DD), same idea as attendance dateKey. */
+    /** Optional local due date/time: YYYY-MM-DD or YYYY-MM-DDTHH:mm. */
     dueDateKey: v.optional(v.string()),
+    /** Set when this task was created from an assignment procedure step. */
+    assignmentId: v.optional(v.id("assignments")),
     createdBy: v.id("users"),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_classId", ["classId"])
-    .index("by_classId_updatedAt", ["classId", "updatedAt"]),
+    .index("by_classId_updatedAt", ["classId", "updatedAt"])
+    .index("by_assignmentId", ["assignmentId"]),
   /**
    * Sparse per-student task completion. Missing row = not done.
    */
@@ -295,6 +298,84 @@ const schema = defineSchema({
   })
     .index("by_task_student", ["taskId", "studentUserId"])
     .index("by_task", ["taskId"])
+    .index("by_classId", ["classId"]),
+  /**
+   * Class assignments — teacher-authored work with optional scoring structure,
+   * instructions, procedure steps, and student link submissions.
+   */
+  assignments: defineTable({
+    classId: v.id("classes"),
+    name: v.string(),
+    subject: v.optional(v.string()),
+    unit: v.optional(v.string()),
+    /** Optional local due date/time: YYYY-MM-DD or YYYY-MM-DDTHH:mm. */
+    dueDateKey: v.optional(v.string()),
+    /** Optional TipTap/ProseMirror JSON instructions. */
+    instructionsJson: v.optional(v.string()),
+    scoringMode: v.union(v.literal("total"), v.literal("sections")),
+    totalPoints: v.optional(v.number()),
+    sections: v.optional(
+      v.array(
+        v.object({
+          key: v.string(),
+          name: v.string(),
+          type: v.union(
+            v.literal("points"),
+            v.literal("rubricLevels"),
+            v.literal("rubricCheckboxes"),
+          ),
+          maxPoints: v.optional(v.number()),
+          levels: v.optional(
+            v.array(
+              v.object({
+                key: v.string(),
+                description: v.string(),
+                points: v.number(),
+              }),
+            ),
+          ),
+          items: v.optional(
+            v.array(
+              v.object({
+                key: v.string(),
+                description: v.string(),
+                points: v.number(),
+              }),
+            ),
+          ),
+        }),
+      ),
+    ),
+    procedureSteps: v.array(
+      v.object({
+        key: v.string(),
+        body: v.string(),
+        addAsTask: v.boolean(),
+        taskId: v.optional(v.id("tasks")),
+      }),
+    ),
+    expectationIds: v.array(v.id("expectations")),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_classId", ["classId"])
+    .index("by_classId_updatedAt", ["classId", "updatedAt"]),
+  /**
+   * Student-owned links for an assignment. `handedIn` marks which links are submitted.
+   */
+  assignmentStudentLinks: defineTable({
+    classId: v.id("classes"),
+    assignmentId: v.id("assignments"),
+    studentUserId: v.id("users"),
+    url: v.string(),
+    label: v.optional(v.string()),
+    handedIn: v.boolean(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_assignment", ["assignmentId"])
+    .index("by_assignment_student", ["assignmentId", "studentUserId"])
     .index("by_classId", ["classId"]),
   /**
    * Class expectations — teacher-defined numeric (or range) measures with a unit.

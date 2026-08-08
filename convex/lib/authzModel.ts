@@ -31,6 +31,11 @@ export const permissions = definePermissions({
    * assistant_teacher+; view uses class:read.
    */
   tasks: { manage: true, complete: true },
+  /**
+   * Class assignments — manage (CUD) is teacher+; view uses class:read.
+   * Students manage their own submission links without a separate permission.
+   */
+  assignments: { manage: true },
   /** Behavior catalog & folders — manage is teacher+; view uses class:read. */
   behaviors: { manage: true },
   /** Rewards catalog & folders — manage is teacher+; view uses class:read. */
@@ -83,6 +88,7 @@ export const roles = defineRoles(permissions, {
     groups: ["manage"],
     announcements: ["manage"],
     tasks: ["manage"],
+    assignments: ["manage"],
     behaviors: ["manage"],
     rewards: ["manage"],
     expectations: ["manage"],
