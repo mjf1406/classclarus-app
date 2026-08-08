@@ -285,3 +285,45 @@ export const markStudentAbsent = classMutation({
     return null;
   },
 });
+
+export const markStudentPresent = classMutation({
+  args: {
+    studentUserId: v.id("users"),
+    dateKey: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await rateLimiter.limit(ctx, "attendanceMarkPresent", { key: ctx.userId, throws: true });
+    await ctx.require("attendance:manage");
+    assertValidDateKey(args.dateKey);
+    const classId = ctx.classDoc._id;
+    await requireStudentInClass(ctx, classId, args.studentUserId);
+
+    const now = Date.now();
+    const sessionId = await ensureSession(ctx, classId, args.dateKey, now);
+    await upsertRecord(ctx, {
+      classId,
+      sessionId,
+      dateKey: args.dateKey,
+      studentUserId: args.studentUserId,
+      status: "present",
+      now,
+    });
+
+    await recordClassActivity(ctx, {
+      classId,
+      actorUserId: ctx.userId,
+      action: "update",
+      resourceType: "attendance",
+      resourceId: args.studentUserId,
+      summary: `Marked student present for ${args.dateKey}`,
+      summaryKey: "activitySummary_markedStudentPresent",
+      metadata: {
+        dateKey: args.dateKey,
+        studentUserId: args.studentUserId,
+      },
+    });
+
+    return null;
+  },
+});

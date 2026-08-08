@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/credenza";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import {
   Select,
   SelectContent,
@@ -60,7 +61,7 @@ type FormDefaults = {
   name: string;
   description: string;
   icon: string;
-  points: string;
+  points: number;
   folderId: string;
   purchaseLimit: PurchaseLimitFormValues;
 };
@@ -95,7 +96,7 @@ export function RewardFormCredenza({
       name: initial?.name ?? "",
       description: initial?.description ?? "",
       icon: initial?.icon ?? "",
-      points: initial ? String(initial.points) : "1",
+      points: initial?.points ?? 1,
       folderId: initial?.folderId ?? NONE_FOLDER,
       purchaseLimit: purchaseLimitToFormValues(initial?.purchaseLimit),
     }),
@@ -120,16 +121,10 @@ export function RewardFormCredenza({
           ),
         icon: z.string(),
         points: z
-          .string()
-          .trim()
-          .regex(/^\d+$/, t("pointsInvalid"))
-          .refine(
-            (value) => {
-              const n = Number(value);
-              return Number.isInteger(n) && n >= 0 && n <= MAX_REWARD_POINTS;
-            },
-            t("pointsOutOfRange", { max: MAX_REWARD_POINTS }),
-          ),
+          .number({ error: t("pointsInvalid") })
+          .int(t("pointsInvalid"))
+          .min(0, t("pointsOutOfRange", { max: MAX_REWARD_POINTS }))
+          .max(MAX_REWARD_POINTS, t("pointsOutOfRange", { max: MAX_REWARD_POINTS })),
         folderId: z.string(),
       }),
     [t],
@@ -181,7 +176,7 @@ export function RewardFormCredenza({
           name: parsed.name,
           description,
           icon,
-          points: Number(parsed.points),
+          points: parsed.points,
           folderId,
           purchaseLimit,
         });
@@ -326,12 +321,13 @@ export function RewardFormCredenza({
                   return (
                     <Field data-invalid={error ? true : undefined}>
                       <FieldLabel htmlFor="reward-points">{t("pointsLabel")}</FieldLabel>
-                      <Input
+                      <NumberInput
                         id="reward-points"
-                        inputMode="numeric"
+                        min={0}
+                        max={MAX_REWARD_POINTS}
                         value={field.state.value}
                         onBlur={field.handleBlur}
-                        onChange={(event) => field.handleChange(event.target.value)}
+                        onValueChange={field.handleChange}
                       />
                       {error ? <FieldError>{error}</FieldError> : null}
                     </Field>

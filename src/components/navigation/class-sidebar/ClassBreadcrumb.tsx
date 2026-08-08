@@ -25,7 +25,9 @@ type BreadcrumbTarget =
   | { kind: "announcements" }
   | { kind: "tasks" }
   | { kind: "taskDetail"; taskId: Id<"tasks"> }
-  | { kind: "behaviors" };
+  | { kind: "points" }
+  | { kind: "behaviors" }
+  | { kind: "rewards" };
 
 function breadcrumbTarget(pathname: string, classId: string): BreadcrumbTarget {
   const base = `/class/${classId}`;
@@ -55,8 +57,14 @@ function breadcrumbTarget(pathname: string, classId: string): BreadcrumbTarget {
   if (pathname === `${base}/tasks` || pathname === `${base}/tasks/`) {
     return { kind: "tasks" };
   }
+  if (pathname === `${base}/points` || pathname === `${base}/points/`) {
+    return { kind: "points" };
+  }
   if (pathname === `${base}/behaviors` || pathname === `${base}/behaviors/`) {
     return { kind: "behaviors" };
+  }
+  if (pathname === `${base}/rewards` || pathname === `${base}/rewards/`) {
+    return { kind: "rewards" };
   }
   return { kind: "classesKey", key: "navDashboard" };
 }
@@ -103,7 +111,9 @@ export function ClassBreadcrumb({ classDoc }: ClassBreadcrumbProps) {
   const { t: tAttendance } = useTranslation("attendance");
   const { t: tAnnouncements } = useTranslation("announcements");
   const { t: tTasks } = useTranslation("tasks");
+  const { t: tPoints } = useTranslation("points");
   const { t: tBehaviors } = useTranslation("behaviors");
+  const { t: tRewards } = useTranslation("rewards");
   const { t: tCommon } = useTranslation("common");
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const target = breadcrumbTarget(pathname, classDoc._id);
@@ -115,9 +125,13 @@ export function ClassBreadcrumb({ classDoc }: ClassBreadcrumbProps) {
         ? tAnnouncements("nav")
         : target.kind === "tasks" || target.kind === "taskDetail"
           ? tTasks("nav")
-          : target.kind === "behaviors"
-            ? tBehaviors("nav")
-            : t(target.key);
+          : target.kind === "points"
+            ? tPoints("nav")
+            : target.kind === "behaviors"
+              ? tBehaviors("nav")
+              : target.kind === "rewards"
+                ? tRewards("nav")
+                : t(target.key);
 
   return (
     <Breadcrumb aria-label={t("breadcrumb")}>

@@ -76,6 +76,14 @@ const schema = defineSchema({
       ),
     ),
     pronounsSelfDescribe: v.optional(v.string()),
+    /** Cached points totals for this class; optional on legacy rows (treat missing as 0). */
+    pointsBalance: v.optional(v.number()),
+    pointsAwarded: v.optional(v.number()),
+    pointsRemoved: v.optional(v.number()),
+    pointsRedeemed: v.optional(v.number()),
+    /** Today's warning badge; meaningful only when warningDateKey matches today. */
+    warningCount: v.optional(v.number()),
+    warningDateKey: v.optional(v.string()),
   })
     .index("by_classId_userId", ["classId", "userId"])
     .index("by_classId_rosterNumber", ["classId", "rosterNumber"])
@@ -328,6 +336,8 @@ const schema = defineSchema({
     behaviorId: v.id("behaviors"),
     studentUserId: v.id("users"),
     pointsApplied: v.number(),
+    /** Units applied in this ledger row; missing on legacy rows means 1. */
+    quantity: v.optional(v.number()),
     awardedBy: v.id("users"),
     awardedAt: v.number(),
     note: v.optional(v.string()),
@@ -393,6 +403,8 @@ const schema = defineSchema({
     rewardId: v.id("rewards"),
     studentUserId: v.id("users"),
     pointsCost: v.number(),
+    /** Units purchased in this ledger row; missing on legacy rows means 1. */
+    quantity: v.optional(v.number()),
     purchasedBy: v.id("users"),
     purchasedAt: v.number(),
     note: v.optional(v.string()),
@@ -400,6 +412,19 @@ const schema = defineSchema({
     .index("by_rewardId", ["rewardId"])
     .index("by_classId_student", ["classId", "studentUserId"])
     .index("by_classId", ["classId"]),
+  /**
+   * Per-student warning events (daily reset via dateKey). Roster warningCount is
+   * denormalized for the points grid; this ledger supports undo/clear.
+   */
+  studentWarningEvents: defineTable({
+    classId: v.id("classes"),
+    studentUserId: v.id("users"),
+    dateKey: v.string(),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+  })
+    .index("by_classId_student_dateKey", ["classId", "studentUserId", "dateKey"])
+    .index("by_classId_dateKey", ["classId", "dateKey"]),
   /**
    * Per-class FERPA activity log (append-only).
    * Purged on class delete and by retention cron (1 year).

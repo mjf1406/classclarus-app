@@ -63,6 +63,11 @@ export async function ensureStudentRosterRow(
     classId,
     userId,
     rosterNumber,
+    pointsBalance: 0,
+    pointsAwarded: 0,
+    pointsRemoved: 0,
+    pointsRedeemed: 0,
+    warningCount: 0,
   });
   return true;
 }
@@ -136,6 +141,11 @@ export async function ensureStudentRostersForUsers(
       classId,
       userId: entry.userId,
       rosterNumber: next,
+      pointsBalance: 0,
+      pointsAwarded: 0,
+      pointsRemoved: 0,
+      pointsRedeemed: 0,
+      warningCount: 0,
     });
     next += 1;
   }

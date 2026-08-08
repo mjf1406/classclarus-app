@@ -23,6 +23,7 @@ import { deleteGroupsForClass } from "./lib/groupsCleanup.js";
 import { deleteTasksForClass } from "./lib/tasksCleanup.js";
 import { deleteBehaviorsForClass } from "./lib/behaviorsCleanup.js";
 import { deleteRewardsForClass } from "./lib/rewardsCleanup.js";
+import { deleteWarningEventsForClass } from "./lib/pointsCleanup.js";
 import { deleteJoinCodesForClass } from "./lib/joinCodesCleanup.js";
 import { languageValidator, type LanguageCode } from "./lib/languages.js";
 import {
@@ -508,6 +509,7 @@ export const remove = classMutation({
     await deleteTasksForClass(ctx, classId);
     await deleteBehaviorsForClass(ctx, classId);
     await deleteRewardsForClass(ctx, classId);
+    await deleteWarningEventsForClass(ctx, classId);
     await deleteFilesForClass(ctx, classId);
     // Purge activity without keeping a delete row (class is gone).
     await ctx.scheduler.runAfter(0, internal.activity.purgeForClass, { classId });

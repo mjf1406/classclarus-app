@@ -2,6 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   ChevronRight,
   ClipboardCheck,
+  Coins,
   Gift,
   GraduationCap,
   History,
@@ -63,6 +64,7 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
   const { t: tAnnouncements } = useTranslation("announcements");
   const { t: tAttendance } = useTranslation("attendance");
   const { t: tTasks } = useTranslation("tasks");
+  const { t: tPoints } = useTranslation("points");
   const { t: tBehaviors } = useTranslation("behaviors");
   const { t: tRewards } = useTranslation("rewards");
   const pathname = useRouterState({ select: (state) => state.location.pathname });
@@ -85,6 +87,7 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
     }
   };
 
+  // Dashboard first, then alphabetize remaining main-area items.
   const topItems: Array<NavItem> = [
     {
       title: t("navDashboard"),
@@ -105,15 +108,21 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
       permission: "attendance:manage",
     },
     {
-      title: tTasks("nav"),
-      icon: ListTodo,
-      to: "/class/$classId/tasks",
-      permission: "class:read",
-    },
-    {
       title: t("navGroups"),
       icon: UsersRound,
       to: "/class/$classId/groups",
+      permission: "class:read",
+    },
+    {
+      title: tPoints("nav"),
+      icon: Coins,
+      to: "/class/$classId/points",
+      permission: "points:manage",
+    },
+    {
+      title: tTasks("nav"),
+      icon: ListTodo,
+      to: "/class/$classId/tasks",
       permission: "class:read",
     },
   ];

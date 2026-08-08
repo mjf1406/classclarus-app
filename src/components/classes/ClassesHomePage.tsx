@@ -30,10 +30,12 @@ import { useCreateClass } from "@/hooks/classes/useCreateClass";
 import { useDeleteClass } from "@/hooks/classes/useDeleteClass";
 import { useSetClassArchived } from "@/hooks/classes/useSetClassArchived";
 import { useUpdateClass } from "@/hooks/classes/useUpdateClass";
+import { useLocalStorageValue } from "@/hooks/useLocalStorageValue";
 import { useAppLanguage } from "@/i18n/language-context";
 import type { ClassPublic } from "@/lib/classes/classes";
 import type { ClassFormValues } from "@/lib/classes/classFormSchema";
 import {
+  isClassViewMode,
   nextSortState,
   partitionClassesByArchive,
   sortClasses,
@@ -41,6 +43,7 @@ import {
   type ClassSortKey,
   type ClassViewMode,
 } from "@/lib/classes/classSort";
+import { STORAGE_KEYS } from "@/lib/storageKeys";
 import { cn } from "@/lib/utils";
 
 type FormTarget = { mode: "create" } | { mode: "edit"; classDoc: ClassPublic };
@@ -111,7 +114,11 @@ export function ClassesHomePage() {
 
   const [sortKey, setSortKey] = useState<ClassSortKey>("name");
   const [sortDirection, setSortDirection] = useState<ClassSortDirection>("asc");
-  const [viewMode, setViewMode] = useState<ClassViewMode>("grid");
+  const [viewMode, setViewMode] = useLocalStorageValue(
+    STORAGE_KEYS.classesViewMode,
+    "grid",
+    isClassViewMode,
+  );
   const [showArchived, setShowArchived] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [formOpen, setFormOpen] = useState(false);

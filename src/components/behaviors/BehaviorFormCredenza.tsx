@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/credenza";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import {
   Select,
   SelectContent,
@@ -53,7 +54,7 @@ type FormDefaults = {
   name: string;
   description: string;
   icon: string;
-  points: string;
+  points: number;
   folderId: string;
 };
 
@@ -87,7 +88,7 @@ export function BehaviorFormCredenza({
       name: initial?.name ?? "",
       description: initial?.description ?? "",
       icon: initial?.icon ?? "",
-      points: initial ? String(initial.points) : "1",
+      points: initial?.points ?? 1,
       folderId: initial?.folderId ?? NONE_FOLDER,
     }),
     [initial],
@@ -111,16 +112,10 @@ export function BehaviorFormCredenza({
           ),
         icon: z.string(),
         points: z
-          .string()
-          .trim()
-          .regex(/^-?\d+$/, t("pointsInvalid"))
-          .refine(
-            (value) => {
-              const n = Number(value);
-              return Number.isInteger(n) && Math.abs(n) <= MAX_BEHAVIOR_POINTS;
-            },
-            t("pointsOutOfRange", { max: MAX_BEHAVIOR_POINTS }),
-          ),
+          .number({ error: t("pointsInvalid") })
+          .int(t("pointsInvalid"))
+          .min(-MAX_BEHAVIOR_POINTS, t("pointsOutOfRange", { max: MAX_BEHAVIOR_POINTS }))
+          .max(MAX_BEHAVIOR_POINTS, t("pointsOutOfRange", { max: MAX_BEHAVIOR_POINTS })),
         folderId: z.string(),
       }),
     [t],
@@ -164,7 +159,7 @@ export function BehaviorFormCredenza({
           name: parsed.name,
           description,
           icon,
-          points: Number(parsed.points),
+          points: parsed.points,
           folderId,
         });
         skipNextResetRef.current = false;
@@ -308,12 +303,13 @@ export function BehaviorFormCredenza({
                   return (
                     <Field data-invalid={error ? true : undefined}>
                       <FieldLabel htmlFor="behavior-points">{t("pointsLabel")}</FieldLabel>
-                      <Input
+                      <NumberInput
                         id="behavior-points"
-                        inputMode="numeric"
+                        min={-MAX_BEHAVIOR_POINTS}
+                        max={MAX_BEHAVIOR_POINTS}
                         value={field.state.value}
                         onBlur={field.handleBlur}
-                        onChange={(event) => field.handleChange(event.target.value)}
+                        onValueChange={field.handleChange}
                       />
                       {error ? <FieldError>{error}</FieldError> : null}
                     </Field>

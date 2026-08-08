@@ -27,6 +27,8 @@ describe("storageKeys", () => {
     expect(STORAGE_KEYS.selfHostUpdateRemindLater).toBe(
       `${APP_CONFIG.slug}-self-host-update-remind-later`,
     );
+    expect(STORAGE_KEYS.classesViewMode).toBe(`${APP_CONFIG.slug}-classes-view-mode`);
+    expect(STORAGE_KEYS.pointsCatalogView).toBe(`${APP_CONFIG.slug}-points-catalog-view`);
   });
 
   test("groupTeamFiltersStorageKey scopes per class id", () => {

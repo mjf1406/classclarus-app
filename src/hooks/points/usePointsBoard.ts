@@ -1,0 +1,32 @@
+import { convexQuery } from "@convex-dev/react-query";
+import { useEffect, useRef } from "react";
+import { useConvexMutation } from "@convex-dev/react-query";
+
+import { api } from "../../../convex/_generated/api";
+import type { Id } from "../../../convex/_generated/dataModel";
+import { useAuthedQuery } from "@/hooks/useAuthedQuery";
+import { ONE_HOUR } from "@/lib/queryCache";
+
+export function pointsBoardQueryKey(classId: Id<"classes">, dateKey: string) {
+  return convexQuery(api.points.board, { classId, dateKey }).queryKey;
+}
+
+/** gcTime: ONE_HOUR — same as roster/attendance; Convex keeps the live query fresh while mounted. */
+export function usePointsBoard(classId: Id<"classes">, dateKey: string) {
+  return useAuthedQuery(api.points.board, { classId, dateKey }, { gcTime: ONE_HOUR });
+}
+
+/** Idempotent backfill of missing roster point counters once per class mount. */
+export function useEnsurePointsCounters(classId: Id<"classes">, enabled: boolean) {
+  const ensure = useConvexMutation(api.points.ensureCounters);
+  const ranForClass = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!enabled) return;
+    if (ranForClass.current === classId) return;
+    ranForClass.current = classId;
+    void ensure({ classId }).catch(() => {
+      ranForClass.current = null;
+    });
+  }, [classId, enabled, ensure]);
+}

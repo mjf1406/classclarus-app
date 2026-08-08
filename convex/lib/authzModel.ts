@@ -35,6 +35,8 @@ export const permissions = definePermissions({
   behaviors: { manage: true },
   /** Rewards catalog & folders — manage is teacher+; reserved for /rewards. */
   rewards: { manage: true },
+  /** Points board — apply/undo/warnings; assistant_teacher+. */
+  points: { manage: true },
   /** App-level admin (global / unscoped). Not a class membership role. */
   admin: { syncProducts: true, viewHealth: true, manageUsers: true, viewFeedback: true },
 });
@@ -52,6 +54,7 @@ export const roles = defineRoles(permissions, {
     guardians: ["read"],
     attendance: ["manage"],
     tasks: ["complete"],
+    points: ["manage"],
   },
   teacher: {
     inherits: "assistant_teacher",

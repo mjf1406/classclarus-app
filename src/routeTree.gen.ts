@@ -37,6 +37,7 @@ import { Route as AuthenticatedClassClassClassIdBehaviorsRouteImport } from "./r
 import { Route as AuthenticatedClassClassClassIdGroupsRouteImport } from "./routes/_authenticated/_class/class/$classId/groups";
 import { Route as AuthenticatedClassClassClassIdGuardiansRouteImport } from "./routes/_authenticated/_class/class/$classId/guardians";
 import { Route as AuthenticatedClassClassClassIdInvitationsRouteImport } from "./routes/_authenticated/_class/class/$classId/invitations";
+import { Route as AuthenticatedClassClassClassIdPointsRouteImport } from "./routes/_authenticated/_class/class/$classId/points";
 import { Route as AuthenticatedClassClassClassIdRewardsRouteImport } from "./routes/_authenticated/_class/class/$classId/rewards";
 import { Route as AuthenticatedClassClassClassIdSettingsRouteImport } from "./routes/_authenticated/_class/class/$classId/settings";
 import { Route as AuthenticatedClassClassClassIdStudentsRouteImport } from "./routes/_authenticated/_class/class/$classId/students";
@@ -191,6 +192,12 @@ const AuthenticatedClassClassClassIdInvitationsRoute =
     path: "/invitations",
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
   } as any);
+const AuthenticatedClassClassClassIdPointsRoute =
+  AuthenticatedClassClassClassIdPointsRouteImport.update({
+    id: "/points",
+    path: "/points",
+    getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
+  } as any);
 const AuthenticatedClassClassClassIdRewardsRoute =
   AuthenticatedClassClassClassIdRewardsRouteImport.update({
     id: "/rewards",
@@ -264,6 +271,7 @@ export interface FileRoutesByFullPath {
   "/class/$classId/groups": typeof AuthenticatedClassClassClassIdGroupsRoute;
   "/class/$classId/guardians": typeof AuthenticatedClassClassClassIdGuardiansRoute;
   "/class/$classId/invitations": typeof AuthenticatedClassClassClassIdInvitationsRoute;
+  "/class/$classId/points": typeof AuthenticatedClassClassClassIdPointsRoute;
   "/class/$classId/rewards": typeof AuthenticatedClassClassClassIdRewardsRoute;
   "/class/$classId/settings": typeof AuthenticatedClassClassClassIdSettingsRoute;
   "/class/$classId/students": typeof AuthenticatedClassClassClassIdStudentsRoute;
@@ -296,6 +304,7 @@ export interface FileRoutesByTo {
   "/class/$classId/groups": typeof AuthenticatedClassClassClassIdGroupsRoute;
   "/class/$classId/guardians": typeof AuthenticatedClassClassClassIdGuardiansRoute;
   "/class/$classId/invitations": typeof AuthenticatedClassClassClassIdInvitationsRoute;
+  "/class/$classId/points": typeof AuthenticatedClassClassClassIdPointsRoute;
   "/class/$classId/rewards": typeof AuthenticatedClassClassClassIdRewardsRoute;
   "/class/$classId/settings": typeof AuthenticatedClassClassClassIdSettingsRoute;
   "/class/$classId/students": typeof AuthenticatedClassClassClassIdStudentsRoute;
@@ -335,6 +344,7 @@ export interface FileRoutesById {
   "/_authenticated/_class/class/$classId/groups": typeof AuthenticatedClassClassClassIdGroupsRoute;
   "/_authenticated/_class/class/$classId/guardians": typeof AuthenticatedClassClassClassIdGuardiansRoute;
   "/_authenticated/_class/class/$classId/invitations": typeof AuthenticatedClassClassClassIdInvitationsRoute;
+  "/_authenticated/_class/class/$classId/points": typeof AuthenticatedClassClassClassIdPointsRoute;
   "/_authenticated/_class/class/$classId/rewards": typeof AuthenticatedClassClassClassIdRewardsRoute;
   "/_authenticated/_class/class/$classId/settings": typeof AuthenticatedClassClassClassIdSettingsRoute;
   "/_authenticated/_class/class/$classId/students": typeof AuthenticatedClassClassClassIdStudentsRoute;
@@ -371,6 +381,7 @@ export interface FileRouteTypes {
     | "/class/$classId/groups"
     | "/class/$classId/guardians"
     | "/class/$classId/invitations"
+    | "/class/$classId/points"
     | "/class/$classId/rewards"
     | "/class/$classId/settings"
     | "/class/$classId/students"
@@ -403,6 +414,7 @@ export interface FileRouteTypes {
     | "/class/$classId/groups"
     | "/class/$classId/guardians"
     | "/class/$classId/invitations"
+    | "/class/$classId/points"
     | "/class/$classId/rewards"
     | "/class/$classId/settings"
     | "/class/$classId/students"
@@ -441,6 +453,7 @@ export interface FileRouteTypes {
     | "/_authenticated/_class/class/$classId/groups"
     | "/_authenticated/_class/class/$classId/guardians"
     | "/_authenticated/_class/class/$classId/invitations"
+    | "/_authenticated/_class/class/$classId/points"
     | "/_authenticated/_class/class/$classId/rewards"
     | "/_authenticated/_class/class/$classId/settings"
     | "/_authenticated/_class/class/$classId/students"
@@ -657,6 +670,13 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof AuthenticatedClassClassClassIdInvitationsRouteImport;
       parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
     };
+    "/_authenticated/_class/class/$classId/points": {
+      id: "/_authenticated/_class/class/$classId/points";
+      path: "/points";
+      fullPath: "/class/$classId/points";
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdPointsRouteImport;
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
+    };
     "/_authenticated/_class/class/$classId/rewards": {
       id: "/_authenticated/_class/class/$classId/rewards";
       path: "/rewards";
@@ -748,6 +768,7 @@ interface AuthenticatedClassClassClassIdRouteRouteChildren {
   AuthenticatedClassClassClassIdGroupsRoute: typeof AuthenticatedClassClassClassIdGroupsRoute;
   AuthenticatedClassClassClassIdGuardiansRoute: typeof AuthenticatedClassClassClassIdGuardiansRoute;
   AuthenticatedClassClassClassIdInvitationsRoute: typeof AuthenticatedClassClassClassIdInvitationsRoute;
+  AuthenticatedClassClassClassIdPointsRoute: typeof AuthenticatedClassClassClassIdPointsRoute;
   AuthenticatedClassClassClassIdRewardsRoute: typeof AuthenticatedClassClassClassIdRewardsRoute;
   AuthenticatedClassClassClassIdSettingsRoute: typeof AuthenticatedClassClassClassIdSettingsRoute;
   AuthenticatedClassClassClassIdStudentsRoute: typeof AuthenticatedClassClassClassIdStudentsRoute;
@@ -769,6 +790,7 @@ const AuthenticatedClassClassClassIdRouteRouteChildren: AuthenticatedClassClassC
     AuthenticatedClassClassClassIdGroupsRoute: AuthenticatedClassClassClassIdGroupsRoute,
     AuthenticatedClassClassClassIdGuardiansRoute: AuthenticatedClassClassClassIdGuardiansRoute,
     AuthenticatedClassClassClassIdInvitationsRoute: AuthenticatedClassClassClassIdInvitationsRoute,
+    AuthenticatedClassClassClassIdPointsRoute: AuthenticatedClassClassClassIdPointsRoute,
     AuthenticatedClassClassClassIdRewardsRoute: AuthenticatedClassClassClassIdRewardsRoute,
     AuthenticatedClassClassClassIdSettingsRoute: AuthenticatedClassClassClassIdSettingsRoute,
     AuthenticatedClassClassClassIdStudentsRoute: AuthenticatedClassClassClassIdStudentsRoute,

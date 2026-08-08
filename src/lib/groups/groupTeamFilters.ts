@@ -78,9 +78,33 @@ function normalizeState(state: GroupTeamFilterState): GroupTeamFilterState {
   };
 }
 
+/** Prefer localStorage; one-time migrate leftover sessionStorage values from older builds. */
+function readStoredFiltersRaw(key: string): string | null {
+  try {
+    const fromLocal = localStorage.getItem(key);
+    if (fromLocal) return fromLocal;
+  } catch {
+    // Private mode / quota.
+  }
+
+  try {
+    const fromSession = sessionStorage.getItem(key);
+    if (!fromSession) return null;
+    try {
+      localStorage.setItem(key, fromSession);
+      sessionStorage.removeItem(key);
+    } catch {
+      // Keep using the session value for this read if migration fails.
+    }
+    return fromSession;
+  } catch {
+    return null;
+  }
+}
+
 export function readGroupTeamFilters(classId: string): GroupTeamFilterState {
   try {
-    const raw = sessionStorage.getItem(groupTeamFiltersStorageKey(classId));
+    const raw = readStoredFiltersRaw(groupTeamFiltersStorageKey(classId));
     if (!raw) {
       return EMPTY_GROUP_TEAM_FILTER_STATE;
     }
@@ -96,12 +120,15 @@ export function readGroupTeamFilters(classId: string): GroupTeamFilterState {
 
 export function writeGroupTeamFilters(classId: string, state: GroupTeamFilterState): void {
   const next = normalizeState(state);
+  const key = groupTeamFiltersStorageKey(classId);
   try {
     if (!hasGroupTeamMembershipFilters(next)) {
-      sessionStorage.removeItem(groupTeamFiltersStorageKey(classId));
+      localStorage.removeItem(key);
     } else {
-      sessionStorage.setItem(groupTeamFiltersStorageKey(classId), JSON.stringify(next));
+      localStorage.setItem(key, JSON.stringify(next));
     }
+    // Drop legacy session copy if present.
+    sessionStorage.removeItem(key);
   } catch {
     // Private mode / quota — still notify subscribers with in-memory snapshot.
   }
@@ -127,7 +154,7 @@ export function subscribeGroupTeamFilters(classId: string, onStoreChange: () => 
   const key = groupTeamFiltersStorageKey(classId);
 
   const onStorage = (event: StorageEvent) => {
-    if (event.storageArea !== sessionStorage) return;
+    if (event.storageArea !== localStorage) return;
     if (event.key !== null && event.key !== key) return;
     snapshotCache.delete(classId);
     onStoreChange();

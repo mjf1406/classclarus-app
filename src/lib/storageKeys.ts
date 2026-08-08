@@ -15,9 +15,13 @@ export const STORAGE_KEYS = {
   selfHostUpdateRemindLater: appStorageKey("self-host-update-remind-later"),
   /** sessionStorage: hide PWA reload banner until the tab session ends. */
   pwaUpdateLater: appStorageKey("pwa-update-later"),
+  /** localStorage: classes home grid/list view. */
+  classesViewMode: appStorageKey("classes-view-mode"),
+  /** localStorage: points apply catalog list/grid view. */
+  pointsCatalogView: appStorageKey("points-catalog-view"),
 } as const;
 
-/** sessionStorage: per-class group/team filter selection for the current tab session. */
+/** localStorage: per-class group/team filter selection. */
 export function groupTeamFiltersStorageKey(classId: string): string {
   return appStorageKey(`group-team-filters:${classId}`);
 }

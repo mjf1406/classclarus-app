@@ -6,6 +6,11 @@ import type { MutationCtx, QueryCtx } from "./_generated/server.js";
 import { classScope } from "./lib/authzModel.js";
 import { recordClassActivity } from "./lib/classActivity.js";
 import { classMutation, classQuery } from "./lib/customFunctions.js";
+import {
+  adjustBehaviorPointsRewrite,
+  applyBehaviorPointsDelta,
+  ledgerQuantity,
+} from "./lib/pointsRoster.js";
 import { rateLimiter } from "./lib/rateLimiter.js";
 
 const MAX_NAME_LENGTH = 100;
@@ -107,6 +112,13 @@ async function deleteApplicationsForBehavior(
     .withIndex("by_behaviorId", (q) => q.eq("behaviorId", behaviorId))
     .collect();
   for (const application of applications) {
+    await applyBehaviorPointsDelta(
+      ctx,
+      application.classId,
+      application.studentUserId,
+      application.pointsApplied,
+      -1,
+    );
     await ctx.db.delete("behaviorApplications", application._id);
   }
 }
@@ -122,9 +134,17 @@ async function applyPointsRetroactively(
     .withIndex("by_behaviorId", (q) => q.eq("behaviorId", behaviorId))
     .collect();
   for (const application of applications) {
-    if (application.pointsApplied !== points) {
+    const nextApplied = points * ledgerQuantity(application.quantity);
+    if (application.pointsApplied !== nextApplied) {
+      await adjustBehaviorPointsRewrite(
+        ctx,
+        application.classId,
+        application.studentUserId,
+        application.pointsApplied,
+        nextApplied,
+      );
       await ctx.db.patch("behaviorApplications", application._id, {
-        pointsApplied: points,
+        pointsApplied: nextApplied,
       });
     }
   }

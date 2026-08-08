@@ -6,6 +6,11 @@ import type { MutationCtx, QueryCtx } from "./_generated/server.js";
 import { classScope } from "./lib/authzModel.js";
 import { recordClassActivity } from "./lib/classActivity.js";
 import { classMutation, classQuery } from "./lib/customFunctions.js";
+import {
+  adjustRewardPointsRewrite,
+  applyRewardPointsDelta,
+  ledgerQuantity,
+} from "./lib/pointsRoster.js";
 import { normalizeOptionalPurchaseLimit, purchaseLimitValidator } from "./lib/purchaseLimit.js";
 import { rateLimiter } from "./lib/rateLimiter.js";
 
@@ -106,6 +111,13 @@ async function deletePurchasesForReward(ctx: MutationCtx, rewardId: Id<"rewards"
     .withIndex("by_rewardId", (q) => q.eq("rewardId", rewardId))
     .collect();
   for (const purchase of purchases) {
+    await applyRewardPointsDelta(
+      ctx,
+      purchase.classId,
+      purchase.studentUserId,
+      purchase.pointsCost,
+      -1,
+    );
     await ctx.db.delete("rewardPurchases", purchase._id);
   }
 }
@@ -121,9 +133,17 @@ async function applyPointsRetroactively(
     .withIndex("by_rewardId", (q) => q.eq("rewardId", rewardId))
     .collect();
   for (const purchase of purchases) {
-    if (purchase.pointsCost !== points) {
+    const nextCost = points * ledgerQuantity(purchase.quantity);
+    if (purchase.pointsCost !== nextCost) {
+      await adjustRewardPointsRewrite(
+        ctx,
+        purchase.classId,
+        purchase.studentUserId,
+        purchase.pointsCost,
+        nextCost,
+      );
       await ctx.db.patch("rewardPurchases", purchase._id, {
-        pointsCost: points,
+        pointsCost: nextCost,
       });
     }
   }

@@ -2,6 +2,10 @@ export type ClassSortKey = "name" | "created" | "updated";
 export type ClassSortDirection = "asc" | "desc";
 export type ClassViewMode = "grid" | "list";
 
+export function isClassViewMode(value: string): value is ClassViewMode {
+  return value === "grid" || value === "list";
+}
+
 export type SortableClass = {
   _id: string;
   _creationTime: number;
