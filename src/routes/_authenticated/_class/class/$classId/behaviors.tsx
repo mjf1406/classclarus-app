@@ -10,7 +10,7 @@ export const Route = createFileRoute("/_authenticated/_class/class/$classId/beha
     const typedClassId = classId as Id<"classes">;
 
     return (
-      <RequirePermission permission="behaviors:manage">
+      <RequirePermission permission="class:read">
         <BehaviorsPage classId={typedClassId} />
       </RequirePermission>
     );

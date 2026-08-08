@@ -89,10 +89,13 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
     }
   };
 
-  // Staff (assistant teacher+) see Expectations under Manage; students/guardians
-  // see it in the main area with other personal reads.
-  const expectationsInMainNav = can("expectations:read") && !can("students:read");
-  const expectationsInManageNav = can("expectations:read") && can("students:read");
+  // Staff (assistant teacher+) see catalog readers under Manage; students/guardians
+  // see them in the main area with other personal reads.
+  const isStaffNav = can("students:read");
+  const expectationsInMainNav = can("expectations:read") && !isStaffNav;
+  const expectationsInManageNav = can("expectations:read") && isStaffNav;
+  const catalogsInMainNav = can("class:read") && !isStaffNav;
+  const catalogsInManageNav = can("class:read") && isStaffNav;
 
   // Dashboard first, then alphabetize remaining main-area items.
   const topItems: Array<NavItem> = [
@@ -114,6 +117,16 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
       to: "/class/$classId/attendance",
       permission: "attendance:read",
     },
+    ...(catalogsInMainNav
+      ? [
+          {
+            title: tBehaviors("nav"),
+            icon: SmilePlus,
+            to: "/class/$classId/behaviors" as const,
+            permission: "class:read" as const,
+          },
+        ]
+      : []),
     ...(expectationsInMainNav
       ? [
           {
@@ -124,12 +137,32 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
           },
         ]
       : []),
+    ...(catalogsInMainNav
+      ? [
+          {
+            title: t("navGroups"),
+            icon: UsersRound,
+            to: "/class/$classId/groups" as const,
+            permission: "class:read" as const,
+          },
+        ]
+      : []),
     {
       title: tPoints("nav"),
       icon: Coins,
       to: "/class/$classId/points",
       permission: "points:read",
     },
+    ...(catalogsInMainNav
+      ? [
+          {
+            title: tRewards("nav"),
+            icon: Gift,
+            to: "/class/$classId/rewards" as const,
+            permission: "class:read" as const,
+          },
+        ]
+      : []),
     {
       title: tTasks("nav"),
       icon: ListTodo,
@@ -176,12 +209,16 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
   ];
 
   const manageItems: Array<NavItem> = [
-    {
-      title: tBehaviors("nav"),
-      icon: SmilePlus,
-      to: "/class/$classId/behaviors",
-      permission: "behaviors:manage",
-    },
+    ...(catalogsInManageNav
+      ? [
+          {
+            title: tBehaviors("nav"),
+            icon: SmilePlus,
+            to: "/class/$classId/behaviors" as const,
+            permission: "class:read" as const,
+          },
+        ]
+      : []),
     ...(expectationsInManageNav
       ? [
           {
@@ -192,18 +229,22 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
           },
         ]
       : []),
-    {
-      title: t("navGroups"),
-      icon: UsersRound,
-      to: "/class/$classId/groups",
-      permission: "groups:manage",
-    },
-    {
-      title: tRewards("nav"),
-      icon: Gift,
-      to: "/class/$classId/rewards",
-      permission: "rewards:manage",
-    },
+    ...(catalogsInManageNav
+      ? [
+          {
+            title: t("navGroups"),
+            icon: UsersRound,
+            to: "/class/$classId/groups" as const,
+            permission: "class:read" as const,
+          },
+          {
+            title: tRewards("nav"),
+            icon: Gift,
+            to: "/class/$classId/rewards" as const,
+            permission: "class:read" as const,
+          },
+        ]
+      : []),
     {
       title: t("navActivityLog"),
       icon: History,

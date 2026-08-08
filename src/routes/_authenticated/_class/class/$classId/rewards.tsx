@@ -10,7 +10,7 @@ export const Route = createFileRoute("/_authenticated/_class/class/$classId/rewa
     const typedClassId = classId as Id<"classes">;
 
     return (
-      <RequirePermission permission="rewards:manage">
+      <RequirePermission permission="class:read">
         <RewardsPage classId={typedClassId} />
       </RequirePermission>
     );

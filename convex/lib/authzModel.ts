@@ -33,7 +33,7 @@ export const permissions = definePermissions({
   tasks: { manage: true, complete: true },
   /** Behavior catalog & folders — manage is teacher+; view uses class:read. */
   behaviors: { manage: true },
-  /** Rewards catalog & folders — manage is teacher+; reserved for /rewards. */
+  /** Rewards catalog & folders — manage is teacher+; view uses class:read. */
   rewards: { manage: true },
   /**
    * Class expectations catalog & per-student values — manage is teacher+;
