@@ -81,25 +81,23 @@ function TaskDetailBreadcrumbItems({
   const { t: tTasks } = useTranslation("tasks");
   const { data: task, isPending } = useTask(classId, taskId);
 
+  const taskLabel = isPending && !task ? null : (task?.name ?? tTasks("notFoundTitle"));
+
   return (
     <>
-      <BreadcrumbItem>
+      <BreadcrumbItem className="min-w-0">
         <BreadcrumbLink
-          render={
-            <Link to="/class/$classId/tasks" params={{ classId }} className="max-w-40 truncate" />
-          }
+          render={<Link to="/class/$classId/tasks" params={{ classId }} />}
+          className="block truncate"
+          title={tasksLabel}
         >
           {tasksLabel}
         </BreadcrumbLink>
       </BreadcrumbItem>
-      <BreadcrumbSeparator />
-      <BreadcrumbItem>
-        <BreadcrumbPage className="max-w-48 truncate">
-          {isPending && !task ? (
-            <Skeleton className="inline-block h-4 w-24" />
-          ) : (
-            (task?.name ?? tTasks("notFoundTitle"))
-          )}
+      <BreadcrumbSeparator className="shrink-0" />
+      <BreadcrumbItem className="min-w-0">
+        <BreadcrumbPage className="block truncate" title={taskLabel ?? undefined}>
+          {taskLabel === null ? <Skeleton className="inline-block h-4 w-24" /> : taskLabel}
         </BreadcrumbPage>
       </BreadcrumbItem>
     </>
@@ -134,29 +132,25 @@ export function ClassBreadcrumb({ classDoc }: ClassBreadcrumbProps) {
                 : t(target.key);
 
   return (
-    <Breadcrumb aria-label={t("breadcrumb")}>
-      <BreadcrumbList>
-        <BreadcrumbItem>
+    <Breadcrumb aria-label={t("breadcrumb")} className="min-w-0">
+      <BreadcrumbList className="flex-nowrap overflow-hidden">
+        <BreadcrumbItem className="shrink-0">
           <BreadcrumbLink render={<Link to="/" />} aria-label={tCommon("goHome")}>
             <Home className="size-4" />
             <span className="sr-only">{tCommon("goHome")}</span>
           </BreadcrumbLink>
         </BreadcrumbItem>
-        <BreadcrumbSeparator />
-        <BreadcrumbItem>
+        <BreadcrumbSeparator className="shrink-0" />
+        <BreadcrumbItem className="min-w-0">
           <BreadcrumbLink
-            render={
-              <Link
-                to="/class/$classId"
-                params={{ classId: classDoc._id }}
-                className="max-w-40 truncate"
-              />
-            }
+            render={<Link to="/class/$classId" params={{ classId: classDoc._id }} />}
+            className="block truncate"
+            title={classDoc.name}
           >
             {classDoc.name}
           </BreadcrumbLink>
         </BreadcrumbItem>
-        <BreadcrumbSeparator />
+        <BreadcrumbSeparator className="shrink-0" />
         {target.kind === "taskDetail" ? (
           <TaskDetailBreadcrumbItems
             classId={classDoc._id}
@@ -164,8 +158,10 @@ export function ClassBreadcrumb({ classDoc }: ClassBreadcrumbProps) {
             tasksLabel={pageLabel}
           />
         ) : (
-          <BreadcrumbItem>
-            <BreadcrumbPage>{pageLabel}</BreadcrumbPage>
+          <BreadcrumbItem className="min-w-0">
+            <BreadcrumbPage className="block truncate" title={pageLabel}>
+              {pageLabel}
+            </BreadcrumbPage>
           </BreadcrumbItem>
         )}
       </BreadcrumbList>

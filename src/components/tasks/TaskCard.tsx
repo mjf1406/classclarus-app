@@ -18,7 +18,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { formatLocalizedDateTime } from "@/i18n/formatDate";
-import type { TaskListItem } from "@/lib/tasks/tasks";
+import { isTaskPastDue, type TaskListItem } from "@/lib/tasks/tasks";
 import { cn } from "@/lib/utils";
 import type { Id } from "../../../convex/_generated/dataModel";
 
@@ -71,7 +71,9 @@ export function TaskCard({ classId, task, personalView, onEdit, onDelete }: Task
 
   const description = task.description?.trim() || t("emptyDescriptionPreview");
   const allDone = task.studentCount > 0 && task.completedCount >= task.studentCount;
-  const personalTone = personalView && task.studentCount > 0 ? completionTone(allDone) : null;
+  const pastDue = isTaskPastDue(task.dueDateKey);
+  const personalTone =
+    personalView && task.studentCount > 0 ? completionTone(allDone, pastDue) : null;
 
   return (
     <Card
@@ -102,6 +104,7 @@ export function TaskCard({ classId, task, personalView, onEdit, onDelete }: Task
         {personalView && task.studentCount > 0 ? (
           <TaskCompletionStatusBadge
             completed={allDone}
+            pastDue={pastDue}
             label={
               task.studentCount <= 1
                 ? undefined

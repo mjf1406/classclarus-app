@@ -105,19 +105,13 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
       title: tAttendance("nav"),
       icon: ClipboardCheck,
       to: "/class/$classId/attendance",
-      permission: "attendance:manage",
-    },
-    {
-      title: t("navGroups"),
-      icon: UsersRound,
-      to: "/class/$classId/groups",
-      permission: "class:read",
+      permission: "attendance:read",
     },
     {
       title: tPoints("nav"),
       icon: Coins,
       to: "/class/$classId/points",
-      permission: "points:manage",
+      permission: "points:read",
     },
     {
       title: tTasks("nav"),
@@ -170,6 +164,12 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
       icon: SmilePlus,
       to: "/class/$classId/behaviors",
       permission: "behaviors:manage",
+    },
+    {
+      title: t("navGroups"),
+      icon: UsersRound,
+      to: "/class/$classId/groups",
+      permission: "groups:manage",
     },
     {
       title: tRewards("nav"),

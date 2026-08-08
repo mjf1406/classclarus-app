@@ -4,8 +4,12 @@ import {
   cycleAttendanceStatus,
   draftForRoster,
   draftFromRecords,
+  greatestCommonDivisor,
   isAttendanceDraftDirty,
   recordsPayloadFromDraft,
+  simplifyRatio,
+  summarizeAttendanceCounts,
+  summarizeAttendanceStatuses,
   type AttendanceRecord,
 } from "@/lib/attendance/attendance";
 import { isValidDateKey, localDateKey } from "@/lib/attendance/dateKey";
@@ -67,5 +71,53 @@ describe("attendance draft helpers", () => {
     expect(recordsPayloadFromDraft({ u1: "late" })).toEqual([
       { studentUserId: "u1", status: "late" },
     ]);
+  });
+});
+
+describe("simplifyRatio", () => {
+  test("reduces by greatest common divisor", () => {
+    expect(greatestCommonDivisor(12, 8)).toBe(4);
+    expect(simplifyRatio(12, 8)).toEqual({ numerator: 3, denominator: 2 });
+    expect(simplifyRatio(15, 5)).toEqual({ numerator: 3, denominator: 1 });
+    expect(simplifyRatio(5, 0)).toEqual({ numerator: 1, denominator: 0 });
+    expect(simplifyRatio(0, 4)).toEqual({ numerator: 0, denominator: 1 });
+    expect(simplifyRatio(0, 0)).toEqual({ numerator: 0, denominator: 0 });
+  });
+});
+
+describe("summarizeAttendanceStatuses", () => {
+  test("counts late as present for percent and ratio", () => {
+    expect(
+      summarizeAttendanceStatuses(["present", "present", "late", "absent", "absent", "present"]),
+    ).toEqual({
+      present: 4,
+      absent: 2,
+      late: 1,
+      total: 6,
+      percentPresent: 67,
+      ratio: { present: 2, absent: 1 },
+    });
+  });
+
+  test("returns zeros when empty", () => {
+    expect(summarizeAttendanceStatuses([])).toEqual({
+      present: 0,
+      absent: 0,
+      late: 0,
+      total: 0,
+      percentPresent: 0,
+      ratio: { present: 0, absent: 0 },
+    });
+  });
+
+  test("summarizeAttendanceCounts accepts pre-aggregated totals", () => {
+    expect(summarizeAttendanceCounts({ present: 4, absent: 2, late: 1 })).toEqual({
+      present: 4,
+      absent: 2,
+      late: 1,
+      total: 6,
+      percentPresent: 67,
+      ratio: { present: 2, absent: 1 },
+    });
   });
 });

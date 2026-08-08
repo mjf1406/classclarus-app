@@ -1,5 +1,7 @@
 import type { FunctionReturnType } from "convex/server";
 
+import { localDateKey } from "@/lib/attendance/dateKey";
+
 import { api } from "../../../convex/_generated/api";
 
 export type TaskListItem = FunctionReturnType<typeof api.tasks.list>[number];
@@ -14,6 +16,15 @@ export function isClassTaskDetail(detail: TaskDetail): detail is TaskDetailClass
 
 export function isPersonalTaskDetail(detail: TaskDetail): detail is TaskDetailPersonal {
   return detail.scope === "personal";
+}
+
+/** True when `dueDateKey` is before today's local calendar day. */
+export function isTaskPastDue(
+  dueDateKey: string | undefined,
+  today: string = localDateKey(),
+): boolean {
+  if (!dueDateKey) return false;
+  return dueDateKey < today;
 }
 
 export const MAX_TASK_NAME_LENGTH = 100;

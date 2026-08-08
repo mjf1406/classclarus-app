@@ -248,7 +248,8 @@ const schema = defineSchema({
   })
     .index("by_session_student", ["sessionId", "studentUserId"])
     .index("by_classId_dateKey", ["classId", "dateKey"])
-    .index("by_classId_student", ["classId", "studentUserId"]),
+    .index("by_classId_student", ["classId", "studentUserId"])
+    .index("by_classId_student_dateKey", ["classId", "studentUserId", "dateKey"]),
   /**
    * Class announcements — teacher-authored posts with optional public slug pages.
    */
@@ -344,6 +345,7 @@ const schema = defineSchema({
   })
     .index("by_behaviorId", ["behaviorId"])
     .index("by_classId_student", ["classId", "studentUserId"])
+    .index("by_classId_student_awardedAt", ["classId", "studentUserId", "awardedAt"])
     .index("by_classId", ["classId"]),
   /**
    * Reward folders — flat containers for rewards within a class.
@@ -411,6 +413,7 @@ const schema = defineSchema({
   })
     .index("by_rewardId", ["rewardId"])
     .index("by_classId_student", ["classId", "studentUserId"])
+    .index("by_classId_student_purchasedAt", ["classId", "studentUserId", "purchasedAt"])
     .index("by_classId", ["classId"]),
   /**
    * Per-student warning events (daily reset via dateKey). Roster warningCount is

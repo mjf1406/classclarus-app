@@ -1,3 +1,5 @@
+import { ConvexError } from "convex/values";
+
 import type { Id } from "../_generated/dataModel.js";
 import type { MutationCtx, QueryCtx } from "../_generated/server.js";
 import { authz } from "../authz.js";
@@ -52,6 +54,40 @@ export async function clearLinksForClass(ctx: MutationCtx, classId: Id<"classes"
     .collect();
   for (const link of links) {
     await ctx.db.delete("guardianStudentLinks", link._id);
+  }
+}
+
+/**
+ * Student user IDs the caller may see in personal (non-staff) class views.
+ * Students → self; guardians → linked students; otherwise empty.
+ */
+export async function resolvePersonalStudentIds(
+  ctx: (QueryCtx | MutationCtx) & { userId: Id<"users"> },
+  classId: Id<"classes">,
+): Promise<Array<Id<"users">>> {
+  const role = await getClassRoleForUser(ctx, ctx.userId, classScope(classId));
+  if (role === "student") {
+    return [ctx.userId];
+  }
+  if (role === "guardian") {
+    const linked = await listLinkedStudentsForGuardian(ctx, classId, ctx.userId);
+    return linked.map((student) => student.userId);
+  }
+  return [];
+}
+
+/** Deny unless the caller may view this student in personal attendance/points views. */
+export async function assertPersonalStudentAccess(
+  ctx: (QueryCtx | MutationCtx) & { userId: Id<"users"> },
+  classId: Id<"classes">,
+  studentUserId: Id<"users">,
+): Promise<void> {
+  const allowed = await resolvePersonalStudentIds(ctx, classId);
+  if (!allowed.some((id) => id === studentUserId)) {
+    throw new ConvexError({
+      code: "CLASS_UNAVAILABLE",
+      message: "Class not found or access denied",
+    });
   }
 }
 

@@ -24,8 +24,8 @@ export const permissions = definePermissions({
   groups: { manage: true },
   /** Class announcements — manage is teacher+; view uses class:read. */
   announcements: { manage: true },
-  /** Attendance — manage is assistant_teacher+; view uses same permission in v1. */
-  attendance: { manage: true },
+  /** Attendance — manage is assistant_teacher+; read is student/guardian (scoped). */
+  attendance: { read: true, manage: true },
   /**
    * Class tasks — manage (CUD) is teacher+; complete (per-student toggles) is
    * assistant_teacher+; view uses class:read.
@@ -35,16 +35,24 @@ export const permissions = definePermissions({
   behaviors: { manage: true },
   /** Rewards catalog & folders — manage is teacher+; reserved for /rewards. */
   rewards: { manage: true },
-  /** Points board — apply/undo/warnings; assistant_teacher+. */
-  points: { manage: true },
+  /** Points board — manage is assistant_teacher+; read is student/guardian (scoped). */
+  points: { read: true, manage: true },
   /** App-level admin (global / unscoped). Not a class membership role. */
   admin: { syncProducts: true, viewHealth: true, manageUsers: true, viewFeedback: true },
 });
 
 export const roles = defineRoles(permissions, {
   class_member: { class: ["read"], files: ["read"] },
-  student: { inherits: "class_member" },
-  guardian: { inherits: "class_member" },
+  student: {
+    inherits: "class_member",
+    attendance: ["read"],
+    points: ["read"],
+  },
+  guardian: {
+    inherits: "class_member",
+    attendance: ["read"],
+    points: ["read"],
+  },
   assistant_teacher: {
     inherits: "class_member",
     activity: ["read"],
@@ -52,9 +60,9 @@ export const roles = defineRoles(permissions, {
     assistantTeachers: ["read"],
     students: ["read"],
     guardians: ["read"],
-    attendance: ["manage"],
+    attendance: ["read", "manage"],
     tasks: ["complete"],
-    points: ["manage"],
+    points: ["read", "manage"],
   },
   teacher: {
     inherits: "assistant_teacher",

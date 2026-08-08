@@ -7,7 +7,11 @@ import type { MutationCtx, QueryCtx } from "./_generated/server.js";
 import { classScope } from "./lib/authzModel.js";
 import { recordClassActivity } from "./lib/classActivity.js";
 import { classMutation, classQuery } from "./lib/customFunctions.js";
-import { getClassRoleForUser } from "./lib/guardianLinks.js";
+import {
+  assertPersonalStudentAccess,
+  getClassRoleForUser,
+  resolvePersonalStudentIds,
+} from "./lib/guardianLinks.js";
 import {
   applyBehaviorPointsDelta,
   applyRewardPointsDelta,
@@ -31,6 +35,8 @@ const DATE_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
 const MAX_QUANTITY = 999;
 const MAX_STUDENTS_PER_APPLY = 200;
 const MAX_ITEMS_PER_APPLY = 50;
+const DEFAULT_LEDGER_LIMIT = 40;
+const MAX_LEDGER_LIMIT = 100;
 
 const genderValidator = v.union(
   v.literal("male"),
@@ -230,6 +236,271 @@ export const board = classQuery({
 
     entries.sort((a, b) => a.rosterNumber - b.rosterNumber);
     return entries;
+  },
+});
+
+/** Personal/read audience: self (student) or linked students (guardian). */
+export const forAudience = classQuery({
+  args: {
+    dateKey: v.string(),
+  },
+  returns: v.array(boardStudentValidator),
+  handler: async (ctx, args) => {
+    await ctx.require("points:read");
+    assertValidDateKey(args.dateKey);
+    const classId = ctx.classDoc._id;
+    const studentUserIds = await resolvePersonalStudentIds(ctx, classId);
+    if (studentUserIds.length === 0) {
+      return [];
+    }
+
+    const audienceSet = new Set(studentUserIds);
+    // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded day; filtered to audience
+    const attendanceRecords = await ctx.db
+      .query("attendanceRecords")
+      .withIndex("by_classId_dateKey", (q) => q.eq("classId", classId).eq("dateKey", args.dateKey))
+      .collect();
+    const attendanceByStudent = new Map(
+      attendanceRecords
+        .filter((record) => audienceSet.has(record.studentUserId))
+        .map((record) => [record.studentUserId, record.status] as const),
+    );
+
+    const entries: Array<{
+      userId: Id<"users">;
+      rosterNumber: number;
+      firstName?: string;
+      lastName?: string;
+      name?: string;
+      image?: string;
+      email?: string;
+      gender?:
+        | "male"
+        | "female"
+        | "transMale"
+        | "transFemale"
+        | "nonBinary"
+        | "selfDescribe"
+        | "preferNotToSay";
+      genderSelfDescribe?: string;
+      pronouns?:
+        | "heHim"
+        | "sheHer"
+        | "theyThem"
+        | "heThey"
+        | "sheThey"
+        | "useNameOnly"
+        | "askSelfDescribe"
+        | "preferNotToSay";
+      pronounsSelfDescribe?: string;
+      pointsBalance: number;
+      pointsAwarded: number;
+      pointsRemoved: number;
+      pointsRedeemed: number;
+      warningCount: number;
+      attendanceStatus?: "present" | "absent" | "late";
+    }> = [];
+
+    for (const studentUserId of studentUserIds) {
+      const row = await ctx.db
+        .query("studentRosters")
+        .withIndex("by_classId_userId", (q) => q.eq("classId", classId).eq("userId", studentUserId))
+        .unique();
+      if (!row) continue;
+      const user = await ctx.db.get("users", studentUserId);
+      if (!user) continue;
+      const counters = readRosterPointCounters(row);
+      const attendanceStatus = attendanceByStudent.get(studentUserId);
+      entries.push({
+        userId: studentUserId,
+        rosterNumber: row.rosterNumber,
+        firstName: row.firstName,
+        lastName: row.lastName,
+        name: user.name,
+        image: await resolveUserImageUrl(ctx, user),
+        email: user.email,
+        gender: row.gender,
+        genderSelfDescribe: row.genderSelfDescribe,
+        pronouns: row.pronouns,
+        pronounsSelfDescribe: row.pronounsSelfDescribe,
+        pointsBalance: counters.pointsBalance,
+        pointsAwarded: counters.pointsAwarded,
+        pointsRemoved: counters.pointsRemoved,
+        pointsRedeemed: counters.pointsRedeemed,
+        warningCount: effectiveWarningCount(row, args.dateKey),
+        ...(attendanceStatus !== undefined ? { attendanceStatus } : {}),
+      });
+    }
+
+    entries.sort((a, b) => a.rosterNumber - b.rosterNumber);
+    return entries;
+  },
+});
+
+const ledgerBehaviorItemValidator = v.object({
+  kind: v.literal("behavior"),
+  id: v.id("behaviorApplications"),
+  at: v.number(),
+  name: v.optional(v.string()),
+  pointsApplied: v.number(),
+  quantity: v.number(),
+});
+
+const ledgerRewardItemValidator = v.object({
+  kind: v.literal("reward"),
+  id: v.id("rewardPurchases"),
+  at: v.number(),
+  name: v.optional(v.string()),
+  pointsCost: v.number(),
+  quantity: v.number(),
+});
+
+const ledgerWarningItemValidator = v.object({
+  kind: v.literal("warning"),
+  id: v.id("studentWarningEvents"),
+  at: v.number(),
+  dateKey: v.string(),
+});
+
+/** Newest-first points ledger for one personal-audience student. */
+export const ledgerForAudience = classQuery({
+  args: {
+    studentUserId: v.id("users"),
+    beforeTimestamp: v.optional(v.number()),
+    limit: v.optional(v.number()),
+  },
+  returns: v.object({
+    items: v.array(
+      v.union(ledgerBehaviorItemValidator, ledgerRewardItemValidator, ledgerWarningItemValidator),
+    ),
+    nextBeforeTimestamp: v.optional(v.number()),
+  }),
+  handler: async (ctx, args) => {
+    await ctx.require("points:read");
+    const classId = ctx.classDoc._id;
+    await assertPersonalStudentAccess(ctx, classId, args.studentUserId);
+
+    const limit = Math.min(
+      Math.max(1, Math.floor(args.limit ?? DEFAULT_LEDGER_LIMIT)),
+      MAX_LEDGER_LIMIT,
+    );
+    const beforeTimestamp = args.beforeTimestamp;
+
+    const behaviorRows =
+      beforeTimestamp === undefined
+        ? await ctx.db
+            .query("behaviorApplications")
+            .withIndex("by_classId_student_awardedAt", (q) =>
+              q.eq("classId", classId).eq("studentUserId", args.studentUserId),
+            )
+            .order("desc")
+            .take(limit)
+        : await ctx.db
+            .query("behaviorApplications")
+            .withIndex("by_classId_student_awardedAt", (q) =>
+              q
+                .eq("classId", classId)
+                .eq("studentUserId", args.studentUserId)
+                .lt("awardedAt", beforeTimestamp),
+            )
+            .order("desc")
+            .take(limit);
+
+    const rewardRows =
+      beforeTimestamp === undefined
+        ? await ctx.db
+            .query("rewardPurchases")
+            .withIndex("by_classId_student_purchasedAt", (q) =>
+              q.eq("classId", classId).eq("studentUserId", args.studentUserId),
+            )
+            .order("desc")
+            .take(limit)
+        : await ctx.db
+            .query("rewardPurchases")
+            .withIndex("by_classId_student_purchasedAt", (q) =>
+              q
+                .eq("classId", classId)
+                .eq("studentUserId", args.studentUserId)
+                .lt("purchasedAt", beforeTimestamp),
+            )
+            .order("desc")
+            .take(limit);
+
+    // eslint-disable-next-line @convex-dev/no-collect-in-query -- per-student warning ledger is classroom-bounded
+    const warningRows = await ctx.db
+      .query("studentWarningEvents")
+      .withIndex("by_classId_student_dateKey", (q) =>
+        q.eq("classId", classId).eq("studentUserId", args.studentUserId),
+      )
+      .collect();
+
+    type MergedItem =
+      | {
+          kind: "behavior";
+          id: Id<"behaviorApplications">;
+          at: number;
+          name?: string;
+          pointsApplied: number;
+          quantity: number;
+        }
+      | {
+          kind: "reward";
+          id: Id<"rewardPurchases">;
+          at: number;
+          name?: string;
+          pointsCost: number;
+          quantity: number;
+        }
+      | {
+          kind: "warning";
+          id: Id<"studentWarningEvents">;
+          at: number;
+          dateKey: string;
+        };
+
+    const merged: MergedItem[] = [];
+
+    for (const row of behaviorRows) {
+      const behavior = await ctx.db.get("behaviors", row.behaviorId);
+      merged.push({
+        kind: "behavior",
+        id: row._id,
+        at: row.awardedAt,
+        ...(behavior?.name ? { name: behavior.name } : {}),
+        pointsApplied: row.pointsApplied,
+        quantity: ledgerQuantity(row.quantity),
+      });
+    }
+
+    for (const row of rewardRows) {
+      const reward = await ctx.db.get("rewards", row.rewardId);
+      merged.push({
+        kind: "reward",
+        id: row._id,
+        at: row.purchasedAt,
+        ...(reward?.name ? { name: reward.name } : {}),
+        pointsCost: row.pointsCost,
+        quantity: ledgerQuantity(row.quantity),
+      });
+    }
+
+    for (const row of warningRows) {
+      if (beforeTimestamp !== undefined && row.createdAt >= beforeTimestamp) continue;
+      merged.push({
+        kind: "warning",
+        id: row._id,
+        at: row.createdAt,
+        dateKey: row.dateKey,
+      });
+    }
+
+    merged.sort((a, b) => b.at - a.at);
+    const items = merged.slice(0, limit);
+
+    return {
+      items,
+      ...(items.length === limit ? { nextBeforeTimestamp: items[items.length - 1]?.at } : {}),
+    };
   },
 });
 

@@ -40,6 +40,7 @@ import { getRosterDisplayName, resolveRosterNameFormat } from "@/lib/roster/rost
 import {
   isClassTaskDetail,
   isPersonalTaskDetail,
+  isTaskPastDue,
   type TaskDetailClass,
   type TaskDetailPersonal,
 } from "@/lib/tasks/tasks";
@@ -396,6 +397,7 @@ function PersonalTaskDetailContent({
   const completedCount = task.students.filter((student) => student.completed).length;
   const total = task.students.length;
   const allDone = total > 0 && completedCount >= total;
+  const pastDue = isTaskPastDue(task.dueDateKey);
 
   return (
     <div className="flex w-full flex-col gap-6 px-4 py-8 sm:px-8">
@@ -410,6 +412,7 @@ function PersonalTaskDetailContent({
           {total > 0 ? (
             <TaskCompletionStatusBadge
               completed={allDone}
+              pastDue={pastDue}
               label={
                 total <= 1 ? undefined : t("statsCompleted", { completed: completedCount, total })
               }
@@ -441,7 +444,7 @@ function PersonalTaskDetailContent({
                 className="flex items-center justify-between gap-3 px-4 py-3 text-sm"
               >
                 <span className="min-w-0 truncate font-medium">{displayName}</span>
-                <TaskCompletionStatusBadge completed={student.completed} />
+                <TaskCompletionStatusBadge completed={student.completed} pastDue={pastDue} />
               </li>
             );
           })}

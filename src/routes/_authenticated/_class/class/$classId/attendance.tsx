@@ -10,7 +10,7 @@ export const Route = createFileRoute("/_authenticated/_class/class/$classId/atte
     const typedClassId = classId as Id<"classes">;
 
     return (
-      <RequirePermission permission="attendance:manage">
+      <RequirePermission permission="attendance:read">
         <AttendancePage classId={typedClassId} />
       </RequirePermission>
     );

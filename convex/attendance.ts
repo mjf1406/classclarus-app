@@ -5,10 +5,13 @@ import type { MutationCtx } from "./_generated/server.js";
 import { classScope } from "./lib/authzModel.js";
 import { recordClassActivity } from "./lib/classActivity.js";
 import { classMutation, classQuery } from "./lib/customFunctions.js";
-import { getClassRoleForUser } from "./lib/guardianLinks.js";
+import { getClassRoleForUser, resolvePersonalStudentIds } from "./lib/guardianLinks.js";
 import { rateLimiter } from "./lib/rateLimiter.js";
+import { resolveUserImageUrl } from "./lib/userImage.js";
 
 const DATE_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
+const DEFAULT_HISTORY_LIMIT = 40;
+const MAX_HISTORY_LIMIT = 100;
 
 const attendanceStatusValidator = v.union(
   v.literal("present"),
@@ -117,6 +120,17 @@ async function upsertRecord(
   });
 }
 
+const personalAttendanceStudentValidator = v.object({
+  userId: v.id("users"),
+  rosterNumber: v.number(),
+  firstName: v.optional(v.string()),
+  lastName: v.optional(v.string()),
+  name: v.optional(v.string()),
+  image: v.optional(v.string()),
+  email: v.optional(v.string()),
+  status: v.optional(attendanceStatusValidator),
+});
+
 export const forDate = classQuery({
   args: {
     dateKey: v.string(),
@@ -166,6 +180,228 @@ export const forDate = classQuery({
         updatedAt: record.updatedAt,
         updatedBy: record.updatedBy,
       })),
+    };
+  },
+});
+
+/** Personal/read audience: self (student) or linked students (guardian). */
+export const forAudience = classQuery({
+  args: {
+    dateKey: v.string(),
+  },
+  returns: v.object({
+    students: v.array(personalAttendanceStudentValidator),
+  }),
+  handler: async (ctx, args) => {
+    await ctx.require("attendance:read");
+    assertValidDateKey(args.dateKey);
+
+    const classId = ctx.classDoc._id;
+    const studentUserIds = await resolvePersonalStudentIds(ctx, classId);
+    if (studentUserIds.length === 0) {
+      return { students: [] };
+    }
+
+    const audienceSet = new Set(studentUserIds);
+    // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded day; filtered to audience
+    const attendanceRecords = await ctx.db
+      .query("attendanceRecords")
+      .withIndex("by_classId_dateKey", (q) => q.eq("classId", classId).eq("dateKey", args.dateKey))
+      .collect();
+    const statusByStudent = new Map(
+      attendanceRecords
+        .filter((record) => audienceSet.has(record.studentUserId))
+        .map((record) => [record.studentUserId, record.status] as const),
+    );
+
+    const students: Array<{
+      userId: Id<"users">;
+      rosterNumber: number;
+      firstName?: string;
+      lastName?: string;
+      name?: string;
+      image?: string;
+      email?: string;
+      status?: "present" | "absent" | "late";
+    }> = [];
+
+    for (const studentUserId of studentUserIds) {
+      const row = await ctx.db
+        .query("studentRosters")
+        .withIndex("by_classId_userId", (q) => q.eq("classId", classId).eq("userId", studentUserId))
+        .unique();
+      if (!row) continue;
+      const user = await ctx.db.get("users", studentUserId);
+      if (!user) continue;
+      const status = statusByStudent.get(studentUserId);
+      students.push({
+        userId: studentUserId,
+        rosterNumber: row.rosterNumber,
+        firstName: row.firstName,
+        lastName: row.lastName,
+        name: user.name,
+        image: await resolveUserImageUrl(ctx, user),
+        email: user.email,
+        ...(status !== undefined ? { status } : {}),
+      });
+    }
+
+    students.sort((a, b) => a.rosterNumber - b.rosterNumber);
+    return { students };
+  },
+});
+
+/** Per-student present/absent totals for the personal audience. */
+export const summaryForAudience = classQuery({
+  args: {},
+  returns: v.object({
+    students: v.array(
+      v.object({
+        studentUserId: v.id("users"),
+        present: v.number(),
+        absent: v.number(),
+        late: v.number(),
+        total: v.number(),
+      }),
+    ),
+  }),
+  handler: async (ctx) => {
+    await ctx.require("attendance:read");
+    const classId = ctx.classDoc._id;
+    const studentUserIds = await resolvePersonalStudentIds(ctx, classId);
+
+    const students: Array<{
+      studentUserId: Id<"users">;
+      present: number;
+      absent: number;
+      late: number;
+      total: number;
+    }> = [];
+
+    for (const studentUserId of studentUserIds) {
+      // eslint-disable-next-line @convex-dev/no-collect-in-query -- per-student history is school-year bounded
+      const rows = await ctx.db
+        .query("attendanceRecords")
+        .withIndex("by_classId_student", (q) =>
+          q.eq("classId", classId).eq("studentUserId", studentUserId),
+        )
+        .collect();
+
+      let presentOnly = 0;
+      let absent = 0;
+      let late = 0;
+      for (const row of rows) {
+        if (row.status === "present") presentOnly += 1;
+        else if (row.status === "absent") absent += 1;
+        else late += 1;
+      }
+      const present = presentOnly + late;
+      students.push({
+        studentUserId,
+        present,
+        absent,
+        late,
+        total: present + absent,
+      });
+    }
+
+    return { students };
+  },
+});
+
+function isHistoryRowAfterCursor(
+  row: { dateKey: string; studentUserId: Id<"users"> },
+  cursor: { dateKey: string; studentUserId: Id<"users"> },
+): boolean {
+  if (row.dateKey !== cursor.dateKey) return row.dateKey < cursor.dateKey;
+  return row.studentUserId > cursor.studentUserId;
+}
+
+/** Newest-first attendance history for every personal-audience student. */
+export const historyForAudience = classQuery({
+  args: {
+    beforeDateKey: v.optional(v.string()),
+    beforeStudentUserId: v.optional(v.id("users")),
+    limit: v.optional(v.number()),
+  },
+  returns: v.object({
+    items: v.array(
+      v.object({
+        dateKey: v.string(),
+        studentUserId: v.id("users"),
+        status: attendanceStatusValidator,
+      }),
+    ),
+    nextBeforeDateKey: v.optional(v.string()),
+    nextBeforeStudentUserId: v.optional(v.id("users")),
+  }),
+  handler: async (ctx, args) => {
+    await ctx.require("attendance:read");
+    const classId = ctx.classDoc._id;
+    const studentUserIds = await resolvePersonalStudentIds(ctx, classId);
+
+    if (args.beforeDateKey !== undefined) {
+      assertValidDateKey(args.beforeDateKey);
+    }
+    if ((args.beforeDateKey === undefined) !== (args.beforeStudentUserId === undefined)) {
+      throw new Error("beforeDateKey and beforeStudentUserId must be provided together");
+    }
+
+    const limit = Math.min(
+      Math.max(1, Math.floor(args.limit ?? DEFAULT_HISTORY_LIMIT)),
+      MAX_HISTORY_LIMIT,
+    );
+
+    const rows: Array<{
+      dateKey: string;
+      studentUserId: Id<"users">;
+      status: "present" | "absent" | "late";
+    }> = [];
+
+    for (const studentUserId of studentUserIds) {
+      // eslint-disable-next-line @convex-dev/no-collect-in-query -- personal audience is a few students; school-year bounded
+      const studentRows = await ctx.db
+        .query("attendanceRecords")
+        .withIndex("by_classId_student", (q) =>
+          q.eq("classId", classId).eq("studentUserId", studentUserId),
+        )
+        .collect();
+      for (const row of studentRows) {
+        rows.push({
+          dateKey: row.dateKey,
+          studentUserId: row.studentUserId,
+          status: row.status,
+        });
+      }
+    }
+
+    rows.sort((a, b) => {
+      if (a.dateKey !== b.dateKey) return a.dateKey < b.dateKey ? 1 : -1;
+      if (a.studentUserId === b.studentUserId) return 0;
+      return a.studentUserId < b.studentUserId ? -1 : 1;
+    });
+
+    const cursor =
+      args.beforeDateKey !== undefined && args.beforeStudentUserId !== undefined
+        ? { dateKey: args.beforeDateKey, studentUserId: args.beforeStudentUserId }
+        : null;
+
+    const pageRows = [];
+    for (const row of rows) {
+      if (cursor !== null && !isHistoryRowAfterCursor(row, cursor)) continue;
+      pageRows.push(row);
+      if (pageRows.length >= limit) break;
+    }
+
+    const last = pageRows[pageRows.length - 1];
+    return {
+      items: pageRows,
+      ...(pageRows.length === limit && last
+        ? {
+            nextBeforeDateKey: last.dateKey,
+            nextBeforeStudentUserId: last.studentUserId,
+          }
+        : {}),
     };
   },
 });

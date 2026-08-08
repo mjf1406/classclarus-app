@@ -3,7 +3,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { AttendanceStudentCard } from "@/components/attendance/AttendanceStudentCard";
+import { PersonalAttendancePage } from "@/components/attendance/PersonalAttendancePage";
 import { GroupTeamFilterButtons } from "@/components/groups/GroupTeamFilterButtons";
+import PendingComponent from "@/components/loading/PendingComponent";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -18,6 +20,7 @@ import { useAttendanceForDate } from "@/hooks/attendance/useAttendanceForDate";
 import { useSaveAttendanceForDate } from "@/hooks/attendance/useSaveAttendanceForDate";
 import { useGroupTeamFilterState } from "@/hooks/groups/useGroupTeamFilterState";
 import { useGroupsBoard } from "@/hooks/groups/useGroupsBoard";
+import { useCan } from "@/hooks/permissions/useCan";
 import { useEnsureStudentRosters } from "@/hooks/roster/useEnsureStudentRosters";
 import { useStudentRoster } from "@/hooks/roster/useStudentRoster";
 import { useStudentRosterFilter } from "@/hooks/students/useStudentRosterFilter";
@@ -43,6 +46,19 @@ type AttendancePageProps = {
 };
 
 export function AttendancePage({ classId }: AttendancePageProps) {
+  const { can, isPending: permissionsPending } = useCan();
+
+  if (permissionsPending) {
+    return <PendingComponent />;
+  }
+  if (!can("attendance:manage")) {
+    return <PersonalAttendancePage classId={classId} />;
+  }
+
+  return <StaffAttendancePage classId={classId} />;
+}
+
+function StaffAttendancePage({ classId }: AttendancePageProps) {
   const { t } = useTranslation("attendance");
   const dateKey = useMemo(() => localDateKey(), []);
   const { data: classDoc } = useAuthedQuery(api.classes.get, { classId }, { gcTime: ONE_HOUR });

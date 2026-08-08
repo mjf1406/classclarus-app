@@ -3,7 +3,9 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { GroupTeamFilterButtons } from "@/components/groups/GroupTeamFilterButtons";
+import PendingComponent from "@/components/loading/PendingComponent";
 import { PointStudentCard } from "@/components/points/PointStudentCard";
+import { PersonalPointsPage } from "@/components/points/PersonalPointsPage";
 import { PointsApplyCredenza } from "@/components/points/PointsApplyCredenza";
 import {
   Empty,
@@ -134,6 +136,19 @@ function PointsSortMenu({
 }
 
 export function PointsPage({ classId }: PointsPageProps) {
+  const { can, isPending: permissionsPending } = useCan();
+
+  if (permissionsPending) {
+    return <PendingComponent />;
+  }
+  if (!can("points:manage")) {
+    return <PersonalPointsPage classId={classId} />;
+  }
+
+  return <StaffPointsPage classId={classId} />;
+}
+
+function StaffPointsPage({ classId }: PointsPageProps) {
   const { t } = useTranslation("points");
   const { can, isPending: permissionsPending } = useCan();
   const canManageAttendance = !permissionsPending && can("attendance:manage");

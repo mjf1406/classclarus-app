@@ -10,7 +10,7 @@ export const Route = createFileRoute("/_authenticated/_class/class/$classId/poin
     const typedClassId = classId as Id<"classes">;
 
     return (
-      <RequirePermission permission="points:manage">
+      <RequirePermission permission="points:read">
         <PointsPage classId={typedClassId} />
       </RequirePermission>
     );
