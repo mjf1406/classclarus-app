@@ -6,6 +6,7 @@ import { components } from "./_generated/api.js";
 import type { Id } from "./_generated/dataModel.js";
 import type { MutationCtx, QueryCtx } from "./_generated/server.js";
 import { classScope } from "./lib/authzModel.js";
+import { recordClassActivity } from "./lib/classActivity.js";
 import { classMutation, classQuery } from "./lib/customFunctions.js";
 import { rateLimiter } from "./lib/rateLimiter.js";
 import {
@@ -271,7 +272,23 @@ export const updateFields = classMutation({
       }
     }
 
+    const changedFields = Object.keys(patch);
     await ctx.db.patch("studentRosters", row._id, patch);
+    if (changedFields.length > 0) {
+      await recordClassActivity(ctx, {
+        classId,
+        actorUserId: ctx.userId,
+        action: "update",
+        resourceType: "roster",
+        resourceId: args.userId,
+        summary: "Updated student roster fields",
+        summaryKey: "activitySummary_updatedStudentRosterFields",
+        metadata: {
+          studentUserId: args.userId,
+          fields: changedFields.join(","),
+        },
+      });
+    }
     return null;
   },
 });
@@ -333,6 +350,18 @@ export const reorder = classMutation({
     }
 
     await renumberStudentRosters(ctx, classId);
+    await recordClassActivity(ctx, {
+      classId,
+      actorUserId: ctx.userId,
+      action: "update",
+      resourceType: "roster",
+      resourceId: classId,
+      summary: "Reordered student roster",
+      summaryKey: "activitySummary_reorderedStudentRoster",
+      metadata: {
+        studentCount: String(args.userIds.length),
+      },
+    });
     return null;
   },
 });

@@ -3,6 +3,7 @@ import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel.js";
 import type { MutationCtx, QueryCtx } from "./_generated/server.js";
 import { classScope } from "./lib/authzModel.js";
+import { recordClassActivity } from "./lib/classActivity.js";
 import { classMutation, classQuery } from "./lib/customFunctions.js";
 import { getClassRoleForUser, listLinkedStudentsForGuardian } from "./lib/guardianLinks.js";
 import { rateLimiter } from "./lib/rateLimiter.js";
@@ -288,6 +289,20 @@ export const upsertScore = classMutation({
     if (payload.isEmpty) {
       if (existing) {
         await ctx.db.delete("assignmentScores", existing._id);
+        await recordClassActivity(ctx, {
+          classId,
+          actorUserId: ctx.userId,
+          action: "delete",
+          resourceType: "assignmentScore",
+          resourceId: existing._id,
+          summary: `Cleared score for "${assignment.name}"`,
+          summaryKey: "activitySummary_clearedAssignmentScore",
+          metadata: {
+            name: assignment.name,
+            assignmentId: args.assignmentId,
+            studentUserId: args.studentUserId,
+          },
+        });
       }
       return null;
     }
@@ -308,10 +323,39 @@ export const upsertScore = classMutation({
 
     if (existing) {
       await ctx.db.replace("assignmentScores", existing._id, next);
+      await recordClassActivity(ctx, {
+        classId,
+        actorUserId: ctx.userId,
+        action: "update",
+        resourceType: "assignmentScore",
+        resourceId: existing._id,
+        summary: `Updated score for "${assignment.name}"`,
+        summaryKey: "activitySummary_upsertedAssignmentScore",
+        metadata: {
+          name: assignment.name,
+          assignmentId: args.assignmentId,
+          studentUserId: args.studentUserId,
+        },
+      });
       return existing._id;
     }
 
-    return await ctx.db.insert("assignmentScores", next);
+    const scoreId = await ctx.db.insert("assignmentScores", next);
+    await recordClassActivity(ctx, {
+      classId,
+      actorUserId: ctx.userId,
+      action: "write",
+      resourceType: "assignmentScore",
+      resourceId: scoreId,
+      summary: `Recorded score for "${assignment.name}"`,
+      summaryKey: "activitySummary_upsertedAssignmentScore",
+      metadata: {
+        name: assignment.name,
+        assignmentId: args.assignmentId,
+        studentUserId: args.studentUserId,
+      },
+    });
+    return scoreId;
   },
 });
 
@@ -327,7 +371,7 @@ export const clearScore = classMutation({
     await ctx.require("assignments:manage");
 
     const classId = ctx.classDoc._id;
-    await requireAssignmentInClass(ctx, classId, args.assignmentId);
+    const assignment = await requireAssignmentInClass(ctx, classId, args.assignmentId);
 
     const existing = await ctx.db
       .query("assignmentScores")
@@ -337,6 +381,20 @@ export const clearScore = classMutation({
       .unique();
     if (existing) {
       await ctx.db.delete("assignmentScores", existing._id);
+      await recordClassActivity(ctx, {
+        classId,
+        actorUserId: ctx.userId,
+        action: "delete",
+        resourceType: "assignmentScore",
+        resourceId: existing._id,
+        summary: `Cleared score for "${assignment.name}"`,
+        summaryKey: "activitySummary_clearedAssignmentScore",
+        metadata: {
+          name: assignment.name,
+          assignmentId: args.assignmentId,
+          studentUserId: args.studentUserId,
+        },
+      });
     }
     return null;
   },
@@ -357,10 +415,28 @@ export const setScoresReleased = classMutation({
     await ctx.require("assignments:manage");
 
     const classId = ctx.classDoc._id;
-    await requireAssignmentInClass(ctx, classId, args.assignmentId);
+    const assignment = await requireAssignmentInClass(ctx, classId, args.assignmentId);
     await ctx.db.patch("assignments", args.assignmentId, {
       scoresReleased: args.released,
       updatedAt: Date.now(),
+    });
+    await recordClassActivity(ctx, {
+      classId,
+      actorUserId: ctx.userId,
+      action: "update",
+      resourceType: "assignment",
+      resourceId: args.assignmentId,
+      summary: args.released
+        ? `Released scores for "${assignment.name}"`
+        : `Unreleased scores for "${assignment.name}"`,
+      summaryKey: args.released
+        ? "activitySummary_releasedAssignmentScores"
+        : "activitySummary_unreleasedAssignmentScores",
+      metadata: {
+        name: assignment.name,
+        assignmentId: args.assignmentId,
+        released: String(args.released),
+      },
     });
     return null;
   },

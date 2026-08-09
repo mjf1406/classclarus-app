@@ -1123,7 +1123,7 @@ export const addLink = classMutation({
     const label = normalizeOptionalLabel(args.label, "Label", MAX_LINK_LABEL_LENGTH);
     const now = Date.now();
 
-    return await ctx.db.insert("assignmentStudentLinks", {
+    const linkId = await ctx.db.insert("assignmentStudentLinks", {
       classId,
       assignmentId: args.assignmentId,
       studentUserId: ctx.userId,
@@ -1133,6 +1133,22 @@ export const addLink = classMutation({
       createdAt: now,
       updatedAt: now,
     });
+
+    await recordClassActivity(ctx, {
+      classId,
+      actorUserId: ctx.userId,
+      action: "write",
+      resourceType: "assignmentLink",
+      resourceId: linkId,
+      summary: `Added submission link for "${assignment.name}"`,
+      summaryKey: "activitySummary_addedAssignmentLink",
+      metadata: {
+        name: assignment.name,
+        assignmentId: args.assignmentId,
+      },
+    });
+
+    return linkId;
   },
 });
 
@@ -1169,6 +1185,20 @@ export const updateLink = classMutation({
       updatedAt: Date.now(),
     });
 
+    await recordClassActivity(ctx, {
+      classId,
+      actorUserId: ctx.userId,
+      action: "update",
+      resourceType: "assignmentLink",
+      resourceId: args.linkId,
+      summary: `Updated submission link for "${assignment.name}"`,
+      summaryKey: "activitySummary_updatedAssignmentLink",
+      metadata: {
+        name: assignment.name,
+        assignmentId: link.assignmentId,
+      },
+    });
+
     return null;
   },
 });
@@ -1193,7 +1223,24 @@ export const removeLink = classMutation({
       throw new Error("You can only remove your own links");
     }
 
+    const assignment = await ctx.db.get("assignments", link.assignmentId);
+    const assignmentName = assignment?.name ?? "assignment";
     await ctx.db.delete("assignmentStudentLinks", args.linkId);
+
+    await recordClassActivity(ctx, {
+      classId,
+      actorUserId: ctx.userId,
+      action: "delete",
+      resourceType: "assignmentLink",
+      resourceId: args.linkId,
+      summary: `Removed submission link for "${assignmentName}"`,
+      summaryKey: "activitySummary_removedAssignmentLink",
+      metadata: {
+        name: assignmentName,
+        assignmentId: link.assignmentId,
+      },
+    });
+
     return null;
   },
 });
@@ -1227,6 +1274,25 @@ export const setLinkHandedIn = classMutation({
     await ctx.db.patch("assignmentStudentLinks", args.linkId, {
       handedIn: args.handedIn,
       updatedAt: Date.now(),
+    });
+
+    await recordClassActivity(ctx, {
+      classId,
+      actorUserId: ctx.userId,
+      action: "update",
+      resourceType: "assignmentLink",
+      resourceId: args.linkId,
+      summary: args.handedIn
+        ? `Marked submission handed in for "${assignment.name}"`
+        : `Unmarked submission handed in for "${assignment.name}"`,
+      summaryKey: args.handedIn
+        ? "activitySummary_markedAssignmentLinkHandedIn"
+        : "activitySummary_unmarkedAssignmentLinkHandedIn",
+      metadata: {
+        name: assignment.name,
+        assignmentId: link.assignmentId,
+        handedIn: String(args.handedIn),
+      },
     });
 
     return null;

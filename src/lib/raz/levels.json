@@ -1,0 +1,234 @@
+{
+  "aa": {
+    "Grade": "K",
+    "Lexile Measure": "BR70-160L",
+    "Category": "Beginning Readers",
+    "LowerBoundDays": 14,
+    "UpperBoundDays": 28,
+    "ScheduleText": "Tests should be administered every 2 to 4 weeks."
+  },
+  "A": {
+    "Grade": "K",
+    "Lexile Measure": "BR70-160L",
+    "Category": "Beginning Readers",
+    "LowerBoundDays": 14,
+    "UpperBoundDays": 28,
+    "ScheduleText": "Tests should be administered every 2 to 4 weeks."
+  },
+  "B": {
+    "Grade": "K",
+    "Lexile Measure": "BR70-160L",
+    "Category": "Beginning Readers",
+    "LowerBoundDays": 14,
+    "UpperBoundDays": 28,
+    "ScheduleText": "Tests should be administered every 2 to 4 weeks."
+  },
+  "C": {
+    "Grade": "K",
+    "Lexile Measure": "BR70-160L",
+    "Category": "Beginning Readers",
+    "LowerBoundDays": 14,
+    "UpperBoundDays": 28,
+    "ScheduleText": "Tests should be administered every 2 to 4 weeks."
+  },
+  "D": {
+    "Grade": "1",
+    "Lexile Measure": "160L-530L",
+    "Category": "Developing Readers",
+    "LowerBoundDays": 28,
+    "UpperBoundDays": 42,
+    "ScheduleText": "Tests should be administered every 4 to 6 weeks."
+  },
+  "E": {
+    "Grade": "1",
+    "Lexile Measure": "160L-530L",
+    "Category": "Developing Readers",
+    "LowerBoundDays": 28,
+    "UpperBoundDays": 42,
+    "ScheduleText": "Tests should be administered every 4 to 6 weeks."
+  },
+  "F": {
+    "Grade": "1",
+    "Lexile Measure": "160L-530L",
+    "Category": "Developing Readers",
+    "LowerBoundDays": 28,
+    "UpperBoundDays": 42,
+    "ScheduleText": "Tests should be administered every 4 to 6 weeks."
+  },
+  "G": {
+    "Grade": "1",
+    "Lexile Measure": "160L-530L",
+    "Category": "Developing Readers",
+    "LowerBoundDays": 28,
+    "UpperBoundDays": 42,
+    "ScheduleText": "Tests should be administered every 4 to 6 weeks."
+  },
+  "H": {
+    "Grade": "1",
+    "Lexile Measure": "160L-530L",
+    "Category": "Developing Readers",
+    "LowerBoundDays": 28,
+    "UpperBoundDays": 42,
+    "ScheduleText": "Tests should be administered every 4 to 6 weeks."
+  },
+  "I": {
+    "Grade": "1",
+    "Lexile Measure": "160L-530L",
+    "Category": "Developing Readers",
+    "LowerBoundDays": 28,
+    "UpperBoundDays": 42,
+    "ScheduleText": "Tests should be administered every 4 to 6 weeks."
+  },
+  "J": {
+    "Grade": "1",
+    "Lexile Measure": "160L-530L",
+    "Category": "Developing Readers",
+    "LowerBoundDays": 28,
+    "UpperBoundDays": 42,
+    "ScheduleText": "Tests should be administered every 4 to 6 weeks."
+  },
+  "K": {
+    "Grade": "2",
+    "Lexile Measure": "510L-850L",
+    "Category": "Effective Readers",
+    "LowerBoundDays": 42,
+    "UpperBoundDays": 56,
+    "ScheduleText": "Tests should be administered every 6 to 8 weeks."
+  },
+  "L": {
+    "Grade": "2",
+    "Lexile Measure": "510L-850L",
+    "Category": "Effective Readers",
+    "LowerBoundDays": 42,
+    "UpperBoundDays": 56,
+    "ScheduleText": "Tests should be administered every 6 to 8 weeks."
+  },
+  "M": {
+    "Grade": "2",
+    "Lexile Measure": "510L-850L",
+    "Category": "Effective Readers",
+    "LowerBoundDays": 42,
+    "UpperBoundDays": 56,
+    "ScheduleText": "Tests should be administered every 6 to 8 weeks."
+  },
+  "N": {
+    "Grade": "2",
+    "Lexile Measure": "510L-850L",
+    "Category": "Effective Readers",
+    "LowerBoundDays": 42,
+    "UpperBoundDays": 56,
+    "ScheduleText": "Tests should be administered every 6 to 8 weeks."
+  },
+  "O": {
+    "Grade": "2",
+    "Lexile Measure": "510L-850L",
+    "Category": "Effective Readers",
+    "LowerBoundDays": 42,
+    "UpperBoundDays": 56,
+    "ScheduleText": "Tests should be administered every 6 to 8 weeks."
+  },
+  "P": {
+    "Grade": "2",
+    "Lexile Measure": "510L-850L",
+    "Category": "Effective Readers",
+    "LowerBoundDays": 42,
+    "UpperBoundDays": 56,
+    "ScheduleText": "Tests should be administered every 6 to 8 weeks."
+  },
+  "Q": {
+    "Grade": "3",
+    "Lexile Measure": "660L-940L",
+    "Category": "Automatic Readers",
+    "LowerBoundDays": 56,
+    "UpperBoundDays": 70,
+    "ScheduleText": "Tests should be administered every 8 to 10 weeks."
+  },
+  "R": {
+    "Grade": "3",
+    "Lexile Measure": "660L-940L",
+    "Category": "Automatic Readers",
+    "LowerBoundDays": 56,
+    "UpperBoundDays": 70,
+    "ScheduleText": "Tests should be administered every 8 to 10 weeks."
+  },
+  "S": {
+    "Grade": "3",
+    "Lexile Measure": "660L-940L",
+    "Category": "Automatic Readers",
+    "LowerBoundDays": 56,
+    "UpperBoundDays": 70,
+    "ScheduleText": "Tests should be administered every 8 to 10 weeks."
+  },
+  "T": {
+    "Grade": "3",
+    "Lexile Measure": "660L-940L",
+    "Category": "Automatic Readers",
+    "LowerBoundDays": 56,
+    "UpperBoundDays": 70,
+    "ScheduleText": "Tests should be administered every 8 to 10 weeks."
+  },
+  "U": {
+    "Grade": "4",
+    "Lexile Measure": "820L-1030L",
+    "Category": "Automatic Readers",
+    "LowerBoundDays": 56,
+    "UpperBoundDays": 70,
+    "ScheduleText": "Tests should be administered every 8 to 10 weeks."
+  },
+  "V": {
+    "Grade": "4",
+    "Lexile Measure": "820L-1030L",
+    "Category": "Automatic Readers",
+    "LowerBoundDays": 56,
+    "UpperBoundDays": 70,
+    "ScheduleText": "Tests should be administered every 8 to 10 weeks."
+  },
+  "W": {
+    "Grade": "4",
+    "Lexile Measure": "820L-1030L",
+    "Category": "Automatic Readers",
+    "LowerBoundDays": 56,
+    "UpperBoundDays": 70,
+    "ScheduleText": "Tests should be administered every 8 to 10 weeks."
+  },
+  "X": {
+    "Grade": "5",
+    "Lexile Measure": "890L-1080L",
+    "Category": "Automatic Readers",
+    "LowerBoundDays": 56,
+    "UpperBoundDays": 70,
+    "ScheduleText": "Tests should be administered every 8 to 10 weeks."
+  },
+  "Y": {
+    "Grade": "5",
+    "Lexile Measure": "890L-1080L",
+    "Category": "Automatic Readers",
+    "LowerBoundDays": 56,
+    "UpperBoundDays": 70,
+    "ScheduleText": "Tests should be administered every 8 to 10 weeks."
+  },
+  "Z": {
+    "Grade": "5",
+    "Lexile Measure": "890L-1080L",
+    "Category": "Automatic Readers",
+    "LowerBoundDays": 56,
+    "UpperBoundDays": 70,
+    "ScheduleText": "Tests should be administered every 8 to 10 weeks."
+  },
+  "Z1": {
+    "Grade": "5+",
+    "Lexile Measure": "920L-1120L",
+    "Category": "Automatic Readers",
+    "LowerBoundDays": 56,
+    "UpperBoundDays": 70,
+    "ScheduleText": "Tests should be administered every 8 to 10 weeks."
+  },
+  "Z2": {
+    "Grade": "5+",
+    "Lexile Measure": "920L-1120L",
+    "Category": "Automatic Readers",
+    "LowerBoundDays": 56,
+    "UpperBoundDays": 70,
+    "ScheduleText": "Tests should be administered every 8 to 10 weeks."
+  }
+}

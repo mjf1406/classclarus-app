@@ -974,6 +974,23 @@ const zht = {
     activitySummary_deletedExpectation: 'Deleted expectation "{{name}}"',
     activitySummary_bulkUpdatedExpectation:
       'Bulk-updated expectation "{{name}}" for {{updatedCount}} students',
+    activitySummary_upsertedAssignmentScore: "已更新「{{name}}」的分數",
+    activitySummary_clearedAssignmentScore: "已清除「{{name}}」的分數",
+    activitySummary_releasedAssignmentScores: "已發布「{{name}}」的分數",
+    activitySummary_unreleasedAssignmentScores: "已取消發布「{{name}}」的分數",
+    activitySummary_addedAssignmentLink: "已為「{{name}}」新增提交連結",
+    activitySummary_updatedAssignmentLink: "已更新「{{name}}」的提交連結",
+    activitySummary_removedAssignmentLink: "已刪除「{{name}}」的提交連結",
+    activitySummary_markedAssignmentLinkHandedIn: "已將「{{name}}」標記為已提交",
+    activitySummary_unmarkedAssignmentLinkHandedIn: "已取消「{{name}}」的已提交標記",
+    activitySummary_markedTaskComplete: "已將任務「{{name}}」標記為完成",
+    activitySummary_clearedTaskCompletion: "已清除任務「{{name}}」的完成狀態",
+    activitySummary_upsertedExpectationValue: "已更新期望「{{name}}」的值",
+    activitySummary_clearedExpectationValue: "已清除期望「{{name}}」的值",
+    activitySummary_upsertedStudentExpectationValues:
+      "已更新學生的期望值（設定 {{valueCount}} 項，清除 {{clearedCount}} 項）",
+    activitySummary_updatedStudentRosterFields: "已更新學生名冊欄位",
+    activitySummary_reorderedStudentRoster: "已重新排列學生名冊順序",
     breadcrumb: "導覽路徑",
   },
   attendance: {

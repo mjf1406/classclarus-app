@@ -1005,6 +1005,23 @@ const uk = {
     activitySummary_deletedExpectation: 'Deleted expectation "{{name}}"',
     activitySummary_bulkUpdatedExpectation:
       'Bulk-updated expectation "{{name}}" for {{updatedCount}} students',
+    activitySummary_upsertedAssignmentScore: "Оцінку за «{{name}}» оновлено",
+    activitySummary_clearedAssignmentScore: "Оцінку за «{{name}}» очищено",
+    activitySummary_releasedAssignmentScores: "Оцінки за «{{name}}» опубліковано",
+    activitySummary_unreleasedAssignmentScores: "Публікацію оцінок за «{{name}}» скасовано",
+    activitySummary_addedAssignmentLink: "Посилання на здачу додано для «{{name}}»",
+    activitySummary_updatedAssignmentLink: "Посилання на здачу оновлено для «{{name}}»",
+    activitySummary_removedAssignmentLink: "Посилання на здачу видалено для «{{name}}»",
+    activitySummary_markedAssignmentLinkHandedIn: "Здачу «{{name}}» позначено як здану",
+    activitySummary_unmarkedAssignmentLinkHandedIn: "Позначку здачі «{{name}}» знято",
+    activitySummary_markedTaskComplete: "Завдання «{{name}}» позначено як виконане",
+    activitySummary_clearedTaskCompletion: "Позначку виконання завдання «{{name}}» знято",
+    activitySummary_upsertedExpectationValue: "Значення очікування «{{name}}» оновлено",
+    activitySummary_clearedExpectationValue: "Значення очікування «{{name}}» очищено",
+    activitySummary_upsertedStudentExpectationValues:
+      "Значення очікувань учня оновлено ({{valueCount}} задано, {{clearedCount}} очищено)",
+    activitySummary_updatedStudentRosterFields: "Поля списку учнів оновлено",
+    activitySummary_reorderedStudentRoster: "Список учнів переупорядковано",
     breadcrumb: "Навігаційний шлях",
   },
   attendance: {

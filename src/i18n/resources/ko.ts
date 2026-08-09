@@ -989,6 +989,23 @@ const ko = {
     activitySummary_deletedExpectation: 'Deleted expectation "{{name}}"',
     activitySummary_bulkUpdatedExpectation:
       'Bulk-updated expectation "{{name}}" for {{updatedCount}} students',
+    activitySummary_upsertedAssignmentScore: '"{{name}}" 점수를 업데이트했습니다',
+    activitySummary_clearedAssignmentScore: '"{{name}}" 점수를 지웠습니다',
+    activitySummary_releasedAssignmentScores: '"{{name}}" 점수를 공개했습니다',
+    activitySummary_unreleasedAssignmentScores: '"{{name}}" 점수 공개를 취소했습니다',
+    activitySummary_addedAssignmentLink: '"{{name}}" 제출 링크를 추가했습니다',
+    activitySummary_updatedAssignmentLink: '"{{name}}" 제출 링크를 업데이트했습니다',
+    activitySummary_removedAssignmentLink: '"{{name}}" 제출 링크를 삭제했습니다',
+    activitySummary_markedAssignmentLinkHandedIn: '"{{name}}"을(를) 제출 완료로 표시했습니다',
+    activitySummary_unmarkedAssignmentLinkHandedIn: '"{{name}}" 제출 완료 표시를 해제했습니다',
+    activitySummary_markedTaskComplete: '과제 "{{name}}"을(를) 완료로 표시했습니다',
+    activitySummary_clearedTaskCompletion: '과제 "{{name}}" 완료를 해제했습니다',
+    activitySummary_upsertedExpectationValue: '기대치 "{{name}}" 값을 업데이트했습니다',
+    activitySummary_clearedExpectationValue: '기대치 "{{name}}" 값을 지웠습니다',
+    activitySummary_upsertedStudentExpectationValues:
+      "학생 기대치 값을 업데이트했습니다({{valueCount}}개 설정, {{clearedCount}}개 지움)",
+    activitySummary_updatedStudentRosterFields: "학생 명부 항목을 업데이트했습니다",
+    activitySummary_reorderedStudentRoster: "학생 명부 순서를 변경했습니다",
     breadcrumb: "탐색 경로",
   },
   attendance: {

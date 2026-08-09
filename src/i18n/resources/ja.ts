@@ -1001,6 +1001,23 @@ const ja = {
     activitySummary_deletedExpectation: 'Deleted expectation "{{name}}"',
     activitySummary_bulkUpdatedExpectation:
       'Bulk-updated expectation "{{name}}" for {{updatedCount}} students',
+    activitySummary_upsertedAssignmentScore: "「{{name}}」の得点を更新しました",
+    activitySummary_clearedAssignmentScore: "「{{name}}」の得点をクリアしました",
+    activitySummary_releasedAssignmentScores: "「{{name}}」の得点を公開しました",
+    activitySummary_unreleasedAssignmentScores: "「{{name}}」の得点の公開を取り消しました",
+    activitySummary_addedAssignmentLink: "「{{name}}」の提出リンクを追加しました",
+    activitySummary_updatedAssignmentLink: "「{{name}}」の提出リンクを更新しました",
+    activitySummary_removedAssignmentLink: "「{{name}}」の提出リンクを削除しました",
+    activitySummary_markedAssignmentLinkHandedIn: "「{{name}}」を提出済みにしました",
+    activitySummary_unmarkedAssignmentLinkHandedIn: "「{{name}}」の提出済みを解除しました",
+    activitySummary_markedTaskComplete: "タスク「{{name}}」を完了にしました",
+    activitySummary_clearedTaskCompletion: "タスク「{{name}}」の完了を解除しました",
+    activitySummary_upsertedExpectationValue: "期待値「{{name}}」の値を更新しました",
+    activitySummary_clearedExpectationValue: "期待値「{{name}}」の値をクリアしました",
+    activitySummary_upsertedStudentExpectationValues:
+      "生徒の期待値を更新しました（{{valueCount}} 件設定、{{clearedCount}} 件クリア）",
+    activitySummary_updatedStudentRosterFields: "生徒名簿の項目を更新しました",
+    activitySummary_reorderedStudentRoster: "生徒名簿の順序を変更しました",
     breadcrumb: "パンくずリスト",
   },
   attendance: {

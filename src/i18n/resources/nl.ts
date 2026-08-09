@@ -1009,6 +1009,26 @@ const nl = {
     activitySummary_deletedExpectation: 'Deleted expectation "{{name}}"',
     activitySummary_bulkUpdatedExpectation:
       'Bulk-updated expectation "{{name}}" for {{updatedCount}} students',
+    activitySummary_upsertedAssignmentScore: 'Score voor "{{name}}" bijgewerkt',
+    activitySummary_clearedAssignmentScore: 'Score voor "{{name}}" gewist',
+    activitySummary_releasedAssignmentScores: 'Scores voor "{{name}}" vrijgegeven',
+    activitySummary_unreleasedAssignmentScores:
+      'Vrijgave van scores voor "{{name}}" ongedaan gemaakt',
+    activitySummary_addedAssignmentLink: 'Inleverlink toegevoegd voor "{{name}}"',
+    activitySummary_updatedAssignmentLink: 'Inleverlink bijgewerkt voor "{{name}}"',
+    activitySummary_removedAssignmentLink: 'Inleverlink verwijderd voor "{{name}}"',
+    activitySummary_markedAssignmentLinkHandedIn:
+      'Inlevering van "{{name}}" gemarkeerd als ingeleverd',
+    activitySummary_unmarkedAssignmentLinkHandedIn:
+      'Ingeleverd-markering van "{{name}}" verwijderd',
+    activitySummary_markedTaskComplete: 'Taak "{{name}}" gemarkeerd als voltooid',
+    activitySummary_clearedTaskCompletion: 'Voltooiing van taak "{{name}}" gewist',
+    activitySummary_upsertedExpectationValue: 'Waarde van verwachting "{{name}}" bijgewerkt',
+    activitySummary_clearedExpectationValue: 'Waarde van verwachting "{{name}}" gewist',
+    activitySummary_upsertedStudentExpectationValues:
+      "Verwachtingswaarden van een leerling bijgewerkt ({{valueCount}} gezet, {{clearedCount}} gewist)",
+    activitySummary_updatedStudentRosterFields: "Velden van leerlingenlijst bijgewerkt",
+    activitySummary_reorderedStudentRoster: "Leerlingenlijst opnieuw gesorteerd",
     breadcrumb: "Broodkruimelnavigatie",
   },
   attendance: {

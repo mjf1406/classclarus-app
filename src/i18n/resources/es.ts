@@ -1014,6 +1014,23 @@ const es = {
     activitySummary_deletedExpectation: 'Deleted expectation "{{name}}"',
     activitySummary_bulkUpdatedExpectation:
       'Bulk-updated expectation "{{name}}" for {{updatedCount}} students',
+    activitySummary_upsertedAssignmentScore: 'Puntuación de "{{name}}" actualizada',
+    activitySummary_clearedAssignmentScore: 'Puntuación de "{{name}}" borrada',
+    activitySummary_releasedAssignmentScores: 'Puntuaciones de "{{name}}" publicadas',
+    activitySummary_unreleasedAssignmentScores: 'Publicación de puntuaciones de "{{name}}" anulada',
+    activitySummary_addedAssignmentLink: 'Enlace de entrega añadido para "{{name}}"',
+    activitySummary_updatedAssignmentLink: 'Enlace de entrega actualizado para "{{name}}"',
+    activitySummary_removedAssignmentLink: 'Enlace de entrega eliminado para "{{name}}"',
+    activitySummary_markedAssignmentLinkHandedIn: 'Entrega de "{{name}}" marcada como enviada',
+    activitySummary_unmarkedAssignmentLinkHandedIn: 'Marca de envío de "{{name}}" anulada',
+    activitySummary_markedTaskComplete: 'Tarea "{{name}}" marcada como completada',
+    activitySummary_clearedTaskCompletion: 'Finalización de la tarea "{{name}}" borrada',
+    activitySummary_upsertedExpectationValue: 'Valor de la expectativa "{{name}}" actualizado',
+    activitySummary_clearedExpectationValue: 'Valor de la expectativa "{{name}}" borrado',
+    activitySummary_upsertedStudentExpectationValues:
+      "Valores de expectativas del estudiante actualizados ({{valueCount}} establecidos, {{clearedCount}} borrados)",
+    activitySummary_updatedStudentRosterFields: "Campos de la lista de estudiantes actualizados",
+    activitySummary_reorderedStudentRoster: "Lista de estudiantes reordenada",
     breadcrumb: "Migas de pan",
   },
   attendance: {

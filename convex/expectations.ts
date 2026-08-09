@@ -675,6 +675,19 @@ export const upsertValue = classMutation({
     if (args.clear) {
       if (existing) {
         await ctx.db.delete("expectationValues", existing._id);
+        await recordClassActivity(ctx, {
+          classId,
+          actorUserId: ctx.userId,
+          action: "delete",
+          resourceType: "expectation",
+          resourceId: args.expectationId,
+          summary: `Cleared value for expectation "${expectation.name}"`,
+          summaryKey: "activitySummary_clearedExpectationValue",
+          metadata: {
+            name: expectation.name,
+            studentUserId: args.studentUserId,
+          },
+        });
       }
       return null;
     }
@@ -687,6 +700,19 @@ export const upsertValue = classMutation({
       payload,
       updatedBy: ctx.userId,
       updatedAt: Date.now(),
+    });
+    await recordClassActivity(ctx, {
+      classId,
+      actorUserId: ctx.userId,
+      action: existing ? "update" : "write",
+      resourceType: "expectation",
+      resourceId: args.expectationId,
+      summary: `Updated value for expectation "${expectation.name}"`,
+      summaryKey: "activitySummary_upsertedExpectationValue",
+      metadata: {
+        name: expectation.name,
+        studentUserId: args.studentUserId,
+      },
     });
     return null;
   },
@@ -719,7 +745,13 @@ export const upsertStudentValues = classMutation({
       throw new Error("Student not found in this class");
     }
 
+    if (args.values.length === 0) {
+      return null;
+    }
+
     const now = Date.now();
+    let valueCount = 0;
+    let clearedCount = 0;
     for (const entry of args.values) {
       const expectation = await requireExpectationInClass(ctx, classId, entry.expectationId);
       const existing = await ctx.db
@@ -732,6 +764,7 @@ export const upsertStudentValues = classMutation({
       if (entry.clear) {
         if (existing) {
           await ctx.db.delete("expectationValues", existing._id);
+          clearedCount += 1;
         }
         continue;
       }
@@ -744,6 +777,24 @@ export const upsertStudentValues = classMutation({
         payload,
         updatedBy: ctx.userId,
         updatedAt: now,
+      });
+      valueCount += 1;
+    }
+
+    if (valueCount > 0 || clearedCount > 0) {
+      await recordClassActivity(ctx, {
+        classId,
+        actorUserId: ctx.userId,
+        action: "update",
+        resourceType: "expectation",
+        resourceId: args.studentUserId,
+        summary: `Updated expectation values for a student (${valueCount} set, ${clearedCount} cleared)`,
+        summaryKey: "activitySummary_upsertedStudentExpectationValues",
+        metadata: {
+          studentUserId: args.studentUserId,
+          valueCount: String(valueCount),
+          clearedCount: String(clearedCount),
+        },
       });
     }
 

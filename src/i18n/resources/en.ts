@@ -997,6 +997,23 @@ const en = {
     activitySummary_deletedExpectation: 'Deleted expectation "{{name}}"',
     activitySummary_bulkUpdatedExpectation:
       'Bulk-updated expectation "{{name}}" for {{updatedCount}} students',
+    activitySummary_upsertedAssignmentScore: 'Updated score for "{{name}}"',
+    activitySummary_clearedAssignmentScore: 'Cleared score for "{{name}}"',
+    activitySummary_releasedAssignmentScores: 'Released scores for "{{name}}"',
+    activitySummary_unreleasedAssignmentScores: 'Unreleased scores for "{{name}}"',
+    activitySummary_addedAssignmentLink: 'Added submission link for "{{name}}"',
+    activitySummary_updatedAssignmentLink: 'Updated submission link for "{{name}}"',
+    activitySummary_removedAssignmentLink: 'Removed submission link for "{{name}}"',
+    activitySummary_markedAssignmentLinkHandedIn: 'Marked submission handed in for "{{name}}"',
+    activitySummary_unmarkedAssignmentLinkHandedIn: 'Unmarked submission handed in for "{{name}}"',
+    activitySummary_markedTaskComplete: 'Marked task "{{name}}" complete',
+    activitySummary_clearedTaskCompletion: 'Cleared completion for task "{{name}}"',
+    activitySummary_upsertedExpectationValue: 'Updated value for expectation "{{name}}"',
+    activitySummary_clearedExpectationValue: 'Cleared value for expectation "{{name}}"',
+    activitySummary_upsertedStudentExpectationValues:
+      "Updated expectation values for a student ({{valueCount}} set, {{clearedCount}} cleared)",
+    activitySummary_updatedStudentRosterFields: "Updated student roster fields",
+    activitySummary_reorderedStudentRoster: "Reordered student roster",
     breadcrumb: "Breadcrumb",
   },
   attendance: {

@@ -1019,6 +1019,25 @@ const de = {
     activitySummary_deletedExpectation: 'Deleted expectation "{{name}}"',
     activitySummary_bulkUpdatedExpectation:
       'Bulk-updated expectation "{{name}}" for {{updatedCount}} students',
+    activitySummary_upsertedAssignmentScore: "Punktzahl für „{{name}}“ aktualisiert",
+    activitySummary_clearedAssignmentScore: "Punktzahl für „{{name}}“ gelöscht",
+    activitySummary_releasedAssignmentScores: "Punktzahlen für „{{name}}“ veröffentlicht",
+    activitySummary_unreleasedAssignmentScores:
+      "Veröffentlichung der Punktzahlen für „{{name}}“ zurückgenommen",
+    activitySummary_addedAssignmentLink: "Abgabelink für „{{name}}“ hinzugefügt",
+    activitySummary_updatedAssignmentLink: "Abgabelink für „{{name}}“ aktualisiert",
+    activitySummary_removedAssignmentLink: "Abgabelink für „{{name}}“ entfernt",
+    activitySummary_markedAssignmentLinkHandedIn: "Abgabe von „{{name}}“ als eingereicht markiert",
+    activitySummary_unmarkedAssignmentLinkHandedIn:
+      "Eingereicht-Markierung von „{{name}}“ entfernt",
+    activitySummary_markedTaskComplete: "Aufgabe „{{name}}“ als erledigt markiert",
+    activitySummary_clearedTaskCompletion: "Erledigung der Aufgabe „{{name}}“ gelöscht",
+    activitySummary_upsertedExpectationValue: "Wert der Erwartung „{{name}}“ aktualisiert",
+    activitySummary_clearedExpectationValue: "Wert der Erwartung „{{name}}“ gelöscht",
+    activitySummary_upsertedStudentExpectationValues:
+      "Erwartungswerte eines Schülers aktualisiert ({{valueCount}} gesetzt, {{clearedCount}} gelöscht)",
+    activitySummary_updatedStudentRosterFields: "Schülerlistenfelder aktualisiert",
+    activitySummary_reorderedStudentRoster: "Schülerliste neu sortiert",
     breadcrumb: "Brotkrumen",
   },
   attendance: {

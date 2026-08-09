@@ -1007,6 +1007,23 @@ const ru = {
     activitySummary_deletedExpectation: 'Deleted expectation "{{name}}"',
     activitySummary_bulkUpdatedExpectation:
       'Bulk-updated expectation "{{name}}" for {{updatedCount}} students',
+    activitySummary_upsertedAssignmentScore: "Оценка за «{{name}}» обновлена",
+    activitySummary_clearedAssignmentScore: "Оценка за «{{name}}» очищена",
+    activitySummary_releasedAssignmentScores: "Оценки за «{{name}}» опубликованы",
+    activitySummary_unreleasedAssignmentScores: "Публикация оценок за «{{name}}» отменена",
+    activitySummary_addedAssignmentLink: "Ссылка на сдачу добавлена для «{{name}}»",
+    activitySummary_updatedAssignmentLink: "Ссылка на сдачу обновлена для «{{name}}»",
+    activitySummary_removedAssignmentLink: "Ссылка на сдачу удалена для «{{name}}»",
+    activitySummary_markedAssignmentLinkHandedIn: "Сдача «{{name}}» отмечена как сданная",
+    activitySummary_unmarkedAssignmentLinkHandedIn: "Отметка о сдаче «{{name}}» снята",
+    activitySummary_markedTaskComplete: "Задание «{{name}}» отмечено как выполненное",
+    activitySummary_clearedTaskCompletion: "Отметка о выполнении задания «{{name}}» снята",
+    activitySummary_upsertedExpectationValue: "Значение ожидания «{{name}}» обновлено",
+    activitySummary_clearedExpectationValue: "Значение ожидания «{{name}}» очищено",
+    activitySummary_upsertedStudentExpectationValues:
+      "Значения ожиданий ученика обновлены ({{valueCount}} задано, {{clearedCount}} очищено)",
+    activitySummary_updatedStudentRosterFields: "Поля списка учеников обновлены",
+    activitySummary_reorderedStudentRoster: "Список учеников переупорядочен",
     breadcrumb: "Навигационная цепочка",
   },
   attendance: {

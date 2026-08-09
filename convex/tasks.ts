@@ -525,7 +525,7 @@ export const setCompletion = classMutation({
     await ctx.require("tasks:complete");
 
     const classId = ctx.classDoc._id;
-    await requireTaskInClass(ctx, classId, args.taskId);
+    const task = await requireTaskInClass(ctx, classId, args.taskId);
     await requireStudentInClass(ctx, classId, args.studentUserId);
 
     const existing = await ctx.db
@@ -544,9 +544,35 @@ export const setCompletion = classMutation({
           completedAt: Date.now(),
           completedBy: ctx.userId,
         });
+        await recordClassActivity(ctx, {
+          classId,
+          actorUserId: ctx.userId,
+          action: "write",
+          resourceType: "taskCompletion",
+          resourceId: args.taskId,
+          summary: `Marked task "${task.name}" complete`,
+          summaryKey: "activitySummary_markedTaskComplete",
+          metadata: {
+            name: task.name,
+            studentUserId: args.studentUserId,
+          },
+        });
       }
     } else if (existing) {
       await ctx.db.delete("taskCompletions", existing._id);
+      await recordClassActivity(ctx, {
+        classId,
+        actorUserId: ctx.userId,
+        action: "delete",
+        resourceType: "taskCompletion",
+        resourceId: args.taskId,
+        summary: `Cleared completion for task "${task.name}"`,
+        summaryKey: "activitySummary_clearedTaskCompletion",
+        metadata: {
+          name: task.name,
+          studentUserId: args.studentUserId,
+        },
+      });
     }
 
     return null;

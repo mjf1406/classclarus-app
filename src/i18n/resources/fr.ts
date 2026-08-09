@@ -1027,6 +1027,23 @@ const fr = {
     activitySummary_deletedExpectation: 'Deleted expectation "{{name}}"',
     activitySummary_bulkUpdatedExpectation:
       'Bulk-updated expectation "{{name}}" for {{updatedCount}} students',
+    activitySummary_upsertedAssignmentScore: "Note de « {{name}} » mise à jour",
+    activitySummary_clearedAssignmentScore: "Note de « {{name}} » effacée",
+    activitySummary_releasedAssignmentScores: "Notes de « {{name}} » publiées",
+    activitySummary_unreleasedAssignmentScores: "Publication des notes de « {{name}} » annulée",
+    activitySummary_addedAssignmentLink: "Lien de remise ajouté pour « {{name}} »",
+    activitySummary_updatedAssignmentLink: "Lien de remise mis à jour pour « {{name}} »",
+    activitySummary_removedAssignmentLink: "Lien de remise supprimé pour « {{name}} »",
+    activitySummary_markedAssignmentLinkHandedIn: "Remise de « {{name}} » marquée comme rendue",
+    activitySummary_unmarkedAssignmentLinkHandedIn: "Marque de remise de « {{name}} » annulée",
+    activitySummary_markedTaskComplete: "Tâche « {{name}} » marquée comme terminée",
+    activitySummary_clearedTaskCompletion: "Achèvement de la tâche « {{name}} » effacé",
+    activitySummary_upsertedExpectationValue: "Valeur de l’attente « {{name}} » mise à jour",
+    activitySummary_clearedExpectationValue: "Valeur de l’attente « {{name}} » effacée",
+    activitySummary_upsertedStudentExpectationValues:
+      "Valeurs d’attente de l’élève mises à jour ({{valueCount}} définies, {{clearedCount}} effacées)",
+    activitySummary_updatedStudentRosterFields: "Champs de la liste des élèves mis à jour",
+    activitySummary_reorderedStudentRoster: "Liste des élèves réordonnée",
     breadcrumb: "Fil d'Ariane",
   },
   attendance: {

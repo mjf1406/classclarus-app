@@ -975,6 +975,23 @@ const th = {
     activitySummary_deletedExpectation: 'Deleted expectation "{{name}}"',
     activitySummary_bulkUpdatedExpectation:
       'Bulk-updated expectation "{{name}}" for {{updatedCount}} students',
+    activitySummary_upsertedAssignmentScore: 'อัปเดตคะแนนของ "{{name}}" แล้ว',
+    activitySummary_clearedAssignmentScore: 'ล้างคะแนนของ "{{name}}" แล้ว',
+    activitySummary_releasedAssignmentScores: 'เผยแพร่คะแนนของ "{{name}}" แล้ว',
+    activitySummary_unreleasedAssignmentScores: 'ยกเลิกการเผยแพร่คะแนนของ "{{name}}" แล้ว',
+    activitySummary_addedAssignmentLink: 'เพิ่มลิงก์ส่งงานสำหรับ "{{name}}" แล้ว',
+    activitySummary_updatedAssignmentLink: 'อัปเดตลิงก์ส่งงานสำหรับ "{{name}}" แล้ว',
+    activitySummary_removedAssignmentLink: 'ลบลิงก์ส่งงานสำหรับ "{{name}}" แล้ว',
+    activitySummary_markedAssignmentLinkHandedIn: 'ทำเครื่องหมายว่าส่ง "{{name}}" แล้ว',
+    activitySummary_unmarkedAssignmentLinkHandedIn: 'ยกเลิกเครื่องหมายส่งของ "{{name}}" แล้ว',
+    activitySummary_markedTaskComplete: 'ทำเครื่องหมายงาน "{{name}}" ว่าเสร็จแล้ว',
+    activitySummary_clearedTaskCompletion: 'ล้างสถานะเสร็จสิ้นของงาน "{{name}}" แล้ว',
+    activitySummary_upsertedExpectationValue: 'อัปเดตค่าความคาดหวัง "{{name}}" แล้ว',
+    activitySummary_clearedExpectationValue: 'ล้างค่าความคาดหวัง "{{name}}" แล้ว',
+    activitySummary_upsertedStudentExpectationValues:
+      "อัปเดตค่าความคาดหวังของนักเรียนแล้ว (ตั้งค่า {{valueCount}} รายการ ล้าง {{clearedCount}} รายการ)",
+    activitySummary_updatedStudentRosterFields: "อัปเดตฟิลด์รายชื่อนักเรียนแล้ว",
+    activitySummary_reorderedStudentRoster: "จัดเรียงรายชื่อนักเรียนใหม่แล้ว",
     breadcrumb: "เส้นทางนำทาง",
   },
   attendance: {
