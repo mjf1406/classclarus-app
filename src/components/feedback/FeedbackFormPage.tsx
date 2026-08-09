@@ -57,8 +57,8 @@ export function FeedbackFormPage() {
   return (
     <div className="mx-auto flex w-full max-w-lg flex-col gap-6 px-4 py-8">
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
-        <p className="text-sm text-muted-foreground">{t("description")}</p>
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t("title")}</h1>
+        <p className="hidden text-muted-foreground sm:block">{t("description")}</p>
       </div>
       <FeedbackForm key={i18n.language} />
     </div>

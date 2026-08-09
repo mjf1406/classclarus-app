@@ -658,6 +658,7 @@ const zhs = {
     navDashboard: "仪表盘",
     navActivityLog: "活动日志",
     navSettings: "设置",
+    settingsDescription: "管理班级详情、学生语言、名册显示和积分设置。",
     studentLanguageTitle: "学生语言",
     studentLanguageDescription: "本班学生看到的界面语言。其他角色仍使用各自的语言设置。",
     studentLanguageSaveFailed: "无法更新学生语言。",

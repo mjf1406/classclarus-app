@@ -685,6 +685,8 @@ const es = {
     navDashboard: "Panel",
     navActivityLog: "Registro de actividad",
     navSettings: "Ajustes",
+    settingsDescription:
+      "Gestiona los datos de la clase, el idioma de los estudiantes, la visualización de la lista y los ajustes de puntos.",
     studentLanguageTitle: "Idioma de los estudiantes",
     studentLanguageDescription:
       "Idioma que ven los estudiantes en esta clase. Los demás roles mantienen su propio idioma.",

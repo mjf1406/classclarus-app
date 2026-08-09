@@ -161,9 +161,10 @@ export function ClassSettingsPage({ classId }: ClassSettingsPageProps) {
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-8 sm:px-8">
+    <div className="flex w-full flex-col gap-6 px-4 py-8 sm:px-8">
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight">{t("navSettings")}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t("navSettings")}</h1>
+        <p className="hidden text-muted-foreground sm:block">{t("settingsDescription")}</p>
       </div>
 
       {showSkeleton ? <SettingsSkeleton /> : null}

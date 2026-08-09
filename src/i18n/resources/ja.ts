@@ -679,6 +679,7 @@ const ja = {
     navDashboard: "ダッシュボード",
     navActivityLog: "アクティビティログ",
     navSettings: "設定",
+    settingsDescription: "クラス情報、生徒の言語、名簿の表示、ポイント設定を管理します。",
     studentLanguageTitle: "生徒の言語",
     studentLanguageDescription:
       "このクラスで生徒に表示する言語です。他の役割は各自の言語設定を使います。",

@@ -680,6 +680,8 @@ const uk = {
     navDashboard: "Панель",
     navActivityLog: "Журнал активності",
     navSettings: "Налаштування",
+    settingsDescription:
+      "Керуйте даними класу, мовою учнів, відображенням списку та налаштуваннями балів.",
     studentLanguageTitle: "Мова учнів",
     studentLanguageDescription:
       "Мова інтерфейсу для учнів у цьому класі. Інші ролі зберігають власну мову.",

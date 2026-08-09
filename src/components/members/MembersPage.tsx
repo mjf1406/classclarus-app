@@ -123,8 +123,8 @@ export function MembersPage({ classId, role, titleKey }: MembersPageProps) {
   return (
     <div className="flex w-full flex-col gap-6 px-4 py-8 sm:px-8">
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight">{t(titleKey)}</h1>
-        <p className="text-sm text-muted-foreground">{t("membersDescription")}</p>
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t(titleKey)}</h1>
+        <p className="hidden text-muted-foreground sm:block">{t("membersDescription")}</p>
       </div>
 
       {showSearch ? (

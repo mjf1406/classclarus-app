@@ -279,8 +279,8 @@ export function PersonalAttendancePage({ classId }: PersonalAttendancePageProps)
   return (
     <div className="flex w-full flex-col gap-4 px-4 py-8 sm:px-8">
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight">{t("personalTitle")}</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t("personalTitle")}</h1>
+        <p className="hidden text-muted-foreground sm:block">
           {t("personalDescription", { date: dateKey })}
         </p>
       </div>

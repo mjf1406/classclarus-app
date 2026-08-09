@@ -688,6 +688,8 @@ const de = {
     navDashboard: "Übersicht",
     navActivityLog: "Aktivitätsprotokoll",
     navSettings: "Einstellungen",
+    settingsDescription:
+      "Klassendetails, Schülersprache, Listenanzeige und Punkteeinstellungen verwalten.",
     studentLanguageTitle: "Schülersprache",
     studentLanguageDescription:
       "Sprache, die Schüler in dieser Klasse sehen. Andere Rollen behalten ihre eigene Sprache.",

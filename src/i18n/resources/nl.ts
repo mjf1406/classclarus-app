@@ -683,6 +683,8 @@ const nl = {
     navDashboard: "Dashboard",
     navActivityLog: "Activiteitenlog",
     navSettings: "Instellingen",
+    settingsDescription:
+      "Beheer klasgegevens, leerlingentaal, weergave van de klaslijst en puntinstellingen.",
     studentLanguageTitle: "Leerlingentaal",
     studentLanguageDescription:
       "Taal die leerlingen in deze klas zien. Andere rollen behouden hun eigen taal.",

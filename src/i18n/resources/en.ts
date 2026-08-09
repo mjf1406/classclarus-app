@@ -673,6 +673,8 @@ const en = {
     navDashboard: "Dashboard",
     navActivityLog: "Activity log",
     navSettings: "Settings",
+    settingsDescription:
+      "Manage class details, student language, roster display, and points settings.",
     studentLanguageTitle: "Student language",
     studentLanguageDescription:
       "Language shown to students in this class. Other roles keep their own language.",

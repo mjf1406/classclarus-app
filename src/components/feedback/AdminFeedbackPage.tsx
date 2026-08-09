@@ -39,8 +39,8 @@ export function AdminFeedbackPage() {
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 sm:px-8">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex flex-col gap-1">
-          <h2 className="text-2xl font-semibold tracking-tight">{t("adminTitle")}</h2>
-          <p className="text-sm text-muted-foreground">{t("adminDescription")}</p>
+          <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t("adminTitle")}</h2>
+          <p className="hidden text-muted-foreground sm:block">{t("adminDescription")}</p>
         </div>
         <ToggleGroup
           variant="outline"

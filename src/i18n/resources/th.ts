@@ -659,6 +659,7 @@ const th = {
     navDashboard: "แดชบอร์ด",
     navActivityLog: "บันทึกกิจกรรม",
     navSettings: "การตั้งค่า",
+    settingsDescription: "จัดการรายละเอียดชั้นเรียน ภาษาของนักเรียน การแสดงรายชื่อ และการตั้งค่าคะแนน",
     studentLanguageTitle: "ภาษาของนักเรียน",
     studentLanguageDescription: "ภาษาที่แสดงให้นักเรียนในชั้นเรียนนี้ บทบาทอื่นใช้ภาษาที่ตั้งค่าเอง",
     studentLanguageSaveFailed: "ไม่สามารถอัปเดตภาษาของนักเรียนได้",

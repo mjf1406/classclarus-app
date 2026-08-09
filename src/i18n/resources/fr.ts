@@ -695,6 +695,8 @@ const fr = {
     navDashboard: "Tableau de bord",
     navActivityLog: "Journal d'activité",
     navSettings: "Paramètres",
+    settingsDescription:
+      "Gérez les détails de la classe, la langue des élèves, l'affichage de la liste et les paramètres de points.",
     studentLanguageTitle: "Langue des élèves",
     studentLanguageDescription:
       "Langue affichée aux élèves dans cette classe. Les autres rôles gardent leur propre langue.",

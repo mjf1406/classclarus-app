@@ -688,6 +688,8 @@ const it = {
     navDashboard: "Dashboard",
     navActivityLog: "Registro attività",
     navSettings: "Impostazioni",
+    settingsDescription:
+      "Gestisci i dettagli della classe, la lingua degli studenti, la visualizzazione dell'elenco e le impostazioni dei punti.",
     studentLanguageTitle: "Lingua degli studenti",
     studentLanguageDescription:
       "Lingua mostrata agli studenti in questa classe. Gli altri ruoli mantengono la propria lingua.",

@@ -658,6 +658,7 @@ const zht = {
     navDashboard: "儀表板",
     navActivityLog: "活動紀錄",
     navSettings: "設定",
+    settingsDescription: "管理班級詳情、學生語言、名冊顯示與點數設定。",
     studentLanguageTitle: "學生語言",
     studentLanguageDescription: "本班學生看到的介面語言。其他角色仍使用各自的語言設定。",
     studentLanguageSaveFailed: "無法更新學生語言。",

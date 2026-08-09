@@ -46,8 +46,10 @@ export function ActivityLogPage({ classId }: { classId: Id<"classes"> }) {
     <div className="flex w-full flex-col gap-4 px-4 py-8 sm:px-8">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight">{t("navActivityLog")}</h1>
-          <p className="text-sm text-muted-foreground">{t("activityDescription")}</p>
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+            {t("navActivityLog")}
+          </h1>
+          <p className="hidden text-muted-foreground sm:block">{t("activityDescription")}</p>
         </div>
         <ProgressButton
           type="button"

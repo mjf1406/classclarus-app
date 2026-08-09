@@ -682,6 +682,8 @@ const ru = {
     navDashboard: "Панель",
     navActivityLog: "Журнал активности",
     navSettings: "Настройки",
+    settingsDescription:
+      "Управляйте данными класса, языком учеников, отображением списка и настройками баллов.",
     studentLanguageTitle: "Язык учеников",
     studentLanguageDescription:
       "Язык интерфейса для учеников в этом классе. Остальные роли сохраняют свой язык.",

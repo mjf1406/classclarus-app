@@ -162,8 +162,10 @@ export const Route = createFileRoute("/_authenticated/_app/join")({
       <div className="mx-auto flex w-full max-w-md flex-col items-center p-4 sm:p-6">
         <div className="flex w-full flex-col items-center gap-6 text-center">
           <div className="flex flex-col gap-1">
-            <h1 className="text-2xl font-semibold tracking-tight">{t("joinPageTitle")}</h1>
-            <p className="text-sm text-muted-foreground">{t("joinPageDescription")}</p>
+            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+              {t("joinPageTitle")}
+            </h1>
+            <p className="hidden text-muted-foreground sm:block">{t("joinPageDescription")}</p>
             <p className="text-sm text-muted-foreground">{t("joinRateLimitHint")}</p>
           </div>
 

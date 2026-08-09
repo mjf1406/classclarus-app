@@ -382,9 +382,9 @@ function StaffTaskHeader({
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div className="flex min-w-0 flex-col gap-2">
         <TaskDetailBackLink classId={classId} />
-        <h1 className="text-2xl font-semibold tracking-tight">{task.name}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{task.name}</h1>
         {task.description ? (
-          <p className="text-sm text-muted-foreground whitespace-pre-wrap">{task.description}</p>
+          <p className="text-muted-foreground whitespace-pre-wrap">{task.description}</p>
         ) : null}
         {task.assignmentId && task.assignmentName ? (
           <p className="text-sm">
@@ -486,9 +486,9 @@ function PersonalTaskDetailContent({
     <div className="flex w-full flex-col gap-6 px-4 py-8 sm:px-8">
       <div className="flex min-w-0 flex-col gap-2">
         <TaskDetailBackLink classId={classId} />
-        <h1 className="text-2xl font-semibold tracking-tight">{task.name}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{task.name}</h1>
         {task.description ? (
-          <p className="text-sm text-muted-foreground whitespace-pre-wrap">{task.description}</p>
+          <p className="text-muted-foreground whitespace-pre-wrap">{task.description}</p>
         ) : null}
         {task.assignmentId && task.assignmentName ? (
           <p className="text-sm">

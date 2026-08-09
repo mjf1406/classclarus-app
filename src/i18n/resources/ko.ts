@@ -669,6 +669,7 @@ const ko = {
     navDashboard: "대시보드",
     navActivityLog: "활동 로그",
     navSettings: "설정",
+    settingsDescription: "수업 정보, 학생 언어, 명단 표시 및 포인트 설정을 관리합니다.",
     studentLanguageTitle: "학생 언어",
     studentLanguageDescription:
       "이 클래스에서 학생에게 표시되는 언어입니다. 다른 역할은 각자의 언어 설정을 사용합니다.",

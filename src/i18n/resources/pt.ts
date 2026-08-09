@@ -680,6 +680,8 @@ const pt = {
     navDashboard: "Painel",
     navActivityLog: "Registro de atividades",
     navSettings: "Configurações",
+    settingsDescription:
+      "Gerencie os detalhes da turma, o idioma dos alunos, a exibição da lista e as configurações de pontos.",
     studentLanguageTitle: "Idioma dos alunos",
     studentLanguageDescription:
       "Idioma mostrado aos alunos nesta turma. Os outros papéis mantêm o próprio idioma.",

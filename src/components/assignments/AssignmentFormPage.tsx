@@ -324,10 +324,10 @@ export function AssignmentFormPage({ classId, mode, initial }: AssignmentFormPag
       </Button>
 
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight">
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
           {mode === "create" ? t("createTitle") : t("editTitle")}
         </h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="hidden text-muted-foreground sm:block">
           {mode === "create" ? t("createDescription") : t("editDescription")}
         </p>
       </div>

@@ -32,8 +32,10 @@ export const Route = createFileRoute("/_authenticated/_class/class/$classId/")({
       <RequirePermission permission="class:read">
         <div className="flex w-full flex-col gap-4 px-4 py-8 sm:px-8">
           <div className="flex flex-col gap-2">
-            <h1 className="text-2xl font-semibold tracking-tight">{t("navDashboard")}</h1>
-            <p className="text-sm text-muted-foreground">{t("comingSoon")}</p>
+            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+              {t("navDashboard")}
+            </h1>
+            <p className="hidden text-muted-foreground sm:block">{t("comingSoon")}</p>
           </div>
           {bannerFileId ? (
             bannerPending || !bannerUrl ? (

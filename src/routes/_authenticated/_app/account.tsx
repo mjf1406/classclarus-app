@@ -57,8 +57,8 @@ export const Route = createFileRoute("/_authenticated/_app/account")({
         )}
 
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{t("description")}</p>
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t("title")}</h1>
+          <p className="mt-1 hidden text-muted-foreground sm:block">{t("description")}</p>
         </div>
 
         <ProfileCard user={userQuery.data} isPending={userQuery.isPending} />
