@@ -1718,6 +1718,33 @@ const zhs = {
     markAbsentFailed: "无法标记缺席。",
     markPresentFailed: "无法标记出席。",
   },
+  raz: {
+    nav: "RAZ",
+    title: "RAZ",
+    initialLevelsTitle: "初始等级",
+    initialLevelsDescription: "为班级中的每位学生设置 RAZ 阅读等级。",
+    initialLevelsChartHelp: "不确定如何设置等级？请查看",
+    columnLevel: "RAZ 等级",
+    levelPlaceholder: "选择等级",
+    levelSaveFailed: "无法保存 RAZ 等级。",
+    allDone: "完成",
+    allDoneDisabledHint: "请为每位学生设置等级后再继续。",
+    setupTitle: "设置初始 RAZ 等级",
+    setupDescription: "使用此页面前，必须为每位学生设置初始 RAZ 等级。",
+    setupProgress: "已有 {{set}} / {{total}} 名学生设置了初始等级。",
+    setupProgressChip: "{{set}} / {{total}} 名学生",
+    setupAction: "设置初始等级",
+    statusTitle: "状态遵循 RAZ 指南",
+    statusDescription:
+      "状态（RTI、待评分、逾期、现在到期、即将到期、最新）遵循 RAZ 指南。待评分由你在学生完成测试但仍需录入分数时设置。",
+    statusAssessLink: "评估学生等级",
+    statusChartLink: "等级对照表",
+    loadFailed: "无法加载 RAZ。",
+    loadFailedDescription: "请检查连接后重试。",
+    studentsEmptyTitle: "没有可显示的学生",
+    studentsEmptyDescription: "邀请学生加入本班以设置 RAZ 等级。",
+    comingSoon: "即将推出",
+  },
 } as const;
 
 export default zhs;

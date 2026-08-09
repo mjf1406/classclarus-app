@@ -1782,6 +1782,34 @@ const nl = {
     markAbsentFailed: "Afwezig markeren mislukt.",
     markPresentFailed: "Aanwezig markeren mislukt.",
   },
+  raz: {
+    nav: "RAZ",
+    title: "RAZ",
+    initialLevelsTitle: "Beginniveaus",
+    initialLevelsDescription: "Stel voor elke leerling in deze klas een RAZ-leesniveau in.",
+    initialLevelsChartHelp: "Weet je niet zeker hoe je niveaus instelt? Bekijk de",
+    columnLevel: "RAZ-niveau",
+    levelPlaceholder: "Niveau kiezen",
+    levelSaveFailed: "RAZ-niveau kon niet worden opgeslagen.",
+    allDone: "Klaar",
+    allDoneDisabledHint: "Stel voor elke leerling een niveau in om door te gaan.",
+    setupTitle: "RAZ-beginniveaus instellen",
+    setupDescription:
+      "Je moet voor elke leerling een RAZ-beginniveau instellen voordat je deze pagina kunt gebruiken.",
+    setupProgress: "Er zijn {{set}} van {{total}} leerlingen met een beginniveau.",
+    setupProgressChip: "{{set}} / {{total}} leerlingen",
+    setupAction: "Beginniveaus instellen",
+    statusTitle: "Statussen volgen de RAZ-richtlijnen",
+    statusDescription:
+      "Statussen (RTI, beoordeling in behandeling, te laat, nu verschuldigd, binnenkort, up-to-date) volgen de RAZ-richtlijnen. In behandeling stel je in wanneer een leerling klaar is met toetsen en scores nog moeten worden ingevoerd.",
+    statusAssessLink: "Het niveau van een leerling beoordelen",
+    statusChartLink: "Niveaucorrelatietabel",
+    loadFailed: "RAZ kon niet worden geladen.",
+    loadFailedDescription: "Controleer je verbinding en probeer het opnieuw.",
+    studentsEmptyTitle: "Geen leerlingen om te tonen",
+    studentsEmptyDescription: "Nodig leerlingen uit voor deze klas om RAZ-niveaus in te stellen.",
+    comingSoon: "Binnenkort",
+  },
 } as const;
 
 export default nl;

@@ -36,7 +36,9 @@ type BreadcrumbTarget =
   | { kind: "behaviors" }
   | { kind: "rewards" }
   | { kind: "expectations" }
-  | { kind: "expectationDetail"; expectationId: Id<"expectations"> };
+  | { kind: "expectationDetail"; expectationId: Id<"expectations"> }
+  | { kind: "raz" }
+  | { kind: "razInitialLevels" };
 
 function breadcrumbTarget(pathname: string, classId: string): BreadcrumbTarget {
   const base = `/class/${classId}`;
@@ -115,6 +117,12 @@ function breadcrumbTarget(pathname: string, classId: string): BreadcrumbTarget {
   if (pathname === `${base}/expectations` || pathname === `${base}/expectations/`) {
     return { kind: "expectations" };
   }
+  if (pathname === `${base}/raz/initial-levels`) {
+    return { kind: "razInitialLevels" };
+  }
+  if (pathname === `${base}/raz` || pathname === `${base}/raz/`) {
+    return { kind: "raz" };
+  }
   return { kind: "classesKey", key: "navDashboard" };
 }
 
@@ -187,6 +195,37 @@ function ExpectationDetailBreadcrumbItems({
           ) : (
             expectationLabel
           )}
+        </BreadcrumbPage>
+      </BreadcrumbItem>
+    </>
+  );
+}
+
+function RazInitialLevelsBreadcrumbItems({
+  classId,
+  razLabel,
+}: {
+  classId: Id<"classes">;
+  razLabel: string;
+}) {
+  const { t: tRaz } = useTranslation("raz");
+  const pageLabel = tRaz("initialLevelsTitle");
+
+  return (
+    <>
+      <BreadcrumbItem className="min-w-0">
+        <BreadcrumbLink
+          render={<Link to="/class/$classId/raz" params={{ classId }} />}
+          className="block truncate"
+          title={razLabel}
+        >
+          {razLabel}
+        </BreadcrumbLink>
+      </BreadcrumbItem>
+      <BreadcrumbSeparator className="shrink-0" />
+      <BreadcrumbItem className="min-w-0">
+        <BreadcrumbPage className="block truncate" title={pageLabel}>
+          {pageLabel}
         </BreadcrumbPage>
       </BreadcrumbItem>
     </>
@@ -313,6 +352,7 @@ export function ClassBreadcrumb({ classDoc }: ClassBreadcrumbProps) {
   const { t: tBehaviors } = useTranslation("behaviors");
   const { t: tRewards } = useTranslation("rewards");
   const { t: tExpectations } = useTranslation("expectations");
+  const { t: tRaz } = useTranslation("raz");
   const { t: tCommon } = useTranslation("common");
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const target = breadcrumbTarget(pathname, classDoc._id);
@@ -338,7 +378,9 @@ export function ClassBreadcrumb({ classDoc }: ClassBreadcrumbProps) {
                   ? tRewards("nav")
                   : target.kind === "expectations" || target.kind === "expectationDetail"
                     ? tExpectations("nav")
-                    : t(target.key);
+                    : target.kind === "raz" || target.kind === "razInitialLevels"
+                      ? tRaz("nav")
+                      : t(target.key);
 
   return (
     <Breadcrumb aria-label={t("breadcrumb")} className="min-w-0">
@@ -389,6 +431,8 @@ export function ClassBreadcrumb({ classDoc }: ClassBreadcrumbProps) {
                   : "detail"
             }
           />
+        ) : target.kind === "razInitialLevels" ? (
+          <RazInitialLevelsBreadcrumbItems classId={classDoc._id} razLabel={pageLabel} />
         ) : (
           <BreadcrumbItem className="min-w-0">
             <BreadcrumbPage className="block truncate" title={pageLabel}>

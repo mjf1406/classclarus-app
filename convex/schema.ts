@@ -637,6 +637,19 @@ const schema = defineSchema({
     syncedAt: v.number(),
   }).index("by_dayKey", ["dayKey"]),
   /**
+   * Per-student RAZ initial reading level for a class.
+   * Sparse — missing row means the student still needs an initial level.
+   */
+  razStudentLevels: defineTable({
+    classId: v.id("classes"),
+    studentUserId: v.id("users"),
+    initialLevel: v.string(),
+    updatedAt: v.number(),
+    updatedBy: v.id("users"),
+  })
+    .index("by_class_student", ["classId", "studentUserId"])
+    .index("by_classId", ["classId"]),
+  /**
    * Cloud product feedback (message-in-a-bottle). Not used on self-host / Electron.
    */
   feedback: defineTable({

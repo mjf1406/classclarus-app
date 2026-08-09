@@ -1799,6 +1799,34 @@ const de = {
     markAbsentFailed: "Abwesend markieren fehlgeschlagen.",
     markPresentFailed: "Anwesend markieren fehlgeschlagen.",
   },
+  raz: {
+    nav: "RAZ",
+    title: "RAZ",
+    initialLevelsTitle: "Ausgangsstufen",
+    initialLevelsDescription: "Lege für jeden Schüler in dieser Klasse eine RAZ-Lesestufe fest.",
+    initialLevelsChartHelp: "Nicht sicher, wie du Stufen festlegst? Siehe die",
+    columnLevel: "RAZ-Stufe",
+    levelPlaceholder: "Stufe wählen",
+    levelSaveFailed: "RAZ-Stufe konnte nicht gespeichert werden.",
+    allDone: "Fertig",
+    allDoneDisabledHint: "Lege für jeden Schüler eine Stufe fest, um fortzufahren.",
+    setupTitle: "RAZ-Ausgangsstufen festlegen",
+    setupDescription:
+      "Du musst für jeden Schüler eine RAZ-Ausgangsstufe festlegen, bevor du diese Seite nutzen kannst.",
+    setupProgress: "Es haben {{set}} von {{total}} Schülern eine Ausgangsstufe.",
+    setupProgressChip: "{{set}} / {{total}} Schüler",
+    setupAction: "Ausgangsstufen festlegen",
+    statusTitle: "Status folgen den RAZ-Richtlinien",
+    statusDescription:
+      "Status (RTI, Bewertung ausstehend, überfällig, jetzt fällig, bald, aktuell) folgen den RAZ-Richtlinien. „Ausstehend“ setzt du, wenn ein Schüler den Test beendet hat und die Punkte noch eingetragen werden müssen.",
+    statusAssessLink: "Stufe eines Schülers einschätzen",
+    statusChartLink: "Stufen-Korrelationstabelle",
+    loadFailed: "RAZ konnte nicht geladen werden.",
+    loadFailedDescription: "Verbindung prüfen und erneut versuchen.",
+    studentsEmptyTitle: "Keine Schüler",
+    studentsEmptyDescription: "Lade Schüler in diese Klasse ein, um RAZ-Stufen festzulegen.",
+    comingSoon: "Demnächst",
+  },
 } as const;
 
 export default de;

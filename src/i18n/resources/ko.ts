@@ -1744,6 +1744,33 @@ const ko = {
     markAbsentFailed: "결석 처리에 실패했습니다.",
     markPresentFailed: "출석 처리에 실패했습니다.",
   },
+  raz: {
+    nav: "RAZ",
+    title: "RAZ",
+    initialLevelsTitle: "초기 레벨",
+    initialLevelsDescription: "이 반의 모든 학생에게 RAZ 읽기 레벨을 설정하세요.",
+    initialLevelsChartHelp: "레벨 설정 방법이 확실하지 않다면 다음을 참고하세요:",
+    columnLevel: "RAZ 레벨",
+    levelPlaceholder: "레벨 선택",
+    levelSaveFailed: "RAZ 레벨을 저장하지 못했습니다.",
+    allDone: "완료",
+    allDoneDisabledHint: "계속하려면 모든 학생의 레벨을 설정하세요.",
+    setupTitle: "초기 RAZ 레벨 설정",
+    setupDescription: "이 페이지를 사용하려면 모든 학생의 초기 RAZ 레벨을 설정해야 합니다.",
+    setupProgress: "{{set}} / {{total}}명의 학생에게 초기 레벨이 설정되어 있습니다.",
+    setupProgressChip: "{{set}} / {{total}}명",
+    setupAction: "초기 레벨 설정",
+    statusTitle: "상태는 RAZ 가이드라인을 따릅니다",
+    statusDescription:
+      "상태(RTI, 채점 대기, 기한 초과, 지금 기한, 곧 예정, 최신)는 RAZ 가이드라인을 따릅니다. 채점 대기는 학생이 시험을 마치고 점수 입력이 아직 필요할 때 설정합니다.",
+    statusAssessLink: "학생 레벨 평가",
+    statusChartLink: "레벨 대응표",
+    loadFailed: "RAZ를 불러오지 못했습니다.",
+    loadFailedDescription: "연결을 확인한 뒤 다시 시도하세요.",
+    studentsEmptyTitle: "표시할 학생이 없습니다",
+    studentsEmptyDescription: "RAZ 레벨을 설정하려면 학생을 초대하세요.",
+    comingSoon: "곧 제공",
+  },
 } as const;
 
 export default ko;

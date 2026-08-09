@@ -1805,6 +1805,35 @@ const fr = {
     markAbsentFailed: "Impossible de marquer absent.",
     markPresentFailed: "Impossible de marquer présent.",
   },
+  raz: {
+    nav: "RAZ",
+    title: "RAZ",
+    initialLevelsTitle: "Niveaux initiaux",
+    initialLevelsDescription:
+      "Définissez un niveau de lecture RAZ pour chaque élève de cette classe.",
+    initialLevelsChartHelp: "Vous ne savez pas comment définir les niveaux ? Consultez le",
+    columnLevel: "Niveau RAZ",
+    levelPlaceholder: "Choisir un niveau",
+    levelSaveFailed: "Impossible d’enregistrer le niveau RAZ.",
+    allDone: "Terminé",
+    allDoneDisabledHint: "Définissez un niveau pour chaque élève pour continuer.",
+    setupTitle: "Définir les niveaux RAZ initiaux",
+    setupDescription:
+      "Vous devez définir un niveau RAZ initial pour chaque élève avant d’utiliser cette page.",
+    setupProgress: "Il y a {{set}} élèves sur {{total}} avec un niveau initial.",
+    setupProgressChip: "{{set}} / {{total}} élèves",
+    setupAction: "Définir les niveaux initiaux",
+    statusTitle: "Les statuts suivent les consignes RAZ",
+    statusDescription:
+      "Les statuts (RTI, notation en attente, en retard, dû maintenant, bientôt, à jour) suivent les consignes RAZ. « En attente » est défini par vous lorsqu’un élève a terminé le test et que les scores restent à saisir.",
+    statusAssessLink: "Évaluer le niveau d’un élève",
+    statusChartLink: "Tableau de corrélation des niveaux",
+    loadFailed: "Impossible de charger RAZ.",
+    loadFailedDescription: "Vérifiez votre connexion et réessayez.",
+    studentsEmptyTitle: "Aucun élève à afficher",
+    studentsEmptyDescription: "Invitez des élèves dans cette classe pour définir les niveaux RAZ.",
+    comingSoon: "Bientôt disponible",
+  },
 } as const;
 
 export default fr;

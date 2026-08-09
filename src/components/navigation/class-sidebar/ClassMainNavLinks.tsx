@@ -1,5 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
+  BookOpen,
   ChevronRight,
   ClipboardCheck,
   Coins,
@@ -71,6 +72,7 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
   const { t: tBehaviors } = useTranslation("behaviors");
   const { t: tRewards } = useTranslation("rewards");
   const { t: tExpectations } = useTranslation("expectations");
+  const { t: tRaz } = useTranslation("raz");
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const { isMobile, state, setOpenMobile } = useSidebar();
   const { can, isPending } = useCan();
@@ -160,6 +162,12 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
       icon: Coins,
       to: "/class/$classId/points",
       permission: "points:read",
+    },
+    {
+      title: tRaz("nav"),
+      icon: BookOpen,
+      to: "/class/$classId/raz",
+      permission: "raz:read",
     },
     ...(catalogsInMainNav
       ? [

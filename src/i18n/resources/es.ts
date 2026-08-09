@@ -1789,6 +1789,34 @@ const es = {
     markAbsentFailed: "No se pudo marcar como ausente.",
     markPresentFailed: "No se pudo marcar como presente.",
   },
+  raz: {
+    nav: "RAZ",
+    title: "RAZ",
+    initialLevelsTitle: "Niveles iniciales",
+    initialLevelsDescription: "Establece un nivel de lectura RAZ para cada estudiante de la clase.",
+    initialLevelsChartHelp: "¿No estás seguro de cómo fijar los niveles? Consulta la",
+    columnLevel: "Nivel RAZ",
+    levelPlaceholder: "Seleccionar nivel",
+    levelSaveFailed: "No se pudo guardar el nivel RAZ.",
+    allDone: "Listo",
+    allDoneDisabledHint: "Establece un nivel para cada estudiante para continuar.",
+    setupTitle: "Establecer niveles iniciales de RAZ",
+    setupDescription:
+      "Debes establecer un nivel RAZ inicial para cada estudiante antes de usar esta página.",
+    setupProgress: "Hay {{set}} de {{total}} estudiantes con un nivel inicial.",
+    setupProgressChip: "{{set}} / {{total}} estudiantes",
+    setupAction: "Establecer niveles iniciales",
+    statusTitle: "Los estados siguen las pautas de RAZ",
+    statusDescription:
+      "Los estados (RTI, pendiente de calificación, atrasado, vence ahora, pronto, al día) siguen las pautas de RAZ. Pendiente lo defines tú cuando un estudiante terminó la prueba y aún faltan puntuaciones.",
+    statusAssessLink: "Evaluar el nivel de un estudiante",
+    statusChartLink: "Tabla de correlación de niveles",
+    loadFailed: "No se pudo cargar RAZ.",
+    loadFailedDescription: "Comprueba la conexión e inténtalo de nuevo.",
+    studentsEmptyTitle: "No hay estudiantes",
+    studentsEmptyDescription: "Invita estudiantes a esta clase para establecer niveles RAZ.",
+    comingSoon: "Próximamente",
+  },
 } as const;
 
 export default es;

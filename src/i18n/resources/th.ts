@@ -1720,6 +1720,33 @@ const th = {
     markAbsentFailed: "ทำเครื่องหมายขาดไม่สำเร็จ",
     markPresentFailed: "ทำเครื่องหมายมาเรียนไม่สำเร็จ",
   },
+  raz: {
+    nav: "RAZ",
+    title: "RAZ",
+    initialLevelsTitle: "ระดับเริ่มต้น",
+    initialLevelsDescription: "ตั้งค่าระดับการอ่าน RAZ ให้ทุกคนในชั้นนี้",
+    initialLevelsChartHelp: "ไม่แน่ใจว่าจะตั้งระดับอย่างไร? ดู",
+    columnLevel: "ระดับ RAZ",
+    levelPlaceholder: "เลือกระดับ",
+    levelSaveFailed: "บันทึกระดับ RAZ ไม่สำเร็จ",
+    allDone: "เสร็จแล้ว",
+    allDoneDisabledHint: "ตั้งระดับให้ทุกคนก่อนจึงจะไปต่อได้",
+    setupTitle: "ตั้งระดับ RAZ เริ่มต้น",
+    setupDescription: "ต้องตั้งระดับ RAZ เริ่มต้นให้ทุกคนก่อนจึงจะใช้หน้านี้ได้",
+    setupProgress: "มี {{set}} จาก {{total}} คนที่มีระดับเริ่มต้นแล้ว",
+    setupProgressChip: "{{set}} / {{total}} คน",
+    setupAction: "ตั้งระดับเริ่มต้น",
+    statusTitle: "สถานะเป็นไปตามแนวทาง RAZ",
+    statusDescription:
+      "สถานะ (RTI, รอให้คะแนน, เลยกำหนด, ครบกำหนดตอนนี้, เร็วๆ นี้, เป็นปัจจุบัน) เป็นไปตามแนวทาง RAZ สถานะรอให้คะแนนตั้งโดยคุณเมื่อนักเรียนสอบเสร็จแล้วยังต้องใส่คะแนน",
+    statusAssessLink: "การประเมินระดับของนักเรียน",
+    statusChartLink: "ตารางเทียบระดับ",
+    loadFailed: "โหลด RAZ ไม่สำเร็จ",
+    loadFailedDescription: "ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง",
+    studentsEmptyTitle: "ไม่มีนักเรียนให้แสดง",
+    studentsEmptyDescription: "เชิญนักเรียนเข้าชั้นเพื่อตั้งระดับ RAZ",
+    comingSoon: "เร็วๆ นี้",
+  },
 } as const;
 
 export default th;

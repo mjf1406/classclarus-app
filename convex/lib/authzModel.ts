@@ -47,6 +47,11 @@ export const permissions = definePermissions({
   expectations: { read: true, manage: true },
   /** Points board — manage is assistant_teacher+; read is student/guardian (scoped). */
   points: { read: true, manage: true },
+  /**
+   * RAZ reading levels — manage (set initial levels / assessments) is teacher+;
+   * read is assistant_teacher+.
+   */
+  raz: { read: true, manage: true },
   /** App-level admin (global / unscoped). Not a class membership role. */
   admin: { syncProducts: true, viewHealth: true, manageUsers: true, viewFeedback: true },
 });
@@ -76,6 +81,7 @@ export const roles = defineRoles(permissions, {
     tasks: ["complete"],
     points: ["read", "manage"],
     expectations: ["read"],
+    raz: ["read"],
   },
   teacher: {
     inherits: "assistant_teacher",
@@ -92,6 +98,7 @@ export const roles = defineRoles(permissions, {
     behaviors: ["manage"],
     rewards: ["manage"],
     expectations: ["manage"],
+    raz: ["read", "manage"],
   },
   owner: {
     inherits: "teacher",

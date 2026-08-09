@@ -49,6 +49,8 @@ import { Route as AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRout
 import { Route as AuthenticatedClassClassClassIdAssignmentsNewRouteImport } from './routes/_authenticated/_class/class/$classId/assignments/new'
 import { Route as AuthenticatedClassClassClassIdExpectationsIndexRouteImport } from './routes/_authenticated/_class/class/$classId/expectations/index'
 import { Route as AuthenticatedClassClassClassIdExpectationsExpectationIdRouteImport } from './routes/_authenticated/_class/class/$classId/expectations/$expectationId'
+import { Route as AuthenticatedClassClassClassIdRazIndexRouteImport } from './routes/_authenticated/_class/class/$classId/raz/index'
+import { Route as AuthenticatedClassClassClassIdRazInitialLevelsRouteImport } from './routes/_authenticated/_class/class/$classId/raz/initial-levels'
 import { Route as AuthenticatedClassClassClassIdTasksIndexRouteImport } from './routes/_authenticated/_class/class/$classId/tasks/index'
 import { Route as AuthenticatedClassClassClassIdTasksTaskIdRouteImport } from './routes/_authenticated/_class/class/$classId/tasks/$taskId'
 import { Route as AuthenticatedClassClassClassIdAssignmentsAssignmentIdIndexRouteImport } from './routes/_authenticated/_class/class/$classId/assignments/$assignmentId/index'
@@ -275,6 +277,18 @@ const AuthenticatedClassClassClassIdExpectationsExpectationIdRoute =
     path: '/expectations/$expectationId',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
   } as any)
+const AuthenticatedClassClassClassIdRazIndexRoute =
+  AuthenticatedClassClassClassIdRazIndexRouteImport.update({
+    id: '/raz/',
+    path: '/raz/',
+    getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
+  } as any)
+const AuthenticatedClassClassClassIdRazInitialLevelsRoute =
+  AuthenticatedClassClassClassIdRazInitialLevelsRouteImport.update({
+    id: '/raz/initial-levels',
+    path: '/raz/initial-levels',
+    getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
+  } as any)
 const AuthenticatedClassClassClassIdTasksIndexRoute =
   AuthenticatedClassClassClassIdTasksIndexRouteImport.update({
     id: '/tasks/',
@@ -343,10 +357,12 @@ export interface FileRoutesByFullPath {
   '/class/$classId/announcements/$announcementId': typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute
   '/class/$classId/assignments/new': typeof AuthenticatedClassClassClassIdAssignmentsNewRoute
   '/class/$classId/expectations/$expectationId': typeof AuthenticatedClassClassClassIdExpectationsExpectationIdRoute
+  '/class/$classId/raz/initial-levels': typeof AuthenticatedClassClassClassIdRazInitialLevelsRoute
   '/class/$classId/tasks/$taskId': typeof AuthenticatedClassClassClassIdTasksTaskIdRoute
   '/class/$classId/announcements/': typeof AuthenticatedClassClassClassIdAnnouncementsIndexRoute
   '/class/$classId/assignments/': typeof AuthenticatedClassClassClassIdAssignmentsIndexRoute
   '/class/$classId/expectations/': typeof AuthenticatedClassClassClassIdExpectationsIndexRoute
+  '/class/$classId/raz/': typeof AuthenticatedClassClassClassIdRazIndexRoute
   '/class/$classId/tasks/': typeof AuthenticatedClassClassClassIdTasksIndexRoute
   '/class/$classId/assignments/$assignmentId/edit': typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdEditRoute
   '/class/$classId/assignments/$assignmentId/grade': typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdGradeRoute
@@ -383,10 +399,12 @@ export interface FileRoutesByTo {
   '/class/$classId/announcements/$announcementId': typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute
   '/class/$classId/assignments/new': typeof AuthenticatedClassClassClassIdAssignmentsNewRoute
   '/class/$classId/expectations/$expectationId': typeof AuthenticatedClassClassClassIdExpectationsExpectationIdRoute
+  '/class/$classId/raz/initial-levels': typeof AuthenticatedClassClassClassIdRazInitialLevelsRoute
   '/class/$classId/tasks/$taskId': typeof AuthenticatedClassClassClassIdTasksTaskIdRoute
   '/class/$classId/announcements': typeof AuthenticatedClassClassClassIdAnnouncementsIndexRoute
   '/class/$classId/assignments': typeof AuthenticatedClassClassClassIdAssignmentsIndexRoute
   '/class/$classId/expectations': typeof AuthenticatedClassClassClassIdExpectationsIndexRoute
+  '/class/$classId/raz': typeof AuthenticatedClassClassClassIdRazIndexRoute
   '/class/$classId/tasks': typeof AuthenticatedClassClassClassIdTasksIndexRoute
   '/class/$classId/assignments/$assignmentId/edit': typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdEditRoute
   '/class/$classId/assignments/$assignmentId/grade': typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdGradeRoute
@@ -431,10 +449,12 @@ export interface FileRoutesById {
   '/_authenticated/_class/class/$classId/announcements/$announcementId': typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute
   '/_authenticated/_class/class/$classId/assignments/new': typeof AuthenticatedClassClassClassIdAssignmentsNewRoute
   '/_authenticated/_class/class/$classId/expectations/$expectationId': typeof AuthenticatedClassClassClassIdExpectationsExpectationIdRoute
+  '/_authenticated/_class/class/$classId/raz/initial-levels': typeof AuthenticatedClassClassClassIdRazInitialLevelsRoute
   '/_authenticated/_class/class/$classId/tasks/$taskId': typeof AuthenticatedClassClassClassIdTasksTaskIdRoute
   '/_authenticated/_class/class/$classId/announcements/': typeof AuthenticatedClassClassClassIdAnnouncementsIndexRoute
   '/_authenticated/_class/class/$classId/assignments/': typeof AuthenticatedClassClassClassIdAssignmentsIndexRoute
   '/_authenticated/_class/class/$classId/expectations/': typeof AuthenticatedClassClassClassIdExpectationsIndexRoute
+  '/_authenticated/_class/class/$classId/raz/': typeof AuthenticatedClassClassClassIdRazIndexRoute
   '/_authenticated/_class/class/$classId/tasks/': typeof AuthenticatedClassClassClassIdTasksIndexRoute
   '/_authenticated/_class/class/$classId/assignments/$assignmentId/edit': typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdEditRoute
   '/_authenticated/_class/class/$classId/assignments/$assignmentId/grade': typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdGradeRoute
@@ -476,10 +496,12 @@ export interface FileRouteTypes {
     | '/class/$classId/announcements/$announcementId'
     | '/class/$classId/assignments/new'
     | '/class/$classId/expectations/$expectationId'
+    | '/class/$classId/raz/initial-levels'
     | '/class/$classId/tasks/$taskId'
     | '/class/$classId/announcements/'
     | '/class/$classId/assignments/'
     | '/class/$classId/expectations/'
+    | '/class/$classId/raz/'
     | '/class/$classId/tasks/'
     | '/class/$classId/assignments/$assignmentId/edit'
     | '/class/$classId/assignments/$assignmentId/grade'
@@ -516,10 +538,12 @@ export interface FileRouteTypes {
     | '/class/$classId/announcements/$announcementId'
     | '/class/$classId/assignments/new'
     | '/class/$classId/expectations/$expectationId'
+    | '/class/$classId/raz/initial-levels'
     | '/class/$classId/tasks/$taskId'
     | '/class/$classId/announcements'
     | '/class/$classId/assignments'
     | '/class/$classId/expectations'
+    | '/class/$classId/raz'
     | '/class/$classId/tasks'
     | '/class/$classId/assignments/$assignmentId/edit'
     | '/class/$classId/assignments/$assignmentId/grade'
@@ -563,10 +587,12 @@ export interface FileRouteTypes {
     | '/_authenticated/_class/class/$classId/announcements/$announcementId'
     | '/_authenticated/_class/class/$classId/assignments/new'
     | '/_authenticated/_class/class/$classId/expectations/$expectationId'
+    | '/_authenticated/_class/class/$classId/raz/initial-levels'
     | '/_authenticated/_class/class/$classId/tasks/$taskId'
     | '/_authenticated/_class/class/$classId/announcements/'
     | '/_authenticated/_class/class/$classId/assignments/'
     | '/_authenticated/_class/class/$classId/expectations/'
+    | '/_authenticated/_class/class/$classId/raz/'
     | '/_authenticated/_class/class/$classId/tasks/'
     | '/_authenticated/_class/class/$classId/assignments/$assignmentId/edit'
     | '/_authenticated/_class/class/$classId/assignments/$assignmentId/grade'
@@ -862,6 +888,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedClassClassClassIdExpectationsExpectationIdRouteImport
       parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
     }
+    '/_authenticated/_class/class/$classId/raz/': {
+      id: '/_authenticated/_class/class/$classId/raz/'
+      path: '/raz'
+      fullPath: '/class/$classId/raz/'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdRazIndexRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/raz/initial-levels': {
+      id: '/_authenticated/_class/class/$classId/raz/initial-levels'
+      path: '/raz/initial-levels'
+      fullPath: '/class/$classId/raz/initial-levels'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdRazInitialLevelsRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
     '/_authenticated/_class/class/$classId/tasks/': {
       id: '/_authenticated/_class/class/$classId/tasks/'
       path: '/tasks'
@@ -964,10 +1004,12 @@ interface AuthenticatedClassClassClassIdRouteRouteChildren {
   AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute: typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute
   AuthenticatedClassClassClassIdAssignmentsNewRoute: typeof AuthenticatedClassClassClassIdAssignmentsNewRoute
   AuthenticatedClassClassClassIdExpectationsExpectationIdRoute: typeof AuthenticatedClassClassClassIdExpectationsExpectationIdRoute
+  AuthenticatedClassClassClassIdRazInitialLevelsRoute: typeof AuthenticatedClassClassClassIdRazInitialLevelsRoute
   AuthenticatedClassClassClassIdTasksTaskIdRoute: typeof AuthenticatedClassClassClassIdTasksTaskIdRoute
   AuthenticatedClassClassClassIdAnnouncementsIndexRoute: typeof AuthenticatedClassClassClassIdAnnouncementsIndexRoute
   AuthenticatedClassClassClassIdAssignmentsIndexRoute: typeof AuthenticatedClassClassClassIdAssignmentsIndexRoute
   AuthenticatedClassClassClassIdExpectationsIndexRoute: typeof AuthenticatedClassClassClassIdExpectationsIndexRoute
+  AuthenticatedClassClassClassIdRazIndexRoute: typeof AuthenticatedClassClassClassIdRazIndexRoute
   AuthenticatedClassClassClassIdTasksIndexRoute: typeof AuthenticatedClassClassClassIdTasksIndexRoute
 }
 
@@ -1007,6 +1049,8 @@ const AuthenticatedClassClassClassIdRouteRouteChildren: AuthenticatedClassClassC
       AuthenticatedClassClassClassIdAssignmentsNewRoute,
     AuthenticatedClassClassClassIdExpectationsExpectationIdRoute:
       AuthenticatedClassClassClassIdExpectationsExpectationIdRoute,
+    AuthenticatedClassClassClassIdRazInitialLevelsRoute:
+      AuthenticatedClassClassClassIdRazInitialLevelsRoute,
     AuthenticatedClassClassClassIdTasksTaskIdRoute:
       AuthenticatedClassClassClassIdTasksTaskIdRoute,
     AuthenticatedClassClassClassIdAnnouncementsIndexRoute:
@@ -1015,6 +1059,8 @@ const AuthenticatedClassClassClassIdRouteRouteChildren: AuthenticatedClassClassC
       AuthenticatedClassClassClassIdAssignmentsIndexRoute,
     AuthenticatedClassClassClassIdExpectationsIndexRoute:
       AuthenticatedClassClassClassIdExpectationsIndexRoute,
+    AuthenticatedClassClassClassIdRazIndexRoute:
+      AuthenticatedClassClassClassIdRazIndexRoute,
     AuthenticatedClassClassClassIdTasksIndexRoute:
       AuthenticatedClassClassClassIdTasksIndexRoute,
   }

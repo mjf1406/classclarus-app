@@ -1771,6 +1771,34 @@ const uk = {
     markAbsentFailed: "Не вдалося позначити відсутнім.",
     markPresentFailed: "Не вдалося позначити присутнім.",
   },
+  raz: {
+    nav: "RAZ",
+    title: "RAZ",
+    initialLevelsTitle: "Початкові рівні",
+    initialLevelsDescription: "Установіть рівень читання RAZ для кожного учня класу.",
+    initialLevelsChartHelp: "Не впевнені, як установити рівні? Див.",
+    columnLevel: "Рівень RAZ",
+    levelPlaceholder: "Виберіть рівень",
+    levelSaveFailed: "Не вдалося зберегти рівень RAZ.",
+    allDone: "Готово",
+    allDoneDisabledHint: "Щоб продовжити, установіть рівень кожному учню.",
+    setupTitle: "Установити початкові рівні RAZ",
+    setupDescription:
+      "Перш ніж користуватися цією сторінкою, потрібно встановити початковий рівень RAZ кожному учню.",
+    setupProgress: "У {{set}} з {{total}} учнів уже є початковий рівень.",
+    setupProgressChip: "{{set}} / {{total}} учнів",
+    setupAction: "Установити початкові рівні",
+    statusTitle: "Статуси відповідають рекомендаціям RAZ",
+    statusDescription:
+      "Статуси (RTI, очікує оцінювання, прострочено, термін зараз, незабаром, актуально) відповідають рекомендаціям RAZ. «Очікує» виставляєте ви, коли учень завершив тест, а бали ще потрібно ввести.",
+    statusAssessLink: "Оцінювання рівня учня",
+    statusChartLink: "Таблиця відповідності рівнів",
+    loadFailed: "Не вдалося завантажити RAZ.",
+    loadFailedDescription: "Перевірте з’єднання та спробуйте знову.",
+    studentsEmptyTitle: "Немає учнів",
+    studentsEmptyDescription: "Запросіть учнів до класу, щоб установити рівні RAZ.",
+    comingSoon: "Незабаром",
+  },
 } as const;
 
 export default uk;

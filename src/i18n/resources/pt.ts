@@ -1780,6 +1780,34 @@ const pt = {
     markAbsentFailed: "Não foi possível marcar ausente.",
     markPresentFailed: "Não foi possível marcar presente.",
   },
+  raz: {
+    nav: "RAZ",
+    title: "RAZ",
+    initialLevelsTitle: "Níveis iniciais",
+    initialLevelsDescription: "Defina um nível de leitura RAZ para cada aluno desta turma.",
+    initialLevelsChartHelp: "Não tem a certeza de como definir os níveis? Veja a",
+    columnLevel: "Nível RAZ",
+    levelPlaceholder: "Selecionar nível",
+    levelSaveFailed: "Não foi possível guardar o nível RAZ.",
+    allDone: "Concluído",
+    allDoneDisabledHint: "Defina um nível para cada aluno para continuar.",
+    setupTitle: "Definir níveis iniciais de RAZ",
+    setupDescription:
+      "Tem de definir um nível RAZ inicial para cada aluno antes de usar esta página.",
+    setupProgress: "Há {{set}} de {{total}} alunos com um nível inicial.",
+    setupProgressChip: "{{set}} / {{total}} alunos",
+    setupAction: "Definir níveis iniciais",
+    statusTitle: "Os estados seguem as diretrizes RAZ",
+    statusDescription:
+      "Os estados (RTI, classificação pendente, atrasado, a vencer agora, em breve, atualizado) seguem as diretrizes RAZ. Pendente é definido por si quando um aluno terminou o teste e ainda faltam pontuações.",
+    statusAssessLink: "Avaliar o nível de um aluno",
+    statusChartLink: "Tabela de correlação de níveis",
+    loadFailed: "Não foi possível carregar o RAZ.",
+    loadFailedDescription: "Verifique a ligação e tente novamente.",
+    studentsEmptyTitle: "Nenhum aluno para mostrar",
+    studentsEmptyDescription: "Convide alunos para esta turma para definir níveis RAZ.",
+    comingSoon: "Em breve",
+  },
 } as const;
 
 export default pt;

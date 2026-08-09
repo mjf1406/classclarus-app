@@ -1760,6 +1760,33 @@ const ja = {
     markAbsentFailed: "欠席にできませんでした。",
     markPresentFailed: "出席にできませんでした。",
   },
+  raz: {
+    nav: "RAZ",
+    title: "RAZ",
+    initialLevelsTitle: "初期レベル",
+    initialLevelsDescription: "このクラスの全生徒に RAZ 読書レベルを設定します。",
+    initialLevelsChartHelp: "レベルの決め方がわからない場合は、次をご覧ください：",
+    columnLevel: "RAZ レベル",
+    levelPlaceholder: "レベルを選択",
+    levelSaveFailed: "RAZ レベルを保存できませんでした。",
+    allDone: "完了",
+    allDoneDisabledHint: "続けるには全生徒のレベルを設定してください。",
+    setupTitle: "初期 RAZ レベルを設定",
+    setupDescription: "このページを使う前に、全生徒の初期 RAZ レベルを設定する必要があります。",
+    setupProgress: "{{set}} / {{total}} 人の生徒に初期レベルが設定されています。",
+    setupProgressChip: "{{set}} / {{total}} 人",
+    setupAction: "初期レベルを設定",
+    statusTitle: "ステータスは RAZ ガイドラインに従います",
+    statusDescription:
+      "ステータス（RTI、採点待ち、期限超過、今すぐ期限、まもなく、最新）は RAZ ガイドラインに従います。採点待ちは、生徒がテストを終えスコア入力がまだ必要なときに設定します。",
+    statusAssessLink: "生徒のレベル評価",
+    statusChartLink: "レベル対応表",
+    loadFailed: "RAZ を読み込めませんでした。",
+    loadFailedDescription: "接続を確認して再試行してください。",
+    studentsEmptyTitle: "表示する生徒がいません",
+    studentsEmptyDescription: "RAZ レベルを設定するには生徒を招待してください。",
+    comingSoon: "近日公開",
+  },
 } as const;
 
 export default ja;

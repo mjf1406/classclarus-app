@@ -1763,6 +1763,33 @@ const en = {
     markAbsentFailed: "Could not mark absent.",
     markPresentFailed: "Could not mark present.",
   },
+  raz: {
+    nav: "RAZ",
+    title: "RAZ",
+    initialLevelsTitle: "Initial levels",
+    initialLevelsDescription: "Set a RAZ reading level for every student in this class.",
+    initialLevelsChartHelp: "Not sure how to set levels? See the",
+    columnLevel: "RAZ level",
+    levelPlaceholder: "Select level",
+    levelSaveFailed: "Could not save RAZ level.",
+    allDone: "All done",
+    allDoneDisabledHint: "Set a level for every student to continue.",
+    setupTitle: "Set initial RAZ levels",
+    setupDescription: "You must set an initial RAZ level for every student before using this page.",
+    setupProgress: "There are {{set}} of {{total}} students with an initial level.",
+    setupProgressChip: "{{set}} / {{total}} students",
+    setupAction: "Set initial levels",
+    statusTitle: "Statuses follow RAZ guidelines",
+    statusDescription:
+      "Statuses (RTI, pending grading, overdue, due now, coming soon, up to date) follow RAZ Guidelines. Pending is set by you when a student has finished testing and still needs scores entered.",
+    statusAssessLink: "Assessing a student’s level",
+    statusChartLink: "Level correlation chart",
+    loadFailed: "Could not load RAZ.",
+    loadFailedDescription: "Check your connection and try again.",
+    studentsEmptyTitle: "No students to show",
+    studentsEmptyDescription: "Invite students to this class to set RAZ levels.",
+    comingSoon: "Coming soon",
+  },
 } as const;
 
 export default en;

@@ -1776,6 +1776,34 @@ const ru = {
     markAbsentFailed: "Не удалось отметить отсутствующим.",
     markPresentFailed: "Не удалось отметить присутствующим.",
   },
+  raz: {
+    nav: "RAZ",
+    title: "RAZ",
+    initialLevelsTitle: "Начальные уровни",
+    initialLevelsDescription: "Задайте уровень чтения RAZ для каждого ученика класса.",
+    initialLevelsChartHelp: "Не уверены, как задать уровни? См.",
+    columnLevel: "Уровень RAZ",
+    levelPlaceholder: "Выберите уровень",
+    levelSaveFailed: "Не удалось сохранить уровень RAZ.",
+    allDone: "Готово",
+    allDoneDisabledHint: "Чтобы продолжить, задайте уровень каждому ученику.",
+    setupTitle: "Задать начальные уровни RAZ",
+    setupDescription:
+      "Перед использованием этой страницы нужно задать начальный уровень RAZ каждому ученику.",
+    setupProgress: "У {{set}} из {{total}} учеников задан начальный уровень.",
+    setupProgressChip: "{{set}} / {{total}} учеников",
+    setupAction: "Задать начальные уровни",
+    statusTitle: "Статусы соответствуют рекомендациям RAZ",
+    statusDescription:
+      "Статусы (RTI, ожидает оценки, просрочено, срок сейчас, скоро, актуально) следуют рекомендациям RAZ. «Ожидает» выставляете вы, когда ученик закончил тест, а баллы ещё нужно ввести.",
+    statusAssessLink: "Оценка уровня ученика",
+    statusChartLink: "Таблица соответствия уровней",
+    loadFailed: "Не удалось загрузить RAZ.",
+    loadFailedDescription: "Проверьте соединение и попробуйте снова.",
+    studentsEmptyTitle: "Нет учеников",
+    studentsEmptyDescription: "Пригласите учеников в класс, чтобы задать уровни RAZ.",
+    comingSoon: "Скоро",
+  },
 } as const;
 
 export default ru;

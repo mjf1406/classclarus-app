@@ -1718,6 +1718,33 @@ const zht = {
     markAbsentFailed: "無法標記缺席。",
     markPresentFailed: "無法標記出席。",
   },
+  raz: {
+    nav: "RAZ",
+    title: "RAZ",
+    initialLevelsTitle: "初始等級",
+    initialLevelsDescription: "為班級中的每位學生設定 RAZ 閱讀等級。",
+    initialLevelsChartHelp: "不確定如何設定等級？請查看",
+    columnLevel: "RAZ 等級",
+    levelPlaceholder: "選擇等級",
+    levelSaveFailed: "無法儲存 RAZ 等級。",
+    allDone: "完成",
+    allDoneDisabledHint: "請為每位學生設定等級後再繼續。",
+    setupTitle: "設定初始 RAZ 等級",
+    setupDescription: "使用此頁面前，必須為每位學生設定初始 RAZ 等級。",
+    setupProgress: "已有 {{set}} / {{total}} 名學生設定了初始等級。",
+    setupProgressChip: "{{set}} / {{total}} 名學生",
+    setupAction: "設定初始等級",
+    statusTitle: "狀態遵循 RAZ 指南",
+    statusDescription:
+      "狀態（RTI、待評分、逾期、現在到期、即將到期、最新）遵循 RAZ 指南。待評分由你在學生完成測驗但仍需輸入分數時設定。",
+    statusAssessLink: "評估學生等級",
+    statusChartLink: "等級對照表",
+    loadFailed: "無法載入 RAZ。",
+    loadFailedDescription: "請檢查連線後再試。",
+    studentsEmptyTitle: "沒有可顯示的學生",
+    studentsEmptyDescription: "邀請學生加入本班以設定 RAZ 等級。",
+    comingSoon: "即將推出",
+  },
 } as const;
 
 export default zht;
