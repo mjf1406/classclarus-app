@@ -32,6 +32,7 @@ type BreadcrumbTarget =
   | { kind: "assignmentDetail"; assignmentId: Id<"assignments"> }
   | { kind: "assignmentEdit"; assignmentId: Id<"assignments"> }
   | { kind: "assignmentGrade"; assignmentId: Id<"assignments"> }
+  | { kind: "assignmentTasks"; assignmentId: Id<"assignments"> }
   | { kind: "points" }
   | { kind: "behaviors" }
   | { kind: "rewards" }
@@ -84,6 +85,12 @@ function breadcrumbTarget(pathname: string, classId: string): BreadcrumbTarget {
       if (action === "grade") {
         return {
           kind: "assignmentGrade",
+          assignmentId: assignmentId as Id<"assignments">,
+        };
+      }
+      if (action === "tasks") {
+        return {
+          kind: "assignmentTasks",
           assignmentId: assignmentId as Id<"assignments">,
         };
       }
@@ -272,7 +279,7 @@ function AssignmentDetailBreadcrumbItems({
   classId: Id<"classes">;
   assignmentId: Id<"assignments">;
   assignmentsLabel: string;
-  mode: "detail" | "edit" | "grade";
+  mode: "detail" | "edit" | "grade" | "tasks";
 }) {
   const { t: tAssignments } = useTranslation("assignments");
   const { data: assignment, isPending } = useAssignment(classId, assignmentId);
@@ -284,7 +291,9 @@ function AssignmentDetailBreadcrumbItems({
       ? tAssignments("editTitle")
       : mode === "grade"
         ? tAssignments("gradeTitle")
-        : null;
+        : mode === "tasks"
+          ? tAssignments("procedureTasksTitle")
+          : null;
 
   return (
     <>
@@ -368,7 +377,8 @@ export function ClassBreadcrumb({ classDoc }: ClassBreadcrumbProps) {
               target.kind === "assignmentNew" ||
               target.kind === "assignmentDetail" ||
               target.kind === "assignmentEdit" ||
-              target.kind === "assignmentGrade"
+              target.kind === "assignmentGrade" ||
+              target.kind === "assignmentTasks"
             ? tAssignments("nav")
             : target.kind === "points"
               ? tPoints("nav")
@@ -418,7 +428,8 @@ export function ClassBreadcrumb({ classDoc }: ClassBreadcrumbProps) {
           <AssignmentNewBreadcrumbItems classId={classDoc._id} assignmentsLabel={pageLabel} />
         ) : target.kind === "assignmentDetail" ||
           target.kind === "assignmentEdit" ||
-          target.kind === "assignmentGrade" ? (
+          target.kind === "assignmentGrade" ||
+          target.kind === "assignmentTasks" ? (
           <AssignmentDetailBreadcrumbItems
             classId={classDoc._id}
             assignmentId={target.assignmentId}
@@ -428,7 +439,9 @@ export function ClassBreadcrumb({ classDoc }: ClassBreadcrumbProps) {
                 ? "edit"
                 : target.kind === "assignmentGrade"
                   ? "grade"
-                  : "detail"
+                  : target.kind === "assignmentTasks"
+                    ? "tasks"
+                    : "detail"
             }
           />
         ) : target.kind === "razInitialLevels" ? (

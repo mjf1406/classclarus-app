@@ -921,6 +921,96 @@ export const get = classQuery({
   },
 });
 
+const procedureTaskCompletionsValidator = v.object({
+  assignmentId: v.id("assignments"),
+  assignmentName: v.string(),
+  steps: v.array(
+    v.object({
+      key: v.string(),
+      body: v.string(),
+      stepNumber: v.number(),
+      taskId: v.id("tasks"),
+    }),
+  ),
+  completionsByTaskId: v.array(
+    v.object({
+      taskId: v.id("tasks"),
+      completedStudentIds: v.array(v.id("users")),
+    }),
+  ),
+});
+
+/**
+ * Staff matrix: per-student completion for every procedure step that is a linked task.
+ */
+export const getProcedureTaskCompletions = classQuery({
+  args: {
+    assignmentId: v.id("assignments"),
+  },
+  returns: v.union(procedureTaskCompletionsValidator, v.null()),
+  handler: async (ctx, args) => {
+    await ctx.require("tasks:complete");
+
+    const classId = ctx.classDoc._id;
+    const assignment = await ctx.db.get("assignments", args.assignmentId);
+    if (!assignment || assignment.classId !== classId) {
+      return null;
+    }
+
+    const studentIds = await listStudentUserIds(ctx, classId);
+    const studentSet = new Set(studentIds);
+
+    const steps: Array<{
+      key: string;
+      body: string;
+      stepNumber: number;
+      taskId: Id<"tasks">;
+    }> = [];
+    const completionsByTaskId: Array<{
+      taskId: Id<"tasks">;
+      completedStudentIds: Array<Id<"users">>;
+    }> = [];
+
+    for (let index = 0; index < assignment.procedureSteps.length; index += 1) {
+      const step = assignment.procedureSteps[index]!;
+      if (!step.addAsTask || !step.taskId) {
+        continue;
+      }
+
+      const task = await ctx.db.get("tasks", step.taskId);
+      if (!task || task.classId !== classId) {
+        continue;
+      }
+
+      // eslint-disable-next-line @convex-dev/no-collect-in-query -- task-scoped completions
+      const completions = await ctx.db
+        .query("taskCompletions")
+        .withIndex("by_task", (q) => q.eq("taskId", step.taskId!))
+        .collect();
+
+      steps.push({
+        key: step.key,
+        body: step.body,
+        stepNumber: index + 1,
+        taskId: step.taskId,
+      });
+      completionsByTaskId.push({
+        taskId: step.taskId,
+        completedStudentIds: completions
+          .map((row) => row.studentUserId)
+          .filter((userId) => studentSet.has(userId)),
+      });
+    }
+
+    return {
+      assignmentId: assignment._id,
+      assignmentName: assignment.name,
+      steps,
+      completionsByTaskId,
+    };
+  },
+});
+
 export const create = classMutation({
   args: {
     name: v.string(),

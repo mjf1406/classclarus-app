@@ -6,6 +6,7 @@ import {
   ClipboardList,
   ExternalLink,
   ClipboardPen,
+  ListTodo,
   Pencil,
   Plus,
   Trash2,
@@ -251,8 +252,13 @@ function AssignmentContentSections({
 }) {
   const { t } = useTranslation("assignments");
   const { t: tTasks } = useTranslation("tasks");
+  const { can } = useCan();
   const isStaffView = assignment.scope === "class";
   const showSelections = highlightReleasedScore === true && scoreDraft != null;
+  const showProcedureTasksLink =
+    isStaffView &&
+    can("tasks:complete") &&
+    assignment.procedureSteps.some((step) => step.addAsTask && step.taskId);
 
   return (
     <div className="flex flex-col gap-6">
@@ -265,7 +271,25 @@ function AssignmentContentSections({
 
       {assignment.procedureSteps.length > 0 ? (
         <section className="flex flex-col gap-2">
-          <h2 className="text-lg font-medium">{t("procedureHeading")}</h2>
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-lg font-medium">{t("procedureHeading")}</h2>
+            {showProcedureTasksLink ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                render={
+                  <Link
+                    to="/class/$classId/assignments/$assignmentId/tasks"
+                    params={{ classId, assignmentId: assignment._id }}
+                  />
+                }
+              >
+                <ListTodo className="size-4" />
+                {t("procedureTasksAction")}
+              </Button>
+            ) : null}
+          </div>
           <ol className="list-decimal space-y-3 pl-5 text-sm">
             {assignment.procedureSteps.map((step) => {
               const studentCount = step.taskStudentCount ?? 0;
