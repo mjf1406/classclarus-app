@@ -1,6 +1,7 @@
 import type { FunctionReturnType } from "convex/server";
 
 import { api } from "../../../convex/_generated/api";
+import { toIntlLocale } from "@/lib/languages";
 import type { PurchaseLimit } from "@/lib/rewards/purchaseLimit";
 
 export const MAX_REWARD_NAME_LENGTH = 100;
@@ -25,7 +26,7 @@ export type RewardFormValues = {
 };
 
 export function formatRewardPoints(points: number, language: string): string {
-  return new Intl.NumberFormat(language).format(points);
+  return new Intl.NumberFormat(toIntlLocale(language)).format(points);
 }
 
 export function filterRewardsByName(rewards: RewardList, query: string): RewardList {

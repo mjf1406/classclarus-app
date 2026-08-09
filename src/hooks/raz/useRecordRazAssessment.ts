@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
+import { shouldAutoSetRazRti } from "../../../convex/lib/razAutoRti";
 import { toast } from "@/components/ui/toast-manager";
 import { razInitialLevelsQueryKey } from "@/hooks/raz/useRazInitialLevels";
 import { useOptimisticMutation } from "@/hooks/useOptimisticMutation";
@@ -46,9 +47,18 @@ export function useRecordRazAssessment() {
       const key = razInitialLevelsQueryKey(args.classId);
       queryClient.setQueryData<RazInitialLevelEntry[]>(key, (old) => {
         if (!old) return old;
-        return old.map((row) =>
-          row.studentUserId === args.studentUserId ? { ...row, currentLevel: args.level } : row,
-        );
+        return old.map((row) => {
+          if (row.studentUserId !== args.studentUserId) return row;
+          const autoRti = shouldAutoSetRazRti(args.result, row.lastAssessmentResult);
+          return {
+            ...row,
+            currentLevel: args.level,
+            lastAssessedAt: args.assessedAt,
+            lastAssessmentResult: args.result,
+            scheduleAnchorAt: args.assessedAt,
+            manualStatus: autoRti ? "rti" : null,
+          };
+        });
       });
     },
     onError: (error) => {

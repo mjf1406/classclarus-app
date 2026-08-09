@@ -1,4 +1,5 @@
 import { PencilIcon } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -11,8 +12,10 @@ import { LanguageSelect } from "@/components/i18n/LanguageSelect";
 import { RosterNameFormatControls } from "@/components/students/RosterNameFormatControls";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CopyButton } from "@/components/ui/copy-button";
 import { ErrorState } from "@/components/ui/error-state";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
+import { Label } from "@/components/ui/label";
 import { NumberInput } from "@/components/ui/number-input";
 import {
   Select,
@@ -23,12 +26,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import { FileDropzone } from "@/components/upload/FileDropzone";
 import { useCan } from "@/hooks/permissions/useCan";
 import { useClass } from "@/hooks/classes/useClass";
 import { useClearClassBanner } from "@/hooks/classes/useClearClassBanner";
 import { useSetClassBanner } from "@/hooks/classes/useSetClassBanner";
 import { useSetPointsBadgeWindows } from "@/hooks/classes/useSetPointsBadgeWindows";
+import { useSetPointsPublicDisplay } from "@/hooks/classes/useSetPointsPublicDisplay";
 import { useSetRosterNameFormat } from "@/hooks/classes/useSetRosterNameFormat";
 import { useSetStudentLanguage } from "@/hooks/classes/useSetStudentLanguage";
 import { useUpdateClass } from "@/hooks/classes/useUpdateClass";
@@ -42,6 +47,7 @@ import {
   POINTS_BADGE_WINDOW_UNITS,
   type PointsBadgeWindowUnit,
 } from "@/lib/points/pointsBadgeWindow";
+import { pointsPublicDisplayUrl } from "@/lib/points/pointsPublicUrls";
 import { resolveRosterNameFormat, type RosterNameFormat } from "@/lib/roster/roster";
 import type { Id } from "../../../convex/_generated/dataModel";
 
@@ -79,6 +85,39 @@ function BannerPreview({ fileId }: { fileId: Id<"files"> }) {
   );
 }
 
+function PointsPublicDisplayShare({
+  publicSlug,
+  copyLabel,
+  qrLabel,
+}: {
+  publicSlug: string;
+  copyLabel: string;
+  qrLabel: string;
+}) {
+  const publicUrl = pointsPublicDisplayUrl(publicSlug);
+  return (
+    <div className="flex flex-col gap-4 rounded-xl border border-border p-4">
+      <div className="flex justify-center rounded-lg bg-white p-3">
+        <QRCodeSVG
+          value={publicUrl}
+          size={180}
+          level="M"
+          marginSize={2}
+          bgColor="#FFFFFF"
+          fgColor="#000000"
+          title={qrLabel}
+        />
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <code className="min-w-0 flex-1 truncate rounded-md bg-muted px-2 py-1 text-xs">
+          {publicUrl}
+        </code>
+        <CopyButton type="link" value={publicUrl} aria-label={copyLabel} />
+      </div>
+    </div>
+  );
+}
+
 export function ClassSettingsPage({ classId }: ClassSettingsPageProps) {
   const { t, i18n } = useTranslation("classes");
   const { can, isPending: permissionsPending } = useCan();
@@ -90,6 +129,7 @@ export function ClassSettingsPage({ classId }: ClassSettingsPageProps) {
   const setStudentLanguage = useSetStudentLanguage();
   const setRosterNameFormat = useSetRosterNameFormat();
   const setPointsBadgeWindows = useSetPointsBadgeWindows();
+  const setPointsPublicDisplay = useSetPointsPublicDisplay();
   const [editOpen, setEditOpen] = useState(false);
 
   const nameFormat = resolveRosterNameFormat({
@@ -266,7 +306,7 @@ export function ClassSettingsPage({ classId }: ClassSettingsPageProps) {
                     max={MAX_POINTS_BADGE_WINDOW_AMOUNT}
                     disabled={!canUpdateClass || setPointsBadgeWindows.isPending}
                     aria-label={t("pointsBadgeWarningWindowAmountAria")}
-                    className="w-28"
+                    className="shrink-0"
                     onValueChange={(warningWindowAmount) =>
                       savePointsBadgeWindows({
                         warningWindowAmount,
@@ -290,7 +330,7 @@ export function ClassSettingsPage({ classId }: ClassSettingsPageProps) {
                     }}
                   >
                     <SelectTrigger
-                      className="w-36"
+                      className="w-36 shrink-0"
                       aria-label={t("pointsBadgeWarningWindowUnitAria")}
                     >
                       <SelectValue>
@@ -320,7 +360,7 @@ export function ClassSettingsPage({ classId }: ClassSettingsPageProps) {
                     max={MAX_POINTS_BADGE_WINDOW_AMOUNT}
                     disabled={!canUpdateClass || setPointsBadgeWindows.isPending}
                     aria-label={t("pointsBadgeMinusWindowAmountAria")}
-                    className="w-28"
+                    className="shrink-0"
                     onValueChange={(minusWindowAmount) =>
                       savePointsBadgeWindows({
                         warningWindowAmount: classDoc.warningWindowAmount,
@@ -344,7 +384,7 @@ export function ClassSettingsPage({ classId }: ClassSettingsPageProps) {
                     }}
                   >
                     <SelectTrigger
-                      className="w-36"
+                      className="w-36 shrink-0"
                       aria-label={t("pointsBadgeMinusWindowUnitAria")}
                     >
                       <SelectValue>
@@ -363,6 +403,41 @@ export function ClassSettingsPage({ classId }: ClassSettingsPageProps) {
                   </Select>
                 </div>
               </Field>
+            </CardContent>
+          </Card>
+
+          <Card className="max-w-2xl">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold">
+                {t("pointsPublicDisplayTitle")}
+              </CardTitle>
+              <CardDescription>{t("pointsPublicDisplayDescription")}</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-col gap-0.5">
+                  <Label htmlFor="points-public-display">{t("pointsPublicDisplayLabel")}</Label>
+                  <p className="text-sm text-muted-foreground">{t("pointsPublicDisplayHint")}</p>
+                </div>
+                <Switch
+                  id="points-public-display"
+                  checked={classDoc.pointsPublicEnabled === true}
+                  disabled={!canUpdateClass || setPointsPublicDisplay.isPending}
+                  onCheckedChange={(checked) => {
+                    void setPointsPublicDisplay.mutateAsync({
+                      classId,
+                      enabled: checked,
+                    });
+                  }}
+                />
+              </div>
+              {classDoc.pointsPublicEnabled === true && classDoc.pointsPublicSlug ? (
+                <PointsPublicDisplayShare
+                  publicSlug={classDoc.pointsPublicSlug}
+                  copyLabel={t("pointsPublicDisplayCopyLink")}
+                  qrLabel={t("pointsPublicDisplayQrLabel")}
+                />
+              ) : null}
             </CardContent>
           </Card>
 

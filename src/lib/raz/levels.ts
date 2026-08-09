@@ -22,8 +22,15 @@ export function isRazLevel(value: string): value is RazLevel {
   return RAZ_LEVEL_SET.has(value);
 }
 
+export type RazManualStatus = "rti" | "pending";
+
 export type RazInitialLevelEntry = {
   studentUserId: string;
   initialLevel: string;
   currentLevel: string;
+  lastAssessedAt: number | null;
+  /** Latest assessment result, or null when none recorded yet. */
+  lastAssessmentResult: "level_up" | "stay" | "level_down" | null;
+  scheduleAnchorAt: number;
+  manualStatus: RazManualStatus | null;
 };

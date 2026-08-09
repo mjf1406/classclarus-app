@@ -116,9 +116,16 @@ const schema = defineSchema({
      */
     minusWindowAmount: v.optional(v.number()),
     minusWindowUnit: v.optional(v.union(v.literal("day"), v.literal("week"), v.literal("month"))),
+    /**
+     * Optional public points display (`/p/$pointsPublicSlug`). Slug is retained when disabled.
+     */
+    pointsPublicEnabled: v.optional(v.boolean()),
+    pointsPublicSlug: v.optional(v.string()),
     updatedAt: v.number(),
     archivedAt: v.optional(v.number()),
-  }).index("by_owner", ["ownerId"]),
+  })
+    .index("by_owner", ["ownerId"])
+    .index("by_pointsPublicSlug", ["pointsPublicSlug"]),
   joinCodes: defineTable({
     code: v.string(),
     classId: v.id("classes"),
@@ -646,6 +653,8 @@ const schema = defineSchema({
     studentUserId: v.id("users"),
     initialLevel: v.string(),
     currentLevel: v.optional(v.string()),
+    /** Teacher override; when set, takes priority over schedule-derived status. */
+    manualStatus: v.optional(v.union(v.literal("rti"), v.literal("pending"))),
     updatedAt: v.number(),
     updatedBy: v.id("users"),
   })

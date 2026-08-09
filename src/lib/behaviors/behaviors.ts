@@ -1,6 +1,7 @@
 import type { FunctionReturnType } from "convex/server";
 
 import { api } from "../../../convex/_generated/api";
+import { toIntlLocale } from "@/lib/languages";
 
 export const MAX_BEHAVIOR_NAME_LENGTH = 100;
 export const MAX_BEHAVIOR_DESCRIPTION_LENGTH = 500;
@@ -23,7 +24,9 @@ export type BehaviorFormValues = {
 };
 
 export function formatBehaviorPoints(points: number, language: string): string {
-  const formatted = new Intl.NumberFormat(language, { signDisplay: "exceptZero" }).format(points);
+  const formatted = new Intl.NumberFormat(toIntlLocale(language), {
+    signDisplay: "exceptZero",
+  }).format(points);
   return formatted;
 }
 

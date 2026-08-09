@@ -801,6 +801,15 @@ const es = {
     pointsBadgeWindowUnit_week: "Semana(s)",
     pointsBadgeWindowUnit_month: "Mes(es)",
     pointsBadgeWindowsSaveFailed: "No se pudieron actualizar las insignias del tablero de puntos.",
+    pointsPublicDisplayTitle: "Pantalla pública de puntos",
+    pointsPublicDisplayDescription:
+      "Comparte un código QR para que otro dispositivo muestre puntos y recompensas anónimos.",
+    pointsPublicDisplayLabel: "Activar pantalla pública",
+    pointsPublicDisplayHint:
+      "Cualquiera con el enlace puede ver números de lista, puntos y recompensas.",
+    pointsPublicDisplayQrLabel: "Código QR de la pantalla pública de puntos",
+    pointsPublicDisplayCopyLink: "Copiar enlace de la pantalla pública",
+    pointsPublicDisplayToggleFailed: "No se pudo actualizar la pantalla pública de puntos.",
     bannerTitle: "Banner del panel",
     bannerDescription: "Sube una imagen que se muestra en el panel de la clase.",
     bannerRemove: "Quitar banner",
@@ -1018,6 +1027,10 @@ const es = {
     activitySummary_setRosterNameFormat: "Se actualizó cómo se muestran los nombres de la lista",
     activitySummary_setPointsBadgeWindows:
       "Se actualizaron los periodos de las insignias de puntos",
+    activitySummary_enabledPointsPublicDisplay:
+      'Se activó la pantalla pública de puntos de "{{name}}"',
+    activitySummary_disabledPointsPublicDisplay:
+      'Se desactivó la pantalla pública de puntos de "{{name}}"',
     activitySummary_transferredOwnership: 'Propiedad de "{{name}}" transferida',
     activitySummary_createdGroup: 'Grupo "{{name}}" creado',
     activitySummary_updatedGroup: 'Grupo "{{name}}" actualizado',
@@ -1060,6 +1073,7 @@ const es = {
     activitySummary_exportedGroupsPdf: "Grupos exportados a PDF",
     activitySummary_recordedRazAssessment:
       "Evaluación RAZ registrada ({{result}}) → nivel {{level}}",
+    activitySummary_setRazManualStatus: "Estado RAZ establecido en {{status}}",
     activitySummary_createdAnnouncement: 'Se creó el anuncio "{{name}}"',
     activitySummary_updatedAnnouncement: 'Se actualizó el anuncio "{{name}}"',
     activitySummary_deletedAnnouncement: 'Se eliminó el anuncio "{{name}}"',
@@ -1777,6 +1791,17 @@ const es = {
     title: "Puntos",
     description:
       "Otorga conductas, quita puntos y canjea recompensas. Los ausentes aparecen atenuados y se omiten en Todos, salvo que los toques.",
+    publicStudentsHeading: "Puntos",
+    publicRewardsHeading: "Recompensas",
+    publicStudentsEmpty: "No hay estudiantes para mostrar.",
+    publicRewardsEmpty: "No hay recompensas para mostrar.",
+    publicNotFoundTitle: "Pantalla no encontrada",
+    publicNotFoundDescription:
+      "Este enlace no es válido o la pantalla pública de puntos está desactivada.",
+    publicLoadFailed: "No se pudo cargar la pantalla de puntos.",
+    publicLoadFailedDescription: "Comprueba la conexión e inténtalo de nuevo.",
+    publicRosterNumberAria: "Número de lista {{number}}",
+    publicPointsAria: "{{points}} puntos",
     personalTitle: "Puntos",
     personalDescription: "Resumen actual de puntos.",
     personalStudentsEmptyTitle: "No hay estudiantes vinculados",
@@ -1903,6 +1928,47 @@ const es = {
     studentsEmptyDescription: "Invita estudiantes a esta clase para establecer niveles RAZ.",
     comingSoon: "Próximamente",
     columnCurrentLevel: "Nivel actual",
+    columnStatus: "Estado",
+    statusRti: "RTI",
+    statusPending: "Pendiente",
+    statusOverdue: "Atrasado",
+    statusDueNow: "Vence ahora",
+    statusComingSoon: "Pronto",
+    statusUpToDate: "Al día",
+    statusAuto: "Auto",
+    statusWhyTitle: "¿Por qué este estado?",
+    statusWhyHelpAria: "Explicar este estado",
+    statusWhy_rti:
+      "Este estudiante necesita una reevaluación inmediata. RTI se asigna automáticamente tras bajar de nivel, o tras dos evaluaciones seguidas sin subir de nivel. También puedes asignar RTI tú.",
+    statusWhy_pending:
+      "Marcaste a este estudiante como pendiente — normalmente porque terminó la prueba y aún faltan las puntuaciones.",
+    statusWhy_overdue_never_assessed:
+      "Este estudiante tiene un nivel inicial, pero aún no ha sido evaluado, así que su primera evaluación está atrasada.",
+    statusWhy_overdue_window:
+      "La ventana de reevaluación ya pasó. Debe evaluarse de nuevo lo antes posible.",
+    statusWhy_due_now:
+      "Está dentro de la ventana recomendada de reevaluación para su nivel actual. Evalúalo ahora.",
+    statusWhy_coming_soon:
+      "La próxima ventana de reevaluación se abre en aproximadamente una semana. Planifica evaluarlo pronto.",
+    statusWhy_up_to_date:
+      "Fue evaluado hace poco, así que la próxima ventana de reevaluación aún no se ha abierto.",
+    statusFilterLabel: "Filtrar por estado",
+    statusSaveFailed: "No se pudo guardar el estado RAZ.",
+    levelHidden: "Oculto",
+    hideLevels: "Ocultar niveles",
+    showLevels: "Mostrar niveles",
+    columnNextDue: "Próximo vencimiento",
+    dueInDays: "En {{count}} días",
+    dueToday: "Vence ahora",
+    dueOverdueDays: "{{count}} días de retraso",
+    dueWindowDates: "{{start}} – {{end}}",
+    dueRangeDays: "{{lower}}–{{upper}} días",
+    searchLabel: "Buscar estudiantes",
+    searchPlaceholder: "Buscar por nombre…",
+    searchClear: "Borrar búsqueda",
+    searchResults: "{{count}} resultados",
+    searchNoResultsTitle: "No hay estudiantes coincidentes",
+    searchNoResults: "Prueba con otro nombre.",
     recordAction: "Registrar",
     recordTitle: "Registrar evaluación RAZ",
     recordFor: "Registrando evaluación para {{name}}",

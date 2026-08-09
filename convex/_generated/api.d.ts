@@ -72,6 +72,7 @@ import type * as lib_polarSubscription from "../lib/polarSubscription.js";
 import type * as lib_purchaseLimit from "../lib/purchaseLimit.js";
 import type * as lib_rateLimitActions from "../lib/rateLimitActions.js";
 import type * as lib_rateLimiter from "../lib/rateLimiter.js";
+import type * as lib_razAutoRti from "../lib/razAutoRti.js";
 import type * as lib_razLevels from "../lib/razLevels.js";
 import type * as lib_rewardsCleanup from "../lib/rewardsCleanup.js";
 import type * as lib_rosterNameFormat from "../lib/rosterNameFormat.js";
@@ -167,6 +168,7 @@ declare const fullApi: ApiFromModules<{
   "lib/purchaseLimit": typeof lib_purchaseLimit;
   "lib/rateLimitActions": typeof lib_rateLimitActions;
   "lib/rateLimiter": typeof lib_rateLimiter;
+  "lib/razAutoRti": typeof lib_razAutoRti;
   "lib/razLevels": typeof lib_razLevels;
   "lib/rewardsCleanup": typeof lib_rewardsCleanup;
   "lib/rosterNameFormat": typeof lib_rosterNameFormat;

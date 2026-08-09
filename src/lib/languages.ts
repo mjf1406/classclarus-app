@@ -25,3 +25,8 @@ export function isAppLanguage(value: unknown): value is AppLanguage {
 export function getLanguageOption(language: AppLanguage) {
   return LANGUAGE_OPTIONS.find((option) => option.value === language)!;
 }
+
+/** Map app language codes (`engb`, `zhs`, …) to BCP 47 tags for `Intl.*`. */
+export function toIntlLocale(language: string): string {
+  return isAppLanguage(language) ? getLanguageOption(language).htmlLang : language;
+}

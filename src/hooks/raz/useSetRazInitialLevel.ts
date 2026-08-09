@@ -30,6 +30,7 @@ export function useSetRazInitialLevel() {
     queryKeys: (args) => [razInitialLevelsQueryKey(args.classId)],
     applyOptimisticUpdate: (queryClient, args) => {
       const key = razInitialLevelsQueryKey(args.classId);
+      const now = Date.now();
       queryClient.setQueryData<RazInitialLevelEntry[]>(key, (old) => {
         if (!old) {
           return [
@@ -37,6 +38,10 @@ export function useSetRazInitialLevel() {
               studentUserId: args.studentUserId,
               initialLevel: args.initialLevel,
               currentLevel: args.initialLevel,
+              lastAssessedAt: null,
+              lastAssessmentResult: null,
+              scheduleAnchorAt: now,
+              manualStatus: null,
             },
           ];
         }
@@ -48,6 +53,10 @@ export function useSetRazInitialLevel() {
               studentUserId: args.studentUserId,
               initialLevel: args.initialLevel,
               currentLevel: args.initialLevel,
+              lastAssessedAt: null,
+              lastAssessmentResult: null,
+              scheduleAnchorAt: now,
+              manualStatus: null,
             },
           ];
         }
@@ -58,6 +67,8 @@ export function useSetRazInitialLevel() {
           initialLevel: args.initialLevel,
           // Match server: do not overwrite an existing currentLevel on patch.
           currentLevel: existing.currentLevel || args.initialLevel,
+          // Only reset the schedule when there is no assessment yet.
+          scheduleAnchorAt: existing.lastAssessedAt == null ? now : existing.scheduleAnchorAt,
         };
         return copy;
       });

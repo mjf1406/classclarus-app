@@ -7,6 +7,7 @@ import type { MutationCtx, QueryCtx } from "./_generated/server.js";
 import { classScope } from "./lib/authzModel.js";
 import { recordClassActivity } from "./lib/classActivity.js";
 import { classMutation, classQuery } from "./lib/customFunctions.js";
+import { shouldAutoSetRazRti } from "./lib/razAutoRti.js";
 import { isRazLevel } from "./lib/razLevels.js";
 import { rateLimiter } from "./lib/rateLimiter.js";
 
@@ -16,10 +17,23 @@ const razResultValidator = v.union(
   v.literal("level_down"),
 );
 
+const razManualStatusValidator = v.union(v.literal("rti"), v.literal("pending"));
+
 const levelEntryValidator = v.object({
   studentUserId: v.id("users"),
   initialLevel: v.string(),
   currentLevel: v.string(),
+  /** Latest assessment `assessedAt`, or null when none recorded yet. */
+  lastAssessedAt: v.union(v.number(), v.null()),
+  /** Latest assessment result, or null when none recorded yet. */
+  lastAssessmentResult: v.union(razResultValidator, v.null()),
+  /**
+   * Anchor for the reassessment schedule window:
+   * last assessment date, else when the level row was last updated (initial setup).
+   */
+  scheduleAnchorAt: v.number(),
+  /** Teacher override / auto-RTI; null when schedule-derived status should be used. */
+  manualStatus: v.union(razManualStatusValidator, v.null()),
 });
 
 async function listStudentUserIds(
@@ -52,11 +66,39 @@ export const listInitialLevels = classQuery({
       .withIndex("by_classId", (q) => q.eq("classId", classId))
       .collect();
 
-    return rows.map((row) => ({
-      studentUserId: row.studentUserId,
-      initialLevel: row.initialLevel,
-      currentLevel: row.currentLevel ?? row.initialLevel,
-    }));
+    // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded RAZ assessments
+    const assessments = await ctx.db
+      .query("razAssessments")
+      .withIndex("by_classId", (q) => q.eq("classId", classId))
+      .collect();
+
+    const lastAssessmentByStudent = new Map<
+      Id<"users">,
+      { assessedAt: number; result: "level_up" | "stay" | "level_down" }
+    >();
+    for (const assessment of assessments) {
+      const prev = lastAssessmentByStudent.get(assessment.studentUserId);
+      if (prev === undefined || assessment.assessedAt > prev.assessedAt) {
+        lastAssessmentByStudent.set(assessment.studentUserId, {
+          assessedAt: assessment.assessedAt,
+          result: assessment.result,
+        });
+      }
+    }
+
+    return rows.map((row) => {
+      const last = lastAssessmentByStudent.get(row.studentUserId) ?? null;
+      const lastAssessedAt = last?.assessedAt ?? null;
+      return {
+        studentUserId: row.studentUserId,
+        initialLevel: row.initialLevel,
+        currentLevel: row.currentLevel ?? row.initialLevel,
+        lastAssessedAt,
+        lastAssessmentResult: last?.result ?? null,
+        scheduleAnchorAt: lastAssessedAt ?? row.updatedAt,
+        manualStatus: row.manualStatus ?? null,
+      };
+    });
   },
 });
 
@@ -173,6 +215,25 @@ export const recordAssessment = classMutation({
       throw new Error("Set an initial RAZ level before recording an assessment");
     }
 
+    // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded prior assessments for one student
+    const priorAssessments = await ctx.db
+      .query("razAssessments")
+      .withIndex("by_class_student", (q) =>
+        q.eq("classId", classId).eq("studentUserId", args.studentUserId),
+      )
+      .collect();
+
+    let previousResult: "level_up" | "stay" | "level_down" | null = null;
+    let previousAssessedAt = Number.NEGATIVE_INFINITY;
+    for (const prior of priorAssessments) {
+      if (prior.assessedAt > previousAssessedAt) {
+        previousAssessedAt = prior.assessedAt;
+        previousResult = prior.result;
+      }
+    }
+
+    const autoRti = shouldAutoSetRazRti(args.result, previousResult);
+
     const now = Date.now();
     const assessmentId = await ctx.db.insert("razAssessments", {
       classId,
@@ -190,9 +251,17 @@ export const recordAssessment = classMutation({
 
     await ctx.db.patch("razStudentLevels", levelRow._id, {
       currentLevel: args.level,
+      manualStatus: autoRti ? "rti" : undefined,
       updatedAt: now,
       updatedBy: ctx.userId,
     });
+
+    const resultLabel =
+      args.result === "level_up"
+        ? "Level up"
+        : args.result === "level_down"
+          ? "Level down"
+          : "Stay";
 
     await recordClassActivity(ctx, {
       classId,
@@ -200,28 +269,75 @@ export const recordAssessment = classMutation({
       action: "write",
       resourceType: "razAssessment",
       resourceId: assessmentId,
-      summary: `Recorded RAZ assessment (${
-        args.result === "level_up"
-          ? "Level up"
-          : args.result === "level_down"
-            ? "Level down"
-            : "Stay"
-      }) → level ${args.level}`,
+      summary: `Recorded RAZ assessment (${resultLabel}) → level ${args.level}`,
       summaryKey: "activitySummary_recordedRazAssessment",
       metadata: {
-        result:
-          args.result === "level_up"
-            ? "Level up"
-            : args.result === "level_down"
-              ? "Level down"
-              : "Stay",
+        result: resultLabel,
         level: args.level,
         targetUserId: args.studentUserId,
         readAccuracy: String(args.readAccuracy),
         respondScore: String(args.respondScore),
+        ...(autoRti ? { autoRti: "true" } : {}),
       },
     });
 
     return assessmentId;
+  },
+});
+
+/**
+ * Set or clear a student's manual RAZ status override (RTI / pending).
+ * Requires raz:manage. Pass null to clear and use schedule-derived status.
+ */
+export const setManualStatus = classMutation({
+  args: {
+    studentUserId: v.id("users"),
+    manualStatus: v.union(razManualStatusValidator, v.null()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await rateLimiter.limit(ctx, "razSetManualStatus", { key: ctx.userId, throws: true });
+    await ctx.require("raz:manage");
+    const classId = ctx.classDoc._id;
+
+    const studentIds = await listStudentUserIds(ctx, classId);
+    if (!studentIds.includes(args.studentUserId)) {
+      throw new Error("Person is not a student in this class");
+    }
+
+    const levelRow = await ctx.db
+      .query("razStudentLevels")
+      .withIndex("by_class_student", (q) =>
+        q.eq("classId", classId).eq("studentUserId", args.studentUserId),
+      )
+      .unique();
+
+    if (!levelRow) {
+      throw new Error("Set an initial RAZ level before setting status");
+    }
+
+    // Do not bump updatedAt — it anchors the schedule when there is no assessment yet.
+    await ctx.db.patch("razStudentLevels", levelRow._id, {
+      manualStatus: args.manualStatus ?? undefined,
+    });
+
+    const statusLabel =
+      args.manualStatus === "rti" ? "RTI" : args.manualStatus === "pending" ? "Pending" : "Auto";
+
+    await recordClassActivity(ctx, {
+      classId,
+      actorUserId: ctx.userId,
+      action: "update",
+      resourceType: "razAssessment",
+      resourceId: levelRow._id,
+      summary: `Set RAZ status to ${statusLabel}`,
+      summaryKey: "activitySummary_setRazManualStatus",
+      metadata: {
+        status: statusLabel,
+        targetUserId: args.studentUserId,
+      },
+    });
+
+    return null;
   },
 });

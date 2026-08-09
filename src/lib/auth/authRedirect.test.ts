@@ -5,9 +5,11 @@ import { getSafeAuthRedirect, isAuthExemptPath } from "./authRedirect";
 const ORIGIN = "https://app.classclarus.com";
 
 describe("isAuthExemptPath", () => {
-  test("allows public announcement and join-display paths", () => {
+  test("allows public announcement, points display, and join-display paths", () => {
     expect(isAuthExemptPath("/a/abc123")).toBe(true);
     expect(isAuthExemptPath("/a/abc123?x=1")).toBe(true);
+    expect(isAuthExemptPath("/p/abc123")).toBe(true);
+    expect(isAuthExemptPath("/p/abc123?x=1")).toBe(true);
     expect(isAuthExemptPath("/join-display")).toBe(true);
     expect(isAuthExemptPath("/join-display?jc=ABC")).toBe(true);
   });

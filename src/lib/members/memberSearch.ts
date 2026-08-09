@@ -24,6 +24,22 @@ export function normalizeSearchText(value: string): string {
   return value.trim().toLowerCase().normalize("NFKD").replace(/\p{M}/gu, "");
 }
 
+function nameFieldCombos(firstName: string | undefined, lastName: string | undefined): string[] {
+  const first = firstName ? normalizeSearchText(firstName) : "";
+  const last = lastName ? normalizeSearchText(lastName) : "";
+  if (!first && !last) {
+    return [];
+  }
+  const partsFirstLast = [first, last].filter(Boolean);
+  const partsLastFirst = [last, first].filter(Boolean);
+  return [
+    partsFirstLast.join(" "),
+    partsFirstLast.join(""),
+    partsLastFirst.join(" "),
+    partsLastFirst.join(""),
+  ];
+}
+
 export function memberMatchesQuery(item: SearchableMember, normalizedQuery: string): boolean {
   if (!normalizedQuery) {
     return true;
@@ -33,7 +49,24 @@ export function memberMatchesQuery(item: SearchableMember, normalizedQuery: stri
     .filter((value): value is string => Boolean(value))
     .map(normalizeSearchText);
 
-  return fields.some((field) => field.includes(normalizedQuery));
+  if (fields.some((field) => field.includes(normalizedQuery))) {
+    return true;
+  }
+
+  // Full-name queries ("Ada Lovelace") when first/last live in separate roster columns.
+  const combos = nameFieldCombos(item.firstName, item.lastName);
+  if (combos.some((combo) => combo.includes(normalizedQuery))) {
+    return true;
+  }
+
+  // Token match: every query word must appear in some name/email field.
+  const tokens = normalizedQuery.split(/\s+/).filter(Boolean);
+  if (tokens.length > 1) {
+    const haystack = [...fields, ...combos];
+    return tokens.every((token) => haystack.some((field) => field.includes(token)));
+  }
+
+  return false;
 }
 
 /** Pure matcher used by the worker and unit tests. */

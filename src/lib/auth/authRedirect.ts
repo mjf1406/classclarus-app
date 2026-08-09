@@ -8,7 +8,9 @@ export function isAuthExemptPath(pathWithSearch: string): boolean {
     pathname === "/join-display" ||
     pathname.startsWith("/join-display/") ||
     pathname === "/a" ||
-    pathname.startsWith("/a/")
+    pathname.startsWith("/a/") ||
+    pathname === "/p" ||
+    pathname.startsWith("/p/")
   );
 }
 

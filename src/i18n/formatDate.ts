@@ -1,10 +1,10 @@
 import i18n from "@/i18n";
 import { pickCountdownUnit, pickDueDurationUnit, type DueDurationUnit } from "@/i18n/countdown";
 import { dueDateKeyHasTime, parseDueDateKey } from "@/lib/dueDate/dueDateKey";
-import { getLanguageOption, isAppLanguage } from "@/lib/languages";
+import { toIntlLocale } from "@/lib/languages";
 
 function getAppLocale(): string {
-  return isAppLanguage(i18n.language) ? getLanguageOption(i18n.language).htmlLang : i18n.language;
+  return toIntlLocale(i18n.language);
 }
 
 function startOfLocalDay(date: Date): Date {

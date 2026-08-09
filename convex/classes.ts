@@ -58,6 +58,11 @@ const classRoleValidator = v.union(
 
 const rosterNameOrderValidator = v.union(v.literal("firstLast"), v.literal("lastFirst"));
 
+const POINTS_PUBLIC_SLUG_ALPHABET =
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+const POINTS_PUBLIC_SLUG_LENGTH = 21;
+const POINTS_PUBLIC_SLUG_GENERATE_ATTEMPTS = 8;
+
 const classValidator = v.object({
   _id: v.id("classes"),
   _creationTime: v.number(),
@@ -74,9 +79,35 @@ const classValidator = v.object({
   warningWindowUnit: pointsBadgeWindowUnitValidator,
   minusWindowAmount: v.number(),
   minusWindowUnit: pointsBadgeWindowUnitValidator,
+  pointsPublicEnabled: v.optional(v.boolean()),
+  pointsPublicSlug: v.optional(v.string()),
   updatedAt: v.number(),
   archivedAt: v.optional(v.number()),
 });
+
+function randomPointsPublicSlug(): string {
+  const bytes = new Uint8Array(POINTS_PUBLIC_SLUG_LENGTH);
+  crypto.getRandomValues(bytes);
+  let result = "";
+  for (const byte of bytes) {
+    result += POINTS_PUBLIC_SLUG_ALPHABET[byte % POINTS_PUBLIC_SLUG_ALPHABET.length];
+  }
+  return result;
+}
+
+async function generateUniquePointsPublicSlug(ctx: MutationCtx): Promise<string> {
+  for (let attempt = 0; attempt < POINTS_PUBLIC_SLUG_GENERATE_ATTEMPTS; attempt += 1) {
+    const pointsPublicSlug = randomPointsPublicSlug();
+    const existing = await ctx.db
+      .query("classes")
+      .withIndex("by_pointsPublicSlug", (q) => q.eq("pointsPublicSlug", pointsPublicSlug))
+      .unique();
+    if (!existing) {
+      return pointsPublicSlug;
+    }
+  }
+  throw new Error("Could not generate a unique public display link");
+}
 
 type ClassPublicDefaults = {
   studentLanguage: LanguageCode;
@@ -533,6 +564,48 @@ export const setPointsBadgeWindows = classMutation({
         minusWindowAmount: String(minus.amount),
         minusWindowUnit: minus.unit,
       },
+    });
+    return withClassDefaults(updated);
+  },
+});
+
+/** Enable or disable the unauthenticated public points display page. */
+export const setPointsPublicDisplay = classMutation({
+  args: {
+    enabled: v.boolean(),
+  },
+  returns: classValidator,
+  handler: async (ctx, args) => {
+    await rateLimiter.limit(ctx, "classUpdate", { key: ctx.userId, throws: true });
+    await ctx.require("class:update");
+
+    let pointsPublicSlug = ctx.classDoc.pointsPublicSlug;
+    if (args.enabled && pointsPublicSlug === undefined) {
+      pointsPublicSlug = await generateUniquePointsPublicSlug(ctx);
+    }
+
+    await ctx.db.patch("classes", ctx.classDoc._id, {
+      pointsPublicEnabled: args.enabled,
+      ...(pointsPublicSlug !== undefined ? { pointsPublicSlug } : {}),
+      updatedAt: Date.now(),
+    });
+    const updated = await ctx.db.get("classes", ctx.classDoc._id);
+    if (!updated) {
+      throw new Error("Failed to update public points display");
+    }
+    await recordClassActivity(ctx, {
+      classId: ctx.classDoc._id,
+      actorUserId: ctx.userId,
+      action: "update",
+      resourceType: "class",
+      resourceId: ctx.classDoc._id,
+      summary: args.enabled
+        ? `Enabled public points display for "${ctx.classDoc.name}"`
+        : `Disabled public points display for "${ctx.classDoc.name}"`,
+      summaryKey: args.enabled
+        ? "activitySummary_enabledPointsPublicDisplay"
+        : "activitySummary_disabledPointsPublicDisplay",
+      metadata: { name: ctx.classDoc.name, enabled: String(args.enabled) },
     });
     return withClassDefaults(updated);
   },

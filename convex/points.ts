@@ -3,7 +3,7 @@ import { ConvexError, v } from "convex/values";
 import { APP_CONFIG } from "./appConfig.js";
 import { components } from "./_generated/api.js";
 import type { Doc, Id } from "./_generated/dataModel.js";
-import type { MutationCtx, QueryCtx } from "./_generated/server.js";
+import { query, type MutationCtx, type QueryCtx } from "./_generated/server.js";
 import { classScope } from "./lib/authzModel.js";
 import {
   getNewestActivityRevision,
@@ -34,6 +34,7 @@ import {
   effectivePurchaseLimitForReward,
   isTimestampInPurchaseLimitWindow,
   purchaseLimitPoolKey,
+  purchaseLimitValidator,
   purchaseLimitWindow,
   rewardPurchaseLimitStatusValidator,
 } from "./lib/purchaseLimit.js";
@@ -42,6 +43,7 @@ import { resolveUserImageUrl } from "./lib/userImage.js";
 
 const DATE_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
 const MAX_QUANTITY = 999;
+const POINTS_PUBLIC_SLUG_MAX_LENGTH = 29;
 const MAX_STUDENTS_PER_APPLY = 200;
 const MAX_ITEMS_PER_APPLY = 50;
 const MAX_APPLICATION_NOTE_LENGTH = 500;
@@ -1201,5 +1203,88 @@ export const clearWarnings = classMutation({
     });
 
     return null;
+  },
+});
+
+const publicBoardStudentValidator = v.object({
+  rosterNumber: v.number(),
+  pointsBalance: v.number(),
+});
+
+const publicBoardRewardValidator = v.object({
+  name: v.string(),
+  description: v.optional(v.string()),
+  icon: v.optional(v.string()),
+  points: v.number(),
+  purchaseLimit: v.optional(purchaseLimitValidator),
+});
+
+const publicBoardValidator = v.object({
+  className: v.string(),
+  students: v.array(publicBoardStudentValidator),
+  rewards: v.array(publicBoardRewardValidator),
+});
+
+/**
+ * Soft-auth public points display. Returns null when the slug is missing/disabled.
+ * Abuse control is slug entropy; payload is intentionally anonymous (no names/userIds).
+ */
+export const getPublicBoard = query({
+  args: {
+    publicSlug: v.string(),
+  },
+  returns: v.union(publicBoardValidator, v.null()),
+  handler: async (ctx, args) => {
+    const publicSlug = args.publicSlug.trim();
+    if (!publicSlug || publicSlug.length > POINTS_PUBLIC_SLUG_MAX_LENGTH) {
+      return null;
+    }
+
+    const classDoc = await ctx.db
+      .query("classes")
+      .withIndex("by_pointsPublicSlug", (q) => q.eq("pointsPublicSlug", publicSlug))
+      .unique();
+    if (!classDoc || classDoc.pointsPublicEnabled !== true) {
+      return null;
+    }
+
+    const classId = classDoc._id;
+
+    // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded roster
+    const rosterRows = await ctx.db
+      .query("studentRosters")
+      .withIndex("by_classId_rosterNumber", (q) => q.eq("classId", classId))
+      .collect();
+
+    const students = rosterRows
+      .slice()
+      .sort((a, b) => a.rosterNumber - b.rosterNumber)
+      .map((row) => ({
+        rosterNumber: row.rosterNumber,
+        pointsBalance: readRosterPointCounters(row).pointsBalance,
+      }));
+
+    // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded rewards catalog
+    const rewardDocs = await ctx.db
+      .query("rewards")
+      .withIndex("by_classId", (q) => q.eq("classId", classId))
+      .collect();
+
+    const rewards = rewardDocs
+      .slice()
+      .sort((a, b) => a.name.localeCompare(b.name) || a._creationTime - b._creationTime)
+      .map((reward) => ({
+        name: reward.name,
+        ...(reward.description !== undefined ? { description: reward.description } : {}),
+        ...(reward.icon !== undefined ? { icon: reward.icon } : {}),
+        points: reward.points,
+        ...(reward.purchaseLimit !== undefined ? { purchaseLimit: reward.purchaseLimit } : {}),
+      }));
+
+    return {
+      className: classDoc.name,
+      students,
+      rewards,
+    };
   },
 });

@@ -19,6 +19,7 @@ import { Route as PublicSplatRouteImport } from "./routes/_public/$";
 import { Route as PublicLoginRouteImport } from "./routes/_public/login";
 import { Route as PublicUnauthorizedRouteImport } from "./routes/_public/unauthorized";
 import { Route as APublicSlugRouteImport } from "./routes/a.$publicSlug";
+import { Route as PPublicSlugRouteImport } from "./routes/p.$publicSlug";
 import { Route as AuthenticatedAppIndexRouteImport } from "./routes/_authenticated/_app/index";
 import { Route as AuthenticatedAppAccountRouteImport } from "./routes/_authenticated/_app/account";
 import { Route as AuthenticatedAppBillingRouteImport } from "./routes/_authenticated/_app/billing";
@@ -102,6 +103,11 @@ const PublicUnauthorizedRoute = PublicUnauthorizedRouteImport.update({
 const APublicSlugRoute = APublicSlugRouteImport.update({
   id: "/a/$publicSlug",
   path: "/a/$publicSlug",
+  getParentRoute: () => rootRouteImport,
+} as any);
+const PPublicSlugRoute = PPublicSlugRouteImport.update({
+  id: "/p/$publicSlug",
+  path: "/p/$publicSlug",
   getParentRoute: () => rootRouteImport,
 } as any);
 const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
@@ -332,6 +338,7 @@ export interface FileRoutesByFullPath {
   "/login": typeof PublicLoginRoute;
   "/unauthorized": typeof PublicUnauthorizedRoute;
   "/a/$publicSlug": typeof APublicSlugRoute;
+  "/p/$publicSlug": typeof PPublicSlugRoute;
   "/account": typeof AuthenticatedAppAccountRoute;
   "/billing": typeof AuthenticatedAppBillingRoute;
   "/feedback": typeof AuthenticatedAppFeedbackRoute;
@@ -377,6 +384,7 @@ export interface FileRoutesByTo {
   "/login": typeof PublicLoginRoute;
   "/unauthorized": typeof PublicUnauthorizedRoute;
   "/a/$publicSlug": typeof APublicSlugRoute;
+  "/p/$publicSlug": typeof PPublicSlugRoute;
   "/account": typeof AuthenticatedAppAccountRoute;
   "/billing": typeof AuthenticatedAppBillingRoute;
   "/feedback": typeof AuthenticatedAppFeedbackRoute;
@@ -425,6 +433,7 @@ export interface FileRoutesById {
   "/_public/login": typeof PublicLoginRoute;
   "/_public/unauthorized": typeof PublicUnauthorizedRoute;
   "/a/$publicSlug": typeof APublicSlugRoute;
+  "/p/$publicSlug": typeof PPublicSlugRoute;
   "/_authenticated/_app/account": typeof AuthenticatedAppAccountRoute;
   "/_authenticated/_app/billing": typeof AuthenticatedAppBillingRoute;
   "/_authenticated/_app/feedback": typeof AuthenticatedAppFeedbackRoute;
@@ -474,6 +483,7 @@ export interface FileRouteTypes {
     | "/login"
     | "/unauthorized"
     | "/a/$publicSlug"
+    | "/p/$publicSlug"
     | "/account"
     | "/billing"
     | "/feedback"
@@ -519,6 +529,7 @@ export interface FileRouteTypes {
     | "/login"
     | "/unauthorized"
     | "/a/$publicSlug"
+    | "/p/$publicSlug"
     | "/account"
     | "/billing"
     | "/feedback"
@@ -566,6 +577,7 @@ export interface FileRouteTypes {
     | "/_public/login"
     | "/_public/unauthorized"
     | "/a/$publicSlug"
+    | "/p/$publicSlug"
     | "/_authenticated/_app/account"
     | "/_authenticated/_app/billing"
     | "/_authenticated/_app/feedback"
@@ -611,6 +623,7 @@ export interface RootRouteChildren {
   PublicRouteRoute: typeof PublicRouteRouteWithChildren;
   JoinDisplayRoute: typeof JoinDisplayRoute;
   APublicSlugRoute: typeof APublicSlugRoute;
+  PPublicSlugRoute: typeof PPublicSlugRoute;
 }
 
 declare module "@tanstack/react-router" {
@@ -683,6 +696,13 @@ declare module "@tanstack/react-router" {
       path: "/a/$publicSlug";
       fullPath: "/a/$publicSlug";
       preLoaderRoute: typeof APublicSlugRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/p/$publicSlug": {
+      id: "/p/$publicSlug";
+      path: "/p/$publicSlug";
+      fullPath: "/p/$publicSlug";
+      preLoaderRoute: typeof PPublicSlugRouteImport;
       parentRoute: typeof rootRouteImport;
     };
     "/_authenticated/_app/": {
@@ -1131,6 +1151,7 @@ const rootRouteChildren: RootRouteChildren = {
   PublicRouteRoute: PublicRouteRouteWithChildren,
   JoinDisplayRoute: JoinDisplayRoute,
   APublicSlugRoute: APublicSlugRoute,
+  PPublicSlugRoute: PPublicSlugRoute,
 };
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
