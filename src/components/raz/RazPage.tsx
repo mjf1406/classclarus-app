@@ -20,8 +20,9 @@ import { useRazInitialLevels } from "@/hooks/raz/useRazInitialLevels";
 import { useStudentRoster } from "@/hooks/roster/useStudentRoster";
 import type { Id } from "../../../convex/_generated/dataModel";
 
-const ASSESS_URL = "https://www.raz-plus.com/learninga-z-levels/assessing-a-students-level/";
-const CHART_URL = "https://www.raz-kids.com/main/ViewPage/name/level-correlation-chart/";
+const ASSESS_URL =
+  "https://www.raz-kids.com/main/AssessmentResources/assessmentCategory/read-retell-respond";
+const CHART_URL = "https://www.raz-kids.com/main/ViewPage/name/level-correlation-chart";
 
 type RazPageProps = {
   classId: Id<"classes">;
