@@ -952,6 +952,9 @@ const de = {
     rosterColumnGender: "Geschlecht",
     rosterColumnPronouns: "Pronomen",
     rosterColumnActions: "Aktionen",
+    rosterColumnExpand: "Erweitern",
+    rosterExpandRow: "Zeile erweitern",
+    rosterCollapseRow: "Zeile einklappen",
     rosterHideColumn: "Spalte ausblenden",
     rosterShowColumn: "Spalte einblenden",
     rosterColumnsMenu: "Spalten",
@@ -2016,6 +2019,9 @@ const de = {
     cancel: "Abbrechen",
     saveAssessment: "Bewertung speichern",
     assessmentSaveFailed: "RAZ-Bewertung konnte nicht gespeichert werden.",
+    historyEmpty: "Noch keine Bewertungen erfasst.",
+    historyExpandAria: "Bewertungsverlauf für {{name}} anzeigen",
+    historyCollapseAria: "Bewertungsverlauf für {{name}} ausblenden",
   },
 } as const;
 

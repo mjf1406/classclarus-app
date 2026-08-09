@@ -943,6 +943,9 @@ const nl = {
     rosterColumnGender: "Gender",
     rosterColumnPronouns: "Voornaamwoorden",
     rosterColumnActions: "Acties",
+    rosterColumnExpand: "Uitklappen",
+    rosterExpandRow: "Rij uitklappen",
+    rosterCollapseRow: "Rij inklappen",
     rosterHideColumn: "Kolom verbergen",
     rosterShowColumn: "Kolom tonen",
     rosterColumnsMenu: "Kolommen",
@@ -1998,6 +2001,9 @@ const nl = {
     cancel: "Annuleren",
     saveAssessment: "Beoordeling opslaan",
     assessmentSaveFailed: "RAZ-beoordeling kon niet worden opgeslagen.",
+    historyEmpty: "Nog geen beoordelingen vastgelegd.",
+    historyExpandAria: "Beoordelingsgeschiedenis van {{name}} tonen",
+    historyCollapseAria: "Beoordelingsgeschiedenis van {{name}} verbergen",
   },
 } as const;
 

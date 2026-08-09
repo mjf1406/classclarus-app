@@ -34,3 +34,15 @@ export type RazInitialLevelEntry = {
   scheduleAnchorAt: number;
   manualStatus: RazManualStatus | null;
 };
+
+export type RazAssessmentEntry = {
+  _id: string;
+  studentUserId: string;
+  assessedAt: number;
+  readAccuracy: number;
+  retellScore: number | null;
+  respondScore: number;
+  result: "level_up" | "stay" | "level_down";
+  level: string;
+  note: string | null;
+};

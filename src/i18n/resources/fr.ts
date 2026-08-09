@@ -961,6 +961,9 @@ const fr = {
     rosterColumnGender: "Genre",
     rosterColumnPronouns: "Pronoms",
     rosterColumnActions: "Actions",
+    rosterColumnExpand: "Développer",
+    rosterExpandRow: "Développer la ligne",
+    rosterCollapseRow: "Réduire la ligne",
     rosterHideColumn: "Masquer la colonne",
     rosterShowColumn: "Afficher la colonne",
     rosterColumnsMenu: "Colonnes",
@@ -2026,6 +2029,9 @@ const fr = {
     cancel: "Annuler",
     saveAssessment: "Enregistrer l’évaluation",
     assessmentSaveFailed: "Impossible d’enregistrer l’évaluation RAZ.",
+    historyEmpty: "Aucune évaluation enregistrée pour le moment.",
+    historyExpandAria: "Afficher l’historique des évaluations de {{name}}",
+    historyCollapseAria: "Masquer l’historique des évaluations de {{name}}",
   },
 } as const;
 

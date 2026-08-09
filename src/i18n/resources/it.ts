@@ -951,6 +951,9 @@ const it = {
     rosterColumnGender: "Genere",
     rosterColumnPronouns: "Pronomi",
     rosterColumnActions: "Azioni",
+    rosterColumnExpand: "Espandi",
+    rosterExpandRow: "Espandi riga",
+    rosterCollapseRow: "Comprimi riga",
     rosterHideColumn: "Nascondi colonna",
     rosterShowColumn: "Mostra colonna",
     rosterColumnsMenu: "Colonne",
@@ -2009,6 +2012,9 @@ const it = {
     cancel: "Annulla",
     saveAssessment: "Salva valutazione",
     assessmentSaveFailed: "Impossibile salvare la valutazione RAZ.",
+    historyEmpty: "Nessuna valutazione registrata ancora.",
+    historyExpandAria: "Mostra cronologia valutazioni di {{name}}",
+    historyCollapseAria: "Nascondi cronologia valutazioni di {{name}}",
   },
 } as const;
 

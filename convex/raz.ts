@@ -36,6 +36,17 @@ const levelEntryValidator = v.object({
   manualStatus: v.union(razManualStatusValidator, v.null()),
 });
 
+const assessmentEntryValidator = v.object({
+  _id: v.id("razAssessments"),
+  studentUserId: v.id("users"),
+  assessedAt: v.number(),
+  readAccuracy: v.number(),
+  retellScore: v.union(v.number(), v.null()),
+  respondScore: v.number(),
+  result: razResultValidator,
+  level: v.string(),
+  note: v.union(v.string(), v.null()),
+});
 async function listStudentUserIds(
   ctx: QueryCtx | MutationCtx,
   classId: Id<"classes">,
@@ -99,6 +110,39 @@ export const listInitialLevels = classQuery({
         manualStatus: row.manualStatus ?? null,
       };
     });
+  },
+});
+
+/**
+ * Sparse list of recorded RAZ assessments for the class (newest first).
+ * Classroom-bounded; used for per-student history under expanded roster rows.
+ */
+export const listAssessments = classQuery({
+  args: {},
+  returns: v.array(assessmentEntryValidator),
+  handler: async (ctx) => {
+    await ctx.require("raz:read");
+    const classId = ctx.classDoc._id;
+
+    // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded RAZ assessments
+    const rows = await ctx.db
+      .query("razAssessments")
+      .withIndex("by_classId", (q) => q.eq("classId", classId))
+      .collect();
+
+    rows.sort((a, b) => b.assessedAt - a.assessedAt);
+
+    return rows.map((row) => ({
+      _id: row._id,
+      studentUserId: row.studentUserId,
+      assessedAt: row.assessedAt,
+      readAccuracy: row.readAccuracy,
+      retellScore: row.retellScore ?? null,
+      respondScore: row.respondScore,
+      result: row.result,
+      level: row.level,
+      note: row.note ?? null,
+    }));
   },
 });
 

@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { DataTableSortableHeader } from "@/components/feedback/DataTableSortableHeader";
+import { RazAssessmentHistoryTable } from "@/components/raz/RazAssessmentHistoryTable";
 import {
   RazRecordAssessmentCredenza,
   type RazRecordAssessmentStudent,
@@ -50,6 +51,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useMemberSearch } from "@/hooks/members/useMemberSearch";
 import { useCan } from "@/hooks/permissions/useCan";
+import { useRazAssessments } from "@/hooks/raz/useRazAssessments";
 import { useRazInitialLevels } from "@/hooks/raz/useRazInitialLevels";
 import { useRecordRazAssessment } from "@/hooks/raz/useRecordRazAssessment";
 import { useSetRazManualStatus } from "@/hooks/raz/useSetRazManualStatus";
@@ -176,6 +178,12 @@ export function RazPage({ classId }: RazPageProps) {
     refetch: refetchLevels,
   } = useRazInitialLevels(classId);
   const {
+    data: assessments,
+    isPending: assessmentsPending,
+    isError: assessmentsError,
+    refetch: refetchAssessments,
+  } = useRazAssessments(classId);
+  const {
     data: roster,
     isPending: rosterPending,
     isError: rosterError,
@@ -212,6 +220,19 @@ export function RazPage({ classId }: RazPageProps) {
     }
     return map;
   }, [levels]);
+
+  const assessmentsByStudent = useMemo(() => {
+    const map = new Map<string, NonNullable<typeof assessments>>();
+    for (const assessment of assessments ?? []) {
+      const list = map.get(assessment.studentUserId);
+      if (list) {
+        list.push(assessment);
+      } else {
+        map.set(assessment.studentUserId, [assessment]);
+      }
+    }
+    return map;
+  }, [assessments]);
 
   const statusByStudent = useMemo(() => {
     const map = new Map<string, RazDisplayStatus[]>();
@@ -530,6 +551,7 @@ export function RazPage({ classId }: RazPageProps) {
   const loading =
     permissionsPending ||
     levelsPending ||
+    assessmentsPending ||
     (canReadStudents && rosterPending && roster === undefined);
 
   const showSearch =
@@ -551,7 +573,7 @@ export function RazPage({ classId }: RazPageProps) {
     );
   }
 
-  if (levelsError || (canReadStudents && rosterError)) {
+  if (levelsError || assessmentsError || (canReadStudents && rosterError)) {
     return (
       <div className="px-4 py-8 sm:px-8">
         <ErrorState
@@ -559,6 +581,7 @@ export function RazPage({ classId }: RazPageProps) {
           description={t("loadFailedDescription")}
           onRetry={() => {
             void refetchLevels();
+            void refetchAssessments();
             if (canReadStudents) void refetchRoster();
           }}
         />
@@ -698,6 +721,17 @@ export function RazPage({ classId }: RazPageProps) {
               columnOrder={columnOrder}
               columnVisibility={columnVisibility}
               extraColumns={extraColumns}
+              expandRowLabel={(student, expanded) => {
+                const name = getRosterDisplayName(student, unnamed, nameFormat);
+                return expanded
+                  ? t("historyCollapseAria", { name })
+                  : t("historyExpandAria", { name });
+              }}
+              renderExpandedRow={(student) => (
+                <RazAssessmentHistoryTable
+                  assessments={assessmentsByStudent.get(student.userId) ?? []}
+                />
+              )}
             />
           )}
         </div>

@@ -936,6 +936,9 @@ const ja = {
     rosterColumnGender: "性別",
     rosterColumnPronouns: "代名詞",
     rosterColumnActions: "操作",
+    rosterColumnExpand: "展開",
+    rosterExpandRow: "行を展開",
+    rosterCollapseRow: "行を折りたたむ",
     rosterHideColumn: "列を非表示",
     rosterShowColumn: "列を表示",
     rosterColumnsMenu: "列",
@@ -1971,6 +1974,9 @@ const ja = {
     cancel: "キャンセル",
     saveAssessment: "アセスメントを保存",
     assessmentSaveFailed: "RAZアセスメントを保存できませんでした。",
+    historyEmpty: "アセスメントはまだありません。",
+    historyExpandAria: "{{name}}のアセスメント履歴を表示",
+    historyCollapseAria: "{{name}}のアセスメント履歴を隠す",
   },
 } as const;
 

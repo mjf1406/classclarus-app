@@ -943,6 +943,9 @@ const ru = {
     rosterColumnGender: "Гендер",
     rosterColumnPronouns: "Местоимения",
     rosterColumnActions: "Действия",
+    rosterColumnExpand: "Развернуть",
+    rosterExpandRow: "Развернуть строку",
+    rosterCollapseRow: "Свернуть строку",
     rosterHideColumn: "Скрыть столбец",
     rosterShowColumn: "Показать столбец",
     rosterColumnsMenu: "Столбцы",
@@ -1987,6 +1990,9 @@ const ru = {
     cancel: "Отмена",
     saveAssessment: "Сохранить оценку",
     assessmentSaveFailed: "Не удалось сохранить оценку RAZ.",
+    historyEmpty: "Оценок пока нет.",
+    historyExpandAria: "Показать историю оценок для {{name}}",
+    historyCollapseAria: "Скрыть историю оценок для {{name}}",
   },
 } as const;
 

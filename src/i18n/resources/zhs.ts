@@ -907,6 +907,9 @@ const zhs = {
     rosterColumnGender: "性别",
     rosterColumnPronouns: "代词",
     rosterColumnActions: "操作",
+    rosterColumnExpand: "展开",
+    rosterExpandRow: "展开行",
+    rosterCollapseRow: "收起行",
     rosterHideColumn: "隐藏列",
     rosterShowColumn: "显示列",
     rosterColumnsMenu: "列",
@@ -1915,6 +1918,9 @@ const zhs = {
     cancel: "取消",
     saveAssessment: "保存评估",
     assessmentSaveFailed: "无法保存 RAZ 评估。",
+    historyEmpty: "尚无评估记录。",
+    historyExpandAria: "显示{{name}}的评估历史",
+    historyCollapseAria: "隐藏{{name}}的评估历史",
   },
 } as const;
 

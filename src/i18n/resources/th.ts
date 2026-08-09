@@ -908,6 +908,9 @@ const th = {
     rosterColumnGender: "เพศ",
     rosterColumnPronouns: "สรรพนาม",
     rosterColumnActions: "การดำเนินการ",
+    rosterColumnExpand: "ขยาย",
+    rosterExpandRow: "ขยายแถว",
+    rosterCollapseRow: "ยุบแถว",
     rosterHideColumn: "ซ่อนคอลัมน์",
     rosterShowColumn: "แสดงคอลัมน์",
     rosterColumnsMenu: "คอลัมน์",
@@ -1918,6 +1921,9 @@ const th = {
     cancel: "ยกเลิก",
     saveAssessment: "บันทึกการประเมิน",
     assessmentSaveFailed: "ไม่สามารถบันทึกการประเมิน RAZ ได้",
+    historyEmpty: "ยังไม่มีการบันทึกการประเมิน",
+    historyExpandAria: "แสดงประวัติการประเมินของ {{name}}",
+    historyCollapseAria: "ซ่อนประวัติการประเมินของ {{name}}",
   },
 } as const;
 

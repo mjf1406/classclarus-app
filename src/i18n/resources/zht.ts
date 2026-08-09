@@ -907,6 +907,9 @@ const zht = {
     rosterColumnGender: "性別",
     rosterColumnPronouns: "代名詞",
     rosterColumnActions: "操作",
+    rosterColumnExpand: "展開",
+    rosterExpandRow: "展開列",
+    rosterCollapseRow: "收合列",
     rosterHideColumn: "隱藏欄",
     rosterShowColumn: "顯示欄",
     rosterColumnsMenu: "欄",
@@ -1915,6 +1918,9 @@ const zht = {
     cancel: "取消",
     saveAssessment: "儲存評估",
     assessmentSaveFailed: "無法儲存 RAZ 評估。",
+    historyEmpty: "尚無評估紀錄。",
+    historyExpandAria: "顯示{{name}}的評估歷史",
+    historyCollapseAria: "隱藏{{name}}的評估歷史",
   },
 } as const;
 

@@ -923,6 +923,9 @@ const ko = {
     rosterColumnGender: "성별",
     rosterColumnPronouns: "대명사",
     rosterColumnActions: "작업",
+    rosterColumnExpand: "펼치기",
+    rosterExpandRow: "행 펼치기",
+    rosterCollapseRow: "행 접기",
     rosterHideColumn: "열 숨기기",
     rosterShowColumn: "열 표시",
     rosterColumnsMenu: "열",
@@ -1946,6 +1949,9 @@ const ko = {
     cancel: "취소",
     saveAssessment: "평가 저장",
     assessmentSaveFailed: "RAZ 평가를 저장할 수 없습니다.",
+    historyEmpty: "아직 기록된 평가가 없습니다.",
+    historyExpandAria: "{{name}}의 평가 기록 보기",
+    historyCollapseAria: "{{name}}의 평가 기록 숨기기",
   },
 } as const;
 

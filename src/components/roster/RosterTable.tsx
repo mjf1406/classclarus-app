@@ -20,18 +20,27 @@ import { CSS } from "@dnd-kit/utilities";
 import {
   flexRender,
   getCoreRowModel,
+  getExpandedRowModel,
   getSortedRowModel,
   useReactTable,
   type Column,
   type ColumnDef,
   type ColumnOrderState,
+  type ExpandedState,
   type SortingFn,
   type SortingState,
   type VisibilityState,
 } from "@tanstack/react-table";
-import { EyeIcon, EyeOffIcon, GripVerticalIcon } from "lucide-react";
+import {
+  ChevronDownIcon,
+  ChevronRightIcon,
+  EyeIcon,
+  EyeOffIcon,
+  GripVerticalIcon,
+} from "lucide-react";
 import {
   createContext,
+  Fragment,
   useCallback,
   useContext,
   useMemo,
@@ -165,6 +174,13 @@ export type RosterTableProps = {
   /** Appended after base roster columns (before actions). */
   extraColumns?: ColumnDef<StudentRosterEntry, unknown>[];
   renderRowActions?: (ctx: RosterRowActionsContext) => ReactNode;
+  /**
+   * When set, each row becomes expandable. Renders a full-width sub-row
+   * under the student (e.g. assessment history on the RAZ page).
+   */
+  renderExpandedRow?: (student: StudentRosterEntry) => ReactNode;
+  /** Accessible label for the expand/collapse control. */
+  expandRowLabel?: (student: StudentRosterEntry, expanded: boolean) => string;
 };
 
 function LastNameCell({ student }: { student: StudentRosterEntry }) {
@@ -348,15 +364,26 @@ function SortableHeaderCell({
   );
 }
 
+const ROW_TOGGLE_IGNORE_SELECTOR =
+  'button, a, input, select, textarea, label, [role="button"], [role="combobox"], [role="menuitem"], [role="option"], [contenteditable="true"]';
+
 function SortableBodyRow({
   id,
   tableEditMode,
   rowEditActive,
+  expandable,
+  expanded,
+  expandLabel,
+  onToggleExpand,
   children,
 }: {
   id: string;
   tableEditMode: boolean;
   rowEditActive: boolean;
+  expandable?: boolean;
+  expanded?: boolean;
+  expandLabel?: string;
+  onToggleExpand?: () => void;
   children: (dragHandle: {
     attributes: ReturnType<typeof useSortable>["attributes"];
     listeners: ReturnType<typeof useSortable>["listeners"];
@@ -378,6 +405,34 @@ function SortableBodyRow({
         opacity: isDragging ? 0.7 : 1,
       }}
       data-dragging={isDragging || undefined}
+      data-state={expandable && expanded ? "selected" : undefined}
+      aria-expanded={expandable ? expanded : undefined}
+      aria-label={expandable ? expandLabel : undefined}
+      tabIndex={expandable ? 0 : undefined}
+      className={expandable ? "cursor-pointer" : undefined}
+      onClick={
+        expandable && onToggleExpand
+          ? (event) => {
+              const target = event.target;
+              if (!(target instanceof Element)) return;
+              if (target.closest(ROW_TOGGLE_IGNORE_SELECTOR)) return;
+              onToggleExpand();
+            }
+          : undefined
+      }
+      onKeyDown={
+        expandable && onToggleExpand
+          ? (event) => {
+              if (event.key !== "Enter" && event.key !== " ") return;
+              const target = event.target;
+              if (!(target instanceof Element)) return;
+              // Only handle when the row itself (not a nested control) has focus.
+              if (target !== event.currentTarget) return;
+              event.preventDefault();
+              onToggleExpand();
+            }
+          : undefined
+      }
     >
       {children({ attributes, listeners, showHandle: !disabled })}
     </TableRow>
@@ -420,11 +475,14 @@ export function RosterTable({
   onSaveRow,
   extraColumns,
   renderRowActions,
+  renderExpandedRow,
+  expandRowLabel,
 }: RosterTableProps) {
   const { t } = useTranslation("classes");
   const [editingUserId, setEditingUserId] = useState<Id<"users"> | null>(null);
   const [draft, setDraft] = useState<RowDraft | null>(null);
   const [sorting, setSorting] = useState<SortingState>(DEFAULT_SORTING);
+  const [expanded, setExpanded] = useState<ExpandedState>({});
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -434,6 +492,7 @@ export function RosterTable({
   const dash = t("rosterUnset");
   const rowEditLocksDnD = editingUserId !== null;
   const showActions = renderRowActions != null;
+  const showExpand = renderExpandedRow != null && !tableEditMode;
   const extraColumnIds = useMemo(
     () => (extraColumns ?? []).map((column, index) => column.id ?? `extra-${index}`),
     [extraColumns],
@@ -502,17 +561,24 @@ export function RosterTable({
     for (const id of extraColumnIds) {
       state[id] = true;
     }
+    if (showExpand) {
+      state.expand = true;
+    }
     if (showActions) {
       state.actions = true;
     }
     return state;
-  }, [columnVisibility, tableEditMode, extraColumnIds, showActions]);
+  }, [columnVisibility, tableEditMode, extraColumnIds, showExpand, showActions]);
 
   const effectiveOrder = useMemo((): ColumnOrderState => {
-    const order: ColumnOrderState = [...columnOrder, ...extraColumnIds];
+    const order: ColumnOrderState = [
+      ...(showExpand ? (["expand"] as const) : []),
+      ...columnOrder,
+      ...extraColumnIds,
+    ];
     if (showActions) order.push("actions");
     return order;
-  }, [columnOrder, extraColumnIds, showActions]);
+  }, [columnOrder, extraColumnIds, showExpand, showActions]);
 
   const columns = useMemo((): ColumnDef<StudentRosterEntry>[] => {
     const headerLabel = (label: string, column: Column<StudentRosterEntry, unknown>) =>
@@ -533,6 +599,37 @@ export function RosterTable({
       }
       return t(pronounLabelKey(student.pronouns));
     };
+
+    const expandColumn: ColumnDef<StudentRosterEntry> | null = showExpand
+      ? {
+          id: "expand",
+          header: () => <span className="sr-only">{t("rosterColumnExpand")}</span>,
+          enableHiding: false,
+          enableSorting: false,
+          cell: ({ row }) => {
+            const expanded = row.getIsExpanded();
+            const label =
+              expandRowLabel?.(row.original, expanded) ??
+              (expanded ? t("rosterCollapseRow") : t("rosterExpandRow"));
+            return (
+              <Button
+                type="button"
+                size="icon-xs"
+                variant="ghost"
+                aria-expanded={expanded}
+                aria-label={label}
+                onClick={() => row.toggleExpanded()}
+              >
+                {expanded ? (
+                  <ChevronDownIcon className="size-4" aria-hidden />
+                ) : (
+                  <ChevronRightIcon className="size-4" aria-hidden />
+                )}
+              </Button>
+            );
+          },
+        }
+      : null;
 
     const base: ColumnDef<StudentRosterEntry>[] = [
       {
@@ -627,13 +724,14 @@ export function RosterTable({
       } as ColumnDef<StudentRosterEntry, unknown>;
     });
 
+    const withExtras = [...(expandColumn ? [expandColumn] : []), ...base, ...extras];
+
     if (!showActions || !renderRowActions) {
-      return [...base, ...extras];
+      return withExtras;
     }
 
     return [
-      ...base,
-      ...extras,
+      ...withExtras,
       {
         id: "actions",
         header: t("rosterColumnActions"),
@@ -644,7 +742,7 @@ export function RosterTable({
         ),
       },
     ];
-  }, [t, extraColumns, showActions, renderRowActions, tableEditMode]);
+  }, [t, extraColumns, showActions, showExpand, renderRowActions, expandRowLabel, tableEditMode]);
 
   const table = useReactTable({
     data,
@@ -653,10 +751,14 @@ export function RosterTable({
       columnOrder: effectiveOrder,
       columnVisibility: effectiveVisibility,
       sorting: tableEditMode ? [] : sorting,
+      expanded: showExpand ? expanded : {},
     },
     onSortingChange: setSorting,
+    onExpandedChange: setExpanded,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
+    getRowCanExpand: () => showExpand,
     getRowId: (row) => row.userId,
     enableSorting: !tableEditMode,
   });
@@ -771,37 +873,57 @@ export function RosterTable({
           <SortableContext items={rowIds} strategy={verticalListSortingStrategy}>
             {table.getRowModel().rows.length ? (
               table.getRowModel().rows.map((row) => (
-                <SortableBodyRow
-                  key={row.id}
-                  id={row.id}
-                  tableEditMode={tableEditMode}
-                  rowEditActive={rowEditLocksDnD}
-                >
-                  {({ attributes, listeners, showHandle }) =>
-                    row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {cell.column.id === "rosterNumber" ? (
-                          <div className="flex items-center gap-2 tabular-nums">
-                            {showHandle ? (
-                              <button
-                                type="button"
-                                className="inline-flex cursor-grab touch-none text-muted-foreground active:cursor-grabbing"
-                                aria-label={t("rosterDragRow")}
-                                {...attributes}
-                                {...listeners}
-                              >
-                                <GripVerticalIcon className="size-4" aria-hidden />
-                              </button>
-                            ) : null}
-                            <span>{row.original.rosterNumber}</span>
-                          </div>
-                        ) : (
-                          flexRender(cell.column.columnDef.cell, cell.getContext())
-                        )}
+                <Fragment key={row.id}>
+                  <SortableBodyRow
+                    id={row.id}
+                    tableEditMode={tableEditMode}
+                    rowEditActive={rowEditLocksDnD}
+                    expandable={showExpand}
+                    expanded={row.getIsExpanded()}
+                    expandLabel={
+                      showExpand
+                        ? (expandRowLabel?.(row.original, row.getIsExpanded()) ??
+                          (row.getIsExpanded() ? t("rosterCollapseRow") : t("rosterExpandRow")))
+                        : undefined
+                    }
+                    onToggleExpand={showExpand ? () => row.toggleExpanded() : undefined}
+                  >
+                    {({ attributes, listeners, showHandle }) =>
+                      row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id}>
+                          {cell.column.id === "rosterNumber" ? (
+                            <div className="flex items-center gap-2 tabular-nums">
+                              {showHandle ? (
+                                <button
+                                  type="button"
+                                  className="inline-flex cursor-grab touch-none text-muted-foreground active:cursor-grabbing"
+                                  aria-label={t("rosterDragRow")}
+                                  {...attributes}
+                                  {...listeners}
+                                >
+                                  <GripVerticalIcon className="size-4" aria-hidden />
+                                </button>
+                              ) : null}
+                              <span>{row.original.rosterNumber}</span>
+                            </div>
+                          ) : (
+                            flexRender(cell.column.columnDef.cell, cell.getContext())
+                          )}
+                        </TableCell>
+                      ))
+                    }
+                  </SortableBodyRow>
+                  {showExpand && row.getIsExpanded() && renderExpandedRow ? (
+                    <TableRow className="hover:bg-transparent">
+                      <TableCell
+                        colSpan={Math.max(row.getVisibleCells().length, 1)}
+                        className="bg-muted/30 p-3"
+                      >
+                        {renderExpandedRow(row.original)}
                       </TableCell>
-                    ))
-                  }
-                </SortableBodyRow>
+                    </TableRow>
+                  ) : null}
+                </Fragment>
               ))
             ) : (
               <TableRow>

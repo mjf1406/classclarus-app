@@ -5,10 +5,11 @@ import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { shouldAutoSetRazRti } from "../../../convex/lib/razAutoRti";
 import { toast } from "@/components/ui/toast-manager";
+import { razAssessmentsQueryKey } from "@/hooks/raz/useRazAssessments";
 import { razInitialLevelsQueryKey } from "@/hooks/raz/useRazInitialLevels";
 import { useOptimisticMutation } from "@/hooks/useOptimisticMutation";
 import { messageFromError } from "@/lib/errors/convexError";
-import type { RazInitialLevelEntry } from "@/lib/raz/levels";
+import type { RazAssessmentEntry, RazInitialLevelEntry } from "@/lib/raz/levels";
 import type { RazAssessmentResult } from "@/lib/raz/scoreRecommendation";
 
 export type RecordRazAssessmentArgs = {
@@ -23,7 +24,7 @@ export type RecordRazAssessmentArgs = {
   note?: string;
 };
 
-/** gcTime: N/A (mutation). Patches levels query (ONE_HOUR). */
+/** gcTime: N/A (mutation). Patches levels + assessments queries (ONE_HOUR). */
 export function useRecordRazAssessment() {
   const { t } = useTranslation("raz");
   const { t: tCommon } = useTranslation("common");
@@ -42,10 +43,13 @@ export function useRecordRazAssessment() {
         level: args.level,
         note: args.note,
       }),
-    queryKeys: (args) => [razInitialLevelsQueryKey(args.classId)],
+    queryKeys: (args) => [
+      razInitialLevelsQueryKey(args.classId),
+      razAssessmentsQueryKey(args.classId),
+    ],
     applyOptimisticUpdate: (queryClient, args) => {
-      const key = razInitialLevelsQueryKey(args.classId);
-      queryClient.setQueryData<RazInitialLevelEntry[]>(key, (old) => {
+      const levelsKey = razInitialLevelsQueryKey(args.classId);
+      queryClient.setQueryData<RazInitialLevelEntry[]>(levelsKey, (old) => {
         if (!old) return old;
         return old.map((row) => {
           if (row.studentUserId !== args.studentUserId) return row;
@@ -59,6 +63,23 @@ export function useRecordRazAssessment() {
             manualStatus: autoRti ? "rti" : null,
           };
         });
+      });
+
+      const assessmentsKey = razAssessmentsQueryKey(args.classId);
+      const optimistic: RazAssessmentEntry = {
+        _id: `optimistic-${args.studentUserId}-${args.assessedAt}`,
+        studentUserId: args.studentUserId,
+        assessedAt: args.assessedAt,
+        readAccuracy: args.readAccuracy,
+        retellScore: args.retellScore ?? null,
+        respondScore: args.respondScore,
+        result: args.result,
+        level: args.level,
+        note: args.note?.trim() ? args.note.trim() : null,
+      };
+      queryClient.setQueryData<RazAssessmentEntry[]>(assessmentsKey, (old) => {
+        if (!old) return [optimistic];
+        return [optimistic, ...old].sort((a, b) => b.assessedAt - a.assessedAt);
       });
     },
     onError: (error) => {

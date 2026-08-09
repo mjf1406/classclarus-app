@@ -929,6 +929,9 @@ const en = {
     rosterColumnGender: "Gender",
     rosterColumnPronouns: "Pronouns",
     rosterColumnActions: "Actions",
+    rosterColumnExpand: "Expand",
+    rosterExpandRow: "Expand row",
+    rosterCollapseRow: "Collapse row",
     rosterHideColumn: "Hide column",
     rosterShowColumn: "Show column",
     rosterColumnsMenu: "Columns",
@@ -1972,6 +1975,9 @@ const en = {
     cancel: "Cancel",
     saveAssessment: "Save Assessment",
     assessmentSaveFailed: "Could not save RAZ assessment.",
+    historyEmpty: "No assessments recorded yet.",
+    historyExpandAria: "Show assessment history for {{name}}",
+    historyCollapseAria: "Hide assessment history for {{name}}",
   },
 } as const;
 

@@ -941,6 +941,9 @@ const uk = {
     rosterColumnGender: "Гендер",
     rosterColumnPronouns: "Займенники",
     rosterColumnActions: "Дії",
+    rosterColumnExpand: "Розгорнути",
+    rosterExpandRow: "Розгорнути рядок",
+    rosterCollapseRow: "Згорнути рядок",
     rosterHideColumn: "Сховати стовпець",
     rosterShowColumn: "Показати стовпець",
     rosterColumnsMenu: "Стовпці",
@@ -1983,6 +1986,9 @@ const uk = {
     cancel: "Скасувати",
     saveAssessment: "Зберегти оцінку",
     assessmentSaveFailed: "Не вдалося зберегти оцінку RAZ.",
+    historyEmpty: "Оцінок ще немає.",
+    historyExpandAria: "Показати історію оцінок для {{name}}",
+    historyCollapseAria: "Сховати історію оцінок для {{name}}",
   },
 } as const;
 
