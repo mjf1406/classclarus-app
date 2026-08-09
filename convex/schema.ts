@@ -587,6 +587,7 @@ const schema = defineSchema({
     createdAt: v.number(),
   })
     .index("by_classId_student_dateKey", ["classId", "studentUserId", "dateKey"])
+    .index("by_classId_student_createdAt", ["classId", "studentUserId", "createdAt"])
     .index("by_classId_dateKey", ["classId", "dateKey"]),
   /**
    * Per-class FERPA activity log (append-only).
@@ -613,6 +614,7 @@ const schema = defineSchema({
     createdAt: v.number(),
   })
     .index("by_class_createdAt", ["classId", "createdAt"])
+    .index("by_class_resource_createdAt", ["classId", "resourceType", "createdAt"])
     .index("by_createdAt", ["createdAt"]),
   /**
    * Anonymous Free-card CTA clicks (cloud prod only). No user/IP fields.

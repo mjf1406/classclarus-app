@@ -1,6 +1,6 @@
 import { authz } from "../authz.js";
 import type { Doc, Id } from "../_generated/dataModel.js";
-import type { MutationCtx } from "../_generated/server.js";
+import type { MutationCtx, QueryCtx } from "../_generated/server.js";
 import { classScope, isClassRole, pickHighestClassRole } from "./authzModel.js";
 
 export const ACTIVITY_ACTIONS = ["read", "write", "update", "delete"] as const;
@@ -174,4 +174,54 @@ export function toPublicActivityEvent(doc: Doc<"classActivityEvents">): ClassAct
     ...(doc.metadata !== undefined ? { metadata: doc.metadata } : {}),
     createdAt: doc.createdAt,
   };
+}
+
+/** Resource types that invalidate personal points ledger names/rows. */
+export const LEDGER_REVISION_RESOURCE_TYPES = [
+  "behaviorApplication",
+  "rewardPurchase",
+  "studentWarning",
+  "behavior",
+  "reward",
+] as const;
+
+/** Resource types that invalidate personal attendance history. */
+export const HISTORY_REVISION_RESOURCE_TYPES = ["attendance"] as const;
+
+export type ActivityRevision = {
+  eventId: Id<"classActivityEvents">;
+  createdAt: number;
+};
+
+/**
+ * Newest activity event across the given resource types (indexed `.first()` per type).
+ * Returns null when none of the types have events for the class.
+ */
+export async function getNewestActivityRevision(
+  ctx: Pick<QueryCtx | MutationCtx, "db">,
+  classId: Id<"classes">,
+  resourceTypes: readonly string[],
+): Promise<ActivityRevision | null> {
+  let newest: ActivityRevision | null = null;
+
+  for (const resourceType of resourceTypes) {
+    const event = await ctx.db
+      .query("classActivityEvents")
+      .withIndex("by_class_resource_createdAt", (q) =>
+        q.eq("classId", classId).eq("resourceType", resourceType),
+      )
+      .order("desc")
+      .first();
+
+    if (
+      event &&
+      (newest === null ||
+        event.createdAt > newest.createdAt ||
+        (event.createdAt === newest.createdAt && event._id > newest.eventId))
+    ) {
+      newest = { eventId: event._id, createdAt: event.createdAt };
+    }
+  }
+
+  return newest;
 }

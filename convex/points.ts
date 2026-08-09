@@ -5,7 +5,11 @@ import { components } from "./_generated/api.js";
 import type { Doc, Id } from "./_generated/dataModel.js";
 import type { MutationCtx, QueryCtx } from "./_generated/server.js";
 import { classScope } from "./lib/authzModel.js";
-import { recordClassActivity } from "./lib/classActivity.js";
+import {
+  getNewestActivityRevision,
+  LEDGER_REVISION_RESOURCE_TYPES,
+  recordClassActivity,
+} from "./lib/classActivity.js";
 import { classMutation, classQuery } from "./lib/customFunctions.js";
 import {
   assertPersonalStudentAccess,
@@ -429,6 +433,28 @@ const ledgerWarningItemValidator = v.object({
   dateKey: v.string(),
 });
 
+const activityRevisionValidator = v.union(
+  v.object({
+    eventId: v.id("classActivityEvents"),
+    createdAt: v.number(),
+  }),
+  v.null(),
+);
+
+/** Live revision tip for personal points ledger (cheap indexed activity head). */
+export const ledgerRevisionForAudience = classQuery({
+  args: {
+    studentUserId: v.id("users"),
+  },
+  returns: activityRevisionValidator,
+  handler: async (ctx, args) => {
+    await ctx.require("points:read");
+    const classId = ctx.classDoc._id;
+    await assertPersonalStudentAccess(ctx, classId, args.studentUserId);
+    return await getNewestActivityRevision(ctx, classId, LEDGER_REVISION_RESOURCE_TYPES);
+  },
+});
+
 /** Newest-first points ledger for one personal-audience student. */
 export const ledgerForAudience = classQuery({
   args: {
@@ -441,6 +467,7 @@ export const ledgerForAudience = classQuery({
       v.union(ledgerBehaviorItemValidator, ledgerRewardItemValidator, ledgerWarningItemValidator),
     ),
     nextBeforeTimestamp: v.optional(v.number()),
+    revision: activityRevisionValidator,
   }),
   handler: async (ctx, args) => {
     await ctx.require("points:read");
@@ -452,6 +479,7 @@ export const ledgerForAudience = classQuery({
       MAX_LEDGER_LIMIT,
     );
     const beforeTimestamp = args.beforeTimestamp;
+    const revision = await getNewestActivityRevision(ctx, classId, LEDGER_REVISION_RESOURCE_TYPES);
 
     const behaviorRows =
       beforeTimestamp === undefined
@@ -493,13 +521,25 @@ export const ledgerForAudience = classQuery({
             .order("desc")
             .take(limit);
 
-    // eslint-disable-next-line @convex-dev/no-collect-in-query -- per-student warning ledger is classroom-bounded
-    const warningRows = await ctx.db
-      .query("studentWarningEvents")
-      .withIndex("by_classId_student_dateKey", (q) =>
-        q.eq("classId", classId).eq("studentUserId", args.studentUserId),
-      )
-      .collect();
+    const warningRows =
+      beforeTimestamp === undefined
+        ? await ctx.db
+            .query("studentWarningEvents")
+            .withIndex("by_classId_student_createdAt", (q) =>
+              q.eq("classId", classId).eq("studentUserId", args.studentUserId),
+            )
+            .order("desc")
+            .take(limit)
+        : await ctx.db
+            .query("studentWarningEvents")
+            .withIndex("by_classId_student_createdAt", (q) =>
+              q
+                .eq("classId", classId)
+                .eq("studentUserId", args.studentUserId)
+                .lt("createdAt", beforeTimestamp),
+            )
+            .order("desc")
+            .take(limit);
 
     type MergedItem =
       | {
@@ -552,7 +592,6 @@ export const ledgerForAudience = classQuery({
     }
 
     for (const row of warningRows) {
-      if (beforeTimestamp !== undefined && row.createdAt >= beforeTimestamp) continue;
       merged.push({
         kind: "warning",
         id: row._id,
@@ -566,6 +605,7 @@ export const ledgerForAudience = classQuery({
 
     return {
       items,
+      revision,
       ...(items.length === limit ? { nextBeforeTimestamp: items[items.length - 1]?.at } : {}),
     };
   },

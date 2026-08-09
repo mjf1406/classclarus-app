@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/empty";
 import { ErrorState } from "@/components/ui/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import {
   Table,
   TableBody,
@@ -244,6 +245,7 @@ function NameFilterButton({ label, pressed, onClick, children }: NameFilterButto
 export function PersonalAttendancePage({ classId }: PersonalAttendancePageProps) {
   const { t, i18n } = useTranslation("attendance");
   const { t: tClasses } = useTranslation("classes");
+  const { t: tCommon } = useTranslation("common");
   const dateKey = useMemo(() => localDateKey(), []);
   const { data: classDoc } = useAuthedQuery(api.classes.get, { classId }, { gcTime: ONE_HOUR });
   const { data, isPending, isError, refetch } = useAttendanceForAudience(classId, dateKey);
@@ -342,6 +344,13 @@ export function PersonalAttendancePage({ classId }: PersonalAttendancePageProps)
                 <Skeleton className="h-10 w-full rounded-xl" />
                 <Skeleton className="h-10 w-full rounded-xl" />
               </div>
+            ) : null}
+
+            {history.isRefreshing ? (
+              <p className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Spinner className="size-3.5" aria-label={tCommon("loading")} />
+                {tCommon("loading")}
+              </p>
             ) : null}
 
             {history.isError ? (

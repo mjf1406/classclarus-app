@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/empty";
 import { ErrorState } from "@/components/ui/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import {
   Table,
   TableBody,
@@ -252,6 +253,7 @@ function LedgerFilterIconButton({
 
 export function PersonalPointsPage({ classId }: PersonalPointsPageProps) {
   const { t } = useTranslation("points");
+  const { t: tCommon } = useTranslation("common");
   const dateKey = useMemo(() => localDateKey(), []);
   const { data: classDoc } = useAuthedQuery(api.classes.get, { classId }, { gcTime: ONE_HOUR });
   const { data, isPending, isError, refetch } = usePointsForAudience(classId, dateKey);
@@ -358,6 +360,13 @@ export function PersonalPointsPage({ classId }: PersonalPointsPageProps) {
                 <Skeleton className="h-10 w-full rounded-xl" />
                 <Skeleton className="h-10 w-full rounded-xl" />
               </div>
+            ) : null}
+
+            {ledger.isRefreshing ? (
+              <p className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Spinner className="size-3.5" aria-label={tCommon("loading")} />
+                {tCommon("loading")}
+              </p>
             ) : null}
 
             {ledger.isError ? (

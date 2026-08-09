@@ -10,22 +10,25 @@ import {
 import { ActivityLogDataTable } from "@/components/activity/ActivityLogDataTable";
 import { ProgressButton } from "@/components/ui/progress-button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import { useClassActivity } from "@/hooks/activity/useClassActivity";
 import { useExportClassActivityCsv } from "@/hooks/activity/useExportClassActivityCsv";
 import { useLogClassAccessOnce } from "@/hooks/activity/useLogClassAccess";
 
 export function ActivityLogPage({ classId }: { classId: Id<"classes"> }) {
   const { t } = useTranslation("classes");
-  const { results, status, loadMore, isPending } = useClassActivity(classId);
+  const { t: tCommon } = useTranslation("common");
+  const { results, status, fetchNextPage, isPending, isLoadingMore, isRefreshing } =
+    useClassActivity(classId);
   const exportCsv = useExportClassActivityCsv(classId);
   const columns = useMemo(() => createActivityLogColumns(t), [t]);
 
   // Load all pages so client-side sort/filter covers the full log.
   useEffect(() => {
     if (status === "CanLoadMore") {
-      loadMore(100);
+      void fetchNextPage();
     }
-  }, [status, loadMore]);
+  }, [status, fetchNextPage]);
 
   const accessArgs = useMemo(
     () => ({
@@ -39,7 +42,6 @@ export function ActivityLogPage({ classId }: { classId: Id<"classes"> }) {
   useLogClassAccessOnce(!isPending, accessArgs);
 
   const rows = results as ActivityLogRow[];
-  const isLoadingMore = status === "LoadingMore" || status === "CanLoadMore";
   const showTable = !isPending;
 
   return (
@@ -67,6 +69,13 @@ export function ActivityLogPage({ classId }: { classId: Id<"classes"> }) {
       </div>
 
       {isPending ? <Skeleton className="h-72 w-full" /> : null}
+
+      {isRefreshing || (showTable && isLoadingMore) ? (
+        <p className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Spinner className="size-3.5" aria-label={tCommon("loading")} />
+          {tCommon("loading")}
+        </p>
+      ) : null}
 
       {showTable ? (
         <ActivityLogDataTable

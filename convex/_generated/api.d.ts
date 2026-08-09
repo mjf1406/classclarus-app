@@ -42,6 +42,7 @@ import type * as lib_announcementsCleanup from "../lib/announcementsCleanup.js";
 import type * as lib_assignmentScoresCleanup from "../lib/assignmentScoresCleanup.js";
 import type * as lib_assignmentsCleanup from "../lib/assignmentsCleanup.js";
 import type * as lib_attendanceCleanup from "../lib/attendanceCleanup.js";
+import type * as lib_attendanceHistory from "../lib/attendanceHistory.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_authzModel from "../lib/authzModel.js";
 import type * as lib_avatarUrl from "../lib/avatarUrl.js";
@@ -95,7 +96,11 @@ import type * as trialBackfill from "../trialBackfill.js";
 import type * as usage from "../usage.js";
 import type * as users from "../users.js";
 
-import type { ApiFromModules, FilterApi, FunctionReference } from "convex/server";
+import type {
+  ApiFromModules,
+  FilterApi,
+  FunctionReference,
+} from "convex/server";
 
 declare const fullApi: ApiFromModules<{
   account: typeof account;
@@ -132,6 +137,7 @@ declare const fullApi: ApiFromModules<{
   "lib/assignmentScoresCleanup": typeof lib_assignmentScoresCleanup;
   "lib/assignmentsCleanup": typeof lib_assignmentsCleanup;
   "lib/attendanceCleanup": typeof lib_attendanceCleanup;
+  "lib/attendanceHistory": typeof lib_attendanceHistory;
   "lib/auth": typeof lib_auth;
   "lib/authzModel": typeof lib_authzModel;
   "lib/avatarUrl": typeof lib_avatarUrl;
@@ -194,7 +200,10 @@ declare const fullApi: ApiFromModules<{
  * const myFunctionReference = api.myModule.myFunction;
  * ```
  */
-export declare const api: FilterApi<typeof fullApi, FunctionReference<any, "public">>;
+export declare const api: FilterApi<
+  typeof fullApi,
+  FunctionReference<any, "public">
+>;
 
 /**
  * A utility for referencing Convex functions in your app's internal API.
@@ -204,7 +213,10 @@ export declare const api: FilterApi<typeof fullApi, FunctionReference<any, "publ
  * const myFunctionReference = internal.myModule.myFunction;
  * ```
  */
-export declare const internal: FilterApi<typeof fullApi, FunctionReference<any, "internal">>;
+export declare const internal: FilterApi<
+  typeof fullApi,
+  FunctionReference<any, "internal">
+>;
 
 export declare const components: {
   authz: import("@djpanda/convex-authz/_generated/component.js").ComponentApi<"authz">;

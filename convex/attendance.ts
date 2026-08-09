@@ -3,7 +3,12 @@ import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel.js";
 import type { MutationCtx } from "./_generated/server.js";
 import { classScope } from "./lib/authzModel.js";
-import { recordClassActivity } from "./lib/classActivity.js";
+import {
+  getNewestActivityRevision,
+  HISTORY_REVISION_RESOURCE_TYPES,
+  recordClassActivity,
+} from "./lib/classActivity.js";
+import { mergeAttendanceHistoryPage } from "./lib/attendanceHistory.js";
 import { classMutation, classQuery } from "./lib/customFunctions.js";
 import { getClassRoleForUser, resolvePersonalStudentIds } from "./lib/guardianLinks.js";
 import { rateLimiter } from "./lib/rateLimiter.js";
@@ -309,13 +314,23 @@ export const summaryForAudience = classQuery({
   },
 });
 
-function isHistoryRowAfterCursor(
-  row: { dateKey: string; studentUserId: Id<"users"> },
-  cursor: { dateKey: string; studentUserId: Id<"users"> },
-): boolean {
-  if (row.dateKey !== cursor.dateKey) return row.dateKey < cursor.dateKey;
-  return row.studentUserId > cursor.studentUserId;
-}
+const activityRevisionValidator = v.union(
+  v.object({
+    eventId: v.id("classActivityEvents"),
+    createdAt: v.number(),
+  }),
+  v.null(),
+);
+
+/** Live revision tip for personal attendance history (cheap indexed activity head). */
+export const historyRevisionForAudience = classQuery({
+  args: {},
+  returns: activityRevisionValidator,
+  handler: async (ctx) => {
+    await ctx.require("attendance:read");
+    return await getNewestActivityRevision(ctx, ctx.classDoc._id, HISTORY_REVISION_RESOURCE_TYPES);
+  },
+});
 
 /** Newest-first attendance history for every personal-audience student. */
 export const historyForAudience = classQuery({
@@ -334,6 +349,7 @@ export const historyForAudience = classQuery({
     ),
     nextBeforeDateKey: v.optional(v.string()),
     nextBeforeStudentUserId: v.optional(v.id("users")),
+    revision: activityRevisionValidator,
   }),
   handler: async (ctx, args) => {
     await ctx.require("attendance:read");
@@ -351,23 +367,42 @@ export const historyForAudience = classQuery({
       Math.max(1, Math.floor(args.limit ?? DEFAULT_HISTORY_LIMIT)),
       MAX_HISTORY_LIMIT,
     );
+    const revision = await getNewestActivityRevision(ctx, classId, HISTORY_REVISION_RESOURCE_TYPES);
 
-    const rows: Array<{
+    const cursor =
+      args.beforeDateKey !== undefined && args.beforeStudentUserId !== undefined
+        ? { dateKey: args.beforeDateKey, studentUserId: args.beforeStudentUserId }
+        : null;
+
+    const candidates: Array<{
       dateKey: string;
       studentUserId: Id<"users">;
       status: "present" | "absent" | "late";
     }> = [];
 
     for (const studentUserId of studentUserIds) {
-      // eslint-disable-next-line @convex-dev/no-collect-in-query -- personal audience is a few students; school-year bounded
-      const studentRows = await ctx.db
-        .query("attendanceRecords")
-        .withIndex("by_classId_student", (q) =>
-          q.eq("classId", classId).eq("studentUserId", studentUserId),
-        )
-        .collect();
+      const studentRows =
+        cursor === null
+          ? await ctx.db
+              .query("attendanceRecords")
+              .withIndex("by_classId_student_dateKey", (q) =>
+                q.eq("classId", classId).eq("studentUserId", studentUserId),
+              )
+              .order("desc")
+              .take(limit)
+          : await ctx.db
+              .query("attendanceRecords")
+              .withIndex("by_classId_student_dateKey", (q) =>
+                q
+                  .eq("classId", classId)
+                  .eq("studentUserId", studentUserId)
+                  .lte("dateKey", cursor.dateKey),
+              )
+              .order("desc")
+              .take(limit + 1);
+
       for (const row of studentRows) {
-        rows.push({
+        candidates.push({
           dateKey: row.dateKey,
           studentUserId: row.studentUserId,
           status: row.status,
@@ -375,31 +410,15 @@ export const historyForAudience = classQuery({
       }
     }
 
-    rows.sort((a, b) => {
-      if (a.dateKey !== b.dateKey) return a.dateKey < b.dateKey ? 1 : -1;
-      if (a.studentUserId === b.studentUserId) return 0;
-      return a.studentUserId < b.studentUserId ? -1 : 1;
-    });
+    const { items, nextCursor } = mergeAttendanceHistoryPage(candidates, limit, cursor);
 
-    const cursor =
-      args.beforeDateKey !== undefined && args.beforeStudentUserId !== undefined
-        ? { dateKey: args.beforeDateKey, studentUserId: args.beforeStudentUserId }
-        : null;
-
-    const pageRows = [];
-    for (const row of rows) {
-      if (cursor !== null && !isHistoryRowAfterCursor(row, cursor)) continue;
-      pageRows.push(row);
-      if (pageRows.length >= limit) break;
-    }
-
-    const last = pageRows[pageRows.length - 1];
     return {
-      items: pageRows,
-      ...(pageRows.length === limit && last
+      items,
+      revision,
+      ...(nextCursor
         ? {
-            nextBeforeDateKey: last.dateKey,
-            nextBeforeStudentUserId: last.studentUserId,
+            nextBeforeDateKey: nextCursor.dateKey,
+            nextBeforeStudentUserId: nextCursor.studentUserId,
           }
         : {}),
     };
