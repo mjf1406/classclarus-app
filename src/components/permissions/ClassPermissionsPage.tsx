@@ -71,7 +71,6 @@ export function ClassPermissionsPage({ classId }: ClassPermissionsPageProps) {
 
   const staff = (staffQuery.data ?? []) as StaffMember[];
   const selectedMember = staff.find((member) => member.userId === selectedUserId) ?? null;
-  const detailPermissions = (detailQuery.data?.permissions ?? []) as PermissionEntry[];
 
   const showStaffLoading = staffQuery.isPending || staffQuery.isAuthLoading;
   const showStaffError = !showStaffLoading && staffQuery.isError;
@@ -81,12 +80,13 @@ export function ClassPermissionsPage({ classId }: ClassPermissionsPageProps) {
   const showDetailError = selectedUserId !== null && !showDetailLoading && detailQuery.isError;
 
   const permissionByKey = useMemo(() => {
+    const detailPermissions = (detailQuery.data?.permissions ?? []) as PermissionEntry[];
     const map = new Map<string, PermissionEntry>();
     for (const entry of detailPermissions) {
       map.set(entry.permission, entry);
     }
     return map;
-  }, [detailPermissions]);
+  }, [detailQuery.data?.permissions]);
 
   return (
     <div className="flex w-full flex-col gap-6 p-4 md:p-6">

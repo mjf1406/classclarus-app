@@ -163,6 +163,7 @@ const rateLimits = {
   pointsClearWarnings: { kind: "token bucket" as const, rate: 120, period: HOUR, capacity: 40 },
   attendanceMarkPresent: { kind: "token bucket" as const, rate: 120, period: HOUR, capacity: 40 },
   razSetInitialLevel: { kind: "token bucket" as const, rate: 120, period: HOUR, capacity: 40 },
+  razRecordAssessment: { kind: "token bucket" as const, rate: 120, period: HOUR, capacity: 40 },
 };
 
 export const rateLimiter = new RateLimiter(components.rateLimiter, rateLimits);

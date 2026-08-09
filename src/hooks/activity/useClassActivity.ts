@@ -68,12 +68,11 @@ export function useClassActivity(classId: Id<"classes">) {
     () => pagesQuery.data?.pages.map((page) => page.page) ?? [],
     [pagesQuery.data],
   );
-  const recent = recentQuery.data?.page ?? [];
 
-  const { items: results, hasOverlapGap } = useMemo(
-    () => mergeActivityRecentWithPages(recent, cachedPages),
-    [recent, cachedPages],
-  );
+  const { items: results, hasOverlapGap } = useMemo(() => {
+    const recent = recentQuery.data?.page ?? [];
+    return mergeActivityRecentWithPages(recent, cachedPages);
+  }, [recentQuery.data?.page, cachedPages]);
 
   const pagesRefetch = pagesQuery.refetch;
   const pagesIsFetching = pagesQuery.isFetching;

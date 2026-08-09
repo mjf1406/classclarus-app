@@ -10,7 +10,8 @@ type NumberInputProps = Omit<
   ComponentProps<"input">,
   "type" | "value" | "defaultValue" | "onChange" | "prefix"
 > & {
-  value: number;
+  /** Pass `null` to show an empty field (optional scores). */
+  value: number | null;
   onValueChange: (value: number) => void;
   min?: number;
   max?: number;
@@ -61,18 +62,24 @@ function NumberInput({
     setDraft(null);
   };
 
+  const displayValue = draft ?? (value === null ? "" : value);
+
   return (
     <div data-slot="number-input" className={cn("flex w-fit items-stretch", className)}>
       <Button
         type="button"
         variant="outline"
         size="icon"
-        disabled={disabled || value <= min}
+        disabled={disabled || (value !== null && value <= min)}
         aria-label={t("decreaseValue")}
         aria-controls={id}
         className="shrink-0 rounded-r-none focus-visible:z-10"
         onClick={() => {
           setDraft(null);
+          if (value === null) {
+            setClamped(Number.isFinite(min) ? min : 0);
+            return;
+          }
           setClamped(value - step);
         }}
       >
@@ -95,7 +102,7 @@ function NumberInput({
           min={Number.isFinite(min) ? min : undefined}
           max={Number.isFinite(max) ? max : undefined}
           step={step}
-          value={draft ?? value}
+          value={displayValue}
           onChange={(event) => {
             const raw = event.target.value;
             if (raw === "") {
@@ -131,12 +138,16 @@ function NumberInput({
         type="button"
         variant="outline"
         size="icon"
-        disabled={disabled || value >= max}
+        disabled={disabled || (value !== null && value >= max)}
         aria-label={t("increaseValue")}
         aria-controls={id}
         className="-ml-px shrink-0 rounded-l-none focus-visible:z-10"
         onClick={() => {
           setDraft(null);
+          if (value === null) {
+            setClamped(Number.isFinite(min) ? min : 0);
+            return;
+          }
           setClamped(value + step);
         }}
       >

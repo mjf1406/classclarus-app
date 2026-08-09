@@ -637,18 +637,38 @@ const schema = defineSchema({
     syncedAt: v.number(),
   }).index("by_dayKey", ["dayKey"]),
   /**
-   * Per-student RAZ initial reading level for a class.
+   * Per-student RAZ reading levels for a class.
    * Sparse — missing row means the student still needs an initial level.
+   * `currentLevel` is updated by assessments; `initialLevel` stays fixed after setup.
    */
   razStudentLevels: defineTable({
     classId: v.id("classes"),
     studentUserId: v.id("users"),
     initialLevel: v.string(),
+    currentLevel: v.optional(v.string()),
     updatedAt: v.number(),
     updatedBy: v.id("users"),
   })
     .index("by_class_student", ["classId", "studentUserId"])
     .index("by_classId", ["classId"]),
+  /**
+   * Recorded RAZ Read / Retell / Respond assessments.
+   */
+  razAssessments: defineTable({
+    classId: v.id("classes"),
+    studentUserId: v.id("users"),
+    assessedAt: v.number(),
+    readAccuracy: v.number(),
+    retellScore: v.optional(v.number()),
+    respondScore: v.number(),
+    result: v.union(v.literal("level_up"), v.literal("stay"), v.literal("level_down")),
+    level: v.string(),
+    note: v.optional(v.string()),
+    createdAt: v.number(),
+    createdBy: v.id("users"),
+  })
+    .index("by_classId", ["classId"])
+    .index("by_class_student", ["classId", "studentUserId"]),
   /**
    * Cloud product feedback (message-in-a-bottle). Not used on self-host / Electron.
    */

@@ -14,6 +14,8 @@ const alertVariants = cva(
         /** Matches toast `type: "warning"` amber border/background + icon color. */
         warning:
           "border-amber-600 bg-[color-mix(in_oklab,var(--background)_80%,var(--color-amber-500)_20%)] text-foreground dark:border-amber-400 *:[svg]:self-center *:[svg]:translate-y-0 *:[svg]:text-amber-700 dark:*:[svg]:text-amber-400",
+        /** Matches toast `type: "info"` cyan border/background + icon color. */
+        info: "border-cyan-600 bg-[color-mix(in_oklab,var(--background)_80%,var(--color-cyan-500)_20%)] text-foreground dark:border-cyan-400 *:[svg]:self-center *:[svg]:translate-y-0 *:[svg]:text-cyan-700 dark:*:[svg]:text-cyan-400",
       },
     },
     defaultVariants: {

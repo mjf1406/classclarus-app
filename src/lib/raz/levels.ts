@@ -25,4 +25,5 @@ export function isRazLevel(value: string): value is RazLevel {
 export type RazInitialLevelEntry = {
   studentUserId: string;
   initialLevel: string;
+  currentLevel: string;
 };

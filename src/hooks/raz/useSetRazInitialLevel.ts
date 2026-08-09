@@ -31,15 +31,34 @@ export function useSetRazInitialLevel() {
     applyOptimisticUpdate: (queryClient, args) => {
       const key = razInitialLevelsQueryKey(args.classId);
       queryClient.setQueryData<RazInitialLevelEntry[]>(key, (old) => {
-        const nextEntry: RazInitialLevelEntry = {
-          studentUserId: args.studentUserId,
-          initialLevel: args.initialLevel,
-        };
-        if (!old) return [nextEntry];
+        if (!old) {
+          return [
+            {
+              studentUserId: args.studentUserId,
+              initialLevel: args.initialLevel,
+              currentLevel: args.initialLevel,
+            },
+          ];
+        }
         const index = old.findIndex((row) => row.studentUserId === args.studentUserId);
-        if (index < 0) return [...old, nextEntry];
+        if (index < 0) {
+          return [
+            ...old,
+            {
+              studentUserId: args.studentUserId,
+              initialLevel: args.initialLevel,
+              currentLevel: args.initialLevel,
+            },
+          ];
+        }
+        const existing = old[index]!;
         const copy = [...old];
-        copy[index] = nextEntry;
+        copy[index] = {
+          ...existing,
+          initialLevel: args.initialLevel,
+          // Match server: do not overwrite an existing currentLevel on patch.
+          currentLevel: existing.currentLevel || args.initialLevel,
+        };
         return copy;
       });
     },
