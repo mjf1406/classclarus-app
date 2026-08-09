@@ -7,6 +7,7 @@ import {
   Gift,
   GraduationCap,
   History,
+  KeyRound,
   LayoutDashboard,
   ClipboardList,
   ListTodo,
@@ -266,6 +267,12 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
       icon: History,
       to: "/class/$classId/activity",
       permission: "activity:read",
+    },
+    {
+      title: t("navPermissions"),
+      icon: KeyRound,
+      to: "/class/$classId/permissions",
+      permission: "permissions:manage",
     },
     {
       title: t("navSettings"),

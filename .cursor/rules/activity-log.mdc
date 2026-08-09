@@ -1,0 +1,47 @@
+---
+description: Log meaningful class actions in the FERPA activity log (or ask)
+alwaysApply: true
+---
+
+# Activity Log Coverage
+
+Class actions that change data or intentionally access sensitive student/class data must appear in the class activity log (`classActivityEvents`). If unsure whether an action belongs, **ask the user** before shipping—include what happened, who should see it, and a proposed summary.
+
+## When to log
+
+- Mutations that create/update/delete class resources (members, groups, tasks, points, attendance, files, etc.)
+- Intentional access to sensitive views (roster, activity log itself, exports) via `useLogClassAccess` / `api.activity.logAccess`
+- Permission/role changes and other audit-relevant admin actions
+
+Skip pure UI chrome, failed attempts, and high-frequency noise unless the product owner asks for it. Reads use a 15-minute server dedupe window.
+
+## How (server mutations)
+
+Prefer `recordClassActivity` from `convex/lib/classActivity.ts` inside the mutation after a successful write:
+
+```ts
+await recordClassActivity(ctx, {
+  classId,
+  actorUserId: ctx.userId,
+  action: "write", // "read" | "write" | "update" | "delete"
+  resourceType: "task",
+  resourceId: taskId,
+  summary: `Created task "${name}"`, // English audit fallback
+  summaryKey: "activitySummary_createdTask",
+  metadata: { name },
+});
+```
+
+## Checklist for a new event
+
+1. Call `recordClassActivity` (or client `useLogClassAccess` for intentional reads).
+2. Add `activitySummary_<key>` to **`en.ts`** and **every** locale under `src/i18n/resources/` (same i18n rule as other UI copy).
+3. Put interpolation values in `metadata` (strings only); keep `summary` English as fallback.
+4. Reuse an existing `resourceType` when possible; extend `ACTIVITY_RESOURCE_TYPES` in `convex/lib/classActivity.ts` when introducing a new one.
+5. If the summary needs special formatting, update `src/lib/activity/formatActivitySummary.ts` (and its tests).
+
+## If unsure
+
+Ask before implementing, e.g.:
+
+> Should we activity-log X? Proposed: action=`update`, resourceType=`…`, summaryKey=`activitySummary_…`, metadata=`{…}`.

@@ -11,6 +11,9 @@ const alertVariants = cva(
         default: "bg-card text-card-foreground",
         destructive:
           "border-destructive/40 bg-[color-mix(in_oklab,var(--background)_80%,var(--destructive)_20%)] text-destructive *:data-[slot=alert-description]:text-destructive/90 *:[svg]:text-current",
+        /** Matches toast `type: "warning"` amber border/background + icon color. */
+        warning:
+          "border-amber-600 bg-[color-mix(in_oklab,var(--background)_80%,var(--color-amber-500)_20%)] text-foreground dark:border-amber-400 *:[svg]:self-center *:[svg]:translate-y-0 *:[svg]:text-amber-700 dark:*:[svg]:text-amber-400",
       },
     },
     defaultVariants: {

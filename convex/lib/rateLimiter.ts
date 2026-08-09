@@ -28,6 +28,7 @@ const rateLimits = {
   memberSuspend: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 10 },
   memberRemove: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 10 },
   memberSetRole: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 10 },
+  memberSetPermission: { kind: "token bucket" as const, rate: 120, period: HOUR, capacity: 30 },
   memberSetGuardianLinks: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 10 },
   rosterEnsure: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 20 },
   rosterUpdateFields: { kind: "token bucket" as const, rate: 120, period: HOUR, capacity: 40 },

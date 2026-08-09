@@ -2,6 +2,7 @@ import { SearchIcon, UsersIcon, XIcon } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { ChangeMemberRoleConfirmDialog } from "@/components/members/ChangeMemberRoleConfirmDialog";
 import { MemberRow } from "@/components/members/MemberRow";
 import { RemoveMemberCredenza } from "@/components/members/RemoveMemberCredenza";
 import {
@@ -20,18 +21,13 @@ import {
   InputGroupText,
 } from "@/components/ui/input-group";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useChangeMemberRoleWithConfirm } from "@/hooks/members/useChangeMemberRoleWithConfirm";
 import { useClassMembersByRole } from "@/hooks/members/useClassMembersByRole";
 import { useMemberSearch } from "@/hooks/members/useMemberSearch";
 import { useRemoveClassMember } from "@/hooks/members/useRemoveClassMember";
 import { useSetGuardianStudentLinks } from "@/hooks/members/useSetGuardianStudentLinks";
-import { useSetMemberRole } from "@/hooks/members/useSetMemberRole";
 import { useCurrentUser } from "@/hooks/user/useCurrentUser";
-import type {
-  ClassMemberPublic,
-  JoinCodeRole,
-  LinkedStudentPublic,
-  MemberListRole,
-} from "@/lib/members/members";
+import type { ClassMemberPublic, LinkedStudentPublic, MemberListRole } from "@/lib/members/members";
 import { getDisplayName } from "@/lib/user/userDisplay";
 import type { Id } from "../../../convex/_generated/dataModel";
 
@@ -58,8 +54,14 @@ export function MembersPage({ classId, role, titleKey }: MembersPageProps) {
   const { data: currentUser } = useCurrentUser();
   const { data, isPending, isError, refetch, isAuthLoading } = useClassMembersByRole(classId, role);
   const removeMutation = useRemoveClassMember(role);
-  const setRoleMutation = useSetMemberRole();
   const setLinksMutation = useSetGuardianStudentLinks();
+  const {
+    requestRoleChange,
+    confirmPendingRoleChange,
+    confirmOpen,
+    handleConfirmOpenChange,
+    pendingMemberName,
+  } = useChangeMemberRoleWithConfirm(classId);
   const [searchQuery, setSearchQuery] = useState("");
   const [memberToRemove, setMemberToRemove] = useState<ClassMemberPublic | null>(null);
   const [removeOpen, setRemoveOpen] = useState(false);
@@ -91,15 +93,10 @@ export function MembersPage({ classId, role, titleKey }: MembersPageProps) {
     : "";
 
   const handleChangeRole = useCallback(
-    (member: ClassMemberPublic, nextRole: JoinCodeRole) => {
-      void setRoleMutation.mutateAsync({
-        classId,
-        userId: member.userId,
-        role: nextRole,
-        fromRole: member.role,
-      });
+    (member: ClassMemberPublic, nextRole: Parameters<typeof requestRoleChange>[1]) => {
+      void requestRoleChange(member, nextRole);
     },
-    [classId, setRoleMutation],
+    [requestRoleChange],
   );
 
   const handleSetLinkedStudents = useCallback(
@@ -212,6 +209,13 @@ export function MembersPage({ classId, role, titleKey }: MembersPageProps) {
         onOpenChange={setRemoveOpen}
         memberName={removeMemberName}
         onConfirm={handleRemoveConfirm}
+      />
+
+      <ChangeMemberRoleConfirmDialog
+        open={confirmOpen}
+        memberName={pendingMemberName}
+        onOpenChange={handleConfirmOpenChange}
+        onConfirm={confirmPendingRoleChange}
       />
     </div>
   );

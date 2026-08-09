@@ -37,7 +37,12 @@ export default defineConfig({
         command: "bunx convex dev",
         cache: false,
       },
+      /** Start web + Convex after syncing authz roles; echo when both exit. */
       ds: {
+        command: "vp run perms && vp run ds:servers",
+        cache: false,
+      },
+      "ds:servers": {
         command: "echo Both stopped.",
         dependsOn: ["dev:web", "dev:convex"],
         cache: false,
@@ -50,6 +55,11 @@ export default defineConfig({
       /** Same as `perms`, against the Convex **prod** deployment (`--prod`). */
       "perms-prod": {
         command: "bunx convex run --prod internal.authzBackfill.syncCatalogRoles",
+        cache: false,
+      },
+      /** Deploy Convex functions to prod, then sync authz catalog roles. */
+      deploy: {
+        command: "bunx convex deploy && vp run perms-prod",
         cache: false,
       },
     },

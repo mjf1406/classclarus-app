@@ -23,6 +23,7 @@ import {
   type MemberListRole,
 } from "./lib/authzModel.js";
 import { recordClassActivity } from "./lib/classActivity.js";
+import { clearClassPermissionOverrides } from "./lib/classPermissionOverrides.js";
 import { classMutation, classQuery } from "./lib/customFunctions.js";
 import {
   clearLinksForUser,
@@ -457,6 +458,8 @@ export const setRole = classMutation({
       await authz.revokeRole(ctx, args.userId, role, ctx.scope);
     }
     await authz.assignRole(ctx, args.userId, newRole, ctx.scope);
+    // Role change returns the member to a clean role baseline (clears grants/denies/suspend).
+    await clearClassPermissionOverrides(ctx, ctx.classDoc._id, args.userId);
 
     if (newRole === "student") {
       await ensureStudentRosterRow(ctx, ctx.classDoc._id, args.userId);

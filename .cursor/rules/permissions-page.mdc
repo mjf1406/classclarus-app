@@ -1,0 +1,34 @@
+---
+description: Keep new capabilities on the class Permissions page (or ask)
+alwaysApply: true
+---
+
+# Permissions Page Coverage
+
+When adding or changing a **class capability** (something gated by authz, a new manage/read action, or a staff-only feature), decide whether it should appear on the class **Permissions** page (`/class/$classId/permissions`). If unsure, **ask the user** before shipping—do not silently omit a grantable permission or invent owner-only gates without confirmation.
+
+## Source of truth
+
+- Permissions and role defaults live in `convex/lib/authzModel.ts` (`definePermissions` / `defineRoles`).
+- The Permissions UI lists **grantable** permissions via `GRANTABLE_CLASS_PERMISSIONS` / `grantablePermissionGroups()` (owner catalog minus `NON_GRANTABLE_CLASS_PERMISSIONS`).
+- Labels come from i18n: `perm_<resource>_<action>` and `permGroup_<resource>` (see `src/lib/permissions/permissionLabels.ts`).
+- Page UI: `src/components/permissions/ClassPermissionsPage.tsx`.
+
+## When adding a new capability
+
+1. Add the permission under the right resource in `definePermissions` (e.g. `foo: { read: true, manage: true }`).
+2. Assign it on the correct roles in `defineRoles` (who has it by default).
+3. Gate server functions and UI with that permission (`Can` / `useCan` / authz checks)—do not hardcode role checks when a permission exists.
+4. Confirm it should be **grantable** on the Permissions page:
+   - Default: yes for staff-tunable capabilities (teacher / assistant_teacher overrides).
+   - Keep non-grantable only for owner-meta powers (today: `permissions:manage`, `class:delete`)—ask before adding more exclusions.
+5. Add `permGroup_<resource>` (if new resource) and `perm_<resource>_<action>` to **`en.ts`** and **every** locale.
+6. Wire nav/routes/actions behind the same permission so overrides actually change access.
+
+## If unsure
+
+Ask before implementing, e.g.:
+
+> New capability X — propose permission `resource:action`, defaults on roles […], grantable on Permissions page: yes/no?
+
+Do not add a feature that only owners/teachers can use via hardcoded roles when a fine-grained permission + Permissions page toggle is the product pattern.

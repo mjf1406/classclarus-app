@@ -13,6 +13,7 @@ import {
   type ClassRole,
 } from "./lib/authzModel.js";
 import { recordClassActivity } from "./lib/classActivity.js";
+import { clearClassPermissionOverrides } from "./lib/classPermissionOverrides.js";
 import { authedQuery, classMutation, classQuery, entitledMutation } from "./lib/customFunctions.js";
 import { rateLimiter } from "./lib/rateLimiter.js";
 import { clearLinksForClass } from "./lib/guardianLinks.js";
@@ -705,6 +706,9 @@ export const transferOwnership = classMutation({
     await authz.revokeRole(ctx, ctx.userId, "owner", ctx.scope);
     // Outgoing owner is demoted to teacher (not removed from the class).
     await authz.assignRole(ctx, ctx.userId, "teacher", ctx.scope);
+    // Role swaps should not leave stale grant/deny overrides from prior roles.
+    await clearClassPermissionOverrides(ctx, ctx.classDoc._id, args.toUserId);
+    await clearClassPermissionOverrides(ctx, ctx.classDoc._id, ctx.userId);
 
     await ctx.db.patch("classes", ctx.classDoc._id, {
       ownerId: args.toUserId,

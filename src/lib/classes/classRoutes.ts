@@ -1,6 +1,7 @@
 export type ClassNavTo =
   | "/class/$classId"
   | "/class/$classId/settings"
+  | "/class/$classId/permissions"
   | "/class/$classId/activity"
   | "/class/$classId/announcements"
   | "/class/$classId/attendance"
@@ -21,6 +22,7 @@ export type ClassNavTo =
 const REST_TO_ROUTE: Record<string, ClassNavTo> = {
   "": "/class/$classId",
   "/settings": "/class/$classId/settings",
+  "/permissions": "/class/$classId/permissions",
   "/activity": "/class/$classId/activity",
   "/announcements": "/class/$classId/announcements",
   "/attendance": "/class/$classId/attendance",
@@ -45,6 +47,8 @@ export function pathFor(to: ClassNavTo, classId: string): string {
       return `/class/${classId}`;
     case "/class/$classId/settings":
       return `/class/${classId}/settings`;
+    case "/class/$classId/permissions":
+      return `/class/${classId}/permissions`;
     case "/class/$classId/activity":
       return `/class/${classId}/activity`;
     case "/class/$classId/announcements":

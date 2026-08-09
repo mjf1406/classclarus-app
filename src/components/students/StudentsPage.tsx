@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { GroupTeamFilterButtons } from "@/components/groups/GroupTeamFilterButtons";
+import { ChangeMemberRoleConfirmDialog } from "@/components/members/ChangeMemberRoleConfirmDialog";
 import { RemoveMemberCredenza } from "@/components/members/RemoveMemberCredenza";
 import { RosterNameFormatControls } from "@/components/students/RosterNameFormatControls";
 import { StudentRosterCard } from "@/components/students/StudentRosterCard";
@@ -29,8 +30,8 @@ import { useSetRosterNameFormat } from "@/hooks/classes/useSetRosterNameFormat";
 import { useCan } from "@/hooks/permissions/useCan";
 import { useGroupsBoard } from "@/hooks/groups/useGroupsBoard";
 import { useGroupTeamFilterState } from "@/hooks/groups/useGroupTeamFilterState";
+import { useChangeMemberRoleWithConfirm } from "@/hooks/members/useChangeMemberRoleWithConfirm";
 import { useRemoveClassMember } from "@/hooks/members/useRemoveClassMember";
-import { useSetMemberRole } from "@/hooks/members/useSetMemberRole";
 import { useClassUserSettings } from "@/hooks/roster/useClassUserSettings";
 import { useEnsureStudentRosters } from "@/hooks/roster/useEnsureStudentRosters";
 import { useReorderStudentRoster } from "@/hooks/roster/useReorderStudentRoster";
@@ -93,7 +94,13 @@ export function StudentsPage({ classId }: StudentsPageProps) {
   useEnsureStudentRosters(classId, !isPending && !isAuthLoading && !isError);
 
   const removeMutation = useRemoveClassMember("student");
-  const setRoleMutation = useSetMemberRole();
+  const {
+    requestRoleChange,
+    confirmPendingRoleChange,
+    confirmOpen,
+    handleConfirmOpenChange,
+    pendingMemberName,
+  } = useChangeMemberRoleWithConfirm(classId);
   const updateFieldsMutation = useUpdateStudentRosterFields();
   const reorderMutation = useReorderStudentRoster();
   const upsertPrefsMutation = useUpsertStudentsViewPrefs();
@@ -246,14 +253,18 @@ export function StudentsPage({ classId }: StudentsPageProps) {
 
   const handleChangeRole = useCallback(
     (student: StudentRosterEntry, nextRole: JoinCodeRole) => {
-      void setRoleMutation.mutateAsync({
-        classId,
-        userId: student.userId,
-        role: nextRole,
-        fromRole: "student",
-      });
+      void requestRoleChange(
+        {
+          userId: student.userId,
+          name: student.name,
+          email: student.email,
+          image: student.image,
+          role: "student",
+        },
+        nextRole,
+      );
     },
-    [classId, setRoleMutation],
+    [requestRoleChange],
   );
 
   const removeMemberName = memberToRemove
@@ -425,6 +436,13 @@ export function StudentsPage({ classId }: StudentsPageProps) {
         onOpenChange={setRemoveOpen}
         memberName={removeMemberName}
         onConfirm={handleRemoveConfirm}
+      />
+
+      <ChangeMemberRoleConfirmDialog
+        open={confirmOpen}
+        memberName={pendingMemberName}
+        onOpenChange={handleConfirmOpenChange}
+        onConfirm={confirmPendingRoleChange}
       />
     </div>
   );

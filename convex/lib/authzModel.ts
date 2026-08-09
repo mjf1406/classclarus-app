@@ -52,6 +52,11 @@ export const permissions = definePermissions({
    * read is assistant_teacher+.
    */
   raz: { read: true, manage: true },
+  /**
+   * Fine-grained staff permission overrides — manage is owner-only.
+   * Used by the class Permissions page under Manage.
+   */
+  permissions: { manage: true },
   /** App-level admin (global / unscoped). Not a class membership role. */
   admin: { syncProducts: true, viewHealth: true, manageUsers: true, viewFeedback: true },
 });
@@ -104,6 +109,7 @@ export const roles = defineRoles(permissions, {
     inherits: "teacher",
     class: ["delete"],
     teachers: ["invite", "remove", "suspend"],
+    permissions: ["manage"],
   },
   /** Global unscoped role — assigned without a class scope. */
   app_admin: {
@@ -145,6 +151,67 @@ export function classScope(classId: string) {
 
 export function permissionsForRole(role: ClassRole): Array<string> {
   return flattenRolePermissions(roles, role);
+}
+
+/** Permissions the owner may grant/deny on the class Permissions page. */
+const NON_GRANTABLE_CLASS_PERMISSIONS = new Set<string>(["permissions:manage", "class:delete"]);
+
+/** Staff roles that may receive fine-grained permission overrides. */
+export const PERMISSION_OVERRIDE_TARGET_ROLES = [
+  "teacher",
+  "assistant_teacher",
+] as const satisfies ReadonlyArray<ClassRole>;
+
+export type PermissionOverrideTargetRole = (typeof PERMISSION_OVERRIDE_TARGET_ROLES)[number];
+
+export function isPermissionOverrideTargetRole(
+  value: string,
+): value is PermissionOverrideTargetRole {
+  return (PERMISSION_OVERRIDE_TARGET_ROLES as ReadonlyArray<string>).includes(value);
+}
+
+export function isGrantableClassPermission(value: string): value is ClassPermission {
+  if (value.startsWith("admin:")) return false;
+  if (NON_GRANTABLE_CLASS_PERMISSIONS.has(value)) return false;
+  // Must be a known class permission from the owner role catalog (full class set).
+  return permissionsForRole("owner").includes(value);
+}
+
+/**
+ * Grantable class permissions for the Permissions page, derived from the owner
+ * role catalog minus owner-exclusive / meta permissions.
+ */
+export const GRANTABLE_CLASS_PERMISSIONS: Array<ClassPermission> = permissionsForRole("owner")
+  .filter(isGrantableClassPermission)
+  .sort((a, b) => a.localeCompare(b));
+
+/** Resource key → grantable permissions for that resource (UI grouping). */
+export function grantablePermissionGroups(): Array<{
+  resource: string;
+  permissions: Array<ClassPermission>;
+}> {
+  const byResource = new Map<string, Array<ClassPermission>>();
+  for (const permission of GRANTABLE_CLASS_PERMISSIONS) {
+    const resource = permission.split(":")[0] ?? permission;
+    const list = byResource.get(resource) ?? [];
+    list.push(permission);
+    byResource.set(resource, list);
+  }
+  return [...byResource.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([resource, perms]) => ({ resource, permissions: perms }));
+}
+
+export type PermissionOverrideEffect = "allow" | "deny";
+
+/** Effective allow after role baseline + optional override (deny wins). */
+export function effectivePermissionEnabled(
+  roleDefault: boolean,
+  override: PermissionOverrideEffect | null,
+): boolean {
+  if (override === "deny") return false;
+  if (override === "allow") return true;
+  return roleDefault;
 }
 
 export function isClassRole(value: string): value is ClassRole {
