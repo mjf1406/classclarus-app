@@ -68,12 +68,14 @@ export const roles = defineRoles(permissions, {
     attendance: ["read"],
     points: ["read"],
     expectations: ["read"],
+    raz: ["read"],
   },
   guardian: {
     inherits: "class_member",
     attendance: ["read"],
     points: ["read"],
     expectations: ["read"],
+    raz: ["read"],
   },
   assistant_teacher: {
     inherits: "class_member",

@@ -5,6 +5,8 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { DataTableSortableHeader } from "@/components/feedback/DataTableSortableHeader";
+import PendingComponent from "@/components/loading/PendingComponent";
+import { PersonalRazPage } from "@/components/raz/PersonalRazPage";
 import { RazAssessmentHistoryTable } from "@/components/raz/RazAssessmentHistoryTable";
 import {
   RazRecordAssessmentCredenza,
@@ -163,6 +165,19 @@ function isRazDisplayStatus(value: string): value is RazDisplayStatus {
 }
 
 export function RazPage({ classId }: RazPageProps) {
+  const { can, isPending: permissionsPending } = useCan();
+
+  if (permissionsPending) {
+    return <PendingComponent />;
+  }
+  if (!can("students:read")) {
+    return <PersonalRazPage classId={classId} />;
+  }
+
+  return <StaffRazPage classId={classId} />;
+}
+
+function StaffRazPage({ classId }: RazPageProps) {
   const { t, i18n } = useTranslation("raz");
   const { t: tClasses } = useTranslation("classes");
   const { t: tCommon } = useTranslation("common");

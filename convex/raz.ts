@@ -7,9 +7,11 @@ import type { MutationCtx, QueryCtx } from "./_generated/server.js";
 import { classScope } from "./lib/authzModel.js";
 import { recordClassActivity } from "./lib/classActivity.js";
 import { classMutation, classQuery } from "./lib/customFunctions.js";
+import { assertPersonalStudentAccess, resolvePersonalStudentIds } from "./lib/guardianLinks.js";
 import { shouldAutoSetRazRti } from "./lib/razAutoRti.js";
 import { isRazLevel } from "./lib/razLevels.js";
 import { rateLimiter } from "./lib/rateLimiter.js";
+import { resolveUserImageUrl } from "./lib/userImage.js";
 
 const razResultValidator = v.union(
   v.literal("level_up"),
@@ -47,6 +49,65 @@ const assessmentEntryValidator = v.object({
   level: v.string(),
   note: v.union(v.string(), v.null()),
 });
+
+/** Personal history — omits staff-only notes. */
+const personalAssessmentEntryValidator = v.object({
+  _id: v.id("razAssessments"),
+  studentUserId: v.id("users"),
+  assessedAt: v.number(),
+  readAccuracy: v.number(),
+  retellScore: v.union(v.number(), v.null()),
+  respondScore: v.number(),
+  result: razResultValidator,
+  level: v.string(),
+});
+
+const personalStudentValidator = v.object({
+  userId: v.id("users"),
+  rosterNumber: v.number(),
+  firstName: v.optional(v.string()),
+  lastName: v.optional(v.string()),
+  name: v.optional(v.string()),
+  image: v.optional(v.string()),
+  email: v.optional(v.string()),
+  initialLevel: v.union(v.string(), v.null()),
+  currentLevel: v.union(v.string(), v.null()),
+  lastAssessedAt: v.union(v.number(), v.null()),
+  lastAssessmentResult: v.union(razResultValidator, v.null()),
+  scheduleAnchorAt: v.union(v.number(), v.null()),
+  manualStatus: v.union(razManualStatusValidator, v.null()),
+  assessmentCount: v.number(),
+  levelUpPct: v.number(),
+  stayPct: v.number(),
+  levelDownPct: v.number(),
+});
+
+function resultMixPercents(results: Array<"level_up" | "stay" | "level_down">): {
+  assessmentCount: number;
+  levelUpPct: number;
+  stayPct: number;
+  levelDownPct: number;
+} {
+  const assessmentCount = results.length;
+  if (assessmentCount === 0) {
+    return { assessmentCount: 0, levelUpPct: 0, stayPct: 0, levelDownPct: 0 };
+  }
+  let levelUp = 0;
+  let stay = 0;
+  let levelDown = 0;
+  for (const result of results) {
+    if (result === "level_up") levelUp += 1;
+    else if (result === "stay") stay += 1;
+    else levelDown += 1;
+  }
+  return {
+    assessmentCount,
+    levelUpPct: Math.round((levelUp / assessmentCount) * 100),
+    stayPct: Math.round((stay / assessmentCount) * 100),
+    levelDownPct: Math.round((levelDown / assessmentCount) * 100),
+  };
+}
+
 async function listStudentUserIds(
   ctx: QueryCtx | MutationCtx,
   classId: Id<"classes">,
@@ -142,6 +203,139 @@ export const listAssessments = classQuery({
       result: row.result,
       level: row.level,
       note: row.note ?? null,
+    }));
+  },
+});
+
+/**
+ * Personal/read audience: self (student) or linked students (guardian).
+ * Includes level summary + result mix percentages. Omits assessment notes.
+ */
+export const forAudience = classQuery({
+  args: {},
+  returns: v.array(personalStudentValidator),
+  handler: async (ctx) => {
+    await ctx.require("raz:read");
+    const classId = ctx.classDoc._id;
+    const studentUserIds = await resolvePersonalStudentIds(ctx, classId);
+    if (studentUserIds.length === 0) {
+      return [];
+    }
+
+    const entries: Array<{
+      userId: Id<"users">;
+      rosterNumber: number;
+      firstName?: string;
+      lastName?: string;
+      name?: string;
+      image?: string;
+      email?: string;
+      initialLevel: string | null;
+      currentLevel: string | null;
+      lastAssessedAt: number | null;
+      lastAssessmentResult: "level_up" | "stay" | "level_down" | null;
+      scheduleAnchorAt: number | null;
+      manualStatus: "rti" | "pending" | null;
+      assessmentCount: number;
+      levelUpPct: number;
+      stayPct: number;
+      levelDownPct: number;
+    }> = [];
+
+    for (const studentUserId of studentUserIds) {
+      const roster = await ctx.db
+        .query("studentRosters")
+        .withIndex("by_classId_userId", (q) => q.eq("classId", classId).eq("userId", studentUserId))
+        .unique();
+      if (!roster) continue;
+      const user = await ctx.db.get("users", studentUserId);
+      if (!user) continue;
+
+      const levelRow = await ctx.db
+        .query("razStudentLevels")
+        .withIndex("by_class_student", (q) =>
+          q.eq("classId", classId).eq("studentUserId", studentUserId),
+        )
+        .unique();
+
+      // eslint-disable-next-line @convex-dev/no-collect-in-query -- per-student RAZ history is school-year bounded
+      const assessments = await ctx.db
+        .query("razAssessments")
+        .withIndex("by_class_student", (q) =>
+          q.eq("classId", classId).eq("studentUserId", studentUserId),
+        )
+        .collect();
+
+      let lastAssessedAt: number | null = null;
+      let lastAssessmentResult: "level_up" | "stay" | "level_down" | null = null;
+      for (const assessment of assessments) {
+        if (lastAssessedAt === null || assessment.assessedAt > lastAssessedAt) {
+          lastAssessedAt = assessment.assessedAt;
+          lastAssessmentResult = assessment.result;
+        }
+      }
+
+      const mix = resultMixPercents(assessments.map((a) => a.result));
+      const initialLevel = levelRow?.initialLevel ?? null;
+      const currentLevel = levelRow ? (levelRow.currentLevel ?? levelRow.initialLevel) : null;
+      const scheduleAnchorAt = levelRow !== null ? (lastAssessedAt ?? levelRow.updatedAt) : null;
+
+      entries.push({
+        userId: studentUserId,
+        rosterNumber: roster.rosterNumber,
+        firstName: roster.firstName,
+        lastName: roster.lastName,
+        name: user.name,
+        image: await resolveUserImageUrl(ctx, user),
+        email: user.email,
+        initialLevel,
+        currentLevel,
+        lastAssessedAt,
+        lastAssessmentResult,
+        scheduleAnchorAt,
+        manualStatus: levelRow?.manualStatus ?? null,
+        ...mix,
+      });
+    }
+
+    entries.sort((a, b) => a.rosterNumber - b.rosterNumber);
+    return entries;
+  },
+});
+
+/**
+ * Assessment history for one personal-audience student (newest first).
+ * Omits staff-only notes.
+ */
+export const assessmentHistoryForAudience = classQuery({
+  args: {
+    studentUserId: v.id("users"),
+  },
+  returns: v.array(personalAssessmentEntryValidator),
+  handler: async (ctx, args) => {
+    await ctx.require("raz:read");
+    const classId = ctx.classDoc._id;
+    await assertPersonalStudentAccess(ctx, classId, args.studentUserId);
+
+    // eslint-disable-next-line @convex-dev/no-collect-in-query -- per-student RAZ history is school-year bounded
+    const rows = await ctx.db
+      .query("razAssessments")
+      .withIndex("by_class_student", (q) =>
+        q.eq("classId", classId).eq("studentUserId", args.studentUserId),
+      )
+      .collect();
+
+    rows.sort((a, b) => b.assessedAt - a.assessedAt);
+
+    return rows.map((row) => ({
+      _id: row._id,
+      studentUserId: row.studentUserId,
+      assessedAt: row.assessedAt,
+      readAccuracy: row.readAccuracy,
+      retellScore: row.retellScore ?? null,
+      respondScore: row.respondScore,
+      result: row.result,
+      level: row.level,
     }));
   },
 });
