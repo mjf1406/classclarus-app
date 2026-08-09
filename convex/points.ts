@@ -2,7 +2,7 @@ import { ConvexError, v } from "convex/values";
 
 import { APP_CONFIG } from "./appConfig.js";
 import { components } from "./_generated/api.js";
-import type { Id } from "./_generated/dataModel.js";
+import type { Doc, Id } from "./_generated/dataModel.js";
 import type { MutationCtx, QueryCtx } from "./_generated/server.js";
 import { classScope } from "./lib/authzModel.js";
 import { recordClassActivity } from "./lib/classActivity.js";
@@ -13,9 +13,14 @@ import {
   resolvePersonalStudentIds,
 } from "./lib/guardianLinks.js";
 import {
+  aggregateMinusCountsByStudent,
+  aggregateWarningCountsByStudent,
+  pointsBadgeLookbackWindow,
+  resolvePointsBadgeWindow,
+} from "./lib/pointsBadgeWindow.js";
+import {
   applyBehaviorPointsDelta,
   applyRewardPointsDelta,
-  effectiveWarningCount,
   ensureRosterPointCounters,
   ledgerQuantity,
   readRosterPointCounters,
@@ -82,6 +87,7 @@ const boardStudentValidator = v.object({
   pointsRemoved: v.number(),
   pointsRedeemed: v.number(),
   warningCount: v.number(),
+  minusCount: v.number(),
   attendanceStatus: v.optional(attendanceStatusValidator),
 });
 
@@ -145,9 +151,51 @@ async function requireStudentsInClass(
   }
 }
 
+async function loadBadgeCountsForClass(
+  ctx: QueryCtx,
+  classDoc: Doc<"classes">,
+  dateKey: string,
+  timeZoneOffsetMinutes: number,
+): Promise<{
+  warningByStudent: Map<Id<"users">, number>;
+  minusByStudent: Map<Id<"users">, number>;
+}> {
+  if (!Number.isFinite(timeZoneOffsetMinutes)) {
+    throw new Error("Invalid timezone offset");
+  }
+  const classId = classDoc._id;
+  const warningWindow = resolvePointsBadgeWindow(
+    classDoc.warningWindowAmount,
+    classDoc.warningWindowUnit,
+  );
+  const minusWindow = resolvePointsBadgeWindow(
+    classDoc.minusWindowAmount,
+    classDoc.minusWindowUnit,
+  );
+  const warningLookback = pointsBadgeLookbackWindow(dateKey, timeZoneOffsetMinutes, warningWindow);
+  const minusLookback = pointsBadgeLookbackWindow(dateKey, timeZoneOffsetMinutes, minusWindow);
+
+  // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded warning ledger
+  const warningEvents = await ctx.db
+    .query("studentWarningEvents")
+    .withIndex("by_classId_dateKey", (q) => q.eq("classId", classId))
+    .collect();
+  // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded behavior ledger
+  const behaviorApps = await ctx.db
+    .query("behaviorApplications")
+    .withIndex("by_classId", (q) => q.eq("classId", classId))
+    .collect();
+
+  return {
+    warningByStudent: aggregateWarningCountsByStudent(warningEvents, warningLookback),
+    minusByStudent: aggregateMinusCountsByStudent(behaviorApps, minusLookback),
+  };
+}
+
 export const board = classQuery({
   args: {
     dateKey: v.string(),
+    timeZoneOffsetMinutes: v.number(),
   },
   returns: v.array(boardStudentValidator),
   handler: async (ctx, args) => {
@@ -170,6 +218,13 @@ export const board = classQuery({
       .collect();
     const attendanceByStudent = new Map(
       attendanceRecords.map((record) => [record.studentUserId, record.status] as const),
+    );
+
+    const { warningByStudent, minusByStudent } = await loadBadgeCountsForClass(
+      ctx,
+      ctx.classDoc,
+      args.dateKey,
+      args.timeZoneOffsetMinutes,
     );
 
     const entries: Array<{
@@ -204,6 +259,7 @@ export const board = classQuery({
       pointsRemoved: number;
       pointsRedeemed: number;
       warningCount: number;
+      minusCount: number;
       attendanceStatus?: "present" | "absent" | "late";
     }> = [];
 
@@ -229,7 +285,8 @@ export const board = classQuery({
         pointsAwarded: counters.pointsAwarded,
         pointsRemoved: counters.pointsRemoved,
         pointsRedeemed: counters.pointsRedeemed,
-        warningCount: effectiveWarningCount(row, args.dateKey),
+        warningCount: warningByStudent.get(row.userId) ?? 0,
+        minusCount: minusByStudent.get(row.userId) ?? 0,
         ...(attendanceStatus !== undefined ? { attendanceStatus } : {}),
       });
     }
@@ -243,6 +300,7 @@ export const board = classQuery({
 export const forAudience = classQuery({
   args: {
     dateKey: v.string(),
+    timeZoneOffsetMinutes: v.number(),
   },
   returns: v.array(boardStudentValidator),
   handler: async (ctx, args) => {
@@ -264,6 +322,13 @@ export const forAudience = classQuery({
       attendanceRecords
         .filter((record) => audienceSet.has(record.studentUserId))
         .map((record) => [record.studentUserId, record.status] as const),
+    );
+
+    const { warningByStudent, minusByStudent } = await loadBadgeCountsForClass(
+      ctx,
+      ctx.classDoc,
+      args.dateKey,
+      args.timeZoneOffsetMinutes,
     );
 
     const entries: Array<{
@@ -298,6 +363,7 @@ export const forAudience = classQuery({
       pointsRemoved: number;
       pointsRedeemed: number;
       warningCount: number;
+      minusCount: number;
       attendanceStatus?: "present" | "absent" | "late";
     }> = [];
 
@@ -327,7 +393,8 @@ export const forAudience = classQuery({
         pointsAwarded: counters.pointsAwarded,
         pointsRemoved: counters.pointsRemoved,
         pointsRedeemed: counters.pointsRedeemed,
-        warningCount: effectiveWarningCount(row, args.dateKey),
+        warningCount: warningByStudent.get(studentUserId) ?? 0,
+        minusCount: minusByStudent.get(studentUserId) ?? 0,
         ...(attendanceStatus !== undefined ? { attendanceStatus } : {}),
       });
     }

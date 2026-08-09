@@ -105,6 +105,17 @@ const schema = defineSchema({
      */
     rosterNameOrder: v.optional(v.union(v.literal("firstLast"), v.literal("lastFirst"))),
     rosterNameSpace: v.optional(v.boolean()),
+    /**
+     * Lookback for the points-board warning badge (default 1 day).
+     * Amount × unit (day / week×7 / month×30) ending on the board dateKey.
+     */
+    warningWindowAmount: v.optional(v.number()),
+    warningWindowUnit: v.optional(v.union(v.literal("day"), v.literal("week"), v.literal("month"))),
+    /**
+     * Lookback for the points-board minus (red flag) badge (default 1 day).
+     */
+    minusWindowAmount: v.optional(v.number()),
+    minusWindowUnit: v.optional(v.union(v.literal("day"), v.literal("week"), v.literal("month"))),
     updatedAt: v.number(),
     archivedAt: v.optional(v.number()),
   }).index("by_owner", ["ownerId"]),

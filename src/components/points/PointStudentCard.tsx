@@ -1,6 +1,7 @@
 import {
   CheckCircle2Icon,
   CheckSquareIcon,
+  FlagIcon,
   TriangleAlertIcon,
   TrophyIcon,
   Undo2Icon,
@@ -256,13 +257,28 @@ export function PointStudentCard({
           <TrophyIcon className="size-3 text-amber-400 sm:size-3.5" aria-hidden="true" />
           {student.pointsBalance}
         </span>
-        {student.warningCount > 0 ? (
-          <span className="inline-flex items-center gap-0.5 text-amber-600 dark:text-amber-400">
-            <TriangleAlertIcon className="size-3 sm:size-3.5" aria-hidden="true" />
-            <span className="text-[11px] font-semibold tabular-nums sm:text-xs">
-              {student.warningCount}
-            </span>
-            <span className="sr-only">{t("warningsCount", { count: student.warningCount })}</span>
+        {student.warningCount > 0 || student.minusCount > 0 ? (
+          <span className="inline-flex items-center gap-1.5 sm:gap-2">
+            {student.warningCount > 0 ? (
+              <span className="inline-flex items-center gap-0.5 text-amber-600 dark:text-amber-400">
+                <TriangleAlertIcon className="size-3 sm:size-3.5" aria-hidden="true" />
+                <span className="text-[11px] font-semibold tabular-nums sm:text-xs">
+                  {student.warningCount}
+                </span>
+                <span className="sr-only">
+                  {t("warningsCount", { count: student.warningCount })}
+                </span>
+              </span>
+            ) : null}
+            {student.minusCount > 0 ? (
+              <span className="inline-flex items-center gap-0.5 text-red-600 dark:text-red-400">
+                <FlagIcon className="size-3 sm:size-3.5" aria-hidden="true" />
+                <span className="text-[11px] font-semibold tabular-nums sm:text-xs">
+                  {student.minusCount}
+                </span>
+                <span className="sr-only">{t("minusCount", { count: student.minusCount })}</span>
+              </span>
+            ) : null}
           </span>
         ) : null}
       </div>

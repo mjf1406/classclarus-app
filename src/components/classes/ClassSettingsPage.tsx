@@ -12,18 +12,36 @@ import { RosterNameFormatControls } from "@/components/students/RosterNameFormat
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ErrorState } from "@/components/ui/error-state";
+import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
+import { NumberInput } from "@/components/ui/number-input";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FileDropzone } from "@/components/upload/FileDropzone";
 import { useCan } from "@/hooks/permissions/useCan";
 import { useClass } from "@/hooks/classes/useClass";
 import { useClearClassBanner } from "@/hooks/classes/useClearClassBanner";
 import { useSetClassBanner } from "@/hooks/classes/useSetClassBanner";
+import { useSetPointsBadgeWindows } from "@/hooks/classes/useSetPointsBadgeWindows";
 import { useSetRosterNameFormat } from "@/hooks/classes/useSetRosterNameFormat";
 import { useSetStudentLanguage } from "@/hooks/classes/useSetStudentLanguage";
 import { useUpdateClass } from "@/hooks/classes/useUpdateClass";
 import { useFileBytes } from "@/hooks/files/useFileBytes";
 import type { ClassFormValues } from "@/lib/classes/classFormSchema";
 import type { AppLanguage } from "@/lib/languages";
+import {
+  isPointsBadgeWindowUnit,
+  MAX_POINTS_BADGE_WINDOW_AMOUNT,
+  MIN_POINTS_BADGE_WINDOW_AMOUNT,
+  POINTS_BADGE_WINDOW_UNITS,
+  type PointsBadgeWindowUnit,
+} from "@/lib/points/pointsBadgeWindow";
 import { resolveRosterNameFormat, type RosterNameFormat } from "@/lib/roster/roster";
 import type { Id } from "../../../convex/_generated/dataModel";
 
@@ -71,6 +89,7 @@ export function ClassSettingsPage({ classId }: ClassSettingsPageProps) {
   const clearBanner = useClearClassBanner();
   const setStudentLanguage = useSetStudentLanguage();
   const setRosterNameFormat = useSetRosterNameFormat();
+  const setPointsBadgeWindows = useSetPointsBadgeWindows();
   const [editOpen, setEditOpen] = useState(false);
 
   const nameFormat = resolveRosterNameFormat({
@@ -121,6 +140,24 @@ export function ClassSettingsPage({ classId }: ClassSettingsPageProps) {
 
   const handleStudentLanguageChange = (studentLanguage: AppLanguage) => {
     setStudentLanguage.mutate({ classId, studentLanguage });
+  };
+
+  const savePointsBadgeWindows = (next: {
+    warningWindowAmount: number;
+    warningWindowUnit: PointsBadgeWindowUnit;
+    minusWindowAmount: number;
+    minusWindowUnit: PointsBadgeWindowUnit;
+  }) => {
+    if (!classDoc || !canUpdateClass) return;
+    if (
+      next.warningWindowAmount === classDoc.warningWindowAmount &&
+      next.warningWindowUnit === classDoc.warningWindowUnit &&
+      next.minusWindowAmount === classDoc.minusWindowAmount &&
+      next.minusWindowUnit === classDoc.minusWindowUnit
+    ) {
+      return;
+    }
+    setPointsBadgeWindows.mutate({ classId, ...next });
   };
 
   return (
@@ -207,6 +244,124 @@ export function ClassSettingsPage({ classId }: ClassSettingsPageProps) {
                 onChange={handleNameFormatChange}
                 disabled={!canUpdateClass || setRosterNameFormat.isPending}
               />
+            </CardContent>
+          </Card>
+
+          <Card className="max-w-2xl">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold">
+                {t("pointsBadgeWindowsTitle")}
+              </CardTitle>
+              <CardDescription>{t("pointsBadgeWindowsDescription")}</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-5">
+              <Field>
+                <FieldLabel>{t("pointsBadgeWarningWindowLabel")}</FieldLabel>
+                <FieldDescription>{t("pointsBadgeWarningWindowDescription")}</FieldDescription>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <NumberInput
+                    value={classDoc.warningWindowAmount}
+                    min={MIN_POINTS_BADGE_WINDOW_AMOUNT}
+                    max={MAX_POINTS_BADGE_WINDOW_AMOUNT}
+                    disabled={!canUpdateClass || setPointsBadgeWindows.isPending}
+                    aria-label={t("pointsBadgeWarningWindowAmountAria")}
+                    className="w-28"
+                    onValueChange={(warningWindowAmount) =>
+                      savePointsBadgeWindows({
+                        warningWindowAmount,
+                        warningWindowUnit: classDoc.warningWindowUnit,
+                        minusWindowAmount: classDoc.minusWindowAmount,
+                        minusWindowUnit: classDoc.minusWindowUnit,
+                      })
+                    }
+                  />
+                  <Select
+                    value={classDoc.warningWindowUnit}
+                    disabled={!canUpdateClass || setPointsBadgeWindows.isPending}
+                    onValueChange={(next) => {
+                      if (next == null || !isPointsBadgeWindowUnit(next)) return;
+                      savePointsBadgeWindows({
+                        warningWindowAmount: classDoc.warningWindowAmount,
+                        warningWindowUnit: next,
+                        minusWindowAmount: classDoc.minusWindowAmount,
+                        minusWindowUnit: classDoc.minusWindowUnit,
+                      });
+                    }}
+                  >
+                    <SelectTrigger
+                      className="w-36"
+                      aria-label={t("pointsBadgeWarningWindowUnitAria")}
+                    >
+                      <SelectValue>
+                        {t(`pointsBadgeWindowUnit_${classDoc.warningWindowUnit}`)}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {POINTS_BADGE_WINDOW_UNITS.map((unit) => (
+                          <SelectItem key={unit} value={unit}>
+                            {t(`pointsBadgeWindowUnit_${unit}`)}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </Field>
+
+              <Field>
+                <FieldLabel>{t("pointsBadgeMinusWindowLabel")}</FieldLabel>
+                <FieldDescription>{t("pointsBadgeMinusWindowDescription")}</FieldDescription>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <NumberInput
+                    value={classDoc.minusWindowAmount}
+                    min={MIN_POINTS_BADGE_WINDOW_AMOUNT}
+                    max={MAX_POINTS_BADGE_WINDOW_AMOUNT}
+                    disabled={!canUpdateClass || setPointsBadgeWindows.isPending}
+                    aria-label={t("pointsBadgeMinusWindowAmountAria")}
+                    className="w-28"
+                    onValueChange={(minusWindowAmount) =>
+                      savePointsBadgeWindows({
+                        warningWindowAmount: classDoc.warningWindowAmount,
+                        warningWindowUnit: classDoc.warningWindowUnit,
+                        minusWindowAmount,
+                        minusWindowUnit: classDoc.minusWindowUnit,
+                      })
+                    }
+                  />
+                  <Select
+                    value={classDoc.minusWindowUnit}
+                    disabled={!canUpdateClass || setPointsBadgeWindows.isPending}
+                    onValueChange={(next) => {
+                      if (next == null || !isPointsBadgeWindowUnit(next)) return;
+                      savePointsBadgeWindows({
+                        warningWindowAmount: classDoc.warningWindowAmount,
+                        warningWindowUnit: classDoc.warningWindowUnit,
+                        minusWindowAmount: classDoc.minusWindowAmount,
+                        minusWindowUnit: next,
+                      });
+                    }}
+                  >
+                    <SelectTrigger
+                      className="w-36"
+                      aria-label={t("pointsBadgeMinusWindowUnitAria")}
+                    >
+                      <SelectValue>
+                        {t(`pointsBadgeWindowUnit_${classDoc.minusWindowUnit}`)}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {POINTS_BADGE_WINDOW_UNITS.map((unit) => (
+                          <SelectItem key={unit} value={unit}>
+                            {t(`pointsBadgeWindowUnit_${unit}`)}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </Field>
             </CardContent>
           </Card>
 

@@ -21,6 +21,7 @@ function student(
     pointsRemoved: 0,
     pointsRedeemed: 0,
     warningCount: 0,
+    minusCount: 0,
     userId: partial.userId,
     rosterNumber: partial.rosterNumber,
   };

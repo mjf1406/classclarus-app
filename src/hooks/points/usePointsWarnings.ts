@@ -79,15 +79,7 @@ export function useClearWarnings() {
   return useOptimisticMutation({
     mutationFn: (args: WarningArgs) => mutationFn(args),
     queryKeys: (args) => [pointsBoardQueryKey(args.classId, args.dateKey)],
-    applyOptimisticUpdate: (queryClient, args) => {
-      const queryKey = pointsBoardQueryKey(args.classId, args.dateKey);
-      queryClient.setQueryData<PointsBoard>(queryKey, (old) => {
-        if (!old) return old;
-        return old.map((student) =>
-          student.userId === args.studentUserId ? { ...student, warningCount: 0 } : student,
-        );
-      });
-    },
+    // Clear is dateKey-scoped; badge may include older days, so rely on invalidate.
     onError: (error) => {
       toast.add({
         title: messageFromError(error, t("clearWarningsFailed"), tCommon("rateLimited")),

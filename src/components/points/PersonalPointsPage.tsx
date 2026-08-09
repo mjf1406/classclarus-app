@@ -106,11 +106,24 @@ function PersonalPointStudentCard({ student, nameFormat }: PersonalPointStudentC
             {tAttendance(attendanceKey)}
           </span>
         </div>
-        {student.warningCount > 0 ? (
-          <span className="inline-flex shrink-0 items-center gap-1 text-amber-600 dark:text-amber-400">
-            <TriangleAlertIcon className="size-4" aria-hidden />
-            <span className="text-sm font-semibold tabular-nums">{student.warningCount}</span>
-            <span className="sr-only">{t("warningsCount", { count: student.warningCount })}</span>
+        {student.warningCount > 0 || student.minusCount > 0 ? (
+          <span className="inline-flex shrink-0 items-center gap-2">
+            {student.warningCount > 0 ? (
+              <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                <TriangleAlertIcon className="size-4" aria-hidden />
+                <span className="text-sm font-semibold tabular-nums">{student.warningCount}</span>
+                <span className="sr-only">
+                  {t("warningsCount", { count: student.warningCount })}
+                </span>
+              </span>
+            ) : null}
+            {student.minusCount > 0 ? (
+              <span className="inline-flex items-center gap-1 text-red-600 dark:text-red-400">
+                <FlagIcon className="size-4" aria-hidden />
+                <span className="text-sm font-semibold tabular-nums">{student.minusCount}</span>
+                <span className="sr-only">{t("minusCount", { count: student.minusCount })}</span>
+              </span>
+            ) : null}
           </span>
         ) : null}
       </div>

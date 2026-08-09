@@ -60,6 +60,7 @@ import type * as lib_joinCodesCleanup from "../lib/joinCodesCleanup.js";
 import type * as lib_languages from "../lib/languages.js";
 import type * as lib_linkAccessibility from "../lib/linkAccessibility.js";
 import type * as lib_permissionSnapshot from "../lib/permissionSnapshot.js";
+import type * as lib_pointsBadgeWindow from "../lib/pointsBadgeWindow.js";
 import type * as lib_pointsCleanup from "../lib/pointsCleanup.js";
 import type * as lib_pointsRoster from "../lib/pointsRoster.js";
 import type * as lib_polarEnv from "../lib/polarEnv.js";
@@ -149,6 +150,7 @@ declare const fullApi: ApiFromModules<{
   "lib/languages": typeof lib_languages;
   "lib/linkAccessibility": typeof lib_linkAccessibility;
   "lib/permissionSnapshot": typeof lib_permissionSnapshot;
+  "lib/pointsBadgeWindow": typeof lib_pointsBadgeWindow;
   "lib/pointsCleanup": typeof lib_pointsCleanup;
   "lib/pointsRoster": typeof lib_pointsRoster;
   "lib/polarEnv": typeof lib_polarEnv;

@@ -29,6 +29,12 @@ import { deleteWarningEventsForClass } from "./lib/pointsCleanup.js";
 import { deleteJoinCodesForClass } from "./lib/joinCodesCleanup.js";
 import { languageValidator, type LanguageCode } from "./lib/languages.js";
 import {
+  normalizePointsBadgeWindow,
+  pointsBadgeWindowUnitValidator,
+  resolvePointsBadgeWindow,
+  type PointsBadgeWindowUnit,
+} from "./lib/pointsBadgeWindow.js";
+import {
   deleteClassUserSettingsForClass,
   deleteStudentRostersForClass,
 } from "./lib/studentRosters.js";
@@ -63,6 +69,10 @@ const classValidator = v.object({
   studentLanguage: languageValidator,
   rosterNameOrder: rosterNameOrderValidator,
   rosterNameSpace: v.boolean(),
+  warningWindowAmount: v.number(),
+  warningWindowUnit: pointsBadgeWindowUnitValidator,
+  minusWindowAmount: v.number(),
+  minusWindowUnit: pointsBadgeWindowUnitValidator,
   updatedAt: v.number(),
   archivedAt: v.optional(v.number()),
 });
@@ -71,7 +81,30 @@ type ClassPublicDefaults = {
   studentLanguage: LanguageCode;
   rosterNameOrder: "firstLast" | "lastFirst";
   rosterNameSpace: boolean;
+  warningWindowAmount: number;
+  warningWindowUnit: PointsBadgeWindowUnit;
+  minusWindowAmount: number;
+  minusWindowUnit: PointsBadgeWindowUnit;
 };
+
+function resolvePointsBadgeWindowFields(classDoc: Doc<"classes">): {
+  warningWindowAmount: number;
+  warningWindowUnit: PointsBadgeWindowUnit;
+  minusWindowAmount: number;
+  minusWindowUnit: PointsBadgeWindowUnit;
+} {
+  const warning = resolvePointsBadgeWindow(
+    classDoc.warningWindowAmount,
+    classDoc.warningWindowUnit,
+  );
+  const minus = resolvePointsBadgeWindow(classDoc.minusWindowAmount, classDoc.minusWindowUnit);
+  return {
+    warningWindowAmount: warning.amount,
+    warningWindowUnit: warning.unit,
+    minusWindowAmount: minus.amount,
+    minusWindowUnit: minus.unit,
+  };
+}
 
 /** API always returns resolved defaults for optional/legacy class fields. */
 function withClassDefaults(classDoc: Doc<"classes">): Doc<"classes"> & ClassPublicDefaults {
@@ -80,6 +113,7 @@ function withClassDefaults(classDoc: Doc<"classes">): Doc<"classes"> & ClassPubl
     studentLanguage: classDoc.studentLanguage ?? "en",
     rosterNameOrder: classDoc.rosterNameOrder === "lastFirst" ? "lastFirst" : "firstLast",
     rosterNameSpace: classDoc.rosterNameSpace !== false,
+    ...resolvePointsBadgeWindowFields(classDoc),
   };
 }
 
@@ -453,6 +487,50 @@ export const setRosterNameFormat = classMutation({
       metadata: {
         rosterNameOrder: args.rosterNameOrder,
         rosterNameSpace: String(args.rosterNameSpace),
+      },
+    });
+    return withClassDefaults(updated);
+  },
+});
+
+/** Lookback windows for warning and minus badges on the points board. */
+export const setPointsBadgeWindows = classMutation({
+  args: {
+    warningWindowAmount: v.number(),
+    warningWindowUnit: pointsBadgeWindowUnitValidator,
+    minusWindowAmount: v.number(),
+    minusWindowUnit: pointsBadgeWindowUnitValidator,
+  },
+  returns: classValidator,
+  handler: async (ctx, args) => {
+    await rateLimiter.limit(ctx, "classUpdate", { key: ctx.userId, throws: true });
+    await ctx.require("class:update");
+    const warning = normalizePointsBadgeWindow(args.warningWindowAmount, args.warningWindowUnit);
+    const minus = normalizePointsBadgeWindow(args.minusWindowAmount, args.minusWindowUnit);
+    await ctx.db.patch("classes", ctx.classDoc._id, {
+      warningWindowAmount: warning.amount,
+      warningWindowUnit: warning.unit,
+      minusWindowAmount: minus.amount,
+      minusWindowUnit: minus.unit,
+      updatedAt: Date.now(),
+    });
+    const updated = await ctx.db.get("classes", ctx.classDoc._id);
+    if (!updated) {
+      throw new Error("Failed to update points badge windows");
+    }
+    await recordClassActivity(ctx, {
+      classId: ctx.classDoc._id,
+      actorUserId: ctx.userId,
+      action: "update",
+      resourceType: "class",
+      resourceId: ctx.classDoc._id,
+      summary: "Updated points badge lookback windows",
+      summaryKey: "activitySummary_setPointsBadgeWindows",
+      metadata: {
+        warningWindowAmount: String(warning.amount),
+        warningWindowUnit: warning.unit,
+        minusWindowAmount: String(minus.amount),
+        minusWindowUnit: minus.unit,
       },
     });
     return withClassDefaults(updated);

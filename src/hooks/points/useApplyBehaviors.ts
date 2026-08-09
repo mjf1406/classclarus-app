@@ -44,13 +44,17 @@ export function useApplyBehaviors() {
           let pointsBalance = student.pointsBalance;
           let pointsAwarded = student.pointsAwarded;
           let pointsRemoved = student.pointsRemoved;
+          let minusCount = student.minusCount;
           for (const item of args.items) {
             const applied = item.points * item.quantity;
             pointsBalance += applied;
             if (applied > 0) pointsAwarded += applied;
-            if (applied < 0) pointsRemoved += Math.abs(applied);
+            if (applied < 0) {
+              pointsRemoved += Math.abs(applied);
+              minusCount += item.quantity;
+            }
           }
-          return { ...student, pointsBalance, pointsAwarded, pointsRemoved };
+          return { ...student, pointsBalance, pointsAwarded, pointsRemoved, minusCount };
         });
       });
     },
