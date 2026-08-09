@@ -1738,6 +1738,8 @@ const uk = {
     tabRemove: "Зняти",
     tabRedeem: "Обміняти",
     quantityLabel: "Кількість",
+    removeNoteLabel: "Нотатка",
+    removeNotePlaceholder: "Необов’язковий коментар до зняття…",
     searchPlaceholder: "Пошук…",
     searchLabel: "Пошук у каталозі",
     searchClear: "Очистити пошук",

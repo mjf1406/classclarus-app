@@ -10,6 +10,9 @@ export type PointsSortDirection = "asc" | "desc";
 
 export type PointsApplyTab = "award" | "remove" | "redeem";
 
+/** Max length for optional notes when removing points (matches Convex). */
+export const MAX_APPLICATION_NOTE_LENGTH = 500;
+
 export type PointsCatalogView = "list" | "grid";
 
 export function isPointsCatalogView(value: string): value is PointsCatalogView {

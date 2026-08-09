@@ -1766,6 +1766,8 @@ const de = {
     tabRemove: "Abziehen",
     tabRedeem: "Einlösen",
     quantityLabel: "Anzahl",
+    removeNoteLabel: "Notiz",
+    removeNotePlaceholder: "Optionaler Kontext für diesen Abzug…",
     searchPlaceholder: "Suchen…",
     searchLabel: "Katalog durchsuchen",
     searchClear: "Suche löschen",

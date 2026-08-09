@@ -1688,6 +1688,8 @@ const th = {
     tabRemove: "หัก",
     tabRedeem: "แลก",
     quantityLabel: "จำนวน",
+    removeNoteLabel: "บันทึก",
+    removeNotePlaceholder: "หมายเหตุเพิ่มเติมสำหรับการหักคะแนน (ไม่บังคับ)…",
     searchPlaceholder: "ค้นหา…",
     searchLabel: "ค้นหารายการ",
     searchClear: "ล้างการค้นหา",

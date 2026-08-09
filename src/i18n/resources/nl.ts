@@ -1749,6 +1749,8 @@ const nl = {
     tabRemove: "Aftrekken",
     tabRedeem: "Inwisselen",
     quantityLabel: "Aantal",
+    removeNoteLabel: "Notitie",
+    removeNotePlaceholder: "Optionele toelichting bij deze aftrek…",
     searchPlaceholder: "Zoeken…",
     searchLabel: "Catalogus doorzoeken",
     searchClear: "Zoekopdracht wissen",

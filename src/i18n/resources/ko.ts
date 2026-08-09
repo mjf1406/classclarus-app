@@ -1711,6 +1711,8 @@ const ko = {
     tabRemove: "차감",
     tabRedeem: "교환",
     quantityLabel: "수량",
+    removeNoteLabel: "메모",
+    removeNotePlaceholder: "감점 관련 선택 메모…",
     searchPlaceholder: "검색…",
     searchLabel: "목록 검색",
     searchClear: "검색 지우기",

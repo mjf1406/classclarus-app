@@ -1759,6 +1759,8 @@ const it = {
     tabRemove: "Togli",
     tabRedeem: "Riscatta",
     quantityLabel: "Quantità",
+    removeNoteLabel: "Nota",
+    removeNotePlaceholder: "Contesto facoltativo per questa rimozione…",
     searchPlaceholder: "Cerca…",
     searchLabel: "Cerca nel catalogo",
     searchClear: "Cancella ricerca",

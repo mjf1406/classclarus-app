@@ -1772,6 +1772,8 @@ const fr = {
     tabRemove: "Retirer",
     tabRedeem: "Échanger",
     quantityLabel: "Quantité",
+    removeNoteLabel: "Note",
+    removeNotePlaceholder: "Contexte facultatif pour ce retrait…",
     searchPlaceholder: "Rechercher…",
     searchLabel: "Rechercher dans le catalogue",
     searchClear: "Effacer la recherche",

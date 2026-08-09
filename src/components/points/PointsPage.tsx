@@ -444,13 +444,14 @@ function StaffPointsPage({ classId }: PointsPageProps) {
         rewardFolders={rewardFolders ?? []}
         purchaseLimitStatuses={purchaseLimits.data ?? []}
         purchaseLimitsPending={purchaseLimits.isPending}
-        onApplyBehaviors={async ({ mode, items }) => {
+        onApplyBehaviors={async ({ mode, items, note }) => {
           await applyBehaviors.mutateAsync({
             classId,
             dateKey,
             studentUserIds: applyTargets.map((student) => student.userId),
             mode,
             items,
+            ...(note ? { note } : {}),
           });
           clearSelection();
           setSelectMode(false);

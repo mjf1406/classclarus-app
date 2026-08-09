@@ -1747,6 +1747,8 @@ const pt = {
     tabRemove: "Remover",
     tabRedeem: "Resgatar",
     quantityLabel: "Quantidade",
+    removeNoteLabel: "Nota",
+    removeNotePlaceholder: "Contexto opcional para esta remoção…",
     searchPlaceholder: "Pesquisar…",
     searchLabel: "Pesquisar no catálogo",
     searchClear: "Limpar pesquisa",

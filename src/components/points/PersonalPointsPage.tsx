@@ -172,6 +172,12 @@ function ledgerDescription(item: PointsLedgerItem, t: (key: string) => string) {
   return item.name?.trim() ? item.name : t("ledgerDeletedItem");
 }
 
+function ledgerNote(item: PointsLedgerItem): string | null {
+  if (item.kind !== "behavior") return null;
+  const note = item.note?.trim();
+  return note ? note : null;
+}
+
 function ledgerAmount(item: PointsLedgerItem): string | null {
   if (item.kind === "warning") return null;
   // pointsApplied / pointsCost are already quantity-inclusive snapshots.
@@ -442,16 +448,26 @@ export function PersonalPointsPage({ classId }: PersonalPointsPageProps) {
                   <TableBody>
                     {visibleLedgerItems.map((item) => {
                       const amount = ledgerAmount(item);
+                      const note = ledgerNote(item);
                       return (
                         <TableRow key={`${item.kind}-${item.id}`}>
                           <TableCell className="whitespace-nowrap text-muted-foreground">
                             {formatLocalizedDateTime(item.at)}
                           </TableCell>
                           <TableCell>
-                            <span className="inline-flex min-w-0 items-center gap-2">
-                              <LedgerKindIcon item={item} />
-                              <span className="min-w-0 font-medium">
-                                {ledgerDescription(item, t)}
+                            <span className="inline-flex min-w-0 items-start gap-2">
+                              <span className="mt-0.5">
+                                <LedgerKindIcon item={item} />
+                              </span>
+                              <span className="min-w-0">
+                                <span className="block font-medium">
+                                  {ledgerDescription(item, t)}
+                                </span>
+                                {note ? (
+                                  <span className="mt-0.5 block text-sm font-normal text-muted-foreground">
+                                    {note}
+                                  </span>
+                                ) : null}
                               </span>
                             </span>
                           </TableCell>

@@ -1686,6 +1686,8 @@ const zhs = {
     tabRemove: "扣除",
     tabRedeem: "兑换",
     quantityLabel: "数量",
+    removeNoteLabel: "备注",
+    removeNotePlaceholder: "可选：说明此次扣分原因…",
     searchPlaceholder: "搜索…",
     searchLabel: "搜索目录",
     searchClear: "清除搜索",

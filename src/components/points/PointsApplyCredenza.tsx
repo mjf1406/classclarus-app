@@ -11,6 +11,7 @@ import {
   LockIcon,
   LockOpenIcon,
   SearchIcon,
+  TriangleAlertIcon,
   TrophyIcon,
   XIcon,
 } from "lucide-react";
@@ -43,6 +44,7 @@ import { HelpTip } from "@/components/ui/help-tip";
 import { IconSwitch } from "@/components/ui/icon-switch";
 import { NumberInput } from "@/components/ui/number-input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { usePointsCatalogSearch } from "@/hooks/points/usePointsCatalogSearch";
@@ -55,7 +57,11 @@ import type {
   PointsCatalogFolder,
   PointsCatalogView,
 } from "@/lib/points/points";
-import { isPointsCatalogView, partitionPointsCatalogByFolder } from "@/lib/points/points";
+import {
+  isPointsCatalogView,
+  MAX_APPLICATION_NOTE_LENGTH,
+  partitionPointsCatalogByFolder,
+} from "@/lib/points/points";
 import { STORAGE_KEYS } from "@/lib/storageKeys";
 import { formatPurchaseLimitSummary, type PurchaseLimitPeriod } from "@/lib/rewards/purchaseLimit";
 import {
@@ -72,8 +78,9 @@ import {
 import { cn } from "@/lib/utils";
 import type { Id } from "../../../convex/_generated/dataModel";
 
-/** Fixed catalog viewport — same height for award / remove / redeem (no tab layout shift). */
-const CATALOG_SCROLL_CLASS = "h-52 overflow-y-auto rounded-xl border p-2";
+/** Fixed note + catalog panel — catalog flex-fills so tabs never shift height. */
+const CATALOG_PANEL_CLASS = "flex h-80 flex-col gap-3";
+const CATALOG_SCROLL_CLASS = "min-h-0 flex-1 overflow-y-auto rounded-xl border p-2";
 
 /** Same column count on mobile and desktop (matches points student cards). */
 const CATALOG_GRID_CLASS = "grid grid-cols-3 gap-2";
@@ -87,6 +94,29 @@ function normalizeQty(quantity: number): number {
 function minStudentBalance(students: readonly PointsBoardStudent[]): number {
   if (students.length === 0) return 0;
   return Math.min(...students.map((student) => student.pointsBalance));
+}
+
+function StudentWarningBits({ student }: { student: PointsBoardStudent }) {
+  const { t } = useTranslation("points");
+  if (student.warningCount <= 0 && student.minusCount <= 0) return null;
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      {student.warningCount > 0 ? (
+        <span className="inline-flex items-center gap-0.5 text-amber-600 dark:text-amber-400">
+          <TriangleAlertIcon className="size-3.5" aria-hidden />
+          <span className="text-xs font-semibold tabular-nums">{student.warningCount}</span>
+          <span className="sr-only">{t("warningsCount", { count: student.warningCount })}</span>
+        </span>
+      ) : null}
+      {student.minusCount > 0 ? (
+        <span className="inline-flex items-center gap-0.5 text-red-600 dark:text-red-400">
+          <FlagIcon className="size-3.5" aria-hidden />
+          <span className="text-xs font-semibold tabular-nums">{student.minusCount}</span>
+          <span className="sr-only">{t("minusCount", { count: student.minusCount })}</span>
+        </span>
+      ) : null}
+    </span>
+  );
 }
 
 function StudentPointsBreakdown({ student }: { student: PointsBoardStudent }) {
@@ -295,6 +325,7 @@ type PointsApplyCredenzaProps = {
   onApplyBehaviors: (args: {
     mode: "award" | "remove";
     items: Array<{ behaviorId: Id<"behaviors">; quantity: number; points: number }>;
+    note?: string;
   }) => Promise<void>;
   onRedeemRewards: (args: {
     items: Array<{ rewardId: Id<"rewards">; quantity: number; points: number }>;
@@ -336,10 +367,12 @@ export function PointsApplyCredenza({
 }: PointsApplyCredenzaProps) {
   const { t, i18n } = useTranslation("points");
   const { t: tClasses } = useTranslation("classes");
+  const { t: tCommon } = useTranslation("common");
   const { t: tRewards } = useTranslation("rewards");
   const [tab, setTab] = useState<PointsApplyTab>("award");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [quantity, setQuantity] = useState(1);
+  const [note, setNote] = useState("");
   const [allowOverrides, setAllowOverrides] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -355,6 +388,7 @@ export function PointsApplyCredenza({
       setIsSubmitting(false);
       setSelectedIds(new Set());
       setQuantity(1);
+      setNote("");
       setAllowOverrides(false);
       setTab("award");
       setSearchQuery("");
@@ -574,7 +608,12 @@ export function PointsApplyCredenza({
             quantity: qty,
             points: behavior.points,
           }));
-        await onApplyBehaviors({ mode: tab, items });
+        const trimmedNote = note.trim();
+        await onApplyBehaviors({
+          mode: tab,
+          items,
+          ...(tab === "remove" && trimmedNote.length > 0 ? { note: trimmedNote } : {}),
+        });
       }
     } catch {
       onOpenChange(true);
@@ -582,17 +621,7 @@ export function PointsApplyCredenza({
     }
   };
 
-  const singleMeta =
-    !multi && primaryStudent
-      ? [
-          studentMeta(primaryStudent, tClasses),
-          primaryStudent.warningCount > 0
-            ? t("warningsCount", { count: primaryStudent.warningCount })
-            : null,
-        ]
-          .filter(Boolean)
-          .join(" · ")
-      : "";
+  const singleMeta = !multi && primaryStudent ? studentMeta(primaryStudent, tClasses) : "";
 
   const catalogIsEmpty = panelCatalog.length === 0;
   const noMatches =
@@ -605,8 +634,11 @@ export function PointsApplyCredenza({
           className={cn(!multi && "relative items-center px-10 text-center md:text-center")}
         >
           {!multi && primaryStudent ? (
-            <span className="absolute top-0 left-0 inline-flex size-6 items-center justify-center rounded-md bg-muted text-[10px] font-semibold tabular-nums">
-              {primaryStudent.rosterNumber}
+            <span className="absolute top-0 left-0 inline-flex items-center gap-1.5">
+              <span className="inline-flex size-6 items-center justify-center rounded-md bg-muted text-[10px] font-semibold tabular-nums">
+                {primaryStudent.rosterNumber}
+              </span>
+              <StudentWarningBits student={primaryStudent} />
             </span>
           ) : null}
           <CredenzaTitle>
@@ -647,6 +679,7 @@ export function PointsApplyCredenza({
               setSelectedIds(new Set());
               setSearchQuery("");
               setOpenFolderIds(new Set());
+              setNote("");
             }}
             className="min-h-0 flex-1"
           >
@@ -736,66 +769,86 @@ export function PointsApplyCredenza({
               </ToggleGroup>
             </div>
 
-            {/* Single fixed-height catalog (not per-TabsContent) avoids tab layout shift. */}
-            <div className={CATALOG_SCROLL_CLASS}>
-              {catalogIsEmpty ? (
-                <p className="p-3 text-sm text-muted-foreground">{t("catalogEmpty")}</p>
-              ) : noMatches ? (
-                <p className="p-3 text-sm text-muted-foreground">{t("catalogNoMatches")}</p>
-              ) : (
-                <div className="space-y-2">
-                  {foldersWithItems.map(({ folder, items }) => {
-                    const open = openFolderIds.has(folder._id);
-                    return (
-                      <Collapsible
-                        key={folder._id}
-                        open={open}
-                        onOpenChange={(nextOpen) => {
-                          setOpenFolderIds((prev) => {
-                            const next = new Set(prev);
-                            if (nextOpen) next.add(folder._id);
-                            else next.delete(folder._id);
-                            return next;
-                          });
-                        }}
-                      >
-                        <CollapsibleTrigger className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm font-medium hover:bg-muted/60">
-                          <ChevronRightIcon
-                            className={cn(
-                              "size-4 shrink-0 text-muted-foreground transition-transform",
-                              open && "rotate-90",
+            {/* Fixed-height panel: catalog flex-fills leftover space when note is hidden. */}
+            <div className={CATALOG_PANEL_CLASS}>
+              {tab === "remove" ? (
+                <Field className="shrink-0">
+                  <FieldLabel htmlFor="points-remove-note">
+                    {t("removeNoteLabel")}
+                    <span className="font-normal text-muted-foreground">
+                      ({tCommon("optional")})
+                    </span>
+                  </FieldLabel>
+                  <Textarea
+                    id="points-remove-note"
+                    value={note}
+                    onChange={(event) => setNote(event.target.value)}
+                    placeholder={t("removeNotePlaceholder")}
+                    rows={2}
+                    maxLength={MAX_APPLICATION_NOTE_LENGTH}
+                  />
+                </Field>
+              ) : null}
+              <div className={CATALOG_SCROLL_CLASS}>
+                {catalogIsEmpty ? (
+                  <p className="p-3 text-sm text-muted-foreground">{t("catalogEmpty")}</p>
+                ) : noMatches ? (
+                  <p className="p-3 text-sm text-muted-foreground">{t("catalogNoMatches")}</p>
+                ) : (
+                  <div className="space-y-2">
+                    {foldersWithItems.map(({ folder, items }) => {
+                      const open = openFolderIds.has(folder._id);
+                      return (
+                        <Collapsible
+                          key={folder._id}
+                          open={open}
+                          onOpenChange={(nextOpen) => {
+                            setOpenFolderIds((prev) => {
+                              const next = new Set(prev);
+                              if (nextOpen) next.add(folder._id);
+                              else next.delete(folder._id);
+                              return next;
+                            });
+                          }}
+                        >
+                          <CollapsibleTrigger className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm font-medium hover:bg-muted/60">
+                            <ChevronRightIcon
+                              className={cn(
+                                "size-4 shrink-0 text-muted-foreground transition-transform",
+                                open && "rotate-90",
+                              )}
+                              aria-hidden
+                            />
+                            {folder.icon ? (
+                              <FontAwesomeIconFromId id={folder.icon} className="size-4 shrink-0" />
+                            ) : (
+                              <FolderIcon className="size-4 shrink-0 text-muted-foreground" />
                             )}
-                            aria-hidden
-                          />
-                          {folder.icon ? (
-                            <FontAwesomeIconFromId id={folder.icon} className="size-4 shrink-0" />
-                          ) : (
-                            <FolderIcon className="size-4 shrink-0 text-muted-foreground" />
-                          )}
-                          <span className="min-w-0 flex-1 truncate">{folder.name}</span>
-                          <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                            {t("folderItemCount", { count: items.length })}
-                          </span>
-                        </CollapsibleTrigger>
-                        <CollapsibleContent className="pt-1 pl-2">
-                          {renderItems(items)}
-                        </CollapsibleContent>
-                      </Collapsible>
-                    );
-                  })}
+                            <span className="min-w-0 flex-1 truncate">{folder.name}</span>
+                            <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                              {t("folderItemCount", { count: items.length })}
+                            </span>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent className="pt-1 pl-2">
+                            {renderItems(items)}
+                          </CollapsibleContent>
+                        </Collapsible>
+                      );
+                    })}
 
-                  {unfiledItems.length > 0 ? (
-                    <div className="space-y-1">
-                      {foldersWithItems.length > 0 ? (
-                        <p className="px-2 pt-1 text-xs font-medium text-muted-foreground">
-                          {t("unfiledTitle")}
-                        </p>
-                      ) : null}
-                      {renderItems(unfiledItems)}
-                    </div>
-                  ) : null}
-                </div>
-              )}
+                    {unfiledItems.length > 0 ? (
+                      <div className="space-y-1">
+                        {foldersWithItems.length > 0 ? (
+                          <p className="px-2 pt-1 text-xs font-medium text-muted-foreground">
+                            {t("unfiledTitle")}
+                          </p>
+                        ) : null}
+                        {renderItems(unfiledItems)}
+                      </div>
+                    ) : null}
+                  </div>
+                )}
+              </div>
             </div>
           </Tabs>
         </CredenzaBody>

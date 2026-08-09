@@ -1730,6 +1730,8 @@ const en = {
     tabRemove: "Remove",
     tabRedeem: "Redeem",
     quantityLabel: "Quantity",
+    removeNoteLabel: "Note",
+    removeNotePlaceholder: "Optional context for this removal…",
     searchPlaceholder: "Search…",
     searchLabel: "Search catalog",
     searchClear: "Clear search",

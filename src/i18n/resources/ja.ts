@@ -1727,6 +1727,8 @@ const ja = {
     tabRemove: "減点",
     tabRedeem: "交換",
     quantityLabel: "数量",
+    removeNoteLabel: "メモ",
+    removeNotePlaceholder: "減点の任意のメモ…",
     searchPlaceholder: "検索…",
     searchLabel: "カタログを検索",
     searchClear: "検索をクリア",

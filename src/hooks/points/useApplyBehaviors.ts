@@ -15,6 +15,7 @@ type ApplyBehaviorsArgs = {
   studentUserIds: Array<Id<"users">>;
   mode: "award" | "remove";
   items: Array<{ behaviorId: Id<"behaviors">; quantity: number; points: number }>;
+  note?: string;
 };
 
 export function useApplyBehaviors() {
@@ -32,6 +33,7 @@ export function useApplyBehaviors() {
           behaviorId: item.behaviorId,
           quantity: item.quantity,
         })),
+        ...(args.note ? { note: args.note } : {}),
       }),
     queryKeys: (args) => [pointsBoardQueryKey(args.classId, args.dateKey)],
     applyOptimisticUpdate: (queryClient, args) => {

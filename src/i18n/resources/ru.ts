@@ -1743,6 +1743,8 @@ const ru = {
     tabRemove: "Снять",
     tabRedeem: "Обменять",
     quantityLabel: "Количество",
+    removeNoteLabel: "Заметка",
+    removeNotePlaceholder: "Необязательный комментарий к снятию…",
     searchPlaceholder: "Поиск…",
     searchLabel: "Поиск по каталогу",
     searchClear: "Очистить поиск",

@@ -1686,6 +1686,8 @@ const zht = {
     tabRemove: "扣除",
     tabRedeem: "兌換",
     quantityLabel: "數量",
+    removeNoteLabel: "備註",
+    removeNotePlaceholder: "選填：說明此次扣分原因…",
     searchPlaceholder: "搜尋…",
     searchLabel: "搜尋目錄",
     searchClear: "清除搜尋",

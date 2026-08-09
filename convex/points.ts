@@ -44,8 +44,19 @@ const DATE_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
 const MAX_QUANTITY = 999;
 const MAX_STUDENTS_PER_APPLY = 200;
 const MAX_ITEMS_PER_APPLY = 50;
+const MAX_APPLICATION_NOTE_LENGTH = 500;
 const DEFAULT_LEDGER_LIMIT = 40;
 const MAX_LEDGER_LIMIT = 100;
+
+function normalizeOptionalApplicationNote(note: string | undefined): string | undefined {
+  if (note === undefined) return undefined;
+  const trimmed = note.trim();
+  if (trimmed.length === 0) return undefined;
+  if (trimmed.length > MAX_APPLICATION_NOTE_LENGTH) {
+    throw new Error(`Note must be at most ${MAX_APPLICATION_NOTE_LENGTH} characters`);
+  }
+  return trimmed;
+}
 
 const genderValidator = v.union(
   v.literal("male"),
@@ -415,6 +426,7 @@ const ledgerBehaviorItemValidator = v.object({
   name: v.optional(v.string()),
   pointsApplied: v.number(),
   quantity: v.number(),
+  note: v.optional(v.string()),
 });
 
 const ledgerRewardItemValidator = v.object({
@@ -549,6 +561,7 @@ export const ledgerForAudience = classQuery({
           name?: string;
           pointsApplied: number;
           quantity: number;
+          note?: string;
         }
       | {
           kind: "reward";
@@ -576,6 +589,7 @@ export const ledgerForAudience = classQuery({
         ...(behavior?.name ? { name: behavior.name } : {}),
         pointsApplied: row.pointsApplied,
         quantity: ledgerQuantity(row.quantity),
+        ...(row.note ? { note: row.note } : {}),
       });
     }
 
@@ -633,6 +647,7 @@ export const applyBehaviors = classMutation({
         quantity: v.number(),
       }),
     ),
+    note: v.optional(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -647,6 +662,10 @@ export const applyBehaviors = classMutation({
     if (args.items.length > MAX_ITEMS_PER_APPLY) {
       throw new Error(`Too many behaviors (max ${MAX_ITEMS_PER_APPLY})`);
     }
+    if (args.note !== undefined && args.mode !== "remove") {
+      throw new Error("Notes can only be added when removing points");
+    }
+    const note = normalizeOptionalApplicationNote(args.note);
 
     const now = Date.now();
     for (const item of args.items) {
@@ -671,6 +690,7 @@ export const applyBehaviors = classMutation({
           quantity,
           awardedBy: ctx.userId,
           awardedAt: now,
+          ...(note ? { note } : {}),
         });
         await applyBehaviorPointsDelta(ctx, classId, studentUserId, pointsApplied, 1);
       }
