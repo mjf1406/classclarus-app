@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { SeatChartViolationsList } from "@/components/assigners/SeatChartViolationsList";
@@ -12,7 +13,10 @@ import {
 } from "@/components/ui/credenza";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { ProgressButton } from "@/components/ui/progress-button";
 import type { SeatChartViolation } from "@/lib/assigners/seatCharts";
+
+const CLOSE_AFTER_SUCCESS_MS = 500;
 
 type SeatChartRecordConfirmCredenzaProps = {
   open: boolean;
@@ -20,7 +24,6 @@ type SeatChartRecordConfirmCredenzaProps = {
   seatedCount: number;
   unseatedCount: number;
   violations: Array<SeatChartViolation>;
-  pending?: boolean;
   onConfirm: () => Promise<void>;
 };
 
@@ -30,13 +33,26 @@ export function SeatChartRecordConfirmCredenza({
   seatedCount,
   unseatedCount,
   violations,
-  pending = false,
   onConfirm,
 }: SeatChartRecordConfirmCredenzaProps) {
   const { t } = useTranslation("assigners");
+  const [progress, setProgress] = useState(0);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!open) {
+      setProgress(0);
+      setBusy(false);
+    }
+  }, [open]);
 
   return (
-    <Credenza open={open} onOpenChange={(next) => !pending && onOpenChange(next)}>
+    <Credenza
+      open={open}
+      onOpenChange={(next) => {
+        if (!busy) onOpenChange(next);
+      }}
+    >
       <CredenzaContent>
         <CredenzaHeader>
           <CredenzaTitle>{t("chartRecordTitle")}</CredenzaTitle>
@@ -63,21 +79,37 @@ export function SeatChartRecordConfirmCredenza({
           <Button
             type="button"
             variant="outline"
-            disabled={pending}
+            disabled={busy}
             onClick={() => onOpenChange(false)}
           >
             {t("cancel")}
           </Button>
-          <Button
+          <ProgressButton
+            key={open ? "open" : "closed"}
             type="button"
-            disabled={pending}
-            onClick={() => {
-              onOpenChange(false);
-              void onConfirm();
+            progress={progress}
+            onClick={async () => {
+              setBusy(true);
+              setProgress(25);
+              try {
+                await onConfirm();
+                setProgress(100);
+              } catch (error) {
+                setBusy(false);
+                setProgress(0);
+                throw error;
+              }
+            }}
+            onSuccess={() => {
+              window.setTimeout(() => {
+                onOpenChange(false);
+                setBusy(false);
+                setProgress(0);
+              }, CLOSE_AFTER_SUCCESS_MS);
             }}
           >
             {t("chartRecordAction")}
-          </Button>
+          </ProgressButton>
         </CredenzaFooter>
       </CredenzaContent>
     </Credenza>

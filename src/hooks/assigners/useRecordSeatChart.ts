@@ -10,6 +10,7 @@ import {
   seatChartStudentSummaryQueryKey,
 } from "@/hooks/assigners/useSeatChartStudentSummary";
 import { seatChartsListQueryKey } from "@/hooks/assigners/useSeatCharts";
+import { groupsBoardQueryKey } from "@/hooks/groups/useGroupsBoard";
 import { useOptimisticMutation } from "@/hooks/useOptimisticMutation";
 import type { SeatChart, SeatChartAssignment, SeatChartList } from "@/lib/assigners/seatCharts";
 import { messageFromError } from "@/lib/errors/convexError";
@@ -34,15 +35,18 @@ export function useRecordSeatChart() {
     ],
     invalidateQueryKeys: (args) => {
       const studentIds = [...new Set(args.assignments.map((a) => a.studentUserId))];
-      return studentIds.flatMap((studentUserId) => [
-        seatChartStudentSummaryQueryKey(
-          args.classId,
-          args.chartId,
-          studentUserId,
-          args.assignments,
-        ),
-        seatChartStudentHistoryPrefixQueryKey(args.classId, args.chartId, studentUserId),
-      ]);
+      return [
+        groupsBoardQueryKey(args.classId),
+        ...studentIds.flatMap((studentUserId) => [
+          seatChartStudentSummaryQueryKey(
+            args.classId,
+            args.chartId,
+            studentUserId,
+            args.assignments,
+          ),
+          seatChartStudentHistoryPrefixQueryKey(args.classId, args.chartId, studentUserId),
+        ]),
+      ];
     },
     applyOptimisticUpdate: (queryClient, args) => {
       const now = Date.now();

@@ -314,35 +314,48 @@ export function SeatChartEditorPage({ classId, chartId }: SeatChartEditorPagePro
     setDirty(false);
   };
 
-  const openRecordDialog = async () => {
+  const handleRecord = async () => {
+    if (!canManage || chart?.archivedAt) return;
+    await recordSeating.mutateAsync({ classId, chartId, assignments });
+    baselineRef.current = cloneAssignmentSnapshot({ assignments });
+    setDirty(false);
+  };
+
+  /** Returns `false` when the confirm dialog opens so ProgressButton skips its checkmark. */
+  const handleRecordClick = async (): Promise<boolean | void> => {
+    if (!canManage || chart?.archivedAt) return false;
     setRecordCheckProgress(15);
+    let result: Array<SeatChartViolation>;
     try {
       setRecordCheckProgress(40);
-      const result = await convex.query(api.seatCharts.previewViolations, {
+      result = await convex.query(api.seatCharts.previewViolations, {
         classId,
         chartId,
         assignments,
       });
-      setRecordCheckProgress(85);
-      setViolations(result);
-      setRecordOpen(true);
-      setRecordCheckProgress(100);
+      setRecordCheckProgress(70);
     } catch (error) {
       setRecordCheckProgress(0);
       toast.add({
         type: "error",
         title: messageFromError(error, t("chartRecordFailed"), tCommon("rateLimited")),
       });
-    } finally {
-      window.setTimeout(() => setRecordCheckProgress(0), 250);
+      throw error;
     }
-  };
-
-  const handleRecord = async () => {
-    if (!canManage || chart?.archivedAt) return;
-    await recordSeating.mutateAsync({ classId, chartId, assignments });
-    baselineRef.current = cloneAssignmentSnapshot({ assignments });
-    setDirty(false);
+    if (result.length > 0) {
+      setViolations(result);
+      setRecordOpen(true);
+      setRecordCheckProgress(0);
+      return false;
+    }
+    try {
+      setRecordCheckProgress(85);
+      await handleRecord();
+      setRecordCheckProgress(100);
+    } catch (error) {
+      setRecordCheckProgress(0);
+      throw error;
+    }
   };
 
   const blocker = useBlocker({
@@ -500,8 +513,8 @@ export function SeatChartEditorPage({ classId, chartId }: SeatChartEditorPagePro
               <ProgressButton
                 type="button"
                 progress={recordCheckProgress}
-                disabled={recordSeating.isPending}
-                onClick={() => openRecordDialog()}
+                disabled={recordOpen}
+                onClick={() => handleRecordClick()}
               >
                 {t("chartRecordAction")}
               </ProgressButton>
@@ -549,7 +562,9 @@ export function SeatChartEditorPage({ classId, chartId }: SeatChartEditorPagePro
                         ? resolveTeamLabel(item.teamAssignment, board?.groups ?? [])
                         : null;
                       const zoneLabel = item.zoneName?.trim() || null;
-                      const deskMeta = [team?.label, zoneLabel].filter(Boolean).join(" · ");
+                      const deskMeta = [team?.stale ? t("teamStale") : team?.label, zoneLabel]
+                        .filter(Boolean)
+                        .join(" · ");
                       const deskGroups = board?.groups ?? [];
 
                       return (
@@ -607,7 +622,12 @@ export function SeatChartEditorPage({ classId, chartId }: SeatChartEditorPagePro
                                   </span>
                                 ) : null}
                                 {deskMeta ? (
-                                  <span className="min-w-0 truncate text-[5px] text-muted-foreground leading-none">
+                                  <span
+                                    className={cn(
+                                      "min-w-0 truncate text-[5px] leading-none",
+                                      team?.stale ? "text-destructive" : "text-muted-foreground",
+                                    )}
+                                  >
                                     {deskMeta}
                                   </span>
                                 ) : null}
@@ -845,7 +865,6 @@ export function SeatChartEditorPage({ classId, chartId }: SeatChartEditorPagePro
         seatedCount={seatedCount}
         unseatedCount={unseatedCount}
         violations={violations}
-        pending={recordSeating.isPending}
         onConfirm={handleRecord}
       />
 

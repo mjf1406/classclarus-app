@@ -256,6 +256,8 @@ export async function resolveTeamIdForStudentDesk(
 
   if (assignment.mode === "single") {
     if (assignment.groupId !== groupId) return undefined;
+    const team = await ctx.db.get("teams", assignment.teamId);
+    if (!team || team.groupId !== groupId) return undefined;
     return assignment.teamId;
   }
 
@@ -268,6 +270,73 @@ export async function resolveTeamIdForStudentDesk(
     .withIndex("by_group", (q) => q.eq("groupId", groupId))
     .collect();
   return teams.find((team) => team.name.trim().toLowerCase() === target)?._id;
+}
+
+export function deskTeamAssignmentAppliesToGroup(
+  assignment: NonNullable<SeatLayoutItemSnapshot["teamAssignment"]>,
+  groupId: Id<"groups">,
+): boolean {
+  if (assignment.mode === "byName") return true;
+  return assignment.groupId === groupId;
+}
+
+export type UnresolvedDeskTeam = {
+  deskItemId: string;
+  deskNumber?: number;
+  teamLabel: string;
+  groupId: Id<"groups">;
+};
+
+export function formatUnresolvedDeskTeamError(unresolved: Array<UnresolvedDeskTeam>): string {
+  const labels = [
+    ...new Set(unresolved.map((entry) => entry.teamLabel.trim()).filter(Boolean)),
+  ].sort((a, b) => a.localeCompare(b));
+  return `Desk team names do not match any team: ${labels.join(", ")}`;
+}
+
+export async function findUnresolvedDeskTeamAssignments(
+  ctx: QueryCtx | MutationCtx,
+  layout: Doc<"seatLayouts">,
+  assignments: Array<ChartAssignment>,
+): Promise<Array<UnresolvedDeskTeam>> {
+  const deskById = deskItemsById(layout.items);
+  const unresolved: Array<UnresolvedDeskTeam> = [];
+  const seen = new Set<string>();
+
+  for (const assignment of assignments) {
+    const desk = deskById.get(assignment.deskItemId);
+    const teamAssignment = desk?.teamAssignment;
+    if (!desk || !teamAssignment) continue;
+    if (!deskTeamAssignmentAppliesToGroup(teamAssignment, assignment.groupId)) continue;
+
+    const teamId = await resolveTeamIdForStudentDesk(ctx, assignment.groupId, desk);
+    if (teamId !== undefined) continue;
+
+    const teamLabel = teamAssignment.mode === "byName" ? teamAssignment.teamName.trim() : "Team";
+    const key = `${assignment.deskItemId}:${assignment.groupId}:${teamLabel.toLowerCase()}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    unresolved.push({
+      deskItemId: assignment.deskItemId,
+      deskNumber: desk.deskNumber,
+      teamLabel,
+      groupId: assignment.groupId,
+    });
+  }
+
+  return unresolved;
+}
+
+export async function assertDeskTeamsResolvableForSeating(
+  ctx: QueryCtx | MutationCtx,
+  layout: Doc<"seatLayouts">,
+  assignments: Array<ChartAssignment>,
+): Promise<void> {
+  const unresolved = await findUnresolvedDeskTeamAssignments(ctx, layout, assignments);
+  if (unresolved.length > 0) {
+    throw new Error(formatUnresolvedDeskTeamError(unresolved));
+  }
 }
 
 export async function syncMembershipTeamsFromSeating(
@@ -292,8 +361,24 @@ export async function syncMembershipTeamsFromSeating(
       .unique();
     if (!membership || membership.groupId !== assignment.groupId) continue;
 
-    await ctx.db.patch("groupMemberships", membership._id, {
-      teamId,
+    if (teamId !== undefined) {
+      await ctx.db.patch("groupMemberships", membership._id, {
+        teamId,
+        updatedAt: now,
+      });
+      continue;
+    }
+
+    if (membership.teamId === undefined) continue;
+
+    const {
+      _id: _ignoredId,
+      _creationTime: _ignoredCreation,
+      teamId: _ignoredTeamId,
+      ...rest
+    } = membership;
+    await ctx.db.replace("groupMemberships", membership._id, {
+      ...rest,
       updatedAt: now,
     });
   }

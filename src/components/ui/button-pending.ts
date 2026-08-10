@@ -1,7 +1,11 @@
 import { useState } from "react";
 import type { MouseEvent, MouseEventHandler } from "react";
 
-type PendingClickHandler = (event: MouseEvent<HTMLButtonElement>) => void | Promise<void>;
+/** Return `false` to signal cancel (e.g. ProgressButton skips success UI). */
+type PendingClickResult = void | boolean;
+type PendingClickHandler = (
+  event: MouseEvent<HTMLButtonElement>,
+) => PendingClickResult | Promise<PendingClickResult>;
 
 function usePendingClick({
   pending: pendingProp,

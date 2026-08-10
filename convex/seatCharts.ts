@@ -19,6 +19,7 @@ import {
   deskItemsById,
   buildPlacementSnapshots,
   buildCombinationLabel,
+  assertDeskTeamsResolvableForSeating,
   syncMembershipTeamsFromSeating,
 } from "./lib/seatChartLogic.js";
 
@@ -721,6 +722,8 @@ export const recordSeating = classMutation({
     for (const assignment of assignments) {
       await requireStudentInClass(ctx, ctx.classDoc._id, assignment.studentUserId);
     }
+
+    await assertDeskTeamsResolvableForSeating(ctx, layout, assignments);
 
     const now = Date.now();
     const placements = await buildPlacementSnapshots(ctx, ctx.classDoc, layout, assignments);

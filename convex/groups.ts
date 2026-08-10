@@ -15,6 +15,11 @@ import {
 } from "./lib/rosterNameFormat.js";
 import type { GenderValue } from "./lib/studentRosters.js";
 import { resolveUserImageUrl } from "./lib/userImage.js";
+import {
+  classHasOtherTeamWithName,
+  clearLayoutTeamAssignmentsForRemovedTeam,
+  rewriteLayoutByNameTeamLabels,
+} from "./lib/seatLayoutTeamSync.js";
 
 const MAX_NAME_LENGTH = 100;
 const MAX_DESCRIPTION_LENGTH = 500;
@@ -707,6 +712,19 @@ export const updateTeam = classMutation({
     const description = normalizeOptionalDescription(args.description);
     const icon = normalizeOptionalIcon(args.icon);
 
+    const oldName = team.name;
+    if (oldName.trim().toLowerCase() !== name.toLowerCase()) {
+      const hasOtherWithOldName = await classHasOtherTeamWithName(
+        ctx,
+        ctx.classDoc._id,
+        args.teamId,
+        oldName,
+      );
+      if (!hasOtherWithOldName) {
+        await rewriteLayoutByNameTeamLabels(ctx, ctx.classDoc._id, oldName, name);
+      }
+    }
+
     await ctx.db.patch("teams", args.teamId, {
       name,
       description,
@@ -825,11 +843,20 @@ export const removeTeam = classMutation({
       .collect();
     const now = Date.now();
     for (const membership of memberships) {
-      await ctx.db.patch("groupMemberships", membership._id, {
-        teamId: undefined,
+      if (membership.teamId === undefined) continue;
+      const {
+        _id: _ignoredId,
+        _creationTime: _ignoredCreation,
+        teamId: _ignoredTeamId,
+        ...rest
+      } = membership;
+      await ctx.db.replace("groupMemberships", membership._id, {
+        ...rest,
         updatedAt: now,
       });
     }
+
+    await clearLayoutTeamAssignmentsForRemovedTeam(ctx, ctx.classDoc._id, args.teamId, team.name);
 
     await ctx.db.delete("teams", args.teamId);
 

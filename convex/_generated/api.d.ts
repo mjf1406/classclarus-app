@@ -79,6 +79,7 @@ import type * as lib_rewardsCleanup from "../lib/rewardsCleanup.js";
 import type * as lib_rosterNameFormat from "../lib/rosterNameFormat.js";
 import type * as lib_seatChartLogic from "../lib/seatChartLogic.js";
 import type * as lib_seatLayoutCopy from "../lib/seatLayoutCopy.js";
+import type * as lib_seatLayoutTeamSync from "../lib/seatLayoutTeamSync.js";
 import type * as lib_seedTestStudents from "../lib/seedTestStudents.js";
 import type * as lib_selfHosted from "../lib/selfHosted.js";
 import type * as lib_studentRosters from "../lib/studentRosters.js";
@@ -182,6 +183,7 @@ declare const fullApi: ApiFromModules<{
   "lib/rosterNameFormat": typeof lib_rosterNameFormat;
   "lib/seatChartLogic": typeof lib_seatChartLogic;
   "lib/seatLayoutCopy": typeof lib_seatLayoutCopy;
+  "lib/seatLayoutTeamSync": typeof lib_seatLayoutTeamSync;
   "lib/seedTestStudents": typeof lib_seedTestStudents;
   "lib/selfHosted": typeof lib_selfHosted;
   "lib/studentRosters": typeof lib_studentRosters;
