@@ -887,6 +887,10 @@ const fr = {
     groupTeamFilterClear: "Effacer les filtres de groupe et d’équipe",
     groupsNoTeamLabel: "Élèves sans équipe",
     groupsDropEmpty: "Déposez les élèves ici",
+    groupsStudentCount: "{{count}} élève",
+    groupsStudentCount_other: "{{count}} élèves",
+    groupsAddAllUngrouped: "Ajouter tous les non groupés",
+    groupsGenderUnset: "Non défini",
     groupsTeamsViaSeating:
       "L'appartenance à l'équipe est définie lorsque vous enregistrez les places.",
     groupsEmptyTitle: "Pas encore d'élèves",
@@ -917,6 +921,12 @@ const fr = {
     groupsMoveStudentsEmpty: "Aucun élève ne correspond à ce filtre.",
     groupsMoveStudentsConfirm: "Déplacer {{count}}",
     groupsMoveStudentsFailed: "Impossible de déplacer les élèves.",
+    groupsClearStudentsAction: "Tout envoyer vers sans groupe",
+    groupsClearStudentsConfirmTitle: "Dégrouper tout le monde dans {{name}} ?",
+    groupsClearStudentsConfirmDescription:
+      "Les élèves de ce groupe et de ses équipes passeront dans Sans groupe. Le groupe et les équipes restent.",
+    groupsClearStudentsConfirm: "Envoyer vers sans groupe",
+    groupsClearStudentsFailed: "Impossible de dégrouper les élèves.",
     groupsExportPdf: "Exporter en PDF",
     groupsExportPdfPending: "Préparation…",
     groupsExportPdfSubtitle: "Groupes et équipes",
@@ -1087,6 +1097,8 @@ const fr = {
     activitySummary_assignedStudentToTeamInGroup:
       "Élève assigné à une équipe du groupe « {{name}} »",
     activitySummary_movedStudentsIntoGroup: "{{count}} élèves déplacés dans le groupe « {{name}} »",
+    activitySummary_movedStudentsToUngrouped:
+      "{{count}} élèves déplacés du groupe « {{name}} » vers sans groupe",
     activitySummary_renamedFile: "Fichier « {{previousName}} » renommé en « {{name}} »",
     activitySummary_deletedFile: "Fichier « {{name}} » supprimé",
     activitySummary_uploadedFile: "Fichier « {{name}} » téléversé",

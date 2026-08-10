@@ -206,6 +206,19 @@ export function resolveActivitySummary(event: ActivitySummaryInput): ResolvedSum
     };
   }
 
+  const movedStudentsToUngrouped = summary.match(
+    new RegExp(`^Moved (\\d+) students from group ${QUOTED_NAME} to ungrouped$`),
+  );
+  if (movedStudentsToUngrouped) {
+    return {
+      key: "activitySummary_movedStudentsToUngrouped",
+      params: {
+        count: movedStudentsToUngrouped[1] ?? "",
+        name: movedStudentsToUngrouped[2] ?? "",
+      },
+    };
+  }
+
   const renamedFile = summary.match(new RegExp(`^Renamed file ${QUOTED_NAME} to ${QUOTED_NAME}$`));
   if (renamedFile) {
     return {

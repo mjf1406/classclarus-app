@@ -37,6 +37,7 @@ import { useLogClassAccess } from "@/hooks/activity/useLogClassAccess";
 import { useClass } from "@/hooks/classes/useClass";
 import { useAssignStudent } from "@/hooks/groups/useAssignStudent";
 import { useAssignStudents } from "@/hooks/groups/useAssignStudents";
+import { useClearGroupStudents } from "@/hooks/groups/useClearGroupStudents";
 import { useCopyTeam } from "@/hooks/groups/useCopyTeam";
 import { useCreateGroup } from "@/hooks/groups/useCreateGroup";
 import { useCreateTeam } from "@/hooks/groups/useCreateTeam";
@@ -77,6 +78,10 @@ type CopyTeamState = {
 };
 
 type MoveStudentsState = {
+  group: BoardGroup;
+};
+
+type ClearStudentsState = {
   group: BoardGroup;
 };
 
@@ -147,11 +152,13 @@ export function GroupsPage({ classId }: GroupsPageProps) {
   const copyTeam = useCopyTeam();
   const assignStudent = useAssignStudent();
   const assignStudents = useAssignStudents();
+  const clearGroupStudents = useClearGroupStudents();
 
   const [formState, setFormState] = useState<NamedFormState | null>(null);
   const [deleteState, setDeleteState] = useState<DeleteState | null>(null);
   const [copyTeamState, setCopyTeamState] = useState<CopyTeamState | null>(null);
   const [moveStudentsState, setMoveStudentsState] = useState<MoveStudentsState | null>(null);
+  const [clearStudentsState, setClearStudentsState] = useState<ClearStudentsState | null>(null);
   const [activeStudent, setActiveStudent] = useState<BoardStudent | null>(null);
   const [hiddenStudentId, setHiddenStudentId] = useState<Id<"users"> | null>(null);
   const overRectRef = useRef<{ left: number; top: number } | null>(null);
@@ -370,6 +377,14 @@ export function GroupsPage({ classId }: GroupsPageProps) {
     [assignStudents, classId, moveStudentsState],
   );
 
+  const handleClearStudentsConfirm = useCallback(async () => {
+    if (!clearStudentsState) return;
+    await clearGroupStudents.mutateAsync({
+      classId,
+      groupId: clearStudentsState.group._id,
+    });
+  }, [classId, clearGroupStudents, clearStudentsState]);
+
   const formInitialValues =
     formState?.mode === "edit"
       ? formState.kind === "group"
@@ -563,11 +578,23 @@ export function GroupsPage({ classId }: GroupsPageProps) {
                       hiddenStudentId={hiddenStudentId}
                       viewerUserId={viewerOnBoard ? viewerUserId : null}
                       nameFormat={nameFormat}
+                      onAddAllUngrouped={
+                        canManage && data.ungrouped.length > 0
+                          ? () => {
+                              assignStudents.mutate({
+                                classId,
+                                groupId: group._id,
+                                studentUserIds: data.ungrouped.map((student) => student.userId),
+                              });
+                            }
+                          : undefined
+                      }
                       onEditGroup={(item) =>
                         setFormState({ kind: "group", mode: "edit", group: item })
                       }
                       onDeleteGroup={(item) => setDeleteState({ kind: "group", group: item })}
                       onMoveStudents={(item) => setMoveStudentsState({ group: item })}
+                      onClearStudents={(item) => setClearStudentsState({ group: item })}
                       onAddTeam={(groupId) =>
                         setFormState({ kind: "team", mode: "create", groupId })
                       }
@@ -639,6 +666,19 @@ export function GroupsPage({ classId }: GroupsPageProps) {
             deleteState.kind === "group" ? t("groupsDeleteAction") : t("teamsDeleteAction")
           }
           onConfirm={handleDeleteConfirm}
+        />
+      ) : null}
+
+      {clearStudentsState ? (
+        <DeleteNamedCredenza
+          open
+          onOpenChange={(open) => {
+            if (!open) setClearStudentsState(null);
+          }}
+          title={t("groupsClearStudentsConfirmTitle", { name: clearStudentsState.group.name })}
+          description={t("groupsClearStudentsConfirmDescription")}
+          confirmLabel={t("groupsClearStudentsConfirm")}
+          onConfirm={handleClearStudentsConfirm}
         />
       ) : null}
 

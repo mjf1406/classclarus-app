@@ -19,6 +19,8 @@ const STRINGS: Record<string, string> = {
   activitySummary_removedMember: "Removed member ({{role}})",
   activitySummary_changedMemberRole: "Changed member role from {{fromRole}} to {{toRole}}",
   activitySummary_movedStudentsIntoGroup: 'Moved {{count}} students into group "{{name}}"',
+  activitySummary_movedStudentsToUngrouped:
+    'Moved {{count}} students from group "{{name}}" to ungrouped',
   activitySummary_createdTeamInGroups: 'Created team "{{name}}" in {{count}} groups',
   activitySummary_copiedTeamToGroup: 'Copied team "{{name}}" to another group',
   ...ROLE_LABELS,
@@ -89,6 +91,9 @@ describe("formatActivitySummary", () => {
     expect(formatActivitySummary({ summary: "Moved 4 students into group “Room A”" }, t)).toBe(
       'Moved 4 students into group "Room A"',
     );
+    expect(
+      formatActivitySummary({ summary: "Moved 3 students from group “Room A” to ungrouped" }, t),
+    ).toBe('Moved 3 students from group "Room A" to ungrouped');
   });
 
   test("uses summaryKey with metadata for new rows", () => {

@@ -43,6 +43,7 @@ const rateLimits = {
   teamRemove: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 20 },
   groupAssignStudent: { kind: "token bucket" as const, rate: 120, period: HOUR, capacity: 40 },
   groupAssignStudents: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 15 },
+  groupClearStudents: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 15 },
   fileUploadUrl: { kind: "token bucket" as const, rate: 30, period: HOUR, capacity: 10 },
   fileUploadUrlGlobal: { kind: "token bucket" as const, rate: 120, period: MINUTE, capacity: 40 },
   fileWatchPending: { kind: "token bucket" as const, rate: 30, period: HOUR, capacity: 10 },

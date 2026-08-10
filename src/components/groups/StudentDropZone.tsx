@@ -1,4 +1,5 @@
 import { useDroppable } from "@dnd-kit/core";
+import type { ReactNode } from "react";
 
 import { StudentChip } from "@/components/groups/StudentChip";
 import type { BoardStudent, DropTarget } from "@/lib/groups/groups";
@@ -12,6 +13,8 @@ type StudentDropZoneProps = {
   students: Array<BoardStudent>;
   canManage: boolean;
   emptyLabel: string;
+  /** Optional action shown under the empty label (e.g. add-all). */
+  emptyAction?: ReactNode;
   className?: string;
   disabled?: boolean;
   hiddenStudentId?: Id<"users"> | null;
@@ -26,6 +29,7 @@ export function StudentDropZone({
   students,
   canManage,
   emptyLabel,
+  emptyAction,
   className,
   disabled = false,
   hiddenStudentId = null,
@@ -49,7 +53,10 @@ export function StudentDropZone({
       )}
     >
       {students.length === 0 ? (
-        <p className="px-1 py-2 text-xs text-muted-foreground">{emptyLabel}</p>
+        <div className="flex flex-col items-start gap-2 px-1 py-2">
+          <p className="text-xs text-muted-foreground">{emptyLabel}</p>
+          {emptyAction}
+        </div>
       ) : (
         students.map((student) => (
           <StudentChip

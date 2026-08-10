@@ -5,6 +5,8 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import {
   DEFAULT_ROSTER_NAME_FORMAT,
   formatRosterNameParts,
+  GENDER_OPTIONS,
+  type GenderOption,
   type RosterNameFormat,
 } from "@/lib/roster/roster";
 
@@ -12,6 +14,60 @@ export type GroupsBoard = FunctionReturnType<typeof api.groups.board>;
 export type BoardGroup = GroupsBoard["groups"][number];
 export type BoardTeam = BoardGroup["teams"][number];
 export type BoardStudent = GroupsBoard["ungrouped"][number];
+
+export type GroupGenderCount = {
+  gender: GenderOption | null;
+  count: number;
+};
+
+/** Flatten teamless + team students in a group (unique by userId). */
+export function collectStudentsInGroup(group: BoardGroup): Array<BoardStudent> {
+  const byId = new Map<Id<"users">, BoardStudent>();
+  for (const student of group.students) {
+    byId.set(student.userId, student);
+  }
+  for (const team of group.teams) {
+    for (const student of team.students) {
+      byId.set(student.userId, student);
+    }
+  }
+  return [...byId.values()];
+}
+
+/** Teamless students plus students on every team in the group. */
+export function countStudentsInGroup(group: BoardGroup): number {
+  return collectStudentsInGroup(group).length;
+}
+
+/** Gender tallies for a group, ordered like roster gender options; unset last. */
+export function countGendersInGroup(group: BoardGroup): Array<GroupGenderCount> {
+  const counts = new Map<GenderOption | "unset", number>();
+  for (const student of collectStudentsInGroup(group)) {
+    const gender = readBoardStudentGender(student);
+    const key = gender ?? "unset";
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  const result: Array<GroupGenderCount> = [];
+  for (const gender of GENDER_OPTIONS) {
+    const count = counts.get(gender);
+    if (count != null && count > 0) {
+      result.push({ gender, count });
+    }
+  }
+  const unset = counts.get("unset");
+  if (unset != null && unset > 0) {
+    result.push({ gender: null, count: unset });
+  }
+  return result;
+}
+
+function readBoardStudentGender(student: BoardStudent): GenderOption | undefined {
+  const gender = (student as { gender?: unknown }).gender;
+  if (typeof gender === "string" && (GENDER_OPTIONS as readonly string[]).includes(gender)) {
+    return gender as GenderOption;
+  }
+  return undefined;
+}
 
 export type GroupFormValues = {
   name: string;
@@ -108,6 +164,32 @@ export function moveStudentsOnBoard(
     (next, studentUserId) => moveStudentOnBoard(next, studentUserId, to, nameFormat),
     board,
   );
+}
+
+/** Move every student in a group (including teams) to the ungrouped pool. */
+export function clearGroupStudentsOnBoard(
+  board: GroupsBoard,
+  groupId: Id<"groups">,
+  nameFormat: RosterNameFormat = DEFAULT_ROSTER_NAME_FORMAT,
+): GroupsBoard {
+  const group = board.groups.find((item) => item._id === groupId);
+  if (!group) return board;
+
+  const released = [...group.students, ...group.teams.flatMap((team) => team.students)];
+  if (released.length === 0) return board;
+
+  return {
+    ungrouped: sortStudents([...board.ungrouped, ...released], nameFormat),
+    groups: board.groups.map((item) =>
+      item._id !== groupId
+        ? item
+        : {
+            ...item,
+            students: [],
+            teams: item.teams.map((team) => ({ ...team, students: [] })),
+          },
+    ),
+  };
 }
 
 export type MoveStudentsFilter =

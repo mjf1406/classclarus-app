@@ -1,13 +1,23 @@
-import { Copy, Pencil, Plus, Trash2, UserPlus } from "lucide-react";
+import { Copy, Pencil, Plus, Trash2, UserMinus, UserPlus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { GroupImageIcon } from "@/components/groups/GroupImageIcon";
 import { StudentChip } from "@/components/groups/StudentChip";
 import { StudentDropZone } from "@/components/groups/StudentDropZone";
 import { ActionMenu } from "@/components/ui/action-menu";
-import type { BoardGroup, BoardTeam } from "@/lib/groups/groups";
+import { Button } from "@/components/ui/button";
+import {
+  countGendersInGroup,
+  countStudentsInGroup,
+  type BoardGroup,
+  type BoardTeam,
+} from "@/lib/groups/groups";
 import { isOptimisticId } from "@/lib/groups/groupFormSchema";
-import { DEFAULT_ROSTER_NAME_FORMAT, type RosterNameFormat } from "@/lib/roster/roster";
+import {
+  DEFAULT_ROSTER_NAME_FORMAT,
+  genderLabelKey,
+  type RosterNameFormat,
+} from "@/lib/roster/roster";
 import { cn } from "@/lib/utils";
 import type { Id } from "../../../convex/_generated/dataModel";
 
@@ -18,9 +28,12 @@ type GroupCardProps = {
   hiddenStudentId?: Id<"users"> | null;
   viewerUserId?: Id<"users"> | null;
   nameFormat?: RosterNameFormat;
+  /** When set and the group is empty, show a quick-add control in the dropzone. */
+  onAddAllUngrouped?: () => void;
   onEditGroup: (group: BoardGroup) => void;
   onDeleteGroup: (group: BoardGroup) => void;
   onMoveStudents: (group: BoardGroup) => void;
+  onClearStudents: (group: BoardGroup) => void;
   onAddTeam: (groupId: Id<"groups">) => void;
   onEditTeam: (groupId: Id<"groups">, team: BoardTeam) => void;
   onCopyTeam: (groupId: Id<"groups">, team: BoardTeam) => void;
@@ -42,9 +55,11 @@ export function GroupCard({
   hiddenStudentId = null,
   viewerUserId = null,
   nameFormat = DEFAULT_ROSTER_NAME_FORMAT,
+  onAddAllUngrouped,
   onEditGroup,
   onDeleteGroup,
   onMoveStudents,
+  onClearStudents,
   onAddTeam,
   onEditTeam,
   onCopyTeam,
@@ -53,6 +68,17 @@ export function GroupCard({
   const { t } = useTranslation("classes");
   const pending = isOptimisticId(group._id);
   const isViewerGroup = groupContainsViewer(group, viewerUserId);
+  const studentCount = countStudentsInGroup(group);
+  const genderCounts = countGendersInGroup(group);
+  const showAddAllUngrouped =
+    canManage && !pending && studentCount === 0 && onAddAllUngrouped != null;
+
+  const genderSummary = genderCounts
+    .map(({ gender, count }) => {
+      const label = gender == null ? t("groupsGenderUnset") : t(genderLabelKey(gender));
+      return `${count} ${label}`;
+    })
+    .join(" · ");
 
   return (
     <section
@@ -70,6 +96,10 @@ export function GroupCard({
           />
           <div className="min-w-0">
             <h3 className="truncate font-semibold">{group.name}</h3>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {t("groupsStudentCount", { count: studentCount })}
+              {genderSummary ? ` · ${genderSummary}` : null}
+            </p>
             {group.description ? (
               <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
                 {group.description}
@@ -95,6 +125,17 @@ export function GroupCard({
                 permission: "groups:manage",
                 onSelect: () => onMoveStudents(group),
               },
+              ...(studentCount > 0
+                ? [
+                    {
+                      id: "clear-students",
+                      label: t("groupsClearStudentsAction"),
+                      icon: <UserMinus />,
+                      permission: "groups:manage" as const,
+                      onSelect: () => onClearStudents(group),
+                    },
+                  ]
+                : []),
               {
                 id: "add-team",
                 label: t("teamsCreateAction"),
@@ -123,6 +164,22 @@ export function GroupCard({
           students={group.students}
           canManage={canManage}
           emptyLabel={t("groupsDropEmpty")}
+          emptyAction={
+            showAddAllUngrouped ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onAddAllUngrouped?.();
+                }}
+              >
+                <UserPlus data-icon="inline-start" />
+                {t("groupsAddAllUngrouped")}
+              </Button>
+            ) : null
+          }
           disabled={pending}
           hiddenStudentId={hiddenStudentId}
           viewerUserId={viewerUserId}

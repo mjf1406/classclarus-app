@@ -872,6 +872,10 @@ const nl = {
     groupTeamFilterClear: "Groep- en teamfilters wissen",
     groupsNoTeamLabel: "Leerlingen zonder team",
     groupsDropEmpty: "Sleep leerlingen hierheen",
+    groupsStudentCount: "{{count}} leerling",
+    groupsStudentCount_other: "{{count}} leerlingen",
+    groupsAddAllUngrouped: "Alle ongegroepeerden toevoegen",
+    groupsGenderUnset: "Niet ingesteld",
     groupsTeamsViaSeating: "Teamlidmaatschap wordt ingesteld wanneer je plaatsen vastlegt.",
     groupsEmptyTitle: "Nog geen leerlingen",
     groupsEmptyDescription: "Nodig leerlingen uit en organiseer ze daarna in groepen.",
@@ -901,6 +905,12 @@ const nl = {
     groupsMoveStudentsEmpty: "Geen leerlingen voldoen aan dit filter.",
     groupsMoveStudentsConfirm: "{{count}} verplaatsen",
     groupsMoveStudentsFailed: "Kon leerlingen niet verplaatsen.",
+    groupsClearStudentsAction: "Allen naar zonder groep",
+    groupsClearStudentsConfirmTitle: "Iedereen in {{name}} ontgroeperen?",
+    groupsClearStudentsConfirmDescription:
+      "Leerlingen in deze groep en de teams gaan naar Zonder groep. De groep en teams blijven bestaan.",
+    groupsClearStudentsConfirm: "Naar zonder groep",
+    groupsClearStudentsFailed: "Kon leerlingen niet ontgroeperen.",
     groupsExportPdf: "PDF exporteren",
     groupsExportPdfPending: "Voorbereiden…",
     groupsExportPdfSubtitle: "Groepen & teams",
@@ -1067,6 +1077,8 @@ const nl = {
     activitySummary_assignedStudentToTeamInGroup:
       'Leerling toegewezen aan een team in groep "{{name}}"',
     activitySummary_movedStudentsIntoGroup: '{{count}} leerlingen verplaatst naar groep "{{name}}"',
+    activitySummary_movedStudentsToUngrouped:
+      '{{count}} leerlingen verplaatst van groep "{{name}}" naar zonder groep',
     activitySummary_renamedFile: 'Bestand "{{previousName}}" hernoemd naar "{{name}}"',
     activitySummary_deletedFile: 'Bestand "{{name}}" verwijderd',
     activitySummary_uploadedFile: 'Bestand "{{name}}" geüpload',

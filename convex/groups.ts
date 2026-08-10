@@ -13,12 +13,23 @@ import {
   resolveRosterNameFormat,
   type RosterNameFormat,
 } from "./lib/rosterNameFormat.js";
+import type { GenderValue } from "./lib/studentRosters.js";
 import { resolveUserImageUrl } from "./lib/userImage.js";
 
 const MAX_NAME_LENGTH = 100;
 const MAX_DESCRIPTION_LENGTH = 500;
 const MAX_ICON_LENGTH = 64;
 const MAX_BULK_ASSIGN_STUDENTS = 100;
+
+const genderValidator = v.union(
+  v.literal("male"),
+  v.literal("female"),
+  v.literal("transMale"),
+  v.literal("transFemale"),
+  v.literal("nonBinary"),
+  v.literal("selfDescribe"),
+  v.literal("preferNotToSay"),
+);
 
 const boardStudentValidator = v.object({
   userId: v.id("users"),
@@ -27,6 +38,7 @@ const boardStudentValidator = v.object({
   name: v.optional(v.string()),
   image: v.optional(v.string()),
   email: v.optional(v.string()),
+  gender: v.optional(genderValidator),
 });
 
 const boardTeamValidator = v.object({
@@ -64,6 +76,13 @@ type BoardStudent = {
   name?: string;
   image?: string;
   email?: string;
+  gender?: GenderValue;
+};
+
+type RosterNameFields = {
+  firstName?: string;
+  lastName?: string;
+  gender?: GenderValue;
 };
 
 function normalizeName(name: string): string {
@@ -121,7 +140,7 @@ function rosterDisplaySortKey(student: BoardStudent, format: RosterNameFormat): 
 async function loadBoardStudent(
   ctx: QueryCtx | MutationCtx,
   userId: Id<"users">,
-  roster?: { firstName?: string; lastName?: string } | null,
+  roster?: RosterNameFields | null,
 ): Promise<BoardStudent | null> {
   const user = await ctx.db.get("users", userId);
   if (!user) return null;
@@ -129,6 +148,7 @@ async function loadBoardStudent(
     userId: user._id,
     ...(roster?.firstName !== undefined ? { firstName: roster.firstName } : {}),
     ...(roster?.lastName !== undefined ? { lastName: roster.lastName } : {}),
+    ...(roster?.gender !== undefined ? { gender: roster.gender } : {}),
     name: user.name,
     image: await resolveUserImageUrl(ctx, user),
     email: user.email,
@@ -187,7 +207,15 @@ export const board = classQuery({
       .collect();
     const rosterByUserId = new Map(
       rosterRows.map(
-        (row) => [row.userId, { firstName: row.firstName, lastName: row.lastName }] as const,
+        (row) =>
+          [
+            row.userId,
+            {
+              firstName: row.firstName,
+              lastName: row.lastName,
+              gender: row.gender,
+            },
+          ] as const,
       ),
     );
 
@@ -898,6 +926,61 @@ export const assignStudent = classMutation({
         name: group.name,
         studentUserId: args.studentUserId,
         groupId: args.groupId,
+      },
+    });
+
+    return null;
+  },
+});
+
+/**
+ * Remove every student from a group (including those on teams inside it)
+ * and return them to the ungrouped pool. The group and its teams remain.
+ */
+export const clearGroupStudents = classMutation({
+  args: {
+    groupId: v.id("groups"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await rateLimiter.limit(ctx, "groupClearStudents", { key: ctx.userId, throws: true });
+    await ctx.require("groups:manage");
+
+    const classId = ctx.classDoc._id;
+    const group = await ctx.db.get("groups", args.groupId);
+    if (!group || group.classId !== classId) {
+      throw new Error("Group not found");
+    }
+
+    // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded
+    const memberships = await ctx.db
+      .query("groupMemberships")
+      .withIndex("by_group", (q) => q.eq("groupId", args.groupId))
+      .collect();
+
+    if (memberships.length === 0) {
+      return null;
+    }
+
+    const moved: Array<Id<"users">> = [];
+    for (const membership of memberships) {
+      await ctx.db.delete("groupMemberships", membership._id);
+      moved.push(membership.studentUserId);
+    }
+
+    await recordClassActivity(ctx, {
+      classId,
+      actorUserId: ctx.userId,
+      action: "update",
+      resourceType: "groupMembership",
+      resourceId: args.groupId,
+      summary: `Moved ${moved.length} students from group “${group.name}” to ungrouped`,
+      summaryKey: "activitySummary_movedStudentsToUngrouped",
+      metadata: {
+        name: group.name,
+        groupId: args.groupId,
+        studentUserIds: moved.join(","),
+        count: String(moved.length),
       },
     });
 
