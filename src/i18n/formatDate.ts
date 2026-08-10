@@ -59,6 +59,21 @@ export function formatLocalizedDateTime(timestampMs: number): string {
   }).format(new Date(timestampMs));
 }
 
+/** Seat chart history: "Mon, Aug 10, 2026, 4:18 PM" (locale-aware). */
+export function formatLocalizedSeatChartHistoryDate(timestampMs: number): string {
+  const date = new Date(timestampMs);
+  const locale = getAppLocale();
+  const weekday = new Intl.DateTimeFormat(locale, { weekday: "short" }).format(date);
+  const month = new Intl.DateTimeFormat(locale, { month: "short" }).format(date);
+  const day = new Intl.DateTimeFormat(locale, { day: "numeric" }).format(date);
+  const year = new Intl.DateTimeFormat(locale, { year: "numeric" }).format(date);
+  const time = new Intl.DateTimeFormat(locale, {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
+  return `${weekday} ${month} ${day}, ${year}, ${time}`;
+}
+
 /**
  * Localized due date for tasks/assignments, e.g.
  * "Wednesday, August 19, 2026 at 8:20 PM (22 days)"

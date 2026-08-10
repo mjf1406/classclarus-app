@@ -4,9 +4,7 @@ import { useTranslation } from "react-i18next";
 
 import { SeedTestStudentsConfirmDialog } from "@/components/admin/SeedTestStudentsConfirmDialog";
 import { Button } from "@/components/ui/button";
-import { useIsAppAdmin } from "@/hooks/admin/useIsAppAdmin";
-import { useIsFeedbackAdmin } from "@/hooks/feedback/useIsFeedbackAdmin";
-import { isSelfHosted } from "@/lib/selfHosted";
+import { useIsSiteAdmin } from "@/hooks/admin/useIsSiteAdmin";
 import type { Id } from "../../../convex/_generated/dataModel";
 
 type SeedTestStudentsButtonProps = {
@@ -17,12 +15,9 @@ type SeedTestStudentsButtonProps = {
 /** Site-admin control on the class dashboard for seeding test roster students. */
 export function SeedTestStudentsButton({ classId, classDisplayName }: SeedTestStudentsButtonProps) {
   const { t } = useTranslation("admin");
-  const selfHosted = isSelfHosted();
-  const selfHostAdmin = useIsAppAdmin();
-  const feedbackAdmin = useIsFeedbackAdmin();
+  const { isAdmin } = useIsSiteAdmin();
   const [open, setOpen] = useState(false);
 
-  const isAdmin = selfHosted ? selfHostAdmin.isAdmin : feedbackAdmin.isAdmin;
   if (!isAdmin) {
     return null;
   }

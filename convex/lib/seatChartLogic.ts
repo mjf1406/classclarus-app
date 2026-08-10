@@ -37,13 +37,32 @@ export type PlacementSnapshot = {
   combinationKey: string;
 };
 
+export type ConstraintViolationParams = {
+  student: string;
+  other?: string;
+  currentZone?: string;
+  targetZone?: string;
+  studentSeat?: string;
+  otherSeat?: string;
+  studentTeam?: string;
+  otherTeam?: string;
+};
+
 export type ConstraintViolation = {
   constraintId: Id<"seatConstraints">;
   type: Doc<"seatConstraints">["type"];
   polarity: Doc<"seatConstraints">["polarity"];
   summary: string;
   studentUserIds: Array<Id<"users">>;
+  params: ConstraintViolationParams;
 };
+
+function deskSeatParam(desk: SeatLayoutItemSnapshot | undefined): string | undefined {
+  if (!desk) return undefined;
+  if (desk.deskNumber !== undefined) return String(desk.deskNumber);
+  const label = desk.label.trim();
+  return label || undefined;
+}
 
 export function normalizeChartName(name: string): string {
   const trimmed = name.trim();
@@ -304,6 +323,20 @@ export function buildCombinationKey(args: {
   ].join("|");
 }
 
+/** Spatial neighbors on adjacent desks, limited to the seated student's group. */
+export function sameGroupNeighborStudentIds(
+  seatedStudentGroupId: Id<"groups">,
+  neighborDeskIds: Array<string>,
+  studentsByDesk: Map<string, Array<Id<"users">>>,
+  groupIdByStudent: Map<Id<"users">, Id<"groups">>,
+): Array<Id<"users">> {
+  return neighborDeskIds.flatMap((deskId) =>
+    (studentsByDesk.get(deskId) ?? []).filter(
+      (studentId) => groupIdByStudent.get(studentId) === seatedStudentGroupId,
+    ),
+  );
+}
+
 export async function buildPlacementSnapshots(
   ctx: QueryCtx | MutationCtx,
   classDoc: Doc<"classes">,
@@ -312,6 +345,7 @@ export async function buildPlacementSnapshots(
 ): Promise<Array<PlacementSnapshot>> {
   const deskById = deskItemsById(layout.items);
   const neighborMap = findStrictDeskNeighborIds(layout.items);
+  const groupIdByStudent = new Map(assignments.map((a) => [a.studentUserId, a.groupId]));
   const studentsByDesk = new Map<string, Array<Id<"users">>>();
   for (const assignment of assignments) {
     const list = studentsByDesk.get(assignment.deskItemId) ?? [];
@@ -326,8 +360,11 @@ export async function buildPlacementSnapshots(
     if (!desk) continue;
 
     const neighborDeskIds = neighborMap.get(assignment.deskItemId) ?? [];
-    const neighborStudentIds = neighborDeskIds.flatMap(
-      (deskId) => studentsByDesk.get(deskId) ?? [],
+    const neighborStudentIds = sameGroupNeighborStudentIds(
+      assignment.groupId,
+      neighborDeskIds,
+      studentsByDesk,
+      groupIdByStudent,
     );
 
     const neighborDisplayNames = await Promise.all(
@@ -441,9 +478,11 @@ export async function evaluateConstraintViolations(
   }
 
   const teamKeyByDesk = new Map<string, string | undefined>();
+  const teamLabelByDesk = new Map<string, string | undefined>();
   for (const desk of deskById.values()) {
-    const { teamKey } = await resolveTeamLabelForDesk(ctx, desk);
+    const { teamKey, teamLabel } = await resolveTeamLabelForDesk(ctx, desk);
     teamKeyByDesk.set(desk.id, teamKey);
+    teamLabelByDesk.set(desk.id, teamLabel);
   }
 
   const violations: Array<ConstraintViolation> = [];
@@ -467,6 +506,11 @@ export async function evaluateConstraintViolations(
           polarity: constraint.polarity,
           summary: `${studentLabel} / ${target}`,
           studentUserIds: [constraint.studentUserId],
+          params: {
+            student: studentLabel,
+            ...(zone ? { currentZone: zone } : {}),
+            ...(target ? { targetZone: target } : {}),
+          },
         });
       }
       continue;
@@ -477,6 +521,8 @@ export async function evaluateConstraintViolations(
     const otherDesk = assignmentByStudent.get(otherId);
     const otherLabel = studentName(otherId);
     const involved = [constraint.studentUserId, otherId];
+    const studentSeat = deskSeatParam(studentDesk ? deskById.get(studentDesk) : undefined);
+    const otherSeat = deskSeatParam(otherDesk ? deskById.get(otherDesk) : undefined);
 
     if (constraint.type === "neighbor") {
       const adjacent = areSpatialNeighbors(studentDesk, otherDesk, neighborMap);
@@ -489,6 +535,12 @@ export async function evaluateConstraintViolations(
           polarity: constraint.polarity,
           summary: `${studentLabel} / ${otherLabel}`,
           studentUserIds: involved,
+          params: {
+            student: studentLabel,
+            other: otherLabel,
+            ...(studentSeat ? { studentSeat } : {}),
+            ...(otherSeat ? { otherSeat } : {}),
+          },
         });
       }
       continue;
@@ -504,12 +556,20 @@ export async function evaluateConstraintViolations(
     const violated =
       constraint.polarity === "must" ? !teammates : constraint.polarity === "mustNot" && teammates;
     if (violated) {
+      const studentTeam = studentDesk ? teamLabelByDesk.get(studentDesk) : undefined;
+      const otherTeam = otherDesk ? teamLabelByDesk.get(otherDesk) : undefined;
       violations.push({
         constraintId: constraint._id,
         type: constraint.type,
         polarity: constraint.polarity,
         summary: `${studentLabel} / ${otherLabel}`,
         studentUserIds: involved,
+        params: {
+          student: studentLabel,
+          other: otherLabel,
+          ...(studentTeam ? { studentTeam } : {}),
+          ...(otherTeam ? { otherTeam } : {}),
+        },
       });
     }
   }
@@ -652,6 +712,46 @@ export function buildCombinationLabel(placement: PlacementSnapshot): string {
     parts.push(placement.neighborDisplayNames.join(", "));
   }
   return parts.join(" · ");
+}
+
+export type MergedAggregateRow = {
+  dimension: Doc<"seatChartAggregates">["dimension"];
+  key: string;
+  label: string;
+  count: number;
+};
+
+export function mergeAggregateRows(
+  rows: Array<Pick<Doc<"seatChartAggregates">, "dimension" | "key" | "label" | "count">>,
+): Array<MergedAggregateRow> {
+  const merged = new Map<string, MergedAggregateRow>();
+  for (const row of rows) {
+    const mapKey = `${row.dimension}:${row.key}`;
+    const existing = merged.get(mapKey);
+    if (existing) {
+      existing.count += row.count;
+    } else {
+      merged.set(mapKey, {
+        dimension: row.dimension,
+        key: row.key,
+        label: row.label,
+        count: row.count,
+      });
+    }
+  }
+  return [...merged.values()];
+}
+
+export async function chartsForLayout(
+  ctx: QueryCtx | MutationCtx,
+  classId: Id<"classes">,
+  layoutId: Id<"seatLayouts">,
+): Promise<Array<Doc<"seatCharts">>> {
+  // eslint-disable-next-line @convex-dev/no-collect-in-query -- layout-bounded chart list
+  return await ctx.db
+    .query("seatCharts")
+    .withIndex("by_class_layout", (q) => q.eq("classId", classId).eq("layoutId", layoutId))
+    .collect();
 }
 
 export async function activeChartsForLayout(

@@ -1,9 +1,8 @@
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { RosterStudentChip } from "@/components/students/RosterStudentChip";
 import { Badge } from "@/components/ui/badge";
 import type { BoardStudent } from "@/lib/groups/groups";
 import {
@@ -12,7 +11,6 @@ import {
   type RosterNameFormat,
 } from "@/lib/roster/roster";
 import { cn } from "@/lib/utils";
-import { getInitials } from "@/lib/user/userDisplay";
 
 type StudentChipProps = {
   student: BoardStudent;
@@ -41,39 +39,26 @@ export function StudentChip({
   const invisiblyHeld = isDragging || hidden;
 
   return (
-    <div
+    <RosterStudentChip
       ref={setNodeRef}
+      userId={student.userId}
+      displayName={displayName}
+      rosterNumber={student.rosterNumber}
+      image={student.image}
+      email={student.email}
+      showGrip={canDrag}
+      isSelf={isSelf}
       // DragOverlay owns the visual while dragging — keep the source in place and hidden.
       style={invisiblyHeld ? undefined : { transform: CSS.Translate.toString(transform) }}
-      className={cn(
-        "flex items-center gap-2 rounded-lg border bg-background px-2 py-1.5 text-sm shadow-sm",
-        canDrag && "cursor-grab active:cursor-grabbing",
-        isSelf && "border-primary bg-primary/10 ring-2 ring-primary/40",
-        invisiblyHeld && "opacity-0",
-      )}
+      className={cn(canDrag && "cursor-grab active:cursor-grabbing", invisiblyHeld && "opacity-0")}
+      trailing={
+        isSelf ? (
+          <Badge variant="default" className="ml-auto shrink-0">
+            {t("groupsYouBadge")}
+          </Badge>
+        ) : null
+      }
       {...(canDrag ? { ...listeners, ...attributes } : {})}
-    >
-      {canDrag ? (
-        <GripVertical className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
-      ) : null}
-      <Avatar className="size-6">
-        {student.image ? (
-          <AvatarImage src={student.image} alt={displayName} referrerPolicy="no-referrer" />
-        ) : null}
-        <AvatarFallback className="text-[10px]">
-          {getInitials({
-            _id: student.userId,
-            name: displayName,
-            email: student.email,
-          })}
-        </AvatarFallback>
-      </Avatar>
-      <span className="min-w-0 truncate font-medium">{displayName}</span>
-      {isSelf ? (
-        <Badge variant="default" className="ml-auto shrink-0">
-          {t("groupsYouBadge")}
-        </Badge>
-      ) : null}
-    </div>
+    />
   );
 }

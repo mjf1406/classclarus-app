@@ -18,6 +18,7 @@ import {
   seatAggregateLabel,
   deskItemsById,
   buildPlacementSnapshots,
+  buildCombinationLabel,
   syncMembershipTeamsFromSeating,
 } from "./lib/seatChartLogic.js";
 
@@ -89,6 +90,16 @@ const violationValidator = v.object({
   polarity: v.union(v.literal("must"), v.literal("mustNot")),
   summary: v.string(),
   studentUserIds: v.array(v.id("users")),
+  params: v.object({
+    student: v.string(),
+    other: v.optional(v.string()),
+    currentZone: v.optional(v.string()),
+    targetZone: v.optional(v.string()),
+    studentSeat: v.optional(v.string()),
+    otherSeat: v.optional(v.string()),
+    studentTeam: v.optional(v.string()),
+    otherTeam: v.optional(v.string()),
+  }),
 });
 
 const aggregateRowValidator = v.object({
@@ -113,6 +124,7 @@ const studentSummaryValidator = v.object({
       deskItemId: v.string(),
       deskNumber: v.optional(v.number()),
       zoneName: v.optional(v.string()),
+      teamKey: v.optional(v.string()),
       teamLabel: v.optional(v.string()),
       neighborDisplayNames: v.array(v.string()),
       isDraft: v.literal(true),
@@ -191,10 +203,51 @@ type DraftPlacementSummary = {
   deskItemId: string;
   deskNumber?: number;
   zoneName?: string;
+  teamKey?: string;
   teamLabel?: string;
   neighborDisplayNames: Array<string>;
   isDraft: true;
 };
+
+type PlacementHistoryFilter = {
+  deskItemId: string;
+  zoneName?: string;
+  teamKey?: string;
+};
+
+function matchesPlacementHistoryFilter(
+  row: Doc<"seatChartPlacements">,
+  filter: PlacementHistoryFilter,
+): boolean {
+  if (row.deskItemId !== filter.deskItemId) return false;
+  if ((row.zoneName ?? undefined) !== (filter.zoneName ?? undefined)) return false;
+  if ((row.teamKey ?? undefined) !== (filter.teamKey ?? undefined)) return false;
+  return true;
+}
+
+function historyItemFromPlacementRow(
+  row: Doc<"seatChartPlacements">,
+  record: Doc<"seatChartRecords">,
+) {
+  return {
+    recordId: row.recordId,
+    recordedAt: row.recordedAt,
+    chartName: record.chartName,
+    layoutName: record.layoutName,
+    ...(row.deskNumber !== undefined ? { deskNumber: row.deskNumber } : {}),
+    ...(row.zoneName !== undefined ? { zoneName: row.zoneName } : {}),
+    ...(row.teamLabel !== undefined ? { teamLabel: row.teamLabel } : {}),
+    neighborDisplayNames: row.neighborDisplayNames,
+    combinationLabel: [
+      row.deskNumber !== undefined ? `Seat ${row.deskNumber}` : "Seat",
+      row.zoneName,
+      row.teamLabel,
+      row.neighborDisplayNames.length > 0 ? row.neighborDisplayNames.join(", ") : undefined,
+    ]
+      .filter(Boolean)
+      .join(" · "),
+  };
+}
 
 type CurrentContextCounts = {
   seat?: { count: number; percent: number; label: string };
@@ -231,6 +284,109 @@ async function recordCountForChart(ctx: QueryCtx, chartId: Id<"seatCharts">): Pr
 function percent(count: number, total: number): number {
   if (total <= 0) return 0;
   return Math.round((count / total) * 1000) / 10;
+}
+
+async function loadLayoutPlacementsForStudent(
+  ctx: QueryCtx,
+  layoutId: Id<"seatLayouts">,
+  studentUserId: Id<"users">,
+): Promise<Array<Doc<"seatChartPlacements">>> {
+  // eslint-disable-next-line @convex-dev/no-collect-in-query -- bounded by recordings on one layout
+  return await ctx.db
+    .query("seatChartPlacements")
+    .withIndex("by_layout_student_recorded", (q) =>
+      q.eq("layoutId", layoutId).eq("studentUserId", studentUserId),
+    )
+    .collect();
+}
+
+function breakdownsFromPlacements(
+  placements: Array<Doc<"seatChartPlacements">>,
+  layoutId: Id<"seatLayouts">,
+) {
+  type BreakdownRow = {
+    dimension: Doc<"seatChartAggregates">["dimension"];
+    key: string;
+    label: string;
+    count: number;
+  };
+
+  const tally = (
+    dimension: BreakdownRow["dimension"],
+    keyFn: (row: Doc<"seatChartPlacements">) => string | undefined,
+    labelFn: (row: Doc<"seatChartPlacements">, key: string) => string,
+  ): Array<BreakdownRow> => {
+    const map = new Map<string, BreakdownRow>();
+    for (const row of placements) {
+      const key = keyFn(row);
+      if (!key) continue;
+      const existing = map.get(key);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        map.set(key, { dimension, key, label: labelFn(row, key), count: 1 });
+      }
+    }
+    return [...map.values()].sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+  };
+
+  const neighbors: Array<BreakdownRow> = [];
+  const neighborMap = new Map<string, BreakdownRow>();
+  for (const row of placements) {
+    for (let i = 0; i < row.neighborStudentIds.length; i += 1) {
+      const neighborId = row.neighborStudentIds[i];
+      if (!neighborId) continue;
+      const label = row.neighborDisplayNames[i] ?? neighborId;
+      const existing = neighborMap.get(neighborId);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        neighborMap.set(neighborId, {
+          dimension: "neighbor",
+          key: neighborId,
+          label,
+          count: 1,
+        });
+      }
+    }
+  }
+  neighbors.push(
+    ...[...neighborMap.values()].sort(
+      (a, b) => b.count - a.count || a.label.localeCompare(b.label),
+    ),
+  );
+
+  return {
+    seats: tally(
+      "seat",
+      (row) => seatAggregateKey(layoutId, row.deskItemId),
+      (row) => seatAggregateLabel(row.deskNumber),
+    ),
+    zones: tally(
+      "zone",
+      (row) => row.zoneName,
+      (row, key) => row.zoneName ?? key,
+    ),
+    teams: tally(
+      "team",
+      (row) => row.teamKey,
+      (row, key) => row.teamLabel ?? key,
+    ),
+    neighbors,
+    combinations: tally(
+      "combination",
+      (row) => row.combinationKey,
+      (row) =>
+        [
+          row.deskNumber !== undefined ? `Seat ${row.deskNumber}` : "Seat",
+          row.zoneName,
+          row.teamLabel,
+          row.neighborDisplayNames.length > 0 ? row.neighborDisplayNames.join(", ") : undefined,
+        ]
+          .filter(Boolean)
+          .join(" · "),
+    ),
+  };
 }
 
 /**
@@ -588,9 +744,11 @@ export const recordSeating = classMutation({
       await ctx.db.insert("seatChartPlacements", {
         classId: ctx.classDoc._id,
         chartId: args.chartId,
+        layoutId: layout._id,
         recordId,
         studentUserId: placement.studentUserId,
         studentDisplayName: placement.studentDisplayName,
+        groupId: placement.groupId,
         deskItemId: placement.deskItemId,
         ...(placement.deskNumber !== undefined ? { deskNumber: placement.deskNumber } : {}),
         ...(placement.zoneName !== undefined ? { zoneName: placement.zoneName } : {}),
@@ -679,12 +837,15 @@ export const getRecord = classQuery({
 });
 
 /**
- * Paginated seating history for one student on a chart.
+ * Paginated seating history for one student on a layout (via the open chart).
  */
 export const studentHistory = classQuery({
   args: {
     chartId: v.id("seatCharts"),
     studentUserId: v.id("users"),
+    deskItemId: v.optional(v.string()),
+    zoneName: v.optional(v.string()),
+    teamKey: v.optional(v.string()),
     beforeRecordedAt: v.optional(v.number()),
     limit: v.optional(v.number()),
   },
@@ -694,68 +855,132 @@ export const studentHistory = classQuery({
   }),
   handler: async (ctx, args) => {
     await ctx.require("assigners:read");
-    await getOwnedChart(ctx, args.chartId);
+    const chart = await getOwnedChart(ctx, args.chartId);
+    const layoutId = chart.layoutId;
 
     const limit = Math.min(
       Math.max(1, Math.floor(args.limit ?? DEFAULT_HISTORY_LIMIT)),
       MAX_HISTORY_LIMIT,
     );
 
-    const query = ctx.db
-      .query("seatChartPlacements")
-      .withIndex("by_chart_student_recorded", (q) =>
-        q.eq("chartId", args.chartId).eq("studentUserId", args.studentUserId),
-      )
-      .order("desc");
-
-    const rows =
-      args.beforeRecordedAt !== undefined
-        ? await ctx.db
-            .query("seatChartPlacements")
-            .withIndex("by_chart_student_recorded", (q) =>
-              q
-                .eq("chartId", args.chartId)
-                .eq("studentUserId", args.studentUserId)
-                .lt("recordedAt", args.beforeRecordedAt!),
-            )
-            .order("desc")
-            .take(limit)
-        : await query.take(limit);
+    const placementFilter: PlacementHistoryFilter | undefined =
+      args.deskItemId !== undefined
+        ? {
+            deskItemId: args.deskItemId,
+            ...(args.zoneName !== undefined ? { zoneName: args.zoneName } : {}),
+            ...(args.teamKey !== undefined ? { teamKey: args.teamKey } : {}),
+          }
+        : undefined;
 
     const recordCache = new Map<Id<"seatChartRecords">, Doc<"seatChartRecords">>();
-    const items = [];
-    for (const row of rows) {
-      let record = recordCache.get(row.recordId);
+
+    async function loadRecord(recordId: Id<"seatChartRecords">) {
+      let record = recordCache.get(recordId);
       if (!record) {
-        const loaded = await ctx.db.get("seatChartRecords", row.recordId);
-        if (!loaded) continue;
+        const loaded = await ctx.db.get("seatChartRecords", recordId);
+        if (!loaded) return null;
         record = loaded;
-        recordCache.set(row.recordId, loaded);
+        recordCache.set(recordId, loaded);
       }
-      items.push({
-        recordId: row.recordId,
-        recordedAt: row.recordedAt,
-        chartName: record.chartName,
-        layoutName: record.layoutName,
-        ...(row.deskNumber !== undefined ? { deskNumber: row.deskNumber } : {}),
-        ...(row.zoneName !== undefined ? { zoneName: row.zoneName } : {}),
-        ...(row.teamLabel !== undefined ? { teamLabel: row.teamLabel } : {}),
-        neighborDisplayNames: row.neighborDisplayNames,
-        combinationLabel: [
-          row.deskNumber !== undefined ? `Seat ${row.deskNumber}` : "Seat",
-          row.zoneName,
-          row.teamLabel,
-          row.neighborDisplayNames.length > 0 ? row.neighborDisplayNames.join(", ") : undefined,
-        ]
-          .filter(Boolean)
-          .join(" · "),
-      });
+      return record;
     }
 
-    const last = rows.at(-1);
+    if (placementFilter === undefined) {
+      const rows =
+        args.beforeRecordedAt !== undefined
+          ? await ctx.db
+              .query("seatChartPlacements")
+              .withIndex("by_layout_student_recorded", (q) =>
+                q
+                  .eq("layoutId", layoutId)
+                  .eq("studentUserId", args.studentUserId)
+                  .lt("recordedAt", args.beforeRecordedAt!),
+              )
+              .order("desc")
+              .take(limit)
+          : await ctx.db
+              .query("seatChartPlacements")
+              .withIndex("by_layout_student_recorded", (q) =>
+                q.eq("layoutId", layoutId).eq("studentUserId", args.studentUserId),
+              )
+              .order("desc")
+              .take(limit);
+
+      const items = [];
+      for (const row of rows) {
+        const record = await loadRecord(row.recordId);
+        if (!record) continue;
+        items.push(historyItemFromPlacementRow(row, record));
+      }
+
+      const last = rows.at(-1);
+      return {
+        items,
+        ...(rows.length === limit && last ? { nextBeforeRecordedAt: last.recordedAt } : {}),
+      };
+    }
+
+    const scanBatchSize = Math.min(Math.max(limit * 5, 50), MAX_HISTORY_LIMIT);
+    const items = [];
+    let lastScannedRecordedAt: number | undefined;
+    let hasMoreSource = true;
+
+    while (items.length < limit && hasMoreSource) {
+      const batch =
+        lastScannedRecordedAt !== undefined
+          ? await ctx.db
+              .query("seatChartPlacements")
+              .withIndex("by_layout_student_recorded", (q) =>
+                q
+                  .eq("layoutId", layoutId)
+                  .eq("studentUserId", args.studentUserId)
+                  .lt("recordedAt", lastScannedRecordedAt!),
+              )
+              .order("desc")
+              .take(scanBatchSize)
+          : args.beforeRecordedAt !== undefined
+            ? await ctx.db
+                .query("seatChartPlacements")
+                .withIndex("by_layout_student_recorded", (q) =>
+                  q
+                    .eq("layoutId", layoutId)
+                    .eq("studentUserId", args.studentUserId)
+                    .lt("recordedAt", args.beforeRecordedAt!),
+                )
+                .order("desc")
+                .take(scanBatchSize)
+            : await ctx.db
+                .query("seatChartPlacements")
+                .withIndex("by_layout_student_recorded", (q) =>
+                  q.eq("layoutId", layoutId).eq("studentUserId", args.studentUserId),
+                )
+                .order("desc")
+                .take(scanBatchSize);
+
+      if (batch.length === 0) {
+        hasMoreSource = false;
+        break;
+      }
+
+      for (const row of batch) {
+        lastScannedRecordedAt = row.recordedAt;
+        if (!matchesPlacementHistoryFilter(row, placementFilter)) continue;
+        const record = await loadRecord(row.recordId);
+        if (!record) continue;
+        items.push(historyItemFromPlacementRow(row, record));
+        if (items.length >= limit) break;
+      }
+
+      if (batch.length < scanBatchSize) {
+        hasMoreSource = false;
+      }
+    }
+
     return {
       items,
-      ...(rows.length === limit && last ? { nextBeforeRecordedAt: last.recordedAt } : {}),
+      ...(hasMoreSource && lastScannedRecordedAt !== undefined
+        ? { nextBeforeRecordedAt: lastScannedRecordedAt }
+        : {}),
     };
   },
 });
@@ -767,6 +992,7 @@ export const studentSummary = classQuery({
   args: {
     chartId: v.id("seatCharts"),
     studentUserId: v.id("users"),
+    assignments: v.optional(v.array(chartAssignmentValidator)),
   },
   returns: studentSummaryValidator,
   handler: async (ctx, args) => {
@@ -777,29 +1003,17 @@ export const studentSummary = classQuery({
       throw new Error("Layout not found");
     }
 
-    // eslint-disable-next-line @convex-dev/no-collect-in-query -- per-student aggregate set
-    const aggregates = await ctx.db
-      .query("seatChartAggregates")
-      .withIndex("by_chart_student", (q) =>
-        q.eq("chartId", args.chartId).eq("studentUserId", args.studentUserId),
-      )
-      .collect();
+    const assignmentSource = args.assignments ?? chart.assignments;
 
-    const byDimension = (dimension: Doc<"seatChartAggregates">["dimension"]) =>
-      aggregates
-        .filter((row) => row.dimension === dimension)
-        .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
-        .map((row) => ({
-          dimension: row.dimension,
-          key: row.key,
-          label: row.label,
-          count: row.count,
-        }));
+    const recordedPlacements = await loadLayoutPlacementsForStudent(
+      ctx,
+      layout._id,
+      args.studentUserId,
+    );
+    const totalRecorded = recordedPlacements.length;
+    const breakdowns = breakdownsFromPlacements(recordedPlacements, layout._id);
 
-    const totalRow = aggregates.find((row) => row.dimension === "total");
-    const totalRecorded = totalRow?.count ?? 0;
-
-    const draftAssignment = chart.assignments.find((a) => a.studentUserId === args.studentUserId);
+    const draftAssignment = assignmentSource.find((a) => a.studentUserId === args.studentUserId);
     let draftPlacement: DraftPlacementSummary | undefined;
     let currentContextCounts: CurrentContextCounts = {
       neighbors: [],
@@ -814,7 +1028,7 @@ export const studentSummary = classQuery({
         const assignments = await normalizeDraftAssignments(
           ctx,
           ctx.classDoc._id,
-          chart.assignments,
+          assignmentSource,
           deskById,
         );
         const placements = await buildPlacementSnapshots(ctx, ctx.classDoc, layout, assignments);
@@ -824,62 +1038,66 @@ export const studentSummary = classQuery({
             deskItemId: snapshot.deskItemId,
             ...(snapshot.deskNumber !== undefined ? { deskNumber: snapshot.deskNumber } : {}),
             ...(snapshot.zoneName !== undefined ? { zoneName: snapshot.zoneName } : {}),
+            ...(snapshot.teamKey !== undefined ? { teamKey: snapshot.teamKey } : {}),
             ...(snapshot.teamLabel !== undefined ? { teamLabel: snapshot.teamLabel } : {}),
             neighborDisplayNames: snapshot.neighborDisplayNames,
             isDraft: true,
           };
 
-          const seatKey = seatAggregateKey(layout._id, snapshot.deskItemId);
-          const seatRow = aggregates.find((row) => row.dimension === "seat" && row.key === seatKey);
+          const seatCount = recordedPlacements.filter(
+            (row) => row.deskItemId === snapshot.deskItemId,
+          ).length;
           currentContextCounts.seat = {
-            count: seatRow?.count ?? 0,
-            percent: percent(seatRow?.count ?? 0, totalRecorded),
+            count: seatCount,
+            percent: percent(seatCount, totalRecorded),
             label: seatAggregateLabel(snapshot.deskNumber),
           };
 
           if (snapshot.zoneName) {
-            const zoneRow = aggregates.find(
-              (row) => row.dimension === "zone" && row.key === snapshot.zoneName,
-            );
+            const zoneCount = recordedPlacements.filter(
+              (row) => row.zoneName === snapshot.zoneName,
+            ).length;
             currentContextCounts.zone = {
-              count: zoneRow?.count ?? 0,
-              percent: percent(zoneRow?.count ?? 0, totalRecorded),
+              count: zoneCount,
+              percent: percent(zoneCount, totalRecorded),
               label: snapshot.zoneName,
             };
           }
 
           if (snapshot.teamKey && snapshot.teamLabel) {
-            const teamRow = aggregates.find(
-              (row) => row.dimension === "team" && row.key === snapshot.teamKey,
-            );
+            const teamCount = recordedPlacements.filter(
+              (row) => row.teamKey === snapshot.teamKey,
+            ).length;
             currentContextCounts.team = {
-              count: teamRow?.count ?? 0,
-              percent: percent(teamRow?.count ?? 0, totalRecorded),
+              count: teamCount,
+              percent: percent(teamCount, totalRecorded),
               label: snapshot.teamLabel,
             };
           }
 
           currentContextCounts.neighbors = snapshot.neighborStudentIds.map((neighborId, index) => {
-            const neighborRow = aggregates.find(
-              (row) => row.dimension === "neighbor" && row.key === neighborId,
-            );
+            const neighborCount = recordedPlacements.filter((row) =>
+              row.neighborStudentIds.includes(neighborId),
+            ).length;
             const label = snapshot.neighborDisplayNames[index] ?? neighborId;
             return {
               studentUserId: neighborId,
               label,
-              count: neighborRow?.count ?? 0,
-              percent: percent(neighborRow?.count ?? 0, totalRecorded),
+              count: neighborCount,
+              percent: percent(neighborCount, totalRecorded),
             };
           });
 
-          const comboRow = aggregates.find(
-            (row) => row.dimension === "combination" && row.key === snapshot.combinationKey,
-          );
-          currentContextCounts.combination = {
-            count: comboRow?.count ?? 0,
-            percent: percent(comboRow?.count ?? 0, totalRecorded),
-            label: comboRow?.label ?? snapshot.combinationKey,
-          };
+          if (snapshot.neighborStudentIds.length > 0) {
+            const comboCount = recordedPlacements.filter(
+              (row) => row.combinationKey === snapshot.combinationKey,
+            ).length;
+            currentContextCounts.combination = {
+              count: comboCount,
+              percent: percent(comboCount, totalRecorded),
+              label: buildCombinationLabel(snapshot),
+            };
+          }
         }
       }
     }
@@ -889,13 +1107,7 @@ export const studentSummary = classQuery({
       totalRecorded,
       ...(draftPlacement !== undefined ? { draftPlacement } : {}),
       currentContextCounts,
-      breakdowns: {
-        seats: byDimension("seat"),
-        zones: byDimension("zone"),
-        teams: byDimension("team"),
-        neighbors: byDimension("neighbor"),
-        combinations: byDimension("combination"),
-      },
+      breakdowns,
     };
   },
 });

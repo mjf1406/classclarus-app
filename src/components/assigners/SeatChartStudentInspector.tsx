@@ -1,16 +1,19 @@
 import { useTranslation } from "react-i18next";
 
 import { SeatChartViolationsAlert } from "@/components/assigners/SeatChartViolationsList";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
+import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSeatChartStudentHistory } from "@/hooks/assigners/useSeatChartStudentHistory";
+import type { SeatChartPlacementHistoryFilter } from "@/hooks/assigners/useSeatChartStudentSummary";
 import { useSeatChartStudentSummary } from "@/hooks/assigners/useSeatChartStudentSummary";
-import { formatLocalizedDateTime } from "@/i18n/formatDate";
-import type { SeatChartViolation } from "@/lib/assigners/seatCharts";
+import { formatLocalizedSeatChartHistoryDate } from "@/i18n/formatDate";
+import type {
+  SeatChartAssignment,
+  SeatChartStudentSummary,
+  SeatChartViolation,
+} from "@/lib/assigners/seatCharts";
 import type { Id } from "../../../convex/_generated/dataModel";
 
 type SeatChartStudentInspectorProps = {
@@ -18,19 +21,58 @@ type SeatChartStudentInspectorProps = {
   chartId: Id<"seatCharts">;
   studentUserId: Id<"users">;
   studentName: string;
+  assignments: Array<SeatChartAssignment>;
   violations?: Array<SeatChartViolation>;
-  onOpenRecord?: (recordId: Id<"seatChartRecords">) => void;
 };
 
-function StatRow({ label, count, percent }: { label: string; count: number; percent: number }) {
+function StatRow({
+  label,
+  count,
+  total,
+  percent,
+  t,
+}: {
+  label: string;
+  count: number;
+  total?: number;
+  percent: number;
+  t: (key: string, options?: Record<string, string | number>) => string;
+}) {
+  const value =
+    total !== undefined
+      ? t("chartContextStatFraction", { count, total, percent })
+      : t("chartContextStatPercent", { count, percent });
+
   return (
-    <div className="flex items-center justify-between gap-2 text-sm">
-      <span className="truncate">{label}</span>
-      <span className="shrink-0 tabular-nums text-muted-foreground">
-        {count} ({percent}%)
-      </span>
+    <div className="flex items-center justify-between gap-2 text-xs">
+      <span className="truncate text-muted-foreground">{label}</span>
+      <span className="shrink-0 tabular-nums">{value}</span>
     </div>
   );
+}
+
+function placementFilterFromDraft(
+  draft: NonNullable<SeatChartStudentSummary["draftPlacement"]>,
+): SeatChartPlacementHistoryFilter {
+  return {
+    deskItemId: draft.deskItemId,
+    ...(draft.zoneName !== undefined ? { zoneName: draft.zoneName } : {}),
+    ...(draft.teamKey !== undefined ? { teamKey: draft.teamKey } : {}),
+  };
+}
+
+function formatDraftPlacement(
+  draft: NonNullable<SeatChartStudentSummary["draftPlacement"]>,
+  t: (key: string, options?: Record<string, string | number>) => string,
+): string {
+  return [
+    draft.deskNumber !== undefined ? t("chartCurrentSeat", { seat: draft.deskNumber }) : null,
+    draft.zoneName,
+    draft.teamLabel,
+    draft.neighborDisplayNames.length > 0 ? draft.neighborDisplayNames.join(", ") : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 }
 
 export function SeatChartStudentInspector({
@@ -38,15 +80,18 @@ export function SeatChartStudentInspector({
   chartId,
   studentUserId,
   studentName,
+  assignments,
   violations = [],
-  onOpenRecord,
 }: SeatChartStudentInspectorProps) {
   const { t } = useTranslation("assigners");
-  const summaryQuery = useSeatChartStudentSummary(classId, chartId, studentUserId);
-  const historyQuery = useSeatChartStudentHistory(classId, chartId, studentUserId);
+  const summaryQuery = useSeatChartStudentSummary(classId, chartId, studentUserId, assignments);
+  const placementFilter = summaryQuery.data?.draftPlacement
+    ? placementFilterFromDraft(summaryQuery.data.draftPlacement)
+    : null;
+  const historyQuery = useSeatChartStudentHistory(classId, chartId, studentUserId, placementFilter);
 
   if (summaryQuery.isPending) {
-    return <Skeleton className="h-48 w-full rounded-xl" />;
+    return <Skeleton className="h-32 w-full rounded-xl" />;
   }
 
   if (summaryQuery.isError || !summaryQuery.data) {
@@ -59,13 +104,19 @@ export function SeatChartStudentInspector({
 
   const summary = summaryQuery.data;
   const historyItems = historyQuery.data?.pages.flatMap((page) => page.items) ?? [];
+  const placementStats = [
+    summary.currentContextCounts.seat,
+    summary.currentContextCounts.zone,
+    summary.currentContextCounts.team,
+  ].filter((row): row is NonNullable<typeof row> => row !== undefined);
+  const combinationStat = summary.currentContextCounts.combination;
 
   return (
     <Card size="sm" className="flex max-h-full flex-col overflow-hidden">
-      <CardHeader className="border-b">
-        <CardTitle className="text-base">{studentName}</CardTitle>
+      <CardHeader className="border-b py-3">
+        <CardTitle className="text-sm">{studentName}</CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col gap-4 overflow-y-auto p-4">
+      <CardContent className="flex flex-col gap-2 overflow-y-auto p-3">
         {violations.length > 0 ? (
           <SeatChartViolationsAlert
             violations={violations}
@@ -73,159 +124,76 @@ export function SeatChartStudentInspector({
           />
         ) : null}
 
-        {summary.draftPlacement ? (
-          <Alert>
-            <AlertTitle>{t("chartDraftPlacementTitle")}</AlertTitle>
-            <AlertDescription className="flex flex-col gap-1">
-              <span>{t("chartDraftPlacementNote")}</span>
-              <span>
-                {[
-                  summary.draftPlacement.deskNumber !== undefined
-                    ? t("chartCurrentSeat", { seat: summary.draftPlacement.deskNumber })
-                    : null,
-                  summary.draftPlacement.zoneName,
-                  summary.draftPlacement.teamLabel,
-                  summary.draftPlacement.neighborDisplayNames.length > 0
-                    ? summary.draftPlacement.neighborDisplayNames.join(", ")
-                    : null,
-                ]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </span>
-            </AlertDescription>
-          </Alert>
-        ) : null}
+        {!summary.draftPlacement ? (
+          <p className="text-xs text-muted-foreground">{t("chartInspectorUnseated")}</p>
+        ) : (
+          <>
+            <div className="flex flex-col gap-0.5">
+              <p className="text-xs font-medium">
+                {formatDraftPlacement(summary.draftPlacement, t)}
+              </p>
+              <p className="text-[11px] text-muted-foreground">{t("chartDraftPlacementNote")}</p>
+            </div>
 
-        <div className="flex flex-col gap-2">
-          <div className="text-sm font-medium">{t("chartRecordedTotal")}</div>
-          <Badge variant="secondary">{summary.totalRecorded}</Badge>
-        </div>
+            {placementStats.length > 0 || combinationStat !== undefined ? (
+              <div className="flex flex-col gap-1">
+                <div className="text-xs font-medium">{t("chartCurrentContextTitle")}</div>
+                {placementStats.map((row) => (
+                  <StatRow
+                    key={row.label}
+                    label={row.label}
+                    count={row.count}
+                    total={summary.totalRecorded}
+                    percent={row.percent}
+                    t={t}
+                  />
+                ))}
+                {combinationStat !== undefined ? (
+                  <StatRow
+                    key={combinationStat.label}
+                    label={combinationStat.label}
+                    count={combinationStat.count}
+                    percent={combinationStat.percent}
+                    t={t}
+                  />
+                ) : null}
+              </div>
+            ) : null}
 
-        <div className="flex flex-col gap-2">
-          <div className="text-sm font-medium">{t("chartCurrentContextTitle")}</div>
-          {summary.currentContextCounts.seat ? (
-            <StatRow
-              label={summary.currentContextCounts.seat.label}
-              count={summary.currentContextCounts.seat.count}
-              percent={summary.currentContextCounts.seat.percent}
-            />
-          ) : null}
-          {summary.currentContextCounts.zone ? (
-            <StatRow
-              label={summary.currentContextCounts.zone.label}
-              count={summary.currentContextCounts.zone.count}
-              percent={summary.currentContextCounts.zone.percent}
-            />
-          ) : null}
-          {summary.currentContextCounts.team ? (
-            <StatRow
-              label={summary.currentContextCounts.team.label}
-              count={summary.currentContextCounts.team.count}
-              percent={summary.currentContextCounts.team.percent}
-            />
-          ) : null}
-          {summary.currentContextCounts.combination ? (
-            <StatRow
-              label={summary.currentContextCounts.combination.label}
-              count={summary.currentContextCounts.combination.count}
-              percent={summary.currentContextCounts.combination.percent}
-            />
-          ) : null}
-          {summary.currentContextCounts.neighbors.map((neighbor) => (
-            <StatRow
-              key={neighbor.studentUserId}
-              label={t("chartNeighborStat", { name: neighbor.label })}
-              count={neighbor.count}
-              percent={neighbor.percent}
-            />
-          ))}
-        </div>
-
-        <Separator />
-
-        <BreakdownSection
-          title={t("chartBreakdownSeats")}
-          rows={summary.breakdowns.seats}
-          empty={t("chartBreakdownEmpty")}
-        />
-        <BreakdownSection
-          title={t("chartBreakdownZones")}
-          rows={summary.breakdowns.zones}
-          empty={t("chartBreakdownEmpty")}
-        />
-        <BreakdownSection
-          title={t("chartBreakdownTeams")}
-          rows={summary.breakdowns.teams}
-          empty={t("chartBreakdownEmpty")}
-        />
-        <BreakdownSection
-          title={t("chartBreakdownNeighbors")}
-          rows={summary.breakdowns.neighbors}
-          empty={t("chartBreakdownEmpty")}
-        />
-
-        <Separator />
-
-        <div className="flex flex-col gap-2">
-          <div className="text-sm font-medium">{t("chartHistoryTitle")}</div>
-          {historyItems.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t("chartHistoryEmpty")}</p>
-          ) : (
-            <ul className="flex flex-col gap-2">
-              {historyItems.map((item) => (
-                <li key={`${item.recordId}-${item.recordedAt}`}>
-                  <button
-                    type="button"
-                    className="w-full rounded-lg border px-3 py-2 text-left text-sm hover:bg-accent/40"
-                    onClick={() => onOpenRecord?.(item.recordId)}
-                  >
-                    <div className="font-medium">{formatLocalizedDateTime(item.recordedAt)}</div>
-                    <div className="text-muted-foreground">{item.combinationLabel}</div>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-          {historyQuery.hasNextPage ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={historyQuery.isFetchingNextPage}
-              onClick={() => void historyQuery.fetchNextPage()}
-            >
-              {t("chartHistoryLoadMore")}
-            </Button>
-          ) : null}
-        </div>
+            <div className="flex flex-col gap-1">
+              <div className="text-xs font-medium">{t("chartHistoryTitle")}</div>
+              {historyQuery.isPending ? (
+                <Skeleton className="h-8 w-full rounded-md" />
+              ) : historyItems.length === 0 ? (
+                <p className="text-xs text-muted-foreground">{t("chartHistoryEmpty")}</p>
+              ) : (
+                <ul className="flex flex-col gap-1">
+                  {historyItems.map((item) => (
+                    <li
+                      key={`${item.recordId}-${item.recordedAt}`}
+                      className="text-xs text-muted-foreground"
+                    >
+                      {formatLocalizedSeatChartHistoryDate(item.recordedAt)}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {historyQuery.hasNextPage ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs"
+                  disabled={historyQuery.isFetchingNextPage}
+                  onClick={() => void historyQuery.fetchNextPage()}
+                >
+                  {t("chartHistoryLoadMore")}
+                </Button>
+              ) : null}
+            </div>
+          </>
+        )}
       </CardContent>
     </Card>
-  );
-}
-
-function BreakdownSection({
-  title,
-  rows,
-  empty,
-}: {
-  title: string;
-  rows: Array<{ label: string; count: number }>;
-  empty: string;
-}) {
-  if (rows.length === 0) {
-    return (
-      <div className="flex flex-col gap-1">
-        <div className="text-sm font-medium">{title}</div>
-        <p className="text-sm text-muted-foreground">{empty}</p>
-      </div>
-    );
-  }
-  return (
-    <div className="flex flex-col gap-1">
-      <div className="text-sm font-medium">{title}</div>
-      {rows.slice(0, 5).map((row) => (
-        <StatRow key={`${title}-${row.label}`} label={row.label} count={row.count} percent={0} />
-      ))}
-    </div>
   );
 }

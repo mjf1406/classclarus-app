@@ -34,6 +34,24 @@ export async function requireAppAdmin(
 }
 
 /**
+ * Site admin = self-host `admin:manageUsers` or cloud `admin:viewFeedback`
+ * (same gate as Seed students / admin tooling UI).
+ */
+export async function requireSiteAdmin(ctx: QueryCtx | MutationCtx): Promise<Id<"users">> {
+  const userId = await requireAuthUserId(ctx);
+  const allowed =
+    (await authz.can(ctx, userId, "admin:manageUsers")) ||
+    (await authz.can(ctx, userId, "admin:viewFeedback"));
+  if (!allowed) {
+    throw new ConvexError({
+      code: "FORBIDDEN",
+      message: "Admin access required",
+    });
+  }
+  return userId;
+}
+
+/**
  * Require the signed-in user to hold a global unscoped admin permission
  * (Action context). Defaults to Polar `admin:syncProducts` for backward compat.
  */

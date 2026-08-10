@@ -365,9 +365,11 @@ const schema = defineSchema({
   seatChartPlacements: defineTable({
     classId: v.id("classes"),
     chartId: v.id("seatCharts"),
+    layoutId: v.optional(v.id("seatLayouts")),
     recordId: v.id("seatChartRecords"),
     studentUserId: v.id("users"),
     studentDisplayName: v.string(),
+    groupId: v.optional(v.id("groups")),
     deskItemId: v.string(),
     deskNumber: v.optional(v.number()),
     zoneName: v.optional(v.string()),
@@ -379,7 +381,8 @@ const schema = defineSchema({
     recordedAt: v.number(),
   })
     .index("by_record", ["recordId"])
-    .index("by_chart_student_recorded", ["chartId", "studentUserId", "recordedAt"]),
+    .index("by_chart_student_recorded", ["chartId", "studentUserId", "recordedAt"])
+    .index("by_layout_student_recorded", ["layoutId", "studentUserId", "recordedAt"]),
   /**
    * Longitudinal seating statistics per student and chart.
    */

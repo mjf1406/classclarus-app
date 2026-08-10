@@ -33,6 +33,7 @@ const genderValidator = v.union(
 
 const boardStudentValidator = v.object({
   userId: v.id("users"),
+  rosterNumber: v.optional(v.number()),
   firstName: v.optional(v.string()),
   lastName: v.optional(v.string()),
   name: v.optional(v.string()),
@@ -71,6 +72,7 @@ const boardValidator = v.object({
 
 type BoardStudent = {
   userId: Id<"users">;
+  rosterNumber?: number;
   firstName?: string;
   lastName?: string;
   name?: string;
@@ -80,6 +82,7 @@ type BoardStudent = {
 };
 
 type RosterNameFields = {
+  rosterNumber?: number;
   firstName?: string;
   lastName?: string;
   gender?: GenderValue;
@@ -146,6 +149,7 @@ async function loadBoardStudent(
   if (!user) return null;
   return {
     userId: user._id,
+    ...(roster?.rosterNumber !== undefined ? { rosterNumber: roster.rosterNumber } : {}),
     ...(roster?.firstName !== undefined ? { firstName: roster.firstName } : {}),
     ...(roster?.lastName !== undefined ? { lastName: roster.lastName } : {}),
     ...(roster?.gender !== undefined ? { gender: roster.gender } : {}),
@@ -211,6 +215,7 @@ export const board = classQuery({
           [
             row.userId,
             {
+              rosterNumber: row.rosterNumber,
               firstName: row.firstName,
               lastName: row.lastName,
               gender: row.gender,

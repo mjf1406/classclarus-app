@@ -6,7 +6,7 @@ import { components } from "./_generated/api.js";
 import type { Id } from "./_generated/dataModel.js";
 import type { MutationCtx } from "./_generated/server.js";
 import { mutation } from "./_generated/server.js";
-import { requireAuthUserId } from "./lib/auth.js";
+import { requireSiteAdmin } from "./lib/admin.js";
 import { classScope } from "./lib/authzModel.js";
 import { recordClassActivity } from "./lib/classActivity.js";
 import { clearLinksForUser } from "./lib/guardianLinks.js";
@@ -17,20 +17,6 @@ import { deleteStudentRosterRow, nextRosterNumber } from "./lib/studentRosters.j
 
 const MAX_PER_GENDER = 40;
 const MAX_TOTAL = 80;
-
-async function requireSiteAdmin(ctx: MutationCtx): Promise<Id<"users">> {
-  const userId = await requireAuthUserId(ctx);
-  const allowed =
-    (await authz.can(ctx, userId, "admin:manageUsers")) ||
-    (await authz.can(ctx, userId, "admin:viewFeedback"));
-  if (!allowed) {
-    throw new ConvexError({
-      code: "FORBIDDEN",
-      message: "Admin access required",
-    });
-  }
-  return userId;
-}
 
 async function removeSeedStudentsFromClass(
   ctx: MutationCtx,

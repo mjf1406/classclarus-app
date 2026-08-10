@@ -194,3 +194,85 @@ export function violationsForStudent(
 ): Array<SeatChartViolation> {
   return violations.filter((violation) => violation.studentUserIds.includes(studentUserId));
 }
+
+type ViolationTranslate = (key: string, options?: Record<string, string>) => string;
+
+/** Localized full-sentence reason with current vs required state. */
+export function formatViolationReason(
+  violation: SeatChartViolation,
+  t: ViolationTranslate,
+): string {
+  const key = `chartViolationReason_${violation.type}_${violation.polarity}`;
+  const params = violation.params;
+  const noZone = t("chartViolationNoZone");
+  const noSeat = t("chartViolationNoSeat");
+  const noTeam = t("chartViolationNoTeam");
+
+  if (violation.type === "zone") {
+    return t(key, {
+      student: params.student,
+      currentZone: params.currentZone?.trim() || noZone,
+      targetZone: params.targetZone?.trim() || noZone,
+    });
+  }
+
+  if (violation.type === "neighbor") {
+    return t(key, {
+      student: params.student,
+      other: params.other ?? "",
+      studentSeat: params.studentSeat?.trim() || noSeat,
+      otherSeat: params.otherSeat?.trim() || noSeat,
+    });
+  }
+
+  return t(key, {
+    student: params.student,
+    other: params.other ?? "",
+    studentTeam: params.studentTeam?.trim() || noTeam,
+    otherTeam: params.otherTeam?.trim() || noTeam,
+  });
+}
+
+function shuffleInPlace<T>(items: Array<T>, random: () => number): Array<T> {
+  for (let i = items.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(random() * (i + 1));
+    const tmp = items[i]!;
+    items[i] = items[j]!;
+    items[j] = tmp;
+  }
+  return items;
+}
+
+/**
+ * Randomly seat each grouped student into a desk slot for their group.
+ * Replaces the full assignment list. Extra students beyond desk count stay unseated;
+ * ungrouped students are ignored.
+ */
+export function randomAssignSeatsByGroup(args: {
+  deskItemIds: ReadonlyArray<string>;
+  studentsByGroup: ReadonlyArray<{
+    groupId: Id<"groups">;
+    studentUserIds: ReadonlyArray<Id<"users">>;
+  }>;
+  random?: () => number;
+}): Array<SeatChartAssignment> {
+  const random = args.random ?? Math.random;
+  const deskItemIds = [...args.deskItemIds];
+  if (deskItemIds.length === 0) return [];
+
+  const result: Array<SeatChartAssignment> = [];
+  for (const { groupId, studentUserIds } of args.studentsByGroup) {
+    if (studentUserIds.length === 0) continue;
+    const shuffledStudents = shuffleInPlace([...studentUserIds], random);
+    const shuffledDesks = shuffleInPlace([...deskItemIds], random);
+    const count = Math.min(shuffledStudents.length, shuffledDesks.length);
+    for (let i = 0; i < count; i += 1) {
+      result.push({
+        deskItemId: shuffledDesks[i]!,
+        groupId,
+        studentUserId: shuffledStudents[i]!,
+      });
+    }
+  }
+  return result;
+}

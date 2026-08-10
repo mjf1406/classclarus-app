@@ -1,4 +1,5 @@
 import { useBlocker } from "@tanstack/react-router";
+import { Redo2, Save, ShuffleIcon, Undo2 } from "lucide-react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -8,13 +9,17 @@ import { SeatChartRecordConfirmCredenza } from "@/components/assigners/SeatChart
 import { SeatChartRecordViewerCredenza } from "@/components/assigners/SeatChartRecordViewerCredenza";
 import { SeatChartStudentInspector } from "@/components/assigners/SeatChartStudentInspector";
 import { SeatLayoutUnsavedChangesDialog } from "@/components/assigners/SeatLayoutUnsavedChangesDialog";
+import { RosterStudentChip } from "@/components/students/RosterStudentChip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/error-state";
 import { HelpTip } from "@/components/ui/help-tip";
+import { ProgressButton } from "@/components/ui/progress-button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "@/components/ui/toast-manager";
+import { useIsSiteAdmin } from "@/hooks/admin/useIsSiteAdmin";
 import { useClass } from "@/hooks/classes/useClass";
 import { useGroupsBoard } from "@/hooks/groups/useGroupsBoard";
 import { useRecordSeatChart } from "@/hooks/assigners/useRecordSeatChart";
@@ -33,12 +38,14 @@ import {
   type SeatOrientation,
 } from "@/lib/assigners/seatLayouts";
 import { computeSeatsPrintCrop } from "@/lib/assigners/seatsPrint";
+import { messageFromError } from "@/lib/errors/convexError";
 import { getRosterDisplayName, resolveRosterNameFormat } from "@/lib/roster/roster";
 import {
   assignStudentToSlot,
   assignmentsEqual,
   hydrateAssignmentsFromBoard,
   neighborDeskIdsForDesk,
+  randomAssignSeatsByGroup,
   studentAssignmentMap,
   type SeatChartAssignment,
   type SeatChartCohortFilter,
@@ -47,7 +54,7 @@ import {
   violationsForStudent,
 } from "@/lib/assigners/seatCharts";
 import { buildMembershipIndex, hasGroupTeamMembershipFilters } from "@/lib/groups/groupTeamFilters";
-import type { GroupsBoard } from "@/lib/groups/groups";
+import { collectStudentsInGroup, type GroupsBoard } from "@/lib/groups/groups";
 import { useStudentRosterFilter } from "@/hooks/students/useStudentRosterFilter";
 import { cn } from "@/lib/utils";
 import { useConvex } from "convex/react";
@@ -92,9 +99,11 @@ function studentInCohort(
 
 export function SeatChartEditorPage({ classId, chartId }: SeatChartEditorPageProps) {
   const { t } = useTranslation("assigners");
+  const { t: tCommon } = useTranslation("common");
   const convex = useConvex();
   const { can } = useCan();
   const canManage = can("assigners:manage");
+  const { isAdmin: isSiteAdmin } = useIsSiteAdmin();
   const { data: chart, isPending, isError, refetch } = useSeatChart(classId, chartId);
   const { data: classDoc } = useClass(classId);
   const { data: roster } = useStudentRoster(classId);
@@ -115,6 +124,7 @@ export function SeatChartEditorPage({ classId, chartId }: SeatChartEditorPagePro
   const [recordViewerId, setRecordViewerId] = useState<Id<"seatChartRecords"> | null>(null);
   const [violations, setViolations] = useState<Array<SeatChartViolation>>([]);
   const [liveViolations, setLiveViolations] = useState<Array<SeatChartViolation>>([]);
+  const [recordCheckProgress, setRecordCheckProgress] = useState(0);
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
   const [dragStudentId, setDragStudentId] = useState<Id<"users"> | null>(null);
@@ -285,6 +295,18 @@ export function SeatChartEditorPage({ classId, chartId }: SeatChartEditorPagePro
     return Number.isFinite(raw) && raw > 0 ? raw : 1;
   }, [canvasCrop.width, canvasViewportSize.width]);
 
+  const handleRandomAssign = () => {
+    if (!isSiteAdmin || !chart || chart.archivedAt !== undefined || !board) return;
+    const deskItemIds = chart.layout.items
+      .filter((item) => item.kind === "desk")
+      .map((item) => item.id);
+    const studentsByGroup = board.groups.map((group) => ({
+      groupId: group._id,
+      studentUserIds: collectStudentsInGroup(group).map((student) => student.userId),
+    }));
+    applyAssignments(randomAssignSeatsByGroup({ deskItemIds, studentsByGroup }));
+  };
+
   const handleSave = async () => {
     if (!canManage || chart?.archivedAt) return;
     await saveDraft.mutateAsync({ classId, chartId, assignments });
@@ -293,13 +315,27 @@ export function SeatChartEditorPage({ classId, chartId }: SeatChartEditorPagePro
   };
 
   const openRecordDialog = async () => {
-    const result = await convex.query(api.seatCharts.previewViolations, {
-      classId,
-      chartId,
-      assignments,
-    });
-    setViolations(result);
-    setRecordOpen(true);
+    setRecordCheckProgress(15);
+    try {
+      setRecordCheckProgress(40);
+      const result = await convex.query(api.seatCharts.previewViolations, {
+        classId,
+        chartId,
+        assignments,
+      });
+      setRecordCheckProgress(85);
+      setViolations(result);
+      setRecordOpen(true);
+      setRecordCheckProgress(100);
+    } catch (error) {
+      setRecordCheckProgress(0);
+      toast.add({
+        type: "error",
+        title: messageFromError(error, t("chartRecordFailed"), tCommon("rateLimited")),
+      });
+    } finally {
+      window.setTimeout(() => setRecordCheckProgress(0), 250);
+    }
   };
 
   const handleRecord = async () => {
@@ -349,53 +385,126 @@ export function SeatChartEditorPage({ classId, chartId }: SeatChartEditorPagePro
         <div className="flex flex-wrap items-center gap-2">
           {dirty ? <Badge variant="outline">{t("editorSaveStatusUnsaved")}</Badge> : null}
           {archived ? <Badge variant="secondary">{t("chartArchivedBadge")}</Badge> : null}
-          <Button
-            type="button"
-            variant="outline"
-            disabled={!canUndo}
-            onClick={() => {
-              const previous = pastRef.current.at(-1);
-              if (!previous) return;
-              pastRef.current = pastRef.current.slice(0, -1);
-              futureRef.current = [cloneAssignmentSnapshot({ assignments }), ...futureRef.current];
-              setAssignments(previous.assignments.map((a) => ({ ...a })));
-              syncHistoryFlags();
-            }}
-          >
-            {t("chartUndo")}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            disabled={!canRedo}
-            onClick={() => {
-              const next = futureRef.current[0];
-              if (!next) return;
-              futureRef.current = futureRef.current.slice(1);
-              pastRef.current = [...pastRef.current, cloneAssignmentSnapshot({ assignments })];
-              setAssignments(next.assignments.map((a) => ({ ...a })));
-              syncHistoryFlags();
-            }}
-          >
-            {t("chartRedo")}
-          </Button>
+          <Tooltip>
+            {canUndo ? (
+              <TooltipTrigger
+                render={
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="outline"
+                    onClick={() => {
+                      const previous = pastRef.current.at(-1);
+                      if (!previous) return;
+                      pastRef.current = pastRef.current.slice(0, -1);
+                      futureRef.current = [
+                        cloneAssignmentSnapshot({ assignments }),
+                        ...futureRef.current,
+                      ];
+                      setAssignments(previous.assignments.map((a) => ({ ...a })));
+                      syncHistoryFlags();
+                    }}
+                  />
+                }
+              >
+                <Undo2 />
+                <span className="sr-only">{t("chartUndo")}</span>
+              </TooltipTrigger>
+            ) : (
+              <TooltipTrigger render={<span className="inline-flex" />}>
+                <Button type="button" size="icon" variant="outline" disabled>
+                  <Undo2 />
+                  <span className="sr-only">{t("chartUndo")}</span>
+                </Button>
+              </TooltipTrigger>
+            )}
+            <TooltipContent side="top">{t("chartUndo")}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            {canRedo ? (
+              <TooltipTrigger
+                render={
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="outline"
+                    onClick={() => {
+                      const next = futureRef.current[0];
+                      if (!next) return;
+                      futureRef.current = futureRef.current.slice(1);
+                      pastRef.current = [
+                        ...pastRef.current,
+                        cloneAssignmentSnapshot({ assignments }),
+                      ];
+                      setAssignments(next.assignments.map((a) => ({ ...a })));
+                      syncHistoryFlags();
+                    }}
+                  />
+                }
+              >
+                <Redo2 />
+                <span className="sr-only">{t("chartRedo")}</span>
+              </TooltipTrigger>
+            ) : (
+              <TooltipTrigger render={<span className="inline-flex" />}>
+                <Button type="button" size="icon" variant="outline" disabled>
+                  <Redo2 />
+                  <span className="sr-only">{t("chartRedo")}</span>
+                </Button>
+              </TooltipTrigger>
+            )}
+            <TooltipContent side="top">{t("chartRedo")}</TooltipContent>
+          </Tooltip>
+          {isSiteAdmin && !archived ? (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!board || chart.layout.items.every((item) => item.kind !== "desk")}
+              onClick={handleRandomAssign}
+            >
+              <ShuffleIcon data-icon="inline-start" />
+              {t("chartAssignRandom")}
+            </Button>
+          ) : null}
           {canManage && !archived ? (
             <>
-              <Button
+              <Tooltip>
+                {!dirty || saveDraft.isPending ? (
+                  <TooltipTrigger render={<span className="inline-flex" />}>
+                    <Button type="button" size="icon" variant="outline" disabled>
+                      <Save />
+                      <span className="sr-only">
+                        {saveDraft.isPending ? t("editorSaveStatusSaving") : t("chartSaveDraft")}
+                      </span>
+                    </Button>
+                  </TooltipTrigger>
+                ) : (
+                  <TooltipTrigger
+                    render={
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="outline"
+                        onClick={() => void handleSave()}
+                      />
+                    }
+                  >
+                    <Save />
+                    <span className="sr-only">{t("chartSaveDraft")}</span>
+                  </TooltipTrigger>
+                )}
+                <TooltipContent side="top">
+                  {saveDraft.isPending ? t("editorSaveStatusSaving") : t("chartSaveDraft")}
+                </TooltipContent>
+              </Tooltip>
+              <ProgressButton
                 type="button"
-                variant="outline"
-                disabled={!dirty || saveDraft.isPending}
-                onClick={() => void handleSave()}
-              >
-                {saveDraft.isPending ? t("editorSaveStatusSaving") : t("chartSaveDraft")}
-              </Button>
-              <Button
-                type="button"
+                progress={recordCheckProgress}
                 disabled={recordSeating.isPending}
-                onClick={() => void openRecordDialog()}
+                onClick={() => openRecordDialog()}
               >
                 {t("chartRecordAction")}
-              </Button>
+              </ProgressButton>
             </>
           ) : null}
         </div>
@@ -654,39 +763,58 @@ export function SeatChartEditorPage({ classId, chartId }: SeatChartEditorPagePro
               const seated = byStudent.has(student.userId);
               return (
                 <li key={student.userId}>
-                  <button
-                    type="button"
-                    draggable={canManage && !archived}
-                    onDragStart={(event) => {
-                      event.dataTransfer.setData(
-                        "application/x-seat-chart-student",
-                        student.userId,
-                      );
-                      setDragStudentId(student.userId);
-                    }}
-                    onDragEnd={() => setDragStudentId(null)}
+                  <RosterStudentChip
+                    userId={student.userId}
+                    displayName={displayName}
+                    rosterNumber={student.rosterNumber}
+                    image={student.image}
+                    email={student.email}
+                    showGrip={canManage && !archived}
                     className={cn(
-                      "flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left text-sm hover:bg-accent/40",
+                      "hover:bg-accent/40",
+                      canManage && !archived && "cursor-grab active:cursor-grabbing",
                       selectedStudentId === student.userId && "ring-2 ring-primary",
                     )}
-                    onClick={() => {
-                      setSelectedStudentId(student.userId);
-                      const assignment = byStudent.get(student.userId);
-                      if (assignment) {
-                        setSelectedDeskId(assignment.deskItemId);
-                        setSelectedSlot({
-                          deskId: assignment.deskItemId,
-                          groupId: assignment.groupId,
-                        });
-                      }
-                      if (selectedSlot && canManage && !archived && !assignment) {
-                        tryAssignStudent(selectedSlot.deskId, student.userId, selectedSlot.groupId);
-                      }
-                    }}
-                  >
-                    <span className="truncate">{displayName}</span>
-                    {seated ? <Badge variant="secondary">{t("chartSeatedBadge")}</Badge> : null}
-                  </button>
+                    trailing={
+                      seated ? (
+                        <Badge variant="secondary" className="shrink-0">
+                          {t("chartSeatedBadge")}
+                        </Badge>
+                      ) : null
+                    }
+                    render={
+                      <button
+                        type="button"
+                        draggable={canManage && !archived}
+                        onDragStart={(event) => {
+                          event.dataTransfer.setData(
+                            "application/x-seat-chart-student",
+                            student.userId,
+                          );
+                          setDragStudentId(student.userId);
+                        }}
+                        onDragEnd={() => setDragStudentId(null)}
+                        onClick={() => {
+                          setSelectedStudentId(student.userId);
+                          const assignment = byStudent.get(student.userId);
+                          if (assignment) {
+                            setSelectedDeskId(assignment.deskItemId);
+                            setSelectedSlot({
+                              deskId: assignment.deskItemId,
+                              groupId: assignment.groupId,
+                            });
+                          }
+                          if (selectedSlot && canManage && !archived && !assignment) {
+                            tryAssignStudent(
+                              selectedSlot.deskId,
+                              student.userId,
+                              selectedSlot.groupId,
+                            );
+                          }
+                        }}
+                      />
+                    }
+                  />
                 </li>
               );
             })}
@@ -697,6 +825,7 @@ export function SeatChartEditorPage({ classId, chartId }: SeatChartEditorPagePro
               classId={classId}
               chartId={chartId}
               studentUserId={selectedStudentId}
+              assignments={assignments}
               studentName={getRosterDisplayName(
                 roster?.find((s) => s.userId === selectedStudentId) ?? {
                   userId: selectedStudentId,
@@ -705,7 +834,6 @@ export function SeatChartEditorPage({ classId, chartId }: SeatChartEditorPagePro
                 nameFormat,
               )}
               violations={violationsForStudent(liveViolations, selectedStudentId)}
-              onOpenRecord={setRecordViewerId}
             />
           ) : null}
         </aside>

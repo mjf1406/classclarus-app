@@ -99,6 +99,7 @@ import type * as raz from "../raz.js";
 import type * as rewardFolders from "../rewardFolders.js";
 import type * as rewards from "../rewards.js";
 import type * as seatCharts from "../seatCharts.js";
+import type * as seatChartsRepair from "../seatChartsRepair.js";
 import type * as seatConstraints from "../seatConstraints.js";
 import type * as seatLayouts from "../seatLayouts.js";
 import type * as studentRosters from "../studentRosters.js";
@@ -202,6 +203,7 @@ declare const fullApi: ApiFromModules<{
   rewardFolders: typeof rewardFolders;
   rewards: typeof rewards;
   seatCharts: typeof seatCharts;
+  seatChartsRepair: typeof seatChartsRepair;
   seatConstraints: typeof seatConstraints;
   seatLayouts: typeof seatLayouts;
   studentRosters: typeof studentRosters;

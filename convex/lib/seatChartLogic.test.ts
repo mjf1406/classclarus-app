@@ -1,11 +1,28 @@
 import { describe, expect, test } from "vitest";
 
-import { areDeskTeammates } from "../../convex/lib/seatChartLogic.js";
+import { areDeskTeammates, sameGroupNeighborStudentIds } from "../../convex/lib/seatChartLogic.js";
 import type { Id } from "../../convex/_generated/dataModel.js";
 
 const studentA = "studentA" as Id<"users">;
 const studentB = "studentB" as Id<"users">;
+const studentC = "studentC" as Id<"users">;
 const groupG1 = "groupG1" as Id<"groups">;
+const groupG2 = "groupG2" as Id<"groups">;
+
+describe("sameGroupNeighborStudentIds", () => {
+  test("includes adjacent same-group students and excludes other groups", () => {
+    const studentsByDesk = new Map<string, Array<Id<"users">>>([["d5", [studentB, studentC]]]);
+    const groupIdByStudent = new Map<Id<"users">, Id<"groups">>([
+      [studentA, groupG1],
+      [studentB, groupG1],
+      [studentC, groupG2],
+    ]);
+
+    expect(sameGroupNeighborStudentIds(groupG1, ["d5"], studentsByDesk, groupIdByStudent)).toEqual([
+      studentB,
+    ]);
+  });
+});
 
 describe("areDeskTeammates", () => {
   test("requires same group and matching desk team keys on different desks", () => {

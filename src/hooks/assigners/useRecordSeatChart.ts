@@ -6,7 +6,7 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import { toast } from "@/components/ui/toast-manager";
 import { seatChartQueryKey } from "@/hooks/assigners/useSeatChart";
 import {
-  seatChartStudentHistoryQueryKey,
+  seatChartStudentHistoryPrefixQueryKey,
   seatChartStudentSummaryQueryKey,
 } from "@/hooks/assigners/useSeatChartStudentSummary";
 import { seatChartsListQueryKey } from "@/hooks/assigners/useSeatCharts";
@@ -35,8 +35,13 @@ export function useRecordSeatChart() {
     invalidateQueryKeys: (args) => {
       const studentIds = [...new Set(args.assignments.map((a) => a.studentUserId))];
       return studentIds.flatMap((studentUserId) => [
-        seatChartStudentSummaryQueryKey(args.classId, args.chartId, studentUserId),
-        seatChartStudentHistoryQueryKey(args.classId, args.chartId, studentUserId),
+        seatChartStudentSummaryQueryKey(
+          args.classId,
+          args.chartId,
+          studentUserId,
+          args.assignments,
+        ),
+        seatChartStudentHistoryPrefixQueryKey(args.classId, args.chartId, studentUserId),
       ]);
     },
     applyOptimisticUpdate: (queryClient, args) => {

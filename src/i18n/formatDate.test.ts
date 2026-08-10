@@ -2,7 +2,11 @@ import { beforeEach, describe, expect, test } from "vite-plus/test";
 
 import i18n from "@/i18n";
 
-import { formatDueRelative, formatLocalizedDueDate } from "./formatDate";
+import {
+  formatDueRelative,
+  formatLocalizedDueDate,
+  formatLocalizedSeatChartHistoryDate,
+} from "./formatDate";
 
 describe("formatDueRelative", () => {
   beforeEach(async () => {
@@ -40,5 +44,16 @@ describe("formatLocalizedDueDate", () => {
     const formatted = formatLocalizedDueDate("2026-08-30T20:20", now);
     expect(formatted).toContain("(22 days)");
     expect(formatted.startsWith("Sunday, August 30, 2026")).toBe(true);
+  });
+});
+
+describe("formatLocalizedSeatChartHistoryDate", () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage("en");
+  });
+
+  test("formats weekday, date, and time with commas", () => {
+    const ts = new Date(2026, 7, 10, 16, 18, 0).getTime();
+    expect(formatLocalizedSeatChartHistoryDate(ts)).toBe("Mon Aug 10, 2026, 4:18 PM");
   });
 });

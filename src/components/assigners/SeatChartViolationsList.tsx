@@ -2,12 +2,8 @@ import { TriangleAlertIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { ViolationConstraintKindBadge } from "@/components/assigners/SeatConstraintKind";
-import type { SeatChartViolation } from "@/lib/assigners/seatCharts";
+import { formatViolationReason, type SeatChartViolation } from "@/lib/assigners/seatCharts";
 import { violationBrokenLabel } from "@/lib/assigners/seatConstraints";
-
-function violationReasonKey(violation: SeatChartViolation): string {
-  return `chartViolationReason_${violation.type}_${violation.polarity}`;
-}
 
 type SeatChartViolationsListProps = {
   violations: Array<SeatChartViolation>;
@@ -27,9 +23,8 @@ export function SeatChartViolationsList({ violations, className }: SeatChartViol
             type={violation.type}
             label={violationBrokenLabel(violation.type, t)}
           />
-          <span className="pl-7 text-sm font-medium text-foreground">{violation.summary}</span>
-          <span className="pl-7 text-xs text-muted-foreground">
-            {t(violationReasonKey(violation))}
+          <span className="pl-7 text-sm text-foreground">
+            {formatViolationReason(violation, t)}
           </span>
         </li>
       ))}
