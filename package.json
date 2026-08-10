@@ -35,7 +35,6 @@
     "@convex-dev/auth": "^0.0.94",
     "@convex-dev/migrations": "^0.3.6",
     "@convex-dev/polar": "0.9.2",
-    "@convex-dev/presence": "^0.4.0",
     "@convex-dev/rate-limiter": "^0.3.2",
     "@convex-dev/react-query": "^0.1.0",
     "@djpanda/convex-authz": "^2.4.1",

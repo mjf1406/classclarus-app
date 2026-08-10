@@ -12,8 +12,8 @@ function uuidV4FromGetRandomValues(): string {
 }
 
 /**
- * Install `crypto.randomUUID` when absent so third-party code
- * (e.g. `@convex-dev/presence`) works over LAN HTTP.
+ * Install `crypto.randomUUID` when absent so client UUID helpers work
+ * over LAN HTTP (Electron / self-host).
  */
 export function polyfillCryptoRandomUUID(): void {
   if (typeof crypto === "undefined" || typeof crypto.randomUUID === "function") {

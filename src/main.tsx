@@ -20,7 +20,7 @@ import { routeTree } from "./routeTree.gen";
 import { TooltipProvider } from "./components/ui/tooltip";
 import { RootErrorComponent } from "./components/errors/RootErrorComponent";
 
-// LAN HTTP (Electron / self-host) is not a secure context — presence needs this.
+// LAN HTTP (Electron / self-host) is not a secure context — polyfill randomUUID.
 polyfillCryptoRandomUUID();
 installVitePreloadRecovery();
 

@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 
 import { TrialBanner } from "@/components/billing/TrialBanner";
-import { ClassPresenceChip } from "@/components/classes/ClassPresenceChip";
 import { ClassStudentLanguageOverride } from "@/components/classes/ClassStudentLanguageOverride";
 import { SelfHostUpdateBanner } from "@/components/classroom/SelfHostUpdateBanner";
 import { AppFooter } from "@/components/navigation/AppFooter";
@@ -15,7 +14,6 @@ import { ClassAppSidebar } from "@/components/navigation/class-sidebar/ClassSide
 import { ClassBreadcrumb } from "@/components/navigation/class-sidebar/ClassBreadcrumb";
 import { FeedbackNavButton } from "@/components/navigation/FeedbackNavButton";
 import { ClassPermissionsProvider } from "@/components/permissions/ClassPermissionsProvider";
-import { ClassPresenceProvider } from "@/components/presence/ClassPresenceProvider";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -72,36 +70,29 @@ export const Route = createFileRoute("/_authenticated/_class/class/$classId")({
         {classDoc ? (
           <ClassStudentLanguageOverride studentLanguage={classDoc.studentLanguage} />
         ) : null}
-        <ClassPresenceProvider classId={classId}>
-          <SidebarProvider>
-            {classDoc ? <ClassAppSidebar classDoc={classDoc} /> : <ClassSidebarSkeleton />}
-            <SidebarInset>
-              <div className="flex min-h-svh min-w-0 flex-col">
-                <header className="sticky top-0 z-40 flex h-12 shrink-0 items-center gap-2 border-b bg-background px-4">
-                  <SidebarTrigger className="-ml-1" />
-                  <Separator orientation="vertical" className="mr-2 h-4" />
-                  <div className="min-w-0 flex-1">
-                    {classDoc ? (
-                      <ClassBreadcrumb classDoc={classDoc} />
-                    ) : (
-                      <ClassBreadcrumbSkeleton />
-                    )}
-                  </div>
-                  <div className="flex shrink-0 items-center gap-2">
-                    <FeedbackNavButton />
-                    {classDoc ? <ClassPresenceChip /> : null}
-                  </div>
-                </header>
-                <SelfHostUpdateBanner />
-                <TrialBanner />
-                <div className="flex min-w-0 flex-1 flex-col">
-                  <ClassContent classPending={isPending || !classDoc} />
+        <SidebarProvider>
+          {classDoc ? <ClassAppSidebar classDoc={classDoc} /> : <ClassSidebarSkeleton />}
+          <SidebarInset>
+            <div className="flex min-h-svh min-w-0 flex-col">
+              <header className="sticky top-0 z-40 flex h-12 shrink-0 items-center gap-2 border-b bg-background px-4">
+                <SidebarTrigger className="-ml-1" />
+                <Separator orientation="vertical" className="mr-2 h-4" />
+                <div className="min-w-0 flex-1">
+                  {classDoc ? <ClassBreadcrumb classDoc={classDoc} /> : <ClassBreadcrumbSkeleton />}
                 </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <FeedbackNavButton />
+                </div>
+              </header>
+              <SelfHostUpdateBanner />
+              <TrialBanner />
+              <div className="flex min-w-0 flex-1 flex-col">
+                <ClassContent classPending={isPending || !classDoc} />
               </div>
-              <AppFooter />
-            </SidebarInset>
-          </SidebarProvider>
-        </ClassPresenceProvider>
+            </div>
+            <AppFooter />
+          </SidebarInset>
+        </SidebarProvider>
       </ClassPermissionsProvider>
     );
   },

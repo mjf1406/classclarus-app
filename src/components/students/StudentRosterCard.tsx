@@ -4,8 +4,7 @@ import { useTranslation } from "react-i18next";
 import { ClassRoleSelectLabel } from "@/components/badges/ClassRoleBadges";
 import { Can } from "@/components/permissions/Can";
 import { useClassPermissionsContext } from "@/components/permissions/classPermissionsContext";
-import { useIsClassMemberOnline } from "@/components/presence/classPresenceContext";
-import { Avatar, AvatarBadge, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -68,7 +67,6 @@ export function StudentRosterCard({
     email: student.email,
   });
   const safeImage = sanitizeAvatarUrl(student.image);
-  const isOnline = useIsClassMemberOnline(student.userId);
   const removePermission = removePermissionForMember("student");
   const showRemove = !isSelf && removePermission !== null;
   const showRoleSelect = !isSelf && canChangeMemberRole(actorRole, "student");
@@ -95,12 +93,6 @@ export function StudentRosterCard({
             <AvatarImage src={safeImage} alt={displayName} referrerPolicy="no-referrer" />
           ) : null}
           <AvatarFallback>{initials}</AvatarFallback>
-          {isOnline ? (
-            <AvatarBadge
-              className="size-3.5 bg-emerald-500 p-0 text-transparent"
-              aria-label={t("presenceOnlineNow")}
-            />
-          ) : null}
         </Avatar>
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <div className="flex items-center gap-2">

@@ -94,7 +94,6 @@ import type * as permissions from "../permissions.js";
 import type * as points from "../points.js";
 import type * as polar from "../polar.js";
 import type * as polarReconcile from "../polarReconcile.js";
-import type * as presence from "../presence.js";
 import type * as raz from "../raz.js";
 import type * as rewardFolders from "../rewardFolders.js";
 import type * as rewards from "../rewards.js";
@@ -198,7 +197,6 @@ declare const fullApi: ApiFromModules<{
   points: typeof points;
   polar: typeof polar;
   polarReconcile: typeof polarReconcile;
-  presence: typeof presence;
   raz: typeof raz;
   rewardFolders: typeof rewardFolders;
   rewards: typeof rewards;
@@ -238,7 +236,6 @@ export declare const components: {
   authz: import("@djpanda/convex-authz/_generated/component.js").ComponentApi<"authz">;
   rateLimiter: import("@convex-dev/rate-limiter/_generated/component.js").ComponentApi<"rateLimiter">;
   polar: import("@convex-dev/polar/_generated/component.js").ComponentApi<"polar">;
-  presence: import("@convex-dev/presence/_generated/component.js").ComponentApi<"presence">;
   usageByKind: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"usageByKind">;
   usageByDownloadOs: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"usageByDownloadOs">;
   githubClones: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"githubClones">;
