@@ -493,7 +493,8 @@ export function SeatLayoutEditorPage({ classId, layoutId }: SeatLayoutEditorPage
   const addItem = (kind: SeatLayoutItem["kind"]) => {
     if (!canManage) return;
     const startDesk = nextDeskNumber;
-    const size = defaultSizeForKind(kind);
+    const groupCount = Math.max(1, board?.groups.length ?? 2);
+    const size = defaultSizeForKind(kind, kind === "desk" ? { groupCount } : undefined);
     const origin = topLeftPlacementOrigin();
     updateItems(
       (prev) => {
@@ -535,6 +536,7 @@ export function SeatLayoutEditorPage({ classId, layoutId }: SeatLayoutEditorPage
     setDeskGridCols(dims.cols);
     setDeskGridRows(dims.rows);
     const startDesk = nextDeskNumber;
+    const groupCount = Math.max(1, board?.groups.length ?? 2);
     updateItems(
       (prev) => {
         const origin = nextPlacementOrigin(prev);
@@ -546,6 +548,7 @@ export function SeatLayoutEditorPage({ classId, layoutId }: SeatLayoutEditorPage
             startDeskNumber: startDesk,
             originX: origin.x,
             originY: origin.y,
+            groupCount,
           }),
         ];
       },

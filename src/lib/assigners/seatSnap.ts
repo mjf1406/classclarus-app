@@ -31,6 +31,9 @@ export type SeatNeighborEdge = {
 export const DEFAULT_SNAP_THRESHOLD_PX = 8;
 export const DEFAULT_NEIGHBOR_GAP_PX = 12;
 export const DEFAULT_NEIGHBOR_OVERLAP_RATIO = 0.25;
+/** Strict side-touch adjacency for seating charts (corners excluded). */
+export const STRICT_NEIGHBOR_GAP_PX = 1;
+export const STRICT_NEIGHBOR_MIN_OVERLAP_PX = 1;
 export const MIN_ITEM_SIZE_PX = 24;
 
 export function snapToGridValue(value: number, gridSize: number): number {
@@ -236,14 +239,16 @@ type DeskLike = SeatSnapRect & { kind: string };
  * Compute N/E/S/W desk adjacency from AABB proximity (for later seat-neighbor features).
  */
 export function findDeskNeighbors(
-  items: Array<DeskLike>,
+  items: ReadonlyArray<DeskLike>,
   options?: {
     gapTolerance?: number;
     overlapRatio?: number;
+    minOverlapPx?: number;
   },
 ): Array<SeatNeighborEdge> {
   const gap = options?.gapTolerance ?? DEFAULT_NEIGHBOR_GAP_PX;
   const overlapRatio = options?.overlapRatio ?? DEFAULT_NEIGHBOR_OVERLAP_RATIO;
+  const minOverlapPx = options?.minOverlapPx;
   const desks = items.filter((item) => item.kind === "desk");
   const edges: Array<SeatNeighborEdge> = [];
 
@@ -261,8 +266,10 @@ export function findDeskNeighbors(
 
       const overlapX = Math.min(aRight, bRight) - Math.max(a.x, b.x);
       const overlapY = Math.min(aBottom, bBottom) - Math.max(a.y, b.y);
-      const minOverlapX = Math.min(a.width, b.width) * overlapRatio;
-      const minOverlapY = Math.min(a.height, b.height) * overlapRatio;
+      const minOverlapX =
+        minOverlapPx !== undefined ? minOverlapPx : Math.min(a.width, b.width) * overlapRatio;
+      const minOverlapY =
+        minOverlapPx !== undefined ? minOverlapPx : Math.min(a.height, b.height) * overlapRatio;
 
       // b east of a
       const gapEast = b.x - aRight;
@@ -295,4 +302,13 @@ export function findDeskNeighbors(
   }
 
   return edges;
+}
+
+/** Cardinal adjacency for charts: shared edge within 1px; corners do not count. */
+export function findStrictDeskNeighbors(items: ReadonlyArray<DeskLike>): Array<SeatNeighborEdge> {
+  return findDeskNeighbors(items, {
+    gapTolerance: STRICT_NEIGHBOR_GAP_PX,
+    overlapRatio: 0,
+    minOverlapPx: STRICT_NEIGHBOR_MIN_OVERLAP_PX,
+  });
 }

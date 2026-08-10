@@ -865,27 +865,22 @@ export const assignStudent = classMutation({
       throw new Error("Group not found");
     }
 
-    let teamId: Id<"teams"> | undefined;
-    if (args.teamId) {
-      const team = await ctx.db.get("teams", args.teamId);
-      if (!team || team.classId !== classId || team.groupId !== args.groupId) {
-        throw new Error("Team not found in this group");
-      }
-      teamId = team._id;
+    if (args.teamId !== undefined && args.teamId !== null) {
+      throw new Error("Assign teams via seating charts");
     }
 
     const now = Date.now();
     if (existing) {
+      const clearingTeam = args.teamId === null || existing.groupId !== args.groupId;
       await ctx.db.patch("groupMemberships", existing._id, {
         groupId: args.groupId,
-        teamId,
+        ...(clearingTeam ? { teamId: undefined } : {}),
         updatedAt: now,
       });
     } else {
       await ctx.db.insert("groupMemberships", {
         classId,
         groupId: args.groupId,
-        ...(teamId !== undefined ? { teamId } : {}),
         studentUserId: args.studentUserId,
         updatedAt: now,
       });
@@ -897,17 +892,12 @@ export const assignStudent = classMutation({
       action: "update",
       resourceType: "groupMembership",
       resourceId: args.studentUserId,
-      summary: teamId
-        ? `Assigned student to team in group “${group.name}”`
-        : `Assigned student to group “${group.name}”`,
-      summaryKey: teamId
-        ? "activitySummary_assignedStudentToTeamInGroup"
-        : "activitySummary_assignedStudentToGroup",
+      summary: `Assigned student to group “${group.name}”`,
+      summaryKey: "activitySummary_assignedStudentToGroup",
       metadata: {
         name: group.name,
         studentUserId: args.studentUserId,
         groupId: args.groupId,
-        ...(teamId !== undefined ? { teamId } : {}),
       },
     });
 

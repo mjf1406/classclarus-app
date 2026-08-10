@@ -288,6 +288,122 @@ const schema = defineSchema({
     updatedAt: v.number(),
   }).index("by_class", ["classId"]),
   /**
+   * Manual seating charts — draft student-to-desk assignments for a layout.
+   */
+  seatCharts: defineTable({
+    classId: v.id("classes"),
+    layoutId: v.id("seatLayouts"),
+    name: v.string(),
+    archivedAt: v.optional(v.number()),
+    assignments: v.array(
+      v.object({
+        deskItemId: v.string(),
+        groupId: v.optional(v.id("groups")),
+        studentUserId: v.id("users"),
+      }),
+    ),
+    updatedAt: v.number(),
+    createdBy: v.id("users"),
+  })
+    .index("by_class", ["classId"])
+    .index("by_layout", ["layoutId"])
+    .index("by_class_layout", ["classId", "layoutId"]),
+  /**
+   * Immutable seating snapshots created via Record seating.
+   */
+  seatChartRecords: defineTable({
+    classId: v.id("classes"),
+    chartId: v.id("seatCharts"),
+    recordedAt: v.number(),
+    recordedBy: v.id("users"),
+    chartName: v.string(),
+    layoutId: v.id("seatLayouts"),
+    layoutName: v.string(),
+    canvasWidth: v.number(),
+    canvasHeight: v.number(),
+    layoutItems: v.array(
+      v.object({
+        id: v.string(),
+        kind: v.union(
+          v.literal("desk"),
+          v.literal("teacherDesk"),
+          v.literal("board"),
+          v.literal("rect"),
+        ),
+        label: v.string(),
+        deskNumber: v.optional(v.number()),
+        teamAssignment: v.optional(
+          v.union(
+            v.object({
+              mode: v.literal("single"),
+              groupId: v.id("groups"),
+              teamId: v.id("teams"),
+            }),
+            v.object({
+              mode: v.literal("byName"),
+              teamName: v.string(),
+            }),
+          ),
+        ),
+        zoneName: v.optional(v.string()),
+        x: v.number(),
+        y: v.number(),
+        width: v.number(),
+        height: v.number(),
+      }),
+    ),
+    placedCount: v.number(),
+    seatedStudentIds: v.array(v.id("users")),
+  })
+    .index("by_class", ["classId"])
+    .index("by_chart", ["chartId"])
+    .index("by_class_chart", ["classId", "chartId"])
+    .index("by_chart_recorded", ["chartId", "recordedAt"]),
+  /**
+   * Per-student placement rows for a recorded seating snapshot.
+   */
+  seatChartPlacements: defineTable({
+    classId: v.id("classes"),
+    chartId: v.id("seatCharts"),
+    recordId: v.id("seatChartRecords"),
+    studentUserId: v.id("users"),
+    studentDisplayName: v.string(),
+    deskItemId: v.string(),
+    deskNumber: v.optional(v.number()),
+    zoneName: v.optional(v.string()),
+    teamKey: v.optional(v.string()),
+    teamLabel: v.optional(v.string()),
+    neighborStudentIds: v.array(v.id("users")),
+    neighborDisplayNames: v.array(v.string()),
+    combinationKey: v.string(),
+    recordedAt: v.number(),
+  })
+    .index("by_record", ["recordId"])
+    .index("by_chart_student_recorded", ["chartId", "studentUserId", "recordedAt"]),
+  /**
+   * Longitudinal seating statistics per student and chart.
+   */
+  seatChartAggregates: defineTable({
+    classId: v.id("classes"),
+    chartId: v.id("seatCharts"),
+    studentUserId: v.id("users"),
+    dimension: v.union(
+      v.literal("total"),
+      v.literal("seat"),
+      v.literal("zone"),
+      v.literal("team"),
+      v.literal("neighbor"),
+      v.literal("combination"),
+    ),
+    key: v.string(),
+    label: v.string(),
+    count: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_chart_student", ["chartId", "studentUserId"])
+    .index("by_chart_student_dimension", ["chartId", "studentUserId", "dimension"])
+    .index("by_chart_student_dimension_key", ["chartId", "studentUserId", "dimension", "key"]),
+  /**
    * Many-to-many guardian ↔ student links within a class.
    * Cleared when either side leaves the guardian/student role.
    */

@@ -1,9 +1,13 @@
 import { ConvexError, v } from "convex/values";
 
+import { authz } from "./authz.js";
 import type { Id } from "./_generated/dataModel.js";
+import { classScope } from "./lib/authzModel.js";
 import { recordClassActivity } from "./lib/classActivity.js";
 import { classMutation, classQuery } from "./lib/customFunctions.js";
 import { rateLimiter } from "./lib/rateLimiter.js";
+import { activeChartsForLayout } from "./lib/seatChartLogic.js";
+import { copySeatLayoutItems } from "./lib/seatLayoutCopy.js";
 
 const MAX_LAYOUT_NAME_LENGTH = 80;
 const MAX_ITEM_LABEL_LENGTH = 80;
@@ -334,6 +338,93 @@ export const create = classMutation({
 });
 
 /**
+ * Copy a seat layout from a class the caller can view into this class.
+ */
+export const copyFromLayout = classMutation({
+  args: {
+    name: v.string(),
+    sourceClassId: v.id("classes"),
+    sourceLayoutId: v.id("seatLayouts"),
+  },
+  returns: v.id("seatLayouts"),
+  handler: async (ctx, args) => {
+    await rateLimiter.limit(ctx, "seatLayoutCreate", { key: ctx.userId, throws: true });
+    await ctx.require("assigners:manage");
+
+    const name = normalizeName(args.name);
+    const targetClassId = ctx.classDoc._id;
+    const existing = await ctx.db
+      .query("seatLayouts")
+      .withIndex("by_class_and_name", (q) => q.eq("classId", targetClassId).eq("name", name))
+      .unique();
+    if (existing) {
+      throw new ConvexError({
+        code: "SEAT_LAYOUT_NAME_TAKEN",
+        message: "A layout with this name already exists",
+      });
+    }
+
+    const sourceClass = await ctx.db.get("classes", args.sourceClassId);
+    if (!sourceClass || sourceClass.archivedAt !== undefined) {
+      throw new ConvexError({
+        code: "CLASS_UNAVAILABLE",
+        message: "Class not found or access denied",
+      });
+    }
+
+    const canReadSource = await authz.can(
+      ctx,
+      ctx.userId,
+      "assigners:read",
+      classScope(args.sourceClassId),
+    );
+    if (!canReadSource) {
+      throw new ConvexError({
+        code: "CLASS_UNAVAILABLE",
+        message: "Class not found or access denied",
+      });
+    }
+
+    const sourceLayout = await ctx.db.get("seatLayouts", args.sourceLayoutId);
+    if (!sourceLayout || sourceLayout.classId !== args.sourceClassId) {
+      throw new Error("Layout not found");
+    }
+
+    const sameClass = args.sourceClassId === targetClassId;
+    const items = normalizeItems(
+      copySeatLayoutItems(sourceLayout.items, {
+        preserveSingleTeamAssignments: sameClass,
+      }),
+    );
+
+    const now = Date.now();
+    const layoutId = await ctx.db.insert("seatLayouts", {
+      classId: targetClassId,
+      name,
+      canvasWidth: sourceLayout.canvasWidth,
+      canvasHeight: sourceLayout.canvasHeight,
+      nextDeskNumber: sourceLayout.nextDeskNumber,
+      items,
+      updatedAt: now,
+      createdBy: ctx.userId,
+    });
+
+    await recordClassActivity(ctx, {
+      classId: targetClassId,
+      actorUserId: ctx.userId,
+      action: "write",
+      resourceType: "seatLayout",
+      resourceId: layoutId,
+      summary: `Copied seat layout "${name}" from "${sourceClass.name}"`,
+      summaryKey: "activitySummary_copiedSeatLayout",
+      metadata: { name, sourceClass: sourceClass.name },
+    });
+
+    return layoutId;
+  },
+});
+
+/**
  * Rename a seat layout.
  */
 export const rename = classMutation({
@@ -401,6 +492,11 @@ export const remove = classMutation({
     const layout = await ctx.db.get("seatLayouts", args.layoutId);
     if (!layout || layout.classId !== ctx.classDoc._id) {
       throw new Error("Layout not found");
+    }
+
+    const activeCharts = await activeChartsForLayout(ctx, args.layoutId);
+    if (activeCharts.length > 0) {
+      throw new Error("Remove or archive seating charts that use this layout first");
     }
 
     await ctx.db.delete("seatLayouts", args.layoutId);

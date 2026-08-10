@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSeatLayout } from "@/hooks/assigners/useSeatLayout";
+import { useSeatChart } from "@/hooks/assigners/useSeatChart";
 import { useAssignment } from "@/hooks/assignments/useAssignment";
 import { useExpectation } from "@/hooks/expectations/useExpectation";
 import { useTask } from "@/hooks/tasks/useTask";
@@ -42,7 +43,8 @@ type BreadcrumbTarget =
   | { kind: "raz" }
   | { kind: "razInitialLevels" }
   | { kind: "assignersSeats" }
-  | { kind: "seatLayoutDetail"; layoutId: Id<"seatLayouts"> };
+  | { kind: "seatLayoutDetail"; layoutId: Id<"seatLayouts"> }
+  | { kind: "seatChartDetail"; chartId: Id<"seatCharts"> };
 
 function breadcrumbTarget(pathname: string, classId: string): BreadcrumbTarget {
   const base = `/class/${classId}`;
@@ -139,17 +141,59 @@ function breadcrumbTarget(pathname: string, classId: string): BreadcrumbTarget {
       return { kind: "seatLayoutDetail", layoutId: layoutId as Id<"seatLayouts"> };
     }
   }
+  if (pathname.startsWith(`${base}/assigners/seats/charts/`)) {
+    const chartId = pathname.slice(`${base}/assigners/seats/charts/`.length).split("/")[0];
+    if (chartId) {
+      return { kind: "seatChartDetail", chartId: chartId as Id<"seatCharts"> };
+    }
+  }
   if (
     pathname === `${base}/assigners/seats` ||
     pathname === `${base}/assigners/seats/` ||
     pathname === `${base}/assigners/seats/layouts` ||
     pathname === `${base}/assigners/seats/layouts/` ||
     pathname === `${base}/assigners/seats/constraints` ||
-    pathname === `${base}/assigners/seats/constraints/`
+    pathname === `${base}/assigners/seats/constraints/` ||
+    pathname === `${base}/assigners/seats/charts` ||
+    pathname === `${base}/assigners/seats/charts/`
   ) {
     return { kind: "assignersSeats" };
   }
   return { kind: "classesKey", key: "navDashboard" };
+}
+
+function SeatChartDetailBreadcrumbItems({
+  classId,
+  chartId,
+  seatsLabel,
+}: {
+  classId: Id<"classes">;
+  chartId: Id<"seatCharts">;
+  seatsLabel: string;
+}) {
+  const { t: tAssigners } = useTranslation("assigners");
+  const { data: chart, isPending } = useSeatChart(classId, chartId);
+  const chartLabel = isPending && !chart ? null : (chart?.name ?? tAssigners("chartNotFound"));
+
+  return (
+    <>
+      <BreadcrumbItem className="min-w-0">
+        <BreadcrumbLink
+          render={<Link to="/class/$classId/assigners/seats/charts" params={{ classId }} />}
+          className="block truncate"
+          title={seatsLabel}
+        >
+          {seatsLabel}
+        </BreadcrumbLink>
+      </BreadcrumbItem>
+      <BreadcrumbSeparator className="shrink-0" />
+      <BreadcrumbItem className="min-w-0">
+        <BreadcrumbPage className="block truncate" title={chartLabel ?? undefined}>
+          {chartLabel === null ? <Skeleton className="inline-block h-4 w-24" /> : chartLabel}
+        </BreadcrumbPage>
+      </BreadcrumbItem>
+    </>
+  );
 }
 
 function SeatLayoutDetailBreadcrumbItems({
@@ -444,7 +488,9 @@ export function ClassBreadcrumb({ classDoc }: ClassBreadcrumbProps) {
                     ? tExpectations("nav")
                     : target.kind === "raz" || target.kind === "razInitialLevels"
                       ? tRaz("nav")
-                      : target.kind === "assignersSeats" || target.kind === "seatLayoutDetail"
+                      : target.kind === "assignersSeats" ||
+                          target.kind === "seatLayoutDetail" ||
+                          target.kind === "seatChartDetail"
                         ? tAssigners("navSeats")
                         : t(target.key);
 
@@ -502,6 +548,12 @@ export function ClassBreadcrumb({ classDoc }: ClassBreadcrumbProps) {
           />
         ) : target.kind === "razInitialLevels" ? (
           <RazInitialLevelsBreadcrumbItems classId={classDoc._id} razLabel={pageLabel} />
+        ) : target.kind === "seatChartDetail" ? (
+          <SeatChartDetailBreadcrumbItems
+            classId={classDoc._id}
+            chartId={target.chartId}
+            seatsLabel={pageLabel}
+          />
         ) : target.kind === "seatLayoutDetail" ? (
           <SeatLayoutDetailBreadcrumbItems
             classId={classDoc._id}

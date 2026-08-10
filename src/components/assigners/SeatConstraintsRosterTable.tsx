@@ -1,18 +1,12 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import {
-  ArrowLeftRightIcon,
-  CheckIcon,
-  ChevronsUpDownIcon,
-  MapPinIcon,
-  Pencil,
-  SearchIcon,
-  Trash2,
-  UsersIcon,
-  XIcon,
-} from "lucide-react";
-import { useCallback, useMemo, useState, type ReactNode } from "react";
+import { ChevronsUpDownIcon, Pencil, SearchIcon, Trash2, XIcon } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import {
+  ConstraintKindBadge,
+  ConstraintKindIcons,
+} from "@/components/assigners/SeatConstraintKind";
 import { DataTableSortableHeader } from "@/components/feedback/DataTableSortableHeader";
 import { RosterColumnVisibilityMenu } from "@/components/roster/RosterColumnVisibilityMenu";
 import { RosterTable } from "@/components/roster/RosterTable";
@@ -37,6 +31,7 @@ import {
 } from "@/components/ui/input-group";
 import { useClassUserSettings } from "@/hooks/roster/useClassUserSettings";
 import { useRosterConsumerColumnVisibility } from "@/hooks/roster/useRosterConsumerColumnVisibility";
+import { constraintKindLabel } from "@/lib/assigners/seatConstraints";
 import {
   buildSeatConstraintRosterRows,
   isSeatConstraintRosterRow,
@@ -82,22 +77,6 @@ function constraintKindKey(constraint: SeatConstraint): ConstraintKindFilter {
   return `${constraint.polarity}:${constraint.type}`;
 }
 
-function constraintKindLabel(
-  polarity: SeatConstraintPolarity,
-  type: SeatConstraintType,
-  t: (key: string) => string,
-): string {
-  const polarityLabel =
-    polarity === "must" ? t("constraintPolarityMust") : t("constraintPolarityMustNot");
-  const typeLabel =
-    type === "neighbor"
-      ? t("constraintTypeNeighbor")
-      : type === "teammate"
-        ? t("constraintTypeTeammate")
-        : t("constraintTypeZone");
-  return `${polarityLabel} · ${typeLabel}`;
-}
-
 function constraintTypeLabel(constraint: SeatConstraint, t: (key: string) => string): string {
   return constraintKindLabel(constraint.polarity, constraint.type, t);
 }
@@ -105,57 +84,6 @@ function constraintTypeLabel(constraint: SeatConstraint, t: (key: string) => str
 function constraintKindOptionLabel(kind: ConstraintKindFilter, t: (key: string) => string): string {
   const [polarity, type] = kind.split(":") as [SeatConstraintPolarity, SeatConstraintType];
   return constraintKindLabel(polarity, type, t);
-}
-
-function polarityIcon(polarity: SeatConstraintPolarity): ReactNode {
-  if (polarity === "must") {
-    return (
-      <CheckIcon className="size-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden />
-    );
-  }
-  return <XIcon className="size-3.5 shrink-0 text-destructive" aria-hidden />;
-}
-
-function typeIcon(type: SeatConstraintType): ReactNode {
-  if (type === "neighbor") {
-    return <ArrowLeftRightIcon className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />;
-  }
-  if (type === "teammate") {
-    return <UsersIcon className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />;
-  }
-  return <MapPinIcon className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />;
-}
-
-function ConstraintKindIcons({
-  polarity,
-  type,
-}: {
-  polarity: SeatConstraintPolarity;
-  type: SeatConstraintType;
-}) {
-  return (
-    <span className="inline-flex items-center gap-1" aria-hidden>
-      {polarityIcon(polarity)}
-      {typeIcon(type)}
-    </span>
-  );
-}
-
-function ConstraintKindBadge({
-  polarity,
-  type,
-  label,
-}: {
-  polarity: SeatConstraintPolarity;
-  type: SeatConstraintType;
-  label: string;
-}) {
-  return (
-    <span className="inline-flex items-center gap-1.5 text-sm whitespace-nowrap">
-      <ConstraintKindIcons polarity={polarity} type={type} />
-      <span>{label}</span>
-    </span>
-  );
 }
 
 function constraintTargetLabel(

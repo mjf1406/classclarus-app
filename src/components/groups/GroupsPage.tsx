@@ -246,21 +246,16 @@ export function GroupsPage({ classId }: GroupsPageProps) {
       overRectRef.current = { left: overRect.left, top: overRect.top };
 
       const overData = event.over.data.current?.target as DropTarget | undefined;
-      let target = overData ?? parseDropTarget(event.over.id);
+      const target = overData ?? parseDropTarget(event.over.id);
       if (!target) {
         finishWithoutMove();
         return;
       }
 
-      // Resolve groupId for team drops when only team id is in the over id.
-      if (target.kind === "team" && !target.groupId) {
-        const teamId = target.teamId;
-        const group = data.groups.find((item) => item.teams.some((team) => team._id === teamId));
-        if (!group) {
-          finishWithoutMove();
-          return;
-        }
-        target = { kind: "team", groupId: group._id, teamId };
+      // Team drops are not supported from the board DnD surface.
+      if (target.kind === "team") {
+        finishWithoutMove();
+        return;
       }
 
       const found = findStudentOnBoard(data, studentUserId);
@@ -271,8 +266,7 @@ export function GroupsPage({ classId }: GroupsPageProps) {
       const from = found.from;
       const same =
         (from.kind === "ungrouped" && target.kind === "ungrouped") ||
-        (from.kind === "group" && target.kind === "group" && from.groupId === target.groupId) ||
-        (from.kind === "team" && target.kind === "team" && from.teamId === target.teamId);
+        (from.kind === "group" && target.kind === "group" && from.groupId === target.groupId);
       if (same) {
         finishWithoutMove();
         return;
@@ -517,7 +511,7 @@ export function GroupsPage({ classId }: GroupsPageProps) {
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(14rem,18rem)_1fr]">
               <aside
                 className={cn(
-                  "flex flex-col gap-2 rounded-2xl p-4 lg:sticky lg:top-4 lg:self-start",
+                  "flex flex-col gap-2 rounded-2xl p-4 lg:sticky lg:top-[calc(3rem+1rem)] lg:z-10 lg:self-start",
                   viewerIsUngrouped
                     ? "bg-primary/5 ring-2 ring-primary/50"
                     : "bg-card ring-1 ring-foreground/10",

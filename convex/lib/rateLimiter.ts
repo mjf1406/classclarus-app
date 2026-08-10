@@ -12,6 +12,7 @@ const rateLimits = {
   accountDelete: { kind: "token bucket" as const, rate: 5, period: HOUR, capacity: 1 },
   signOutOtherSessions: { kind: "token bucket" as const, rate: 10, period: HOUR, capacity: 3 },
   adminResetPassword: { kind: "token bucket" as const, rate: 20, period: HOUR, capacity: 5 },
+  adminSeedTestStudents: { kind: "token bucket" as const, rate: 10, period: HOUR, capacity: 3 },
   joinCodeCreate: { kind: "token bucket" as const, rate: 30, period: HOUR, capacity: 5 },
   joinCodeRevoke: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 10 },
   joinCodeRedeemShort: {
@@ -173,6 +174,11 @@ const rateLimits = {
   seatConstraintCreate: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 20 },
   seatConstraintUpdate: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 30 },
   seatConstraintRemove: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 20 },
+  seatChartCreate: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 20 },
+  seatChartRename: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 30 },
+  seatChartArchive: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 20 },
+  seatChartSaveDraft: { kind: "token bucket" as const, rate: 240, period: HOUR, capacity: 80 },
+  seatChartRecord: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 30 },
 };
 
 export const rateLimiter = new RateLimiter(components.rateLimiter, rateLimits);

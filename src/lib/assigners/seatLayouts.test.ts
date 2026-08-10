@@ -7,6 +7,7 @@ import {
   CANVAS_RESIZE_STEP,
   commonTeamAssignment,
   commonZoneName,
+  compressSeatItemGaps,
   DEFAULT_CANVAS_HEIGHT,
   DEFAULT_CANVAS_WIDTH,
   DEFAULT_DESK_HEIGHT,
@@ -198,9 +199,9 @@ describe("nextPlacementOrigin", () => {
 });
 
 describe("resizeSeatCanvas", () => {
-  test("defaults are 25 grid cells", () => {
-    expect(DEFAULT_CANVAS_WIDTH).toBe(SEAT_CANVAS_GRID_SIZE * 25);
-    expect(DEFAULT_CANVAS_HEIGHT).toBe(SEAT_CANVAS_GRID_SIZE * 25);
+  test("defaults are 30 grid cells", () => {
+    expect(DEFAULT_CANVAS_WIDTH).toBe(SEAT_CANVAS_GRID_SIZE * 30);
+    expect(DEFAULT_CANVAS_HEIGHT).toBe(SEAT_CANVAS_GRID_SIZE * 30);
   });
 
   test("grows east and south without shifting items", () => {
@@ -464,5 +465,27 @@ describe("nextSeatLayoutSortState", () => {
       sortKey: "created",
       sortDirection: "desc",
     });
+  });
+});
+
+describe("compressSeatItemGaps", () => {
+  test("collapses oversized gutters while keeping item sizes", () => {
+    const compressed = compressSeatItemGaps(
+      [
+        { id: "a", x: 0, y: 0, width: 100, height: 40 },
+        { id: "b", x: 300, y: 200, width: 100, height: 40 },
+      ],
+      { maxGapX: 20, maxGapY: 20 },
+    );
+    expect(compressed[0]).toEqual({ id: "a", x: 0, y: 0, width: 100, height: 40 });
+    expect(compressed[1]).toEqual({ id: "b", x: 120, y: 60, width: 100, height: 40 });
+  });
+
+  test("leaves already-tight gaps alone", () => {
+    const items = [
+      { id: "a", x: 0, y: 0, width: 100, height: 40 },
+      { id: "b", x: 120, y: 0, width: 100, height: 40 },
+    ];
+    expect(compressSeatItemGaps(items, { maxGapX: 20, maxGapY: 20 })).toEqual(items);
   });
 });

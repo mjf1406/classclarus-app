@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vite-plus/test";
 
+import type { Id } from "../../../convex/_generated/dataModel";
 import type { MembershipByUserId } from "@/lib/groups/groupTeamFilters";
 
 import {
@@ -16,9 +17,9 @@ const students: FilterableRosterStudent[] = [
 ];
 
 const membershipByUserId: MembershipByUserId = {
-  a: { groupId: "g1", teamId: "t1" },
-  b: { groupId: "g1" },
-  c: { groupId: "g2", teamId: "t2" },
+  a: { groupId: "g1" as Id<"groups">, teamId: "t1" as Id<"teams"> },
+  b: { groupId: "g1" as Id<"groups"> },
+  c: { groupId: "g2" as Id<"groups">, teamId: "t2" as Id<"teams"> },
   d: {},
 };
 

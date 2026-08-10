@@ -10,6 +10,8 @@ export function seatLayoutsListQueryKey(classId: Id<"classes">) {
 }
 
 /** gcTime: 5 minutes — reactive via Convex; moderate cache after unmount. */
-export function useSeatLayouts(classId: Id<"classes">) {
-  return useAuthedQuery(api.seatLayouts.list, { classId }, { gcTime: FIVE_MINUTES });
+export function useSeatLayouts(classId: Id<"classes"> | null) {
+  return useAuthedQuery(api.seatLayouts.list, classId ? { classId } : "skip", {
+    gcTime: FIVE_MINUTES,
+  });
 }

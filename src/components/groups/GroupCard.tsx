@@ -2,6 +2,7 @@ import { Copy, Pencil, Plus, Trash2, UserPlus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { GroupImageIcon } from "@/components/groups/GroupImageIcon";
+import { StudentChip } from "@/components/groups/StudentChip";
 import { StudentDropZone } from "@/components/groups/StudentDropZone";
 import { ActionMenu } from "@/components/ui/action-menu";
 import type { BoardGroup, BoardTeam } from "@/lib/groups/groups";
@@ -191,17 +192,22 @@ export function GroupCard({
                 />
               ) : null}
             </div>
-            <StudentDropZone
-              id={`team:${team._id}`}
-              target={{ kind: "team", groupId: group._id, teamId: team._id }}
-              students={team.students}
-              canManage={canManage}
-              emptyLabel={t("groupsDropEmpty")}
-              disabled={pending || teamPending}
-              hiddenStudentId={hiddenStudentId}
-              viewerUserId={viewerUserId}
-              nameFormat={nameFormat}
-            />
+            <div
+              className="flex min-h-16 flex-col gap-2 rounded-lg border border-dashed p-2"
+              title={t("groupsTeamsViaSeating")}
+            >
+              <p className="px-1 text-[10px] text-muted-foreground">{t("groupsTeamsViaSeating")}</p>
+              {team.students.map((student) => (
+                <StudentChip
+                  key={student.userId}
+                  student={student}
+                  canDrag={false}
+                  hidden={hiddenStudentId === student.userId}
+                  isSelf={viewerUserId != null && student.userId === viewerUserId}
+                  nameFormat={nameFormat}
+                />
+              ))}
+            </div>
           </div>
         );
       })}

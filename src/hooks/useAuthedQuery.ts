@@ -17,7 +17,7 @@ type UseAuthedQueryOptions<TData> = {
  */
 export function useAuthedQuery<ConvexQueryReference extends FunctionReference<"query">>(
   funcRef: ConvexQueryReference,
-  args: FunctionArgs<ConvexQueryReference>,
+  args: FunctionArgs<ConvexQueryReference> | "skip",
   options: UseAuthedQueryOptions<FunctionReturnType<ConvexQueryReference>>,
 ): UseQueryResult<FunctionReturnType<ConvexQueryReference>, Error> & {
   isAuthLoading: boolean;

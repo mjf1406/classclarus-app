@@ -23,6 +23,8 @@ export default [
       "convex/_generated/**",
       "src/routeTree.gen.ts",
       "convex/**/*.test.ts",
+      // One-off Bun scripts are not in a TS project
+      "scripts/**/*.ts",
     ],
   },
 

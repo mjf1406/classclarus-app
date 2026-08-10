@@ -1,3 +1,4 @@
+import type { Id } from "../../../convex/_generated/dataModel";
 import type { GroupsBoard } from "@/lib/groups/groups";
 import { groupTeamFiltersStorageKey } from "@/lib/storageKeys";
 
@@ -8,8 +9,8 @@ export type GroupTeamFilterState = {
 };
 
 export type StudentMembership = {
-  groupId?: string;
-  teamId?: string;
+  groupId?: Id<"groups">;
+  teamId?: Id<"teams">;
 };
 
 export type MembershipByUserId = Record<string, StudentMembership>;

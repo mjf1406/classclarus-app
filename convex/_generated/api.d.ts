@@ -10,6 +10,7 @@
 
 import type * as account from "../account.js";
 import type * as activity from "../activity.js";
+import type * as adminSeed from "../adminSeed.js";
 import type * as adminUsers from "../adminUsers.js";
 import type * as announcements from "../announcements.js";
 import type * as appConfig from "../appConfig.js";
@@ -76,6 +77,9 @@ import type * as lib_razAutoRti from "../lib/razAutoRti.js";
 import type * as lib_razLevels from "../lib/razLevels.js";
 import type * as lib_rewardsCleanup from "../lib/rewardsCleanup.js";
 import type * as lib_rosterNameFormat from "../lib/rosterNameFormat.js";
+import type * as lib_seatChartLogic from "../lib/seatChartLogic.js";
+import type * as lib_seatLayoutCopy from "../lib/seatLayoutCopy.js";
+import type * as lib_seedTestStudents from "../lib/seedTestStudents.js";
 import type * as lib_selfHosted from "../lib/selfHosted.js";
 import type * as lib_studentRosters from "../lib/studentRosters.js";
 import type * as lib_tasksCleanup from "../lib/tasksCleanup.js";
@@ -94,6 +98,7 @@ import type * as presence from "../presence.js";
 import type * as raz from "../raz.js";
 import type * as rewardFolders from "../rewardFolders.js";
 import type * as rewards from "../rewards.js";
+import type * as seatCharts from "../seatCharts.js";
 import type * as seatConstraints from "../seatConstraints.js";
 import type * as seatLayouts from "../seatLayouts.js";
 import type * as studentRosters from "../studentRosters.js";
@@ -108,6 +113,7 @@ import type { ApiFromModules, FilterApi, FunctionReference } from "convex/server
 declare const fullApi: ApiFromModules<{
   account: typeof account;
   activity: typeof activity;
+  adminSeed: typeof adminSeed;
   adminUsers: typeof adminUsers;
   announcements: typeof announcements;
   appConfig: typeof appConfig;
@@ -174,6 +180,9 @@ declare const fullApi: ApiFromModules<{
   "lib/razLevels": typeof lib_razLevels;
   "lib/rewardsCleanup": typeof lib_rewardsCleanup;
   "lib/rosterNameFormat": typeof lib_rosterNameFormat;
+  "lib/seatChartLogic": typeof lib_seatChartLogic;
+  "lib/seatLayoutCopy": typeof lib_seatLayoutCopy;
+  "lib/seedTestStudents": typeof lib_seedTestStudents;
   "lib/selfHosted": typeof lib_selfHosted;
   "lib/studentRosters": typeof lib_studentRosters;
   "lib/tasksCleanup": typeof lib_tasksCleanup;
@@ -192,6 +201,7 @@ declare const fullApi: ApiFromModules<{
   raz: typeof raz;
   rewardFolders: typeof rewardFolders;
   rewards: typeof rewards;
+  seatCharts: typeof seatCharts;
   seatConstraints: typeof seatConstraints;
   seatLayouts: typeof seatLayouts;
   studentRosters: typeof studentRosters;

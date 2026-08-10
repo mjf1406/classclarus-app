@@ -27,6 +27,7 @@ export type SeatsPrintLabels = {
 export type SeatsPrintItem = SeatLayoutItem & {
   teamLabel?: string;
   zoneLabel?: string;
+  studentLabel?: string;
 };
 
 export type SeatsPrintCrop = {
@@ -201,9 +202,10 @@ function itemHtml(item: SeatsPrintItem, scale: number, degrees: number): string 
   const zonePx = Math.max(9, Math.round(10 * scale));
   const labelPadTop = Math.max(12, Math.round(16 * scale));
   const labelPadX = Math.max(4, Math.round(6 * scale));
+  const displayLabel = item.studentLabel?.trim() || item.label.trim();
   return `<div class="item ${kindClass}" style="left:${item.x}px;top:${item.y}px;width:${item.width}px;height:${item.height}px;font-size:${fontPx}px">
     ${item.kind === "desk" && item.deskNumber !== undefined ? `<span class="desk-num" style="font-size:${deskNumPx}px;transform:rotate(${-degrees}deg)">${item.deskNumber}</span>` : ""}
-    <span class="item-label" style="padding:${labelPadTop}px ${labelPadX}px 4px;transform:rotate(${-degrees}deg)">${escapeHtml(item.label.trim())}</span>
+    <span class="item-label" style="padding:${labelPadTop}px ${labelPadX}px 4px;transform:rotate(${-degrees}deg)">${escapeHtml(displayLabel)}</span>
     ${item.teamLabel ? `<span class="team" style="font-size:${teamPx}px;transform:rotate(${-degrees}deg)">${escapeHtml(item.teamLabel)}</span>` : ""}
     ${item.zoneLabel ? `<span class="zone" style="font-size:${zonePx}px;transform:rotate(${-degrees}deg)">${escapeHtml(item.zoneLabel)}</span>` : ""}
   </div>`;

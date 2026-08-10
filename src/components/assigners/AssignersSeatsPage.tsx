@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { AssignersSeatsTabs } from "@/components/assigners/AssignersSeatsTabs";
+import { SeatLayoutCreateCredenza } from "@/components/assigners/SeatLayoutCreateCredenza";
 import { SeatLayoutNameCredenza } from "@/components/assigners/SeatLayoutNameCredenza";
 import { DeleteNamedCredenza } from "@/components/groups/DeleteNamedCredenza";
 import { ActionMenu, type ActionMenuItem } from "@/components/ui/action-menu";
@@ -20,6 +21,7 @@ import {
 import { ErrorState } from "@/components/ui/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useCopySeatLayout } from "@/hooks/assigners/useCopySeatLayout";
 import { useCreateSeatLayout } from "@/hooks/assigners/useCreateSeatLayout";
 import { useRemoveSeatLayout } from "@/hooks/assigners/useRemoveSeatLayout";
 import { useRenameSeatLayout } from "@/hooks/assigners/useRenameSeatLayout";
@@ -62,6 +64,7 @@ export function AssignersSeatsPage({ classId }: AssignersSeatsPageProps) {
   const canManage = can("assigners:manage");
   const { data, isPending, isError, refetch } = useSeatLayouts(classId);
   const createLayout = useCreateSeatLayout();
+  const copyLayout = useCopySeatLayout();
   const renameLayout = useRenameSeatLayout();
   const removeLayout = useRemoveSeatLayout();
   const [createOpen, setCreateOpen] = useState(false);
@@ -214,13 +217,24 @@ export function AssignersSeatsPage({ classId }: AssignersSeatsPageProps) {
 
       {canManage ? (
         <>
-          <SeatLayoutNameCredenza
+          <SeatLayoutCreateCredenza
             open={createOpen}
             onOpenChange={setCreateOpen}
-            title={t("createLayoutTitle")}
-            description={t("createLayoutDescription")}
-            onSubmit={async (name) => {
+            classId={classId}
+            onCreate={async (name) => {
               const layoutId = await createLayout.mutateAsync({ classId, name });
+              await navigate({
+                to: "/class/$classId/assigners/seats/layouts/$layoutId",
+                params: { classId, layoutId },
+              });
+            }}
+            onCopy={async ({ name, sourceClassId, sourceLayoutId }) => {
+              const layoutId = await copyLayout.mutateAsync({
+                classId,
+                name,
+                sourceClassId,
+                sourceLayoutId,
+              });
               await navigate({
                 to: "/class/$classId/assigners/seats/layouts/$layoutId",
                 params: { classId, layoutId },

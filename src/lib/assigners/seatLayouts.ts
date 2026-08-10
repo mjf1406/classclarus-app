@@ -115,7 +115,7 @@ export function seatItemDisplayLabel(
 export const SEAT_CANVAS_GRID_SIZE = 20;
 
 /** Default new-layout size in grid cells (width × height). */
-export const DEFAULT_CANVAS_CELLS = 25;
+export const DEFAULT_CANVAS_CELLS = 30;
 export const DEFAULT_CANVAS_WIDTH = SEAT_CANVAS_GRID_SIZE * DEFAULT_CANVAS_CELLS;
 export const DEFAULT_CANVAS_HEIGHT = SEAT_CANVAS_GRID_SIZE * DEFAULT_CANVAS_CELLS;
 export const CANVAS_RESIZE_STEP = SEAT_CANVAS_GRID_SIZE;
@@ -236,8 +236,16 @@ export function canvasResizePanDelta(
 }
 
 /** Default sizes are exact multiples of `SEAT_CANVAS_GRID_SIZE`. */
-export const DEFAULT_DESK_WIDTH = SEAT_CANVAS_GRID_SIZE * 4;
-export const DEFAULT_DESK_HEIGHT = SEAT_CANVAS_GRID_SIZE * 3;
+export const DESK_SLOT_HEIGHT = SEAT_CANVAS_GRID_SIZE * 2;
+export const DEFAULT_DESK_WIDTH = SEAT_CANVAS_GRID_SIZE * 5;
+export const DEFAULT_DESK_HEIGHT = DESK_SLOT_HEIGHT * 2 + SEAT_CANVAS_GRID_SIZE;
+export function deskSizeForGroupCount(groupCount: number): { width: number; height: number } {
+  const slots = Math.max(1, groupCount);
+  return {
+    width: DEFAULT_DESK_WIDTH,
+    height: DESK_SLOT_HEIGHT * slots + SEAT_CANVAS_GRID_SIZE,
+  };
+}
 export const DEFAULT_TEACHER_DESK_WIDTH = SEAT_CANVAS_GRID_SIZE * 7;
 export const DEFAULT_TEACHER_DESK_HEIGHT = SEAT_CANVAS_GRID_SIZE * 4;
 export const DEFAULT_BOARD_WIDTH = SEAT_CANVAS_GRID_SIZE * 11;
@@ -257,13 +265,16 @@ export function newItemId(): string {
   return `item_${Math.random().toString(36).slice(2, 12)}`;
 }
 
-export function defaultSizeForKind(kind: SeatLayoutItemKind): {
+export function defaultSizeForKind(
+  kind: SeatLayoutItemKind,
+  options?: { groupCount?: number },
+): {
   width: number;
   height: number;
 } {
   switch (kind) {
     case "desk":
-      return { width: DEFAULT_DESK_WIDTH, height: DEFAULT_DESK_HEIGHT };
+      return deskSizeForGroupCount(options?.groupCount ?? 2);
     case "teacherDesk":
       return { width: DEFAULT_TEACHER_DESK_WIDTH, height: DEFAULT_TEACHER_DESK_HEIGHT };
     case "board":
@@ -339,12 +350,14 @@ export function buildDeskGrid(options: {
   originY: number;
   gapX?: number;
   gapY?: number;
+  groupCount?: number;
   createId?: () => string;
 }): Array<SeatLayoutItem> {
   const { cols, rows } = clampDeskGridDims(options.cols, options.rows);
   const gapX = options.gapX ?? SEAT_CANVAS_GRID_SIZE;
   const gapY = options.gapY ?? SEAT_CANVAS_GRID_SIZE;
   const createId = options.createId ?? newItemId;
+  const deskSize = deskSizeForGroupCount(options.groupCount ?? 2);
   const items: Array<SeatLayoutItem> = [];
   let deskNumber = options.startDeskNumber;
   for (let row = 0; row < rows; row += 1) {
@@ -354,10 +367,10 @@ export function buildDeskGrid(options: {
         kind: "desk",
         label: "",
         deskNumber,
-        x: options.originX + col * (DEFAULT_DESK_WIDTH + gapX),
-        y: options.originY + row * (DEFAULT_DESK_HEIGHT + gapY),
-        width: DEFAULT_DESK_WIDTH,
-        height: DEFAULT_DESK_HEIGHT,
+        x: options.originX + col * (deskSize.width + gapX),
+        y: options.originY + row * (deskSize.height + gapY),
+        width: deskSize.width,
+        height: deskSize.height,
       });
       deskNumber += 1;
     }
@@ -489,4 +502,83 @@ export function zoneSeatCounts(
     counts[name] = (counts[name] ?? 0) + 1;
   }
   return counts;
+}
+
+function mergeAxisIntervals(intervals: Array<[number, number]>): Array<[number, number]> {
+  if (intervals.length === 0) return [];
+  const sorted = [...intervals].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const merged: Array<[number, number]> = [[sorted[0]![0], sorted[0]![1]]];
+  for (let i = 1; i < sorted.length; i++) {
+    const [start, end] = sorted[i]!;
+    const last = merged[merged.length - 1]!;
+    if (start <= last[1]) {
+      last[1] = Math.max(last[1], end);
+    } else {
+      merged.push([start, end]);
+    }
+  }
+  return merged;
+}
+
+/**
+ * Map axis coordinates so empty gaps between occupied bands are at most `maxGap`.
+ * Item sizes are unchanged; only positions move closer together.
+ */
+function buildAxisGapCollapseShift(
+  intervals: Array<[number, number]>,
+  maxGap: number,
+): (value: number) => number {
+  const merged = mergeAxisIntervals(intervals);
+  if (merged.length <= 1) return (value) => value;
+
+  const blockShift: Array<number> = [0];
+  let cumulative = 0;
+  for (let i = 0; i < merged.length - 1; i++) {
+    const gap = merged[i + 1]![0] - merged[i]![1];
+    cumulative += Math.max(0, gap - maxGap);
+    blockShift.push(cumulative);
+  }
+
+  return (value: number) => {
+    for (let i = 0; i < merged.length - 1; i++) {
+      const gapStart = merged[i]![1];
+      const gapEnd = merged[i + 1]![0];
+      if (value > gapStart && value < gapEnd) {
+        const intoGap = value - gapStart;
+        return gapStart - blockShift[i]! + Math.min(intoGap, maxGap);
+      }
+    }
+    let shift = 0;
+    for (let i = 0; i < merged.length; i++) {
+      if (value >= merged[i]![0]) shift = blockShift[i]!;
+    }
+    return value - shift;
+  };
+}
+
+/**
+ * Collapse oversized empty gutters between layout items (display-only).
+ * Preserves relative cluster order and item sizes.
+ */
+export function compressSeatItemGaps<
+  T extends { x: number; y: number; width: number; height: number },
+>(items: Array<T>, options?: { maxGapX?: number; maxGapY?: number }): Array<T> {
+  if (items.length <= 1) return items.map((item) => ({ ...item }));
+
+  const maxGapX = options?.maxGapX ?? SEAT_CANVAS_GRID_SIZE;
+  const maxGapY = options?.maxGapY ?? SEAT_CANVAS_GRID_SIZE;
+  const shiftX = buildAxisGapCollapseShift(
+    items.map((item) => [item.x, item.x + item.width]),
+    maxGapX,
+  );
+  const shiftY = buildAxisGapCollapseShift(
+    items.map((item) => [item.y, item.y + item.height]),
+    maxGapY,
+  );
+
+  return items.map((item) => ({
+    ...item,
+    x: shiftX(item.x),
+    y: shiftY(item.y),
+  }));
 }

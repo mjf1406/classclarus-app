@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { ListChecks, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -12,6 +12,7 @@ import {
   EmptyContent,
   EmptyDescription,
   EmptyHeader,
+  EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
 import { ErrorState } from "@/components/ui/error-state";
@@ -128,6 +129,9 @@ export function AssignersSeatsConstraintsPage({ classId }: AssignersSeatsConstra
       ) : !data?.length ? (
         <Empty className="border border-dashed">
           <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <ListChecks />
+            </EmptyMedia>
             <EmptyTitle>{t("constraintsEmptyTitle")}</EmptyTitle>
             <EmptyDescription>{t("constraintsEmptyDescription")}</EmptyDescription>
           </EmptyHeader>

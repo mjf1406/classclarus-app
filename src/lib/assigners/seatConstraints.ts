@@ -26,6 +26,35 @@ export function isPairConstraintType(type: SeatConstraintType): boolean {
   return type === "neighbor" || type === "teammate";
 }
 
+export function constraintKindLabel(
+  polarity: SeatConstraintPolarity,
+  type: SeatConstraintType,
+  t: (key: string) => string,
+): string {
+  const polarityLabel =
+    polarity === "must" ? t("constraintPolarityMust") : t("constraintPolarityMustNot");
+  const typeLabel =
+    type === "neighbor"
+      ? t("constraintTypeNeighbor")
+      : type === "teammate"
+        ? t("constraintTypeTeammate")
+        : t("constraintTypeZone");
+  return `${polarityLabel} · ${typeLabel}`;
+}
+
+export function violationBrokenLabel(
+  type: SeatConstraintType,
+  t: (key: string, options?: Record<string, string>) => string,
+): string {
+  const kind =
+    type === "neighbor"
+      ? t("constraintTypeNeighbor")
+      : type === "teammate"
+        ? t("constraintTypeTeammate")
+        : t("constraintTypeZone");
+  return t("chartViolationBroken", { kind });
+}
+
 export function isSeatConstraintRosterRow(row: StudentRosterEntry): row is SeatConstraintRosterRow {
   return "constraintId" in row && typeof row.constraintId === "string";
 }
