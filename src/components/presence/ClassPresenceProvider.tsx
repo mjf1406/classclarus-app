@@ -6,7 +6,9 @@ import {
   type ClassPresenceContextValue,
 } from "@/components/presence/classPresenceContext";
 import { useClassPresence } from "@/hooks/presence/useClassPresence";
+import { usePresenceDisplaySummaries } from "@/hooks/presence/usePresenceDisplaySummaries";
 import { useCurrentUser } from "@/hooks/user/useCurrentUser";
+import { mergePresenceDisplaySummaries } from "@/lib/presence/presence";
 import type { Id } from "../../../convex/_generated/dataModel";
 
 type ClassPresenceProviderProps = {
@@ -44,12 +46,22 @@ function ClassPresenceProviderInner({
   children: ReactNode;
 }) {
   const presenceState = useClassPresence(classId, userId);
+  const onlineUserIds = useMemo(
+    () =>
+      new Set((presenceState ?? []).filter((entry) => entry.online).map((entry) => entry.userId)),
+    [presenceState],
+  );
+  const { data: displaySummaries } = usePresenceDisplaySummaries(classId, onlineUserIds);
   const value = useMemo((): ClassPresenceContextValue => {
-    const onlineUserIds = new Set(
-      (presenceState ?? []).filter((entry) => entry.online).map((entry) => entry.userId),
+    const enrichedPresenceState = mergePresenceDisplaySummaries(presenceState, displaySummaries);
+    const enrichedOnlineUserIds = new Set(
+      (enrichedPresenceState ?? []).filter((entry) => entry.online).map((entry) => entry.userId),
     );
-    return { presenceState, onlineUserIds };
-  }, [presenceState]);
+    return {
+      presenceState: enrichedPresenceState,
+      onlineUserIds: enrichedOnlineUserIds,
+    };
+  }, [presenceState, displaySummaries]);
 
   return <ClassPresenceContext.Provider value={value}>{children}</ClassPresenceContext.Provider>;
 }

@@ -5,11 +5,14 @@ import { components } from "./_generated/api.js";
 import type { Id } from "./_generated/dataModel.js";
 import { mutation, query } from "./_generated/server.js";
 import { authz } from "./authz.js";
-import { authedMutation } from "./lib/customFunctions.js";
+import { authedMutation, classQuery } from "./lib/customFunctions.js";
 import { classScope } from "./lib/authzModel.js";
 import { resolveUserImageUrl } from "./lib/userImage.js";
 
 const presence = new Presence(components.presence);
+
+/** Matches `@convex-dev/presence` default list limit. */
+const PRESENCE_LIST_LIMIT = 104;
 
 const heartbeatResultValidator = v.object({
   roomToken: v.string(),
@@ -21,6 +24,10 @@ const presenceEntryValidator = v.object({
   online: v.boolean(),
   lastDisconnected: v.number(),
   data: v.optional(v.any()),
+});
+
+const presenceDisplaySummaryValidator = v.object({
+  userId: v.id("users"),
   name: v.optional(v.string()),
   image: v.optional(v.string()),
 });
@@ -83,20 +90,51 @@ export const list = query({
   args: { roomToken: v.string() },
   returns: v.array(presenceEntryValidator),
   handler: async (ctx, { roomToken }) => {
-    const presenceList = await presence.list(ctx, roomToken);
-    return await Promise.all(
-      presenceList.map(async (entry) => {
-        const user = await ctx.db.get("users", entry.userId as Id<"users">);
-        if (!user) {
-          return entry;
-        }
-        return {
-          ...entry,
-          name: user.name,
-          image: await resolveUserImageUrl(ctx, user),
-        };
-      }),
-    );
+    return await presence.list(ctx, roomToken);
+  },
+});
+
+/**
+ * Display summaries for online users in a class room.
+ * Requires auth + `class:read`; skips users who cannot read the class.
+ */
+export const displaySummaries = classQuery({
+  args: {
+    userIds: v.array(v.string()),
+  },
+  returns: v.array(presenceDisplaySummaryValidator),
+  handler: async (ctx, { userIds }) => {
+    const uniqueUserIds = [...new Set(userIds)].slice(0, PRESENCE_LIST_LIMIT);
+    const summaries: Array<{
+      userId: Id<"users">;
+      name?: string;
+      image?: string;
+    }> = [];
+
+    for (const userId of uniqueUserIds) {
+      const normalizedUserId = ctx.db.normalizeId("users", userId);
+      if (!normalizedUserId) {
+        continue;
+      }
+
+      const canReadClass = await authz.can(ctx, normalizedUserId, "class:read", ctx.scope);
+      if (!canReadClass) {
+        continue;
+      }
+
+      const user = await ctx.db.get("users", normalizedUserId);
+      if (!user) {
+        continue;
+      }
+
+      summaries.push({
+        userId: user._id,
+        name: user.name,
+        image: await resolveUserImageUrl(ctx, user),
+      });
+    }
+
+    return summaries;
   },
 });
 
