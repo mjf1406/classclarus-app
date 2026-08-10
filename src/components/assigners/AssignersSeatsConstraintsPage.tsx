@@ -2,7 +2,7 @@ import { ListChecks, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { AssignersSeatsTabs } from "@/components/assigners/AssignersSeatsTabs";
+import { AssignersSeatsShell } from "@/components/assigners/AssignersSeatsShell";
 import { SeatConstraintCredenza } from "@/components/assigners/SeatConstraintCredenza";
 import { SeatConstraintsRosterTable } from "@/components/assigners/SeatConstraintsRosterTable";
 import { DeleteNamedCredenza } from "@/components/groups/DeleteNamedCredenza";
@@ -95,22 +95,19 @@ export function AssignersSeatsConstraintsPage({ classId }: AssignersSeatsConstra
   const errored = isError || rosterError;
 
   return (
-    <div className="flex w-full flex-col gap-4 px-4 py-8 sm:px-8">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t("navSeats")}</h1>
-          <p className="hidden text-muted-foreground sm:block">{t("constraintsDescription")}</p>
-        </div>
-        {canManage ? (
+    <AssignersSeatsShell
+      classId={classId}
+      tab="constraints"
+      description={t("constraintsDescription")}
+      action={
+        canManage ? (
           <Button type="button" onClick={() => setCreateOpen(true)}>
             <Plus className="size-4" />
             {t("createConstraint")}
           </Button>
-        ) : null}
-      </div>
-
-      <AssignersSeatsTabs classId={classId} value="constraints" />
-
+        ) : null
+      }
+    >
       {loading ? (
         <div className="flex flex-col gap-2">
           <Skeleton className="h-16 w-full" />
@@ -216,6 +213,6 @@ export function AssignersSeatsConstraintsPage({ classId }: AssignersSeatsConstra
           setDeleting(null);
         }}
       />
-    </div>
+    </AssignersSeatsShell>
   );
 }

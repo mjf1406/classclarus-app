@@ -32,7 +32,7 @@ export function AssignersSeatsTabs({ classId, value }: AssignersSeatsTabsProps) 
         });
       }}
     >
-      <TabsList variant="line" className="w-full sm:w-auto">
+      <TabsList variant="line">
         <TabsTrigger value="layouts">{t("tabLayouts")}</TabsTrigger>
         <TabsTrigger value="constraints">{t("tabConstraints")}</TabsTrigger>
         <TabsTrigger value="charts">{t("tabCharts")}</TabsTrigger>

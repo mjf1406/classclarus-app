@@ -3,7 +3,7 @@ import { Archive, LayoutGrid, Pencil, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { AssignersSeatsTabs } from "@/components/assigners/AssignersSeatsTabs";
+import { AssignersSeatsShell } from "@/components/assigners/AssignersSeatsShell";
 import { SeatChartCreateCredenza } from "@/components/assigners/SeatChartCreateCredenza";
 import { SeatChartNameCredenza } from "@/components/assigners/SeatChartNameCredenza";
 import { ActionMenu, type ActionMenuItem } from "@/components/ui/action-menu";
@@ -61,22 +61,19 @@ export function AssignersSeatsChartsPage({ classId }: AssignersSeatsChartsPagePr
   );
 
   return (
-    <div className="flex w-full flex-col gap-4 px-4 py-8 sm:px-8">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t("navSeats")}</h1>
-          <p className="hidden text-muted-foreground sm:block">{t("chartsDescription")}</p>
-        </div>
-        {canManage ? (
+    <AssignersSeatsShell
+      classId={classId}
+      tab="charts"
+      description={t("chartsDescription")}
+      action={
+        canManage ? (
           <Button type="button" onClick={() => setCreateOpen(true)}>
             <Plus className="size-4" />
             {t("createChart")}
           </Button>
-        ) : null}
-      </div>
-
-      <AssignersSeatsTabs classId={classId} value="charts" />
-
+        ) : null
+      }
+    >
       {!isPending && !isError && data && data.length > 0 ? (
         <ToggleGroup
           variant="outline"
@@ -228,6 +225,6 @@ export function AssignersSeatsChartsPage({ classId }: AssignersSeatsChartsPagePr
           />
         </>
       ) : null}
-    </div>
+    </AssignersSeatsShell>
   );
 }

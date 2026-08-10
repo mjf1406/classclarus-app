@@ -3,7 +3,7 @@ import { Pencil, Plus, RockingChair, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { AssignersSeatsTabs } from "@/components/assigners/AssignersSeatsTabs";
+import { AssignersSeatsShell } from "@/components/assigners/AssignersSeatsShell";
 import { SeatLayoutCreateCredenza } from "@/components/assigners/SeatLayoutCreateCredenza";
 import { SeatLayoutNameCredenza } from "@/components/assigners/SeatLayoutNameCredenza";
 import { DeleteNamedCredenza } from "@/components/groups/DeleteNamedCredenza";
@@ -85,22 +85,19 @@ export function AssignersSeatsPage({ classId }: AssignersSeatsPageProps) {
   };
 
   return (
-    <div className="flex w-full flex-col gap-4 px-4 py-8 sm:px-8">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t("navSeats")}</h1>
-          <p className="hidden text-muted-foreground sm:block">{t("seatsDescription")}</p>
-        </div>
-        {canManage ? (
+    <AssignersSeatsShell
+      classId={classId}
+      tab="layouts"
+      description={t("seatsDescription")}
+      action={
+        canManage ? (
           <Button type="button" onClick={() => setCreateOpen(true)}>
             <Plus className="size-4" />
             {t("createLayout")}
           </Button>
-        ) : null}
-      </div>
-
-      <AssignersSeatsTabs classId={classId} value="layouts" />
-
+        ) : null
+      }
+    >
       {!isPending && !isError && data && data.length > 0 ? (
         <div className="flex flex-wrap items-center gap-2">
           <ToggleGroup
@@ -273,6 +270,6 @@ export function AssignersSeatsPage({ classId }: AssignersSeatsPageProps) {
           />
         </>
       ) : null}
-    </div>
+    </AssignersSeatsShell>
   );
 }
