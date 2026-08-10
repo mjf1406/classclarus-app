@@ -225,6 +225,52 @@ const schema = defineSchema({
     .index("by_team", ["teamId"])
     .index("by_class", ["classId"]),
   /**
+   * Classroom seat layouts for Assigners — named canvases of desks and fixtures.
+   * Items are a bounded per-classroom array (well under Convex array limits).
+   */
+  seatLayouts: defineTable({
+    classId: v.id("classes"),
+    name: v.string(),
+    canvasWidth: v.number(),
+    canvasHeight: v.number(),
+    /** Next number stamped on a newly added student desk. */
+    nextDeskNumber: v.number(),
+    items: v.array(
+      v.object({
+        id: v.string(),
+        kind: v.union(
+          v.literal("desk"),
+          v.literal("teacherDesk"),
+          v.literal("board"),
+          v.literal("rect"),
+        ),
+        label: v.string(),
+        deskNumber: v.optional(v.number()),
+        teamAssignment: v.optional(
+          v.union(
+            v.object({
+              mode: v.literal("single"),
+              groupId: v.id("groups"),
+              teamId: v.id("teams"),
+            }),
+            v.object({
+              mode: v.literal("byName"),
+              teamName: v.string(),
+            }),
+          ),
+        ),
+        x: v.number(),
+        y: v.number(),
+        width: v.number(),
+        height: v.number(),
+      }),
+    ),
+    updatedAt: v.number(),
+    createdBy: v.id("users"),
+  })
+    .index("by_class", ["classId"])
+    .index("by_class_and_name", ["classId", "name"]),
+  /**
    * Many-to-many guardian ↔ student links within a class.
    * Cleared when either side leaves the guardian/student role.
    */

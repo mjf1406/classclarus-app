@@ -13,6 +13,7 @@ import {
   ListTodo,
   Mail,
   Megaphone,
+  RockingChair,
   SmilePlus,
   Settings2,
   Shield,
@@ -20,6 +21,7 @@ import {
   UserRound,
   Users,
   UsersRound,
+  Waypoints,
   type LucideIcon,
 } from "lucide-react";
 import { useState } from "react";
@@ -74,6 +76,7 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
   const { t: tRewards } = useTranslation("rewards");
   const { t: tExpectations } = useTranslation("expectations");
   const { t: tRaz } = useTranslation("raz");
+  const { t: tAssigners } = useTranslation("assigners");
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const { isMobile, state, setOpenMobile } = useSidebar();
   const { can, isPending } = useCan();
@@ -81,6 +84,7 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
   const { data: memberCounts } = useClassMemberCounts(classId);
   const groupsCollapsed = state === "collapsed" && !isMobile;
   const [peopleOpen, setPeopleOpen] = useState(false);
+  const [assignersOpen, setAssignersOpen] = useState(false);
   const [manageOpen, setManageOpen] = useState(false);
 
   const countFor = (role: MemberListRole | undefined): number | null => {
@@ -225,6 +229,15 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
     },
   ];
 
+  const assignersItems: Array<NavItem> = [
+    {
+      title: tAssigners("navSeats"),
+      icon: RockingChair,
+      to: "/class/$classId/assigners/seats",
+      permission: "assigners:read",
+    },
+  ];
+
   const manageItems: Array<NavItem> = [
     ...(catalogsInManageNav
       ? [
@@ -288,9 +301,15 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
 
   const visibleTopItems = topItems.filter((item) => can(item.permission));
   const visiblePeopleItems = peopleItems.filter((item) => can(item.permission));
+  const visibleAssignersItems = assignersItems.filter((item) => can(item.permission));
   const visibleManageItems = manageItems.filter((item) => can(item.permission));
 
   const peopleActive = visiblePeopleItems.some((item) => pathname === pathFor(item.to, classId));
+  const assignersActive = visibleAssignersItems.some(
+    (item) =>
+      pathname === pathFor(item.to, classId) ||
+      pathname.startsWith(`${pathFor(item.to, classId)}/`),
+  );
   const manageActive = visibleManageItems.some(
     (item) =>
       pathname === pathFor(item.to, classId) ||
@@ -421,6 +440,98 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
                             {count !== null ? (
                               <SidebarMenuBadge className="top-1">{count}</SidebarMenuBadge>
                             ) : null}
+                          </SidebarMenuSubItem>
+                        );
+                      })}
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
+            )}
+          </SidebarMenu>
+        </SidebarGroup>
+      ) : null}
+
+      {visibleAssignersItems.length > 0 ? (
+        <SidebarGroup>
+          <SidebarMenu>
+            {groupsCollapsed ? (
+              <SidebarMenuItem>
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    render={
+                      <SidebarMenuButton
+                        tooltip={tAssigners("navGroup")}
+                        isActive={assignersActive}
+                      />
+                    }
+                  >
+                    <Waypoints />
+                    <span>{tAssigners("navGroup")}</span>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    className="min-w-56 rounded-lg"
+                    align="start"
+                    side="right"
+                    sideOffset={4}
+                  >
+                    <DropdownMenuGroup>
+                      <DropdownMenuLabel className="text-xs text-muted-foreground">
+                        {tAssigners("navGroup")}
+                      </DropdownMenuLabel>
+                      {visibleAssignersItems.map((item) => (
+                        <DropdownMenuItem
+                          key={item.to}
+                          className="gap-2 p-2"
+                          render={
+                            <Link to={item.to} params={{ classId }} onClick={closeMobileSidebar} />
+                          }
+                        >
+                          <item.icon />
+                          <span className="min-w-0 flex-1 truncate">{item.title}</span>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </SidebarMenuItem>
+            ) : (
+              <Collapsible
+                open={assignersOpen || assignersActive}
+                onOpenChange={setAssignersOpen}
+                className="group/collapsible"
+              >
+                <SidebarMenuItem>
+                  <CollapsibleTrigger className="peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-hidden ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0">
+                    <Waypoints />
+                    <span>{tAssigners("navGroup")}</span>
+                    <ChevronRight
+                      className={cn(
+                        "ml-auto transition-transform group-data-[collapsible=icon]:hidden",
+                        (assignersOpen || assignersActive) && "rotate-90",
+                      )}
+                    />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      {visibleAssignersItems.map((item) => {
+                        const href = pathFor(item.to, classId);
+                        const isActive = pathname === href || pathname.startsWith(`${href}/`);
+                        return (
+                          <SidebarMenuSubItem key={item.to}>
+                            <SidebarMenuSubButton
+                              isActive={isActive}
+                              render={
+                                <Link
+                                  to={item.to}
+                                  params={{ classId }}
+                                  onClick={closeMobileSidebar}
+                                />
+                              }
+                            >
+                              <item.icon />
+                              <span>{item.title}</span>
+                            </SidebarMenuSubButton>
                           </SidebarMenuSubItem>
                         );
                       })}

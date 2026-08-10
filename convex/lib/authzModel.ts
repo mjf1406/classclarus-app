@@ -53,6 +53,11 @@ export const permissions = definePermissions({
    */
   raz: { read: true, manage: true },
   /**
+   * Assigners (seat layouts, etc.) — read is assistant_teacher+;
+   * manage (edit layouts) is teacher+.
+   */
+  assigners: { read: true, manage: true },
+  /**
    * Fine-grained staff permission overrides — manage is owner-only.
    * Used by the class Permissions page under Manage.
    */
@@ -89,6 +94,7 @@ export const roles = defineRoles(permissions, {
     points: ["read", "manage"],
     expectations: ["read"],
     raz: ["read"],
+    assigners: ["read"],
   },
   teacher: {
     inherits: "assistant_teacher",
@@ -106,6 +112,7 @@ export const roles = defineRoles(permissions, {
     rewards: ["manage"],
     expectations: ["manage"],
     raz: ["read", "manage"],
+    assigners: ["read", "manage"],
   },
   owner: {
     inherits: "teacher",

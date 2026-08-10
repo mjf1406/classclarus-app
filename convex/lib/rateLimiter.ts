@@ -165,6 +165,11 @@ const rateLimits = {
   razSetInitialLevel: { kind: "token bucket" as const, rate: 120, period: HOUR, capacity: 40 },
   razRecordAssessment: { kind: "token bucket" as const, rate: 120, period: HOUR, capacity: 40 },
   razSetManualStatus: { kind: "token bucket" as const, rate: 120, period: HOUR, capacity: 40 },
+  seatLayoutCreate: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 20 },
+  seatLayoutRename: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 30 },
+  seatLayoutRemove: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 20 },
+  /** Debounced canvas saves — higher capacity for drag/resize. */
+  seatLayoutSaveItems: { kind: "token bucket" as const, rate: 240, period: HOUR, capacity: 80 },
 };
 
 export const rateLimiter = new RateLimiter(components.rateLimiter, rateLimits);

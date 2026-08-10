@@ -11,6 +11,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSeatLayout } from "@/hooks/assigners/useSeatLayout";
 import { useAssignment } from "@/hooks/assignments/useAssignment";
 import { useExpectation } from "@/hooks/expectations/useExpectation";
 import { useTask } from "@/hooks/tasks/useTask";
@@ -39,7 +40,9 @@ type BreadcrumbTarget =
   | { kind: "expectations" }
   | { kind: "expectationDetail"; expectationId: Id<"expectations"> }
   | { kind: "raz" }
-  | { kind: "razInitialLevels" };
+  | { kind: "razInitialLevels" }
+  | { kind: "assignersSeats" }
+  | { kind: "seatLayoutDetail"; layoutId: Id<"seatLayouts"> };
 
 function breadcrumbTarget(pathname: string, classId: string): BreadcrumbTarget {
   const base = `/class/${classId}`;
@@ -130,7 +133,50 @@ function breadcrumbTarget(pathname: string, classId: string): BreadcrumbTarget {
   if (pathname === `${base}/raz` || pathname === `${base}/raz/`) {
     return { kind: "raz" };
   }
+  if (pathname.startsWith(`${base}/assigners/seats/`)) {
+    const layoutId = pathname.slice(`${base}/assigners/seats/`.length).split("/")[0];
+    if (layoutId) {
+      return { kind: "seatLayoutDetail", layoutId: layoutId as Id<"seatLayouts"> };
+    }
+  }
+  if (pathname === `${base}/assigners/seats` || pathname === `${base}/assigners/seats/`) {
+    return { kind: "assignersSeats" };
+  }
   return { kind: "classesKey", key: "navDashboard" };
+}
+
+function SeatLayoutDetailBreadcrumbItems({
+  classId,
+  layoutId,
+  seatsLabel,
+}: {
+  classId: Id<"classes">;
+  layoutId: Id<"seatLayouts">;
+  seatsLabel: string;
+}) {
+  const { t: tAssigners } = useTranslation("assigners");
+  const { data: layout, isPending } = useSeatLayout(classId, layoutId);
+  const layoutLabel = isPending && !layout ? null : (layout?.name ?? tAssigners("layoutNotFound"));
+
+  return (
+    <>
+      <BreadcrumbItem className="min-w-0">
+        <BreadcrumbLink
+          render={<Link to="/class/$classId/assigners/seats" params={{ classId }} />}
+          className="block truncate"
+          title={seatsLabel}
+        >
+          {seatsLabel}
+        </BreadcrumbLink>
+      </BreadcrumbItem>
+      <BreadcrumbSeparator className="shrink-0" />
+      <BreadcrumbItem className="min-w-0">
+        <BreadcrumbPage className="block truncate" title={layoutLabel ?? undefined}>
+          {layoutLabel === null ? <Skeleton className="inline-block h-4 w-24" /> : layoutLabel}
+        </BreadcrumbPage>
+      </BreadcrumbItem>
+    </>
+  );
 }
 
 function TaskDetailBreadcrumbItems({
@@ -362,6 +408,7 @@ export function ClassBreadcrumb({ classDoc }: ClassBreadcrumbProps) {
   const { t: tRewards } = useTranslation("rewards");
   const { t: tExpectations } = useTranslation("expectations");
   const { t: tRaz } = useTranslation("raz");
+  const { t: tAssigners } = useTranslation("assigners");
   const { t: tCommon } = useTranslation("common");
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const target = breadcrumbTarget(pathname, classDoc._id);
@@ -390,7 +437,9 @@ export function ClassBreadcrumb({ classDoc }: ClassBreadcrumbProps) {
                     ? tExpectations("nav")
                     : target.kind === "raz" || target.kind === "razInitialLevels"
                       ? tRaz("nav")
-                      : t(target.key);
+                      : target.kind === "assignersSeats" || target.kind === "seatLayoutDetail"
+                        ? tAssigners("navSeats")
+                        : t(target.key);
 
   return (
     <Breadcrumb aria-label={t("breadcrumb")} className="min-w-0">
@@ -446,6 +495,12 @@ export function ClassBreadcrumb({ classDoc }: ClassBreadcrumbProps) {
           />
         ) : target.kind === "razInitialLevels" ? (
           <RazInitialLevelsBreadcrumbItems classId={classDoc._id} razLabel={pageLabel} />
+        ) : target.kind === "seatLayoutDetail" ? (
+          <SeatLayoutDetailBreadcrumbItems
+            classId={classDoc._id}
+            layoutId={target.layoutId}
+            seatsLabel={pageLabel}
+          />
         ) : (
           <BreadcrumbItem className="min-w-0">
             <BreadcrumbPage className="block truncate" title={pageLabel}>
