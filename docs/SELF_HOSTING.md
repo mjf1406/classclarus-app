@@ -111,7 +111,7 @@ Optional: set `APP_VERSION` (semver **without** a leading `v`) only to override.
 
 Data lives in the `convex-data` volume — keep that volume when rebuilding.
 
-The `deploy` service pushes Convex functions when the deploy marker changes. That marker includes a hash of `convex/` source, so backend code updates redeploy even when the app version is unchanged. If the SPA calls a function the backend does not know, rebuild/redeploy so `deploy` runs again:
+The `deploy` service pushes Convex functions when the deploy marker changes. That marker includes a hash of `convex/` source, so backend code updates redeploy even when the app version is unchanged. After deploy (or when the authz perms marker is missing/stale), bootstrap also runs `internal.authzBackfill.syncCatalogRoles` — the self-host equivalent of `vp run perms` / `perms-prod` — so role catalogs (and permission-gated sidebar items) stay current. If the SPA calls a function the backend does not know, rebuild/redeploy so `deploy` runs again:
 
 ```bash
 docker compose up -d --build deploy web

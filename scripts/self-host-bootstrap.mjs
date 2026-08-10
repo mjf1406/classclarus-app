@@ -1,6 +1,8 @@
 /**
  * Shared self-host bootstrap for Docker deploy and Electron first-run.
- * Waits for Convex, deploys functions, sets SELF_HOSTED / SITE_URL / JWT keys.
+ * Waits for Convex, deploys functions, syncs authz catalog roles (same as
+ * `vp run perms` / `perms-prod` after cloud deploy), then sets SELF_HOSTED /
+ * SITE_URL / JWT keys.
  *
  * Usage (CLI):
  *   bun scripts/self-host-bootstrap.mjs \
@@ -114,6 +116,7 @@ export async function runSelfHostBootstrap(options) {
   const dataDir = options.dataDir;
   const authKeysFile = options.authKeysFile ?? path.join(dataDir, "auth_keys.json");
   const markerFile = options.deployMarkerFile ?? path.join(dataDir, ".deploy_complete");
+  const permsMarkerFile = path.join(dataDir, ".authz_perms_complete");
   const appVersion = options.appVersion ?? "0";
   // Docker used to mark deploy complete with a sticky label ("docker" / "0.0.0"),
   // so rebuilt SPAs could call new functions the backend never received. Always
@@ -136,6 +139,25 @@ export async function runSelfHostBootstrap(options) {
       log(`Deploy marker matches ${deployKey}; skipping deploy.`);
     } else {
       log(`Deploy marker stale (was ${prev || "(empty)"}, want ${deployKey}); redeploying.`);
+    }
+  }
+
+  // Cloud deploy runs `vp run perms-prod` after `convex deploy`. Self-host must
+  // do the same, or new sidebar gates (e.g. raz:read) stay missing on existing roles.
+  // Also sync when an older bootstrap deployed without this step.
+  let needsPermsSync = needsDeploy;
+  if (!needsPermsSync) {
+    if (!existsSync(permsMarkerFile)) {
+      needsPermsSync = true;
+      log("Authz perms marker missing; syncing catalog roles.");
+    } else {
+      const prevPerms = (await readFile(permsMarkerFile, "utf8")).trim();
+      if (prevPerms !== deployKey) {
+        needsPermsSync = true;
+        log(
+          `Authz perms marker stale (was ${prevPerms || "(empty)"}, want ${deployKey}); syncing.`,
+        );
+      }
     }
   }
 
@@ -176,6 +198,19 @@ export async function runSelfHostBootstrap(options) {
       cwd: options.projectDir,
       env,
     });
+  }
+
+  if (needsPermsSync) {
+    log("Syncing authz catalog roles...");
+    await runCommand(
+      bunBin,
+      ["x", "convex", "run", "internal.authzBackfill.syncCatalogRoles", ...envFileArgs],
+      {
+        cwd: options.projectDir,
+        env,
+      },
+    );
+    await writeFile(permsMarkerFile, deployKey, "utf8");
   }
 
   log("Setting self-host Convex env...");

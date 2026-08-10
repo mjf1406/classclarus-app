@@ -10,6 +10,7 @@ import { permissionSnapshotForScope } from "./lib/permissionSnapshot.js";
  * Run once after deploying role-catalog updates (e.g. `announcements:manage` on teacher):
  * - Dev: `vp run perms` (or `bunx convex run internal.authzBackfill.syncCatalogRoles`)
  * - Prod: `vp run perms-prod` (or `bunx convex run --prod internal.authzBackfill.syncCatalogRoles`)
+ * - Self-host (Electron / Docker): `scripts/self-host-bootstrap.mjs` runs this after deploy
  */
 export const syncCatalogRoles = internalAction({
   args: {},

@@ -75,7 +75,7 @@ bun scripts/download-convex-backend.mjs
 bun run electron:dev
 ```
 
-`electron:dev` starts Vite on **`0.0.0.0:8088`** (LAN-reachable) and the Electron shell. The shell spawns `convex-local-backend` on **3210/3211**, runs the shared bootstrap (`scripts/self-host-bootstrap.mjs`), and exposes `window.classroom` IPC for LAN join URLs.
+`electron:dev` starts Vite on **`0.0.0.0:8088`** (LAN-reachable) and the Electron shell. The shell spawns `convex-local-backend` on **3210/3211**, runs the shared bootstrap (`scripts/self-host-bootstrap.mjs` — deploy + authz catalog sync, same idea as `vp run perms`), and exposes `window.classroom` IPC for LAN join URLs.
 
 Allow Windows Firewall prompts for Bun/Node on ports **8088**, **3210**, and **3211** (or add inbound rules). Guest Wi‑Fi / client isolation will still block phones.
 
