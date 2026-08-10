@@ -1,4 +1,4 @@
-import { useNavigate } from "@tanstack/react-router";
+import { useBlocker, useNavigate } from "@tanstack/react-router";
 import { Minus, Plus } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -8,6 +8,7 @@ import {
   type SeatLayoutPrintSelection,
 } from "@/components/assigners/SeatLayoutPrintCredenza";
 import { SeatLayoutToolbar } from "@/components/assigners/SeatLayoutToolbar";
+import { SeatLayoutUnsavedChangesDialog } from "@/components/assigners/SeatLayoutUnsavedChangesDialog";
 import { DeleteNamedCredenza } from "@/components/groups/DeleteNamedCredenza";
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/error-state";
@@ -42,6 +43,7 @@ import {
   nextPlacementOrigin,
   resizeSeatCanvas,
   topLeftPlacementOrigin,
+  listZoneNames,
   resolveTeamLabel,
   SEAT_CANVAS_GRID_SIZE,
   SEAT_ORIENTATION_DEGREES,
@@ -105,8 +107,21 @@ function applyTeamAssignment(
   return rest;
 }
 
+function applyZoneName(item: SeatLayoutItem, zoneName: string | undefined): SeatLayoutItem {
+  if (zoneName) {
+    return { ...item, zoneName };
+  }
+  const { zoneName: _removed, ...rest } = item;
+  void _removed;
+  return rest;
+}
+
 function cloneItems(items: Array<SeatLayoutItem>): Array<SeatLayoutItem> {
-  return items.map((item) => ({ ...item, teamAssignment: item.teamAssignment }));
+  return items.map((item) => ({
+    ...item,
+    teamAssignment: item.teamAssignment,
+    zoneName: item.zoneName,
+  }));
 }
 
 const PAN_VISIBLE_MARGIN = 48;
@@ -290,32 +305,45 @@ export function SeatLayoutEditorPage({ classId, layoutId }: SeatLayoutEditorPage
     setDirty(true);
   };
 
-  const handleSave = () => {
-    if (!canManage || !dirty || saveItems.isPending) return;
+  const persistLayout = async (): Promise<boolean> => {
+    if (!canManage || !dirty || saveItems.isPending) return false;
     const latest = latestRef.current;
-    saveItems.mutate(
-      {
+    try {
+      await saveItems.mutateAsync({
         classId,
         layoutId,
         canvasWidth: latest.canvasWidth,
         canvasHeight: latest.canvasHeight,
         nextDeskNumber: latest.nextDeskNumber,
         items: latest.items,
-      },
-      {
-        onSuccess: () => {
-          layoutSnapshotRef.current = cloneSeatSnapshot({
-            items: latest.items,
-            nextDeskNumber: latest.nextDeskNumber,
-            canvasWidth: latest.canvasWidth,
-            canvasHeight: latest.canvasHeight,
-          });
-          resetHistory();
-          setDirty(false);
-        },
-      },
-    );
+      });
+      layoutSnapshotRef.current = cloneSeatSnapshot({
+        items: latest.items,
+        nextDeskNumber: latest.nextDeskNumber,
+        canvasWidth: latest.canvasWidth,
+        canvasHeight: latest.canvasHeight,
+      });
+      resetHistory();
+      setDirty(false);
+      return true;
+    } catch {
+      return false;
+    }
   };
+
+  const handleSave = () => {
+    void persistLayout();
+  };
+
+  const dirtyNavRef = useRef(false);
+  dirtyNavRef.current = canManage && dirty;
+  const shouldBlockNavigation = useCallback(() => dirtyNavRef.current, []);
+  const blocker = useBlocker({
+    shouldBlockFn: shouldBlockNavigation,
+    withResolver: true,
+    enableBeforeUnload: () => dirtyNavRef.current,
+    disabled: !canManage,
+  });
 
   const updateItems = (
     updater: (prev: Array<SeatLayoutItem>) => Array<SeatLayoutItem>,
@@ -755,10 +783,12 @@ export function SeatLayoutEditorPage({ classId, layoutId }: SeatLayoutEditorPage
     try {
       const printItems = items.map((item) => {
         const team = resolveTeamLabel(item.teamAssignment, groups);
+        const zoneName = item.zoneName?.trim();
         return {
           ...item,
           label: seatItemDisplayLabel(item, itemDefaults),
           teamLabel: team && !team.stale ? team.label : team?.stale ? t("teamStale") : undefined,
+          zoneLabel: zoneName || undefined,
         };
       });
       const orientationLabels = {
@@ -830,7 +860,7 @@ export function SeatLayoutEditorPage({ classId, layoutId }: SeatLayoutEditorPage
           description={t("layoutNotFoundDescription")}
           onRetry={() => {
             void navigate({
-              to: "/class/$classId/assigners/seats",
+              to: "/class/$classId/assigners/seats/layouts",
               params: { classId },
             });
           }}
@@ -1118,6 +1148,11 @@ export function SeatLayoutEditorPage({ classId, layoutId }: SeatLayoutEditorPage
                                 {team.stale ? t("teamStale") : team.label}
                               </span>
                             ) : null}
+                            {item.kind === "desk" && item.zoneName?.trim() ? (
+                              <span className="line-clamp-1 text-[10px] text-muted-foreground">
+                                {item.zoneName.trim()}
+                              </span>
+                            ) : null}
                           </div>
                         )}
                         {canManage && soleSelected?.id === item.id && editingId !== item.id
@@ -1219,6 +1254,13 @@ export function SeatLayoutEditorPage({ classId, layoutId }: SeatLayoutEditorPage
                   ),
                 );
               }}
+              zoneSuggestions={listZoneNames(items)}
+              onZoneNameChange={(zoneName) => {
+                const deskIds = new Set(selectedDesks.map((desk) => desk.id));
+                updateItems((prev) =>
+                  prev.map((item) => (deskIds.has(item.id) ? applyZoneName(item, zoneName) : item)),
+                );
+              }}
               hasSelection={selectedItems.length > 0}
               onDeleteSelected={deleteSelectedItems}
               canClear={items.length > 0}
@@ -1233,6 +1275,25 @@ export function SeatLayoutEditorPage({ classId, layoutId }: SeatLayoutEditorPage
         onOpenChange={setPrintOpen}
         currentOrientation={orientation}
         onConfirm={handlePrint}
+      />
+
+      <SeatLayoutUnsavedChangesDialog
+        open={blocker.status === "blocked"}
+        saving={saveItems.isPending}
+        onCancel={() => {
+          blocker.reset?.();
+        }}
+        onDiscard={() => {
+          blocker.proceed?.();
+        }}
+        onSaveAndLeave={() => {
+          void (async () => {
+            const saved = await persistLayout();
+            if (saved) {
+              blocker.proceed?.();
+            }
+          })();
+        }}
       />
 
       {canManage ? (

@@ -6,26 +6,49 @@ import {
   clampDeskGridDims,
   CANVAS_RESIZE_STEP,
   commonTeamAssignment,
+  commonZoneName,
   DEFAULT_CANVAS_HEIGHT,
   DEFAULT_CANVAS_WIDTH,
   DEFAULT_DESK_HEIGHT,
   DEFAULT_DESK_WIDTH,
   deskGridBlockSize,
+  listZoneNames,
   MAX_CANVAS_SIZE,
   MAX_DESKS_PER_ADD,
   MIN_CANVAS_SIZE,
   nextPlacementOrigin,
+  nextSeatLayoutSortState,
   resizeSeatCanvas,
   SEAT_CANVAS_GRID_SIZE,
+  sortSeatLayouts,
   topLeftPlacementOrigin,
   seatItemDisplayLabel,
   teamAssignmentsEqual,
+  zoneSeatCounts,
   type SeatLayoutItem,
+  type SeatLayoutListItem,
 } from "@/lib/assigners/seatLayouts";
 import type { Id } from "../../../convex/_generated/dataModel";
 
 function rectItem(id: string, x: number, y: number, width = 80, height = 60): SeatLayoutItem {
   return { id, kind: "rect", label: "", x, y, width, height };
+}
+
+function deskItem(
+  id: string,
+  extras: Partial<SeatLayoutItem> & { deskNumber?: number } = {},
+): SeatLayoutItem {
+  return {
+    id,
+    kind: "desk",
+    label: "",
+    deskNumber: extras.deskNumber ?? 1,
+    x: extras.x ?? 0,
+    y: extras.y ?? 0,
+    width: extras.width ?? DEFAULT_DESK_WIDTH,
+    height: extras.height ?? DEFAULT_DESK_HEIGHT,
+    ...extras,
+  };
 }
 
 const defaults = {
@@ -89,6 +112,48 @@ describe("commonTeamAssignment", () => {
         { mode: "byName", teamName: "red" },
       ),
     ).toBe(true);
+  });
+});
+
+describe("commonZoneName", () => {
+  test("returns shared zone name", () => {
+    expect(commonZoneName([{ zoneName: "Front" }, { zoneName: " Front " }])).toBe("Front");
+  });
+
+  test("returns undefined when mixed, empty, or unset", () => {
+    expect(commonZoneName([])).toBeUndefined();
+    expect(commonZoneName([{ zoneName: "A" }, { zoneName: "B" }])).toBeUndefined();
+    expect(commonZoneName([{ zoneName: "A" }, { zoneName: undefined }])).toBeUndefined();
+    expect(commonZoneName([{ zoneName: undefined }, { zoneName: "  " }])).toBeUndefined();
+  });
+});
+
+describe("listZoneNames", () => {
+  test("returns unique sorted names from desks only", () => {
+    expect(
+      listZoneNames([
+        deskItem("1", { zoneName: "Back", deskNumber: 1 }),
+        deskItem("2", { zoneName: "Front", deskNumber: 2 }),
+        deskItem("3", { zoneName: "Back", deskNumber: 3 }),
+        deskItem("4", { deskNumber: 4 }),
+        rectItem("r", 0, 0),
+        { ...rectItem("r2", 0, 0), zoneName: "Ignored" },
+      ]),
+    ).toEqual(["Back", "Front"]);
+  });
+});
+
+describe("zoneSeatCounts", () => {
+  test("counts desks per zone and omits unzoned", () => {
+    expect(
+      zoneSeatCounts([
+        deskItem("1", { zoneName: "A", deskNumber: 1 }),
+        deskItem("2", { zoneName: "A", deskNumber: 2 }),
+        deskItem("3", { zoneName: "B", deskNumber: 3 }),
+        deskItem("4", { deskNumber: 4 }),
+        rectItem("r", 0, 0),
+      ]),
+    ).toEqual({ A: 2, B: 1 });
   });
 });
 
@@ -331,6 +396,73 @@ describe("buildDeskGrid", () => {
     expect(deskGridBlockSize(4, 1)).toEqual({
       width: 4 * DEFAULT_DESK_WIDTH + 3 * SEAT_CANVAS_GRID_SIZE,
       height: DEFAULT_DESK_HEIGHT,
+    });
+  });
+});
+
+function listItem(
+  overrides: Pick<SeatLayoutListItem, "name" | "_creationTime" | "updatedAt"> &
+    Partial<SeatLayoutListItem>,
+): SeatLayoutListItem {
+  return {
+    _id: "layout1" as Id<"seatLayouts">,
+    deskCount: 0,
+    itemCount: 0,
+    ...overrides,
+  };
+}
+
+describe("sortSeatLayouts", () => {
+  const layouts = [
+    listItem({
+      _id: "a" as Id<"seatLayouts">,
+      name: "Beta",
+      _creationTime: 100,
+      updatedAt: 300,
+    }),
+    listItem({
+      _id: "b" as Id<"seatLayouts">,
+      name: "Alpha",
+      _creationTime: 200,
+      updatedAt: 100,
+    }),
+    listItem({
+      _id: "c" as Id<"seatLayouts">,
+      name: "alpha",
+      _creationTime: 150,
+      updatedAt: 200,
+    }),
+  ];
+
+  test("sorts by name ascending case-insensitively", () => {
+    expect(sortSeatLayouts(layouts, "name", "asc").map((l) => l._id)).toEqual(["b", "c", "a"]);
+  });
+
+  test("sorts by updated descending", () => {
+    expect(sortSeatLayouts(layouts, "updated", "desc").map((l) => l._id)).toEqual(["a", "c", "b"]);
+  });
+
+  test("sorts by created ascending", () => {
+    expect(sortSeatLayouts(layouts, "created", "asc").map((l) => l._id)).toEqual(["a", "c", "b"]);
+  });
+});
+
+describe("nextSeatLayoutSortState", () => {
+  test("flips direction when the same key is selected", () => {
+    expect(nextSeatLayoutSortState("updated", "desc", "updated")).toEqual({
+      sortKey: "updated",
+      sortDirection: "asc",
+    });
+  });
+
+  test("defaults name to asc and dates to desc", () => {
+    expect(nextSeatLayoutSortState("updated", "desc", "name")).toEqual({
+      sortKey: "name",
+      sortDirection: "asc",
+    });
+    expect(nextSeatLayoutSortState("name", "asc", "created")).toEqual({
+      sortKey: "created",
+      sortDirection: "desc",
     });
   });
 });

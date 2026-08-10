@@ -33,6 +33,7 @@ const seatLayoutItemValidator = v.object({
   label: v.string(),
   deskNumber: v.optional(v.number()),
   teamAssignment: v.optional(teamAssignmentValidator),
+  zoneName: v.optional(v.string()),
   x: v.number(),
   y: v.number(),
   width: v.number(),
@@ -87,6 +88,16 @@ function normalizeCanvasSize(value: number, field: string): number {
   return Math.round(value);
 }
 
+function normalizeZoneName(zoneName: string | undefined): string | undefined {
+  if (zoneName === undefined) return undefined;
+  const trimmed = zoneName.trim();
+  if (!trimmed) return undefined;
+  if (trimmed.length > MAX_ITEM_LABEL_LENGTH) {
+    throw new Error(`Zone name must be at most ${MAX_ITEM_LABEL_LENGTH} characters`);
+  }
+  return trimmed;
+}
+
 function normalizeItems(
   items: Array<{
     id: string;
@@ -96,6 +107,7 @@ function normalizeItems(
     teamAssignment?:
       | { mode: "single"; groupId: Id<"groups">; teamId: Id<"teams"> }
       | { mode: "byName"; teamName: string };
+    zoneName?: string;
     x: number;
     y: number;
     width: number;
@@ -168,12 +180,15 @@ function normalizeItems(
       }
     }
 
+    const zoneName = item.kind === "desk" ? normalizeZoneName(item.zoneName) : undefined;
+
     return {
       id,
       kind: item.kind,
       label: normalizeLabel(item.label),
       ...(deskNumber !== undefined ? { deskNumber } : {}),
       ...(teamAssignment !== undefined ? { teamAssignment } : {}),
+      ...(zoneName !== undefined ? { zoneName } : {}),
       x: Math.round(item.x),
       y: Math.round(item.y),
       width: Math.round(item.width),
@@ -207,6 +222,33 @@ export const list = classQuery({
         itemCount: doc.items.length,
       }))
       .sort((a, b) => b.updatedAt - a.updatedAt || a.name.localeCompare(b.name));
+  },
+});
+
+/**
+ * Unique trimmed zone names from all seat layouts in the class.
+ */
+export const listZoneNames = classQuery({
+  args: {},
+  returns: v.array(v.string()),
+  handler: async (ctx) => {
+    await ctx.require("assigners:read");
+    const classId = ctx.classDoc._id;
+    // eslint-disable-next-line @convex-dev/no-collect-in-query -- class-bounded layout list
+    const docs = await ctx.db
+      .query("seatLayouts")
+      .withIndex("by_class", (q) => q.eq("classId", classId))
+      .collect();
+
+    const names = new Set<string>();
+    for (const doc of docs) {
+      for (const item of doc.items) {
+        if (item.kind !== "desk") continue;
+        const zoneName = normalizeZoneName(item.zoneName);
+        if (zoneName) names.add(zoneName);
+      }
+    }
+    return [...names].sort((a, b) => a.localeCompare(b));
   },
 });
 

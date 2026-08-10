@@ -3,18 +3,19 @@ import {
   Eraser,
   Grid3x3,
   LayoutGrid,
+  MapPin,
   Presentation,
   Printer,
   Redo2,
   Save,
-  Scan,
   Square,
+  Telescope,
   Trash2,
   Type,
   Undo2,
   UsersRound,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
@@ -47,6 +48,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   commonTeamAssignment,
+  commonZoneName,
   MAX_DESK_GRID_COLS,
   MAX_DESK_GRID_ROWS,
   SEAT_ORIENTATION_LABEL_KEYS,
@@ -92,6 +94,8 @@ type SeatLayoutToolbarProps = {
   groups: Array<GroupOption>;
   sharedNames: Array<SharedTeamName>;
   onTeamAssignmentChange: (teamAssignment: SeatTeamAssignment | undefined) => void;
+  zoneSuggestions: Array<string>;
+  onZoneNameChange: (zoneName: string | undefined) => void;
   hasSelection: boolean;
   onDeleteSelected: () => void;
   canClear: boolean;
@@ -190,6 +194,8 @@ export function SeatLayoutToolbar({
   groups,
   sharedNames,
   onTeamAssignmentChange,
+  zoneSuggestions,
+  onZoneNameChange,
   hasSelection,
   onDeleteSelected,
   canClear,
@@ -199,6 +205,7 @@ export function SeatLayoutToolbar({
   const { t: tCommon } = useTranslation("common");
   const [deskGridOpen, setDeskGridOpen] = useState(false);
   const [teamAssignOpen, setTeamAssignOpen] = useState(false);
+  const [zoneAssignOpen, setZoneAssignOpen] = useState(false);
 
   const orientationLabel = t(SEAT_ORIENTATION_LABEL_KEYS[orientation]);
   const snapHint = snapToGrid ? t("snapHintGrid") : t("snapHint");
@@ -296,43 +303,81 @@ export function SeatLayoutToolbar({
             <>
               <ToolbarSeparator />
               {selectedDesks.length > 0 ? (
-                <Popover open={teamAssignOpen} onOpenChange={setTeamAssignOpen}>
-                  <Tooltip>
-                    <TooltipTrigger render={<span className="inline-flex" />}>
-                      <PopoverTrigger
-                        render={<Button type="button" size="icon" variant="outline" />}
-                      >
-                        <UsersRound />
-                        <span className="sr-only">
-                          {selectedDesks.length > 1
-                            ? t("teamAssignMulti", { count: selectedDesks.length })
-                            : t("teamAssign")}
-                        </span>
-                      </PopoverTrigger>
-                    </TooltipTrigger>
-                    <TooltipContent side="top">
-                      {selectedDesks.length > 1
-                        ? t("teamAssignMulti", { count: selectedDesks.length })
-                        : t("teamAssign")}
-                    </TooltipContent>
-                  </Tooltip>
-                  <PopoverContent side="top" align="start" className="w-72 gap-3 p-3">
-                    <PopoverHeader className="gap-1">
-                      <PopoverTitle className="text-sm">
+                <>
+                  <Popover open={teamAssignOpen} onOpenChange={setTeamAssignOpen}>
+                    <Tooltip>
+                      <TooltipTrigger render={<span className="inline-flex" />}>
+                        <PopoverTrigger
+                          render={<Button type="button" size="icon" variant="outline" />}
+                        >
+                          <UsersRound />
+                          <span className="sr-only">
+                            {selectedDesks.length > 1
+                              ? t("teamAssignMulti", { count: selectedDesks.length })
+                              : t("teamAssign")}
+                          </span>
+                        </PopoverTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
                         {selectedDesks.length > 1
                           ? t("teamAssignMulti", { count: selectedDesks.length })
                           : t("teamAssign")}
-                      </PopoverTitle>
-                    </PopoverHeader>
-                    <TeamAssignControls
-                      key={selectedDesks.map((desk) => desk.id).join(",")}
-                      groups={groups}
-                      sharedNames={sharedNames}
-                      assignment={commonTeamAssignment(selectedDesks)}
-                      onChange={onTeamAssignmentChange}
-                    />
-                  </PopoverContent>
-                </Popover>
+                      </TooltipContent>
+                    </Tooltip>
+                    <PopoverContent side="top" align="start" className="w-72 gap-3 p-3">
+                      <PopoverHeader className="gap-1">
+                        <PopoverTitle className="text-sm">
+                          {selectedDesks.length > 1
+                            ? t("teamAssignMulti", { count: selectedDesks.length })
+                            : t("teamAssign")}
+                        </PopoverTitle>
+                      </PopoverHeader>
+                      <TeamAssignControls
+                        key={selectedDesks.map((desk) => desk.id).join(",")}
+                        groups={groups}
+                        sharedNames={sharedNames}
+                        assignment={commonTeamAssignment(selectedDesks)}
+                        onChange={onTeamAssignmentChange}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <Popover open={zoneAssignOpen} onOpenChange={setZoneAssignOpen}>
+                    <Tooltip>
+                      <TooltipTrigger render={<span className="inline-flex" />}>
+                        <PopoverTrigger
+                          render={<Button type="button" size="icon" variant="outline" />}
+                        >
+                          <MapPin />
+                          <span className="sr-only">
+                            {selectedDesks.length > 1
+                              ? t("zoneAssignMulti", { count: selectedDesks.length })
+                              : t("zoneAssign")}
+                          </span>
+                        </PopoverTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
+                        {selectedDesks.length > 1
+                          ? t("zoneAssignMulti", { count: selectedDesks.length })
+                          : t("zoneAssign")}
+                      </TooltipContent>
+                    </Tooltip>
+                    <PopoverContent side="top" align="start" className="w-72 gap-3 p-3">
+                      <PopoverHeader className="gap-1">
+                        <PopoverTitle className="text-sm">
+                          {selectedDesks.length > 1
+                            ? t("zoneAssignMulti", { count: selectedDesks.length })
+                            : t("zoneAssign")}
+                        </PopoverTitle>
+                      </PopoverHeader>
+                      <ZoneAssignControls
+                        key={selectedDesks.map((desk) => desk.id).join(",")}
+                        zoneName={commonZoneName(selectedDesks)}
+                        suggestions={zoneSuggestions}
+                        onChange={onZoneNameChange}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </>
               ) : null}
               {hasSelection ? (
                 <ToolbarIconButton
@@ -382,7 +427,7 @@ export function SeatLayoutToolbar({
         <Tooltip>
           <TooltipTrigger render={<span className="inline-flex" />}>
             <DropdownMenuTrigger render={<Button type="button" size="icon" variant="outline" />}>
-              <Scan />
+              <Telescope />
               <span className="sr-only">
                 {t("orientationLabel")}: {orientationLabel}
               </span>
@@ -610,6 +655,73 @@ function TeamAssignControls({
           {t("teamAssignClear")}
         </Button>
       ) : null}
+    </div>
+  );
+}
+
+function ZoneAssignControls({
+  zoneName,
+  suggestions,
+  onChange,
+}: {
+  zoneName: string | undefined;
+  suggestions: Array<string>;
+  onChange: (next: string | undefined) => void;
+}) {
+  const { t } = useTranslation("assigners");
+  const listId = useId();
+  const [draft, setDraft] = useState(zoneName ?? "");
+
+  return (
+    <div className="flex flex-col gap-2">
+      <Label htmlFor={listId}>{t("zoneNameLabel")}</Label>
+      <Input
+        id={listId}
+        list={`${listId}-options`}
+        value={draft}
+        maxLength={80}
+        placeholder={t("zoneNameLabel")}
+        onChange={(event) => setDraft(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            const trimmed = draft.trim();
+            onChange(trimmed || undefined);
+          }
+        }}
+      />
+      {suggestions.length > 0 ? (
+        <datalist id={`${listId}-options`}>
+          {suggestions.map((name) => (
+            <option key={name} value={name} />
+          ))}
+        </datalist>
+      ) : null}
+      <p className="text-xs text-muted-foreground">{t("zoneHint")}</p>
+      <div className="flex flex-wrap gap-2">
+        <Button
+          type="button"
+          size="sm"
+          onClick={() => {
+            const trimmed = draft.trim();
+            onChange(trimmed || undefined);
+          }}
+        >
+          {t("zoneAssignApply")}
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          disabled={!zoneName && !draft.trim()}
+          onClick={() => {
+            setDraft("");
+            onChange(undefined);
+          }}
+        >
+          {t("zoneAssignClear")}
+        </Button>
+      </div>
     </div>
   );
 }

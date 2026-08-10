@@ -170,6 +170,9 @@ const rateLimits = {
   seatLayoutRemove: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 20 },
   /** Debounced canvas saves — higher capacity for drag/resize. */
   seatLayoutSaveItems: { kind: "token bucket" as const, rate: 240, period: HOUR, capacity: 80 },
+  seatConstraintCreate: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 20 },
+  seatConstraintUpdate: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 30 },
+  seatConstraintRemove: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 20 },
 };
 
 export const rateLimiter = new RateLimiter(components.rateLimiter, rateLimits);

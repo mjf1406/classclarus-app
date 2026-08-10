@@ -133,13 +133,20 @@ function breadcrumbTarget(pathname: string, classId: string): BreadcrumbTarget {
   if (pathname === `${base}/raz` || pathname === `${base}/raz/`) {
     return { kind: "raz" };
   }
-  if (pathname.startsWith(`${base}/assigners/seats/`)) {
-    const layoutId = pathname.slice(`${base}/assigners/seats/`.length).split("/")[0];
+  if (pathname.startsWith(`${base}/assigners/seats/layouts/`)) {
+    const layoutId = pathname.slice(`${base}/assigners/seats/layouts/`.length).split("/")[0];
     if (layoutId) {
       return { kind: "seatLayoutDetail", layoutId: layoutId as Id<"seatLayouts"> };
     }
   }
-  if (pathname === `${base}/assigners/seats` || pathname === `${base}/assigners/seats/`) {
+  if (
+    pathname === `${base}/assigners/seats` ||
+    pathname === `${base}/assigners/seats/` ||
+    pathname === `${base}/assigners/seats/layouts` ||
+    pathname === `${base}/assigners/seats/layouts/` ||
+    pathname === `${base}/assigners/seats/constraints` ||
+    pathname === `${base}/assigners/seats/constraints/`
+  ) {
     return { kind: "assignersSeats" };
   }
   return { kind: "classesKey", key: "navDashboard" };
@@ -162,7 +169,7 @@ function SeatLayoutDetailBreadcrumbItems({
     <>
       <BreadcrumbItem className="min-w-0">
         <BreadcrumbLink
-          render={<Link to="/class/$classId/assigners/seats" params={{ classId }} />}
+          render={<Link to="/class/$classId/assigners/seats/layouts" params={{ classId }} />}
           className="block truncate"
           title={seatsLabel}
         >

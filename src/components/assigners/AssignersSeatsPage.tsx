@@ -1,18 +1,14 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { MoreVertical, Plus, RockingChair } from "lucide-react";
-import { useState } from "react";
+import { Pencil, Plus, RockingChair, Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { AssignersSeatsTabs } from "@/components/assigners/AssignersSeatsTabs";
 import { SeatLayoutNameCredenza } from "@/components/assigners/SeatLayoutNameCredenza";
 import { DeleteNamedCredenza } from "@/components/groups/DeleteNamedCredenza";
+import { ActionMenu, type ActionMenuItem } from "@/components/ui/action-menu";
 import { Button } from "@/components/ui/button";
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Empty,
   EmptyContent,
@@ -23,12 +19,20 @@ import {
 } from "@/components/ui/empty";
 import { ErrorState } from "@/components/ui/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useCreateSeatLayout } from "@/hooks/assigners/useCreateSeatLayout";
 import { useRemoveSeatLayout } from "@/hooks/assigners/useRemoveSeatLayout";
 import { useRenameSeatLayout } from "@/hooks/assigners/useRenameSeatLayout";
 import { useSeatLayouts } from "@/hooks/assigners/useSeatLayouts";
 import { useCan } from "@/hooks/permissions/useCan";
-import type { SeatLayoutListItem } from "@/lib/assigners/seatLayouts";
+import { formatLocalizedDateTime } from "@/i18n/formatDate";
+import {
+  nextSeatLayoutSortState,
+  sortSeatLayouts,
+  type SeatLayoutListItem,
+  type SeatLayoutSortDirection,
+  type SeatLayoutSortKey,
+} from "@/lib/assigners/seatLayouts";
 import type { Id } from "../../../convex/_generated/dataModel";
 
 const SEATS_GRID_CLASS = "grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3";
@@ -36,6 +40,20 @@ const SEATS_GRID_CLASS = "grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3";
 type AssignersSeatsPageProps = {
   classId: Id<"classes">;
 };
+
+function sortLabel(
+  key: SeatLayoutSortKey,
+  activeKey: SeatLayoutSortKey,
+  direction: SeatLayoutSortDirection,
+  labels: Record<SeatLayoutSortKey, string>,
+): string {
+  const base = labels[key];
+  if (key !== activeKey) return base;
+  if (key === "name") {
+    return `${base} ${direction === "asc" ? "↓" : "↑"}`;
+  }
+  return `${base} ${direction === "asc" ? "↑" : "↓"}`;
+}
 
 export function AssignersSeatsPage({ classId }: AssignersSeatsPageProps) {
   const { t } = useTranslation("assigners");
@@ -49,12 +67,25 @@ export function AssignersSeatsPage({ classId }: AssignersSeatsPageProps) {
   const [createOpen, setCreateOpen] = useState(false);
   const [renaming, setRenaming] = useState<SeatLayoutListItem | null>(null);
   const [deleting, setDeleting] = useState<SeatLayoutListItem | null>(null);
+  const [sortKey, setSortKey] = useState<SeatLayoutSortKey>("updated");
+  const [sortDirection, setSortDirection] = useState<SeatLayoutSortDirection>("desc");
+
+  const sorted = useMemo(
+    () => (data ? sortSeatLayouts(data, sortKey, sortDirection) : []),
+    [data, sortDirection, sortKey],
+  );
+
+  const sortLabels: Record<SeatLayoutSortKey, string> = {
+    name: t("sortName"),
+    created: t("sortCreated"),
+    updated: t("sortUpdated"),
+  };
 
   return (
     <div className="flex w-full flex-col gap-4 px-4 py-8 sm:px-8">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t("seatsTitle")}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t("navSeats")}</h1>
           <p className="hidden text-muted-foreground sm:block">{t("seatsDescription")}</p>
         </div>
         {canManage ? (
@@ -65,10 +96,35 @@ export function AssignersSeatsPage({ classId }: AssignersSeatsPageProps) {
         ) : null}
       </div>
 
+      <AssignersSeatsTabs classId={classId} value="layouts" />
+
+      {!isPending && !isError && data && data.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <ToggleGroup
+            variant="outline"
+            spacing={0}
+            value={[sortKey]}
+            onValueChange={(values) => {
+              const next = values[0] as SeatLayoutSortKey | undefined;
+              const state = nextSeatLayoutSortState(sortKey, sortDirection, next ?? sortKey);
+              setSortKey(state.sortKey);
+              setSortDirection(state.sortDirection);
+            }}
+            className="flex-wrap"
+          >
+            {(["name", "created", "updated"] as const).map((key) => (
+              <ToggleGroupItem key={key} value={key} className="px-3">
+                {sortLabel(key, sortKey, sortDirection, sortLabels)}
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
+        </div>
+      ) : null}
+
       {isPending ? (
         <div className={SEATS_GRID_CLASS}>
           {Array.from({ length: 3 }, (_, index) => (
-            <Skeleton key={index} className="h-28 w-full rounded-2xl" />
+            <Skeleton key={index} className="h-32 w-full rounded-2xl" />
           ))}
         </div>
       ) : null}
@@ -101,53 +157,58 @@ export function AssignersSeatsPage({ classId }: AssignersSeatsPageProps) {
         </Empty>
       ) : null}
 
-      {!isPending && !isError && data && data.length > 0 ? (
+      {!isPending && !isError && sorted.length > 0 ? (
         <ul className={SEATS_GRID_CLASS}>
-          {data.map((layout) => (
-            <li key={layout._id}>
-              <Card size="sm" className="relative transition-colors hover:bg-accent/40">
-                <Link
-                  to="/class/$classId/assigners/seats/$layoutId"
-                  params={{ classId, layoutId: layout._id }}
-                  className="absolute inset-0 z-0 rounded-[inherit] outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  aria-label={t("openLayout", { name: layout.name })}
-                />
-                <CardHeader className="relative z-10 flex flex-row items-start gap-3 pointer-events-none">
-                  <div className="min-w-0 flex-1">
-                    <CardTitle className="truncate text-base font-semibold">
-                      {layout.name}
-                    </CardTitle>
-                    <CardDescription className="mt-1">
-                      {t("deskCount", { count: layout.deskCount })}
-                    </CardDescription>
-                  </div>
-                  {canManage ? (
-                    <div className="shrink-0 pointer-events-auto">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger
-                          render={<Button type="button" variant="ghost" size="icon-sm" />}
-                        >
-                          <MoreVertical className="size-4" />
-                          <span className="sr-only">{t("layoutActions")}</span>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => setRenaming(layout)}>
-                            {t("renameLayout")}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            variant="destructive"
-                            onClick={() => setDeleting(layout)}
-                          >
-                            {t("deleteLayout")}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+          {sorted.map((layout) => {
+            const menuItems: Array<ActionMenuItem> = [
+              {
+                id: "edit",
+                label: t("editAction"),
+                icon: <Pencil />,
+                permission: "assigners:manage",
+                group: "manage",
+                onSelect: () => setRenaming(layout),
+              },
+              {
+                id: "delete",
+                label: t("deleteLayout"),
+                icon: <Trash2 />,
+                permission: "assigners:manage",
+                variant: "destructive",
+                group: "danger",
+                onSelect: () => setDeleting(layout),
+              },
+            ];
+
+            return (
+              <li key={layout._id}>
+                <Card size="sm" className="relative transition-colors hover:bg-accent/40">
+                  <Link
+                    to="/class/$classId/assigners/seats/layouts/$layoutId"
+                    params={{ classId, layoutId: layout._id }}
+                    className="absolute inset-0 z-0 rounded-[inherit] outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    aria-label={t("openLayout", { name: layout.name })}
+                  />
+                  <CardHeader className="relative z-10 flex flex-row items-start gap-3 pointer-events-none">
+                    <div className="min-w-0 flex-1">
+                      <CardTitle className="truncate text-base font-semibold">
+                        {layout.name}
+                      </CardTitle>
+                      <CardDescription className="mt-1">
+                        {t("deskCount", { count: layout.deskCount })}
+                      </CardDescription>
                     </div>
-                  ) : null}
-                </CardHeader>
-              </Card>
-            </li>
-          ))}
+                    <div className="shrink-0 pointer-events-auto">
+                      <ActionMenu items={menuItems} label={t("layoutActions")} />
+                    </div>
+                  </CardHeader>
+                  <CardFooter className="relative z-10 border-t text-xs text-muted-foreground pointer-events-none">
+                    {t("updatedAt", { date: formatLocalizedDateTime(layout.updatedAt) })}
+                  </CardFooter>
+                </Card>
+              </li>
+            );
+          })}
         </ul>
       ) : null}
 
@@ -161,7 +222,7 @@ export function AssignersSeatsPage({ classId }: AssignersSeatsPageProps) {
             onSubmit={async (name) => {
               const layoutId = await createLayout.mutateAsync({ classId, name });
               await navigate({
-                to: "/class/$classId/assigners/seats/$layoutId",
+                to: "/class/$classId/assigners/seats/layouts/$layoutId",
                 params: { classId, layoutId },
               });
             }}

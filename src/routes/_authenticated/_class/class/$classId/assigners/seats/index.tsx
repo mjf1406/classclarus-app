@@ -1,18 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
-
-import { AssignersSeatsPage } from "@/components/assigners/AssignersSeatsPage";
-import { RequirePermission } from "@/components/permissions/RequirePermission";
-import type { Id } from "../../../../../../../../convex/_generated/dataModel";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/_class/class/$classId/assigners/seats/")({
-  component: function ClassAssignersSeatsPage() {
-    const { classId } = Route.useParams();
-    const typedClassId = classId as Id<"classes">;
-
-    return (
-      <RequirePermission permission="assigners:read">
-        <AssignersSeatsPage classId={typedClassId} />
-      </RequirePermission>
-    );
+  beforeLoad: ({ params }) => {
+    throw redirect({
+      to: "/class/$classId/assigners/seats/layouts",
+      params: { classId: params.classId },
+    });
   },
 });

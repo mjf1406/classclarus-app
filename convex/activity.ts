@@ -80,8 +80,6 @@ export const logAccess = classMutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    await rateLimiter.limit(ctx, "activityLogAccess", { key: ctx.userId, throws: true });
-
     const resourceType = args.resourceType.trim().slice(0, 64);
     const summary = args.summary.trim().slice(0, 500);
     if (!resourceType || !summary) {
@@ -98,6 +96,14 @@ export const logAccess = classMutation({
       resourceId,
     });
     if (duplicate) {
+      return null;
+    }
+
+    const { ok } = await rateLimiter.limit(ctx, "activityLogAccess", {
+      key: ctx.userId,
+      throws: false,
+    });
+    if (!ok) {
       return null;
     }
 

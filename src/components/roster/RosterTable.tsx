@@ -120,6 +120,36 @@ function rosterSortableHeader(label: string, column: Column<StudentRosterEntry, 
   );
 }
 
+function rosterHeaderWithSearch(
+  label: string,
+  column: Column<StudentRosterEntry, unknown>,
+  filter: RosterNameColumnFilter | undefined,
+  tableEditMode: boolean,
+) {
+  const title = tableEditMode ? (
+    <span className="text-sm font-medium">{label}</span>
+  ) : (
+    rosterSortableHeader(label, column)
+  );
+  if (!filter) return title;
+  return (
+    <div className="flex min-w-36 flex-col gap-1 py-1">
+      {title}
+      <Input
+        value={filter.value}
+        onChange={(event) => filter.onChange(event.target.value)}
+        placeholder={filter.placeholder}
+        aria-label={filter["aria-label"]}
+        autoComplete="off"
+        spellCheck={false}
+        className="h-8 rounded-lg"
+        onClick={(event) => event.stopPropagation()}
+        onKeyDown={(event) => event.stopPropagation()}
+      />
+    </div>
+  );
+}
+
 type RowDraft = {
   firstName: string;
   lastName: string;
@@ -160,6 +190,17 @@ export type RosterRowActionsContext = {
   cancelEdit: () => void;
 };
 
+export type RosterNameColumnFilter = {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  "aria-label": string;
+};
+
+export type RosterNameColumnFilters = Partial<
+  Record<"firstName" | "lastName" | "name", RosterNameColumnFilter>
+>;
+
 export type RosterTableProps = {
   data: StudentRosterEntry[];
   columnOrder: RosterColumnId[];
@@ -181,6 +222,13 @@ export type RosterTableProps = {
   renderExpandedRow?: (student: StudentRosterEntry) => ReactNode;
   /** Accessible label for the expand/collapse control. */
   expandRowLabel?: (student: StudentRosterEntry, expanded: boolean) => string;
+  /**
+   * Override row identity (default: `userId`). Use when the same student can
+   * appear more than once (e.g. one roster row per seat constraint).
+   */
+  getRowId?: (row: StudentRosterEntry) => string;
+  /** Optional search inputs under first / last / name column headers. */
+  nameColumnFilters?: RosterNameColumnFilters;
 };
 
 function LastNameCell({ student }: { student: StudentRosterEntry }) {
@@ -477,6 +525,8 @@ export function RosterTable({
   renderRowActions,
   renderExpandedRow,
   expandRowLabel,
+  getRowId,
+  nameColumnFilters,
 }: RosterTableProps) {
   const { t } = useTranslation("classes");
   const [editingUserId, setEditingUserId] = useState<Id<"users"> | null>(null);
@@ -584,6 +634,12 @@ export function RosterTable({
     const headerLabel = (label: string, column: Column<StudentRosterEntry, unknown>) =>
       tableEditMode ? label : rosterSortableHeader(label, column);
 
+    const nameHeader = (
+      columnId: "firstName" | "lastName" | "name",
+      label: string,
+      column: Column<StudentRosterEntry, unknown>,
+    ) => rosterHeaderWithSearch(label, column, nameColumnFilters?.[columnId], tableEditMode);
+
     const genderSortValue = (student: StudentRosterEntry): string => {
       if (!student.gender) return "";
       if (student.gender === "selfDescribe") {
@@ -647,7 +703,7 @@ export function RosterTable({
       {
         id: "lastName",
         accessorKey: "lastName",
-        header: ({ column }) => headerLabel(t("rosterColumnLastName"), column),
+        header: ({ column }) => nameHeader("lastName", t("rosterColumnLastName"), column),
         cell: ({ row }) => <LastNameCell student={row.original} />,
         sortingFn: textSortingFn((student) => student.lastName),
         enableSorting: true,
@@ -655,7 +711,7 @@ export function RosterTable({
       {
         id: "firstName",
         accessorKey: "firstName",
-        header: ({ column }) => headerLabel(t("rosterColumnFirstName"), column),
+        header: ({ column }) => nameHeader("firstName", t("rosterColumnFirstName"), column),
         cell: ({ row }) => <FirstNameCell student={row.original} />,
         sortingFn: textSortingFn((student) => student.firstName),
         enableSorting: true,
@@ -663,7 +719,7 @@ export function RosterTable({
       {
         id: "name",
         accessorKey: "name",
-        header: ({ column }) => headerLabel(t("rosterColumnName"), column),
+        header: ({ column }) => nameHeader("name", t("rosterColumnName"), column),
         cell: ({ row }) =>
           getDisplayName(
             {
@@ -742,7 +798,16 @@ export function RosterTable({
         ),
       },
     ];
-  }, [t, extraColumns, showActions, showExpand, renderRowActions, expandRowLabel, tableEditMode]);
+  }, [
+    t,
+    extraColumns,
+    showActions,
+    showExpand,
+    renderRowActions,
+    expandRowLabel,
+    tableEditMode,
+    nameColumnFilters,
+  ]);
 
   const table = useReactTable({
     data,
@@ -759,7 +824,7 @@ export function RosterTable({
     getSortedRowModel: getSortedRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
     getRowCanExpand: () => showExpand,
-    getRowId: (row) => row.userId,
+    getRowId: (row) => (getRowId ? getRowId(row) : row.userId),
     enableSorting: !tableEditMode,
   });
 

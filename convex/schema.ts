@@ -259,6 +259,8 @@ const schema = defineSchema({
             }),
           ),
         ),
+        /** Free-text zone for seating distribution (desk items only). */
+        zoneName: v.optional(v.string()),
         x: v.number(),
         y: v.number(),
         width: v.number(),
@@ -270,6 +272,21 @@ const schema = defineSchema({
   })
     .index("by_class", ["classId"])
     .index("by_class_and_name", ["classId", "name"]),
+  /**
+   * Class-scoped seating constraints for Assigners (shared across all layouts).
+   */
+  seatConstraints: defineTable({
+    classId: v.id("classes"),
+    type: v.union(v.literal("neighbor"), v.literal("teammate"), v.literal("zone")),
+    polarity: v.union(v.literal("must"), v.literal("mustNot")),
+    studentUserId: v.id("users"),
+    /** Required for neighbor / teammate. */
+    otherStudentUserId: v.optional(v.id("users")),
+    /** Required for zone — matches free-text desk zoneName values. */
+    zoneName: v.optional(v.string()),
+    createdBy: v.id("users"),
+    updatedAt: v.number(),
+  }).index("by_class", ["classId"]),
   /**
    * Many-to-many guardian ↔ student links within a class.
    * Cleared when either side leaves the guardian/student role.

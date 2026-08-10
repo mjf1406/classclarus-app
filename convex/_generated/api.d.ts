@@ -94,6 +94,7 @@ import type * as presence from "../presence.js";
 import type * as raz from "../raz.js";
 import type * as rewardFolders from "../rewardFolders.js";
 import type * as rewards from "../rewards.js";
+import type * as seatConstraints from "../seatConstraints.js";
 import type * as seatLayouts from "../seatLayouts.js";
 import type * as studentRosters from "../studentRosters.js";
 import type * as tasks from "../tasks.js";
@@ -191,6 +192,7 @@ declare const fullApi: ApiFromModules<{
   raz: typeof raz;
   rewardFolders: typeof rewardFolders;
   rewards: typeof rewards;
+  seatConstraints: typeof seatConstraints;
   seatLayouts: typeof seatLayouts;
   studentRosters: typeof studentRosters;
   tasks: typeof tasks;

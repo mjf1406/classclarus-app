@@ -10,6 +10,54 @@ export type SeatLayoutItem = SeatLayout["items"][number];
 export type SeatLayoutItemKind = SeatLayoutItem["kind"];
 export type SeatTeamAssignment = NonNullable<SeatLayoutItem["teamAssignment"]>;
 
+export type SeatLayoutSortKey = "name" | "created" | "updated";
+export type SeatLayoutSortDirection = "asc" | "desc";
+
+export function compareSeatLayouts(
+  a: SeatLayoutListItem,
+  b: SeatLayoutListItem,
+  sortKey: SeatLayoutSortKey,
+  direction: SeatLayoutSortDirection,
+): number {
+  const dir = direction === "asc" ? 1 : -1;
+  switch (sortKey) {
+    case "name": {
+      const byName = a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+      if (byName !== 0) return byName * dir;
+      return (a.updatedAt - b.updatedAt) * dir;
+    }
+    case "created":
+      return (a._creationTime - b._creationTime) * dir;
+    case "updated":
+      return (a.updatedAt - b.updatedAt) * dir;
+  }
+}
+
+export function sortSeatLayouts(
+  layouts: readonly SeatLayoutListItem[],
+  sortKey: SeatLayoutSortKey,
+  direction: SeatLayoutSortDirection,
+): SeatLayoutListItem[] {
+  return [...layouts].sort((a, b) => compareSeatLayouts(a, b, sortKey, direction));
+}
+
+export function nextSeatLayoutSortState(
+  currentKey: SeatLayoutSortKey,
+  currentDirection: SeatLayoutSortDirection,
+  nextKey: SeatLayoutSortKey,
+): { sortKey: SeatLayoutSortKey; sortDirection: SeatLayoutSortDirection } {
+  if (currentKey === nextKey) {
+    return {
+      sortKey: currentKey,
+      sortDirection: currentDirection === "asc" ? "desc" : "asc",
+    };
+  }
+  return {
+    sortKey: nextKey,
+    sortDirection: nextKey === "name" ? "asc" : "desc",
+  };
+}
+
 export type SeatOrientation = "front" | "back" | "left" | "right";
 
 export const SEAT_ORIENTATION_DEGREES: Record<SeatOrientation, number> = {
@@ -398,4 +446,47 @@ export function sharedTeamNames(
   return [...byKey.values()]
     .filter((entry) => entry.groupNames.length >= 2)
     .sort((a, b) => a.teamName.localeCompare(b.teamName));
+}
+
+function normalizeZoneNameValue(zoneName: string | undefined): string | undefined {
+  if (zoneName === undefined) return undefined;
+  const trimmed = zoneName.trim();
+  return trimmed || undefined;
+}
+
+/** Shared zone when every desk matches (case-sensitive trim); otherwise undefined. */
+export function commonZoneName(desks: Array<Pick<SeatLayoutItem, "zoneName">>): string | undefined {
+  if (desks.length === 0) return undefined;
+  const first = normalizeZoneNameValue(desks[0]?.zoneName);
+  if (!desks.every((desk) => normalizeZoneNameValue(desk.zoneName) === first)) {
+    return undefined;
+  }
+  return first;
+}
+
+/** Unique trimmed zone names on desks, sorted for suggestion lists. */
+export function listZoneNames(
+  items: Array<Pick<SeatLayoutItem, "kind" | "zoneName">>,
+): Array<string> {
+  const names = new Set<string>();
+  for (const item of items) {
+    if (item.kind !== "desk") continue;
+    const name = normalizeZoneNameValue(item.zoneName);
+    if (name) names.add(name);
+  }
+  return [...names].sort((a, b) => a.localeCompare(b));
+}
+
+/** Desk counts per zone name. Unzoned desks are omitted. */
+export function zoneSeatCounts(
+  items: Array<Pick<SeatLayoutItem, "kind" | "zoneName">>,
+): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const item of items) {
+    if (item.kind !== "desk") continue;
+    const name = normalizeZoneNameValue(item.zoneName);
+    if (!name) continue;
+    counts[name] = (counts[name] ?? 0) + 1;
+  }
+  return counts;
 }
