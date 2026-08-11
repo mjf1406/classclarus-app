@@ -60,12 +60,16 @@ import { Route as AuthenticatedClassClassClassIdAssignmentsAssignmentIdIndexRout
 import { Route as AuthenticatedClassClassClassIdAssignmentsAssignmentIdEditRouteImport } from "./routes/_authenticated/_class/class/$classId/assignments/$assignmentId/edit";
 import { Route as AuthenticatedClassClassClassIdAssignmentsAssignmentIdGradeRouteImport } from "./routes/_authenticated/_class/class/$classId/assignments/$assignmentId/grade";
 import { Route as AuthenticatedClassClassClassIdAssignmentsAssignmentIdTasksRouteImport } from "./routes/_authenticated/_class/class/$classId/assignments/$assignmentId/tasks";
+import { Route as AuthenticatedClassClassClassIdSwGradeScalesIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/sw/grade-scales/index";
 import { Route as AuthenticatedClassClassClassIdAssignersSeatsChartsIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/assigners/seats/charts/index";
 import { Route as AuthenticatedClassClassClassIdAssignersSeatsChartsChartIdRouteImport } from "./routes/_authenticated/_class/class/$classId/assigners/seats/charts/$chartId";
 import { Route as AuthenticatedClassClassClassIdAssignersSeatsConstraintsIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/assigners/seats/constraints/index";
 import { Route as AuthenticatedClassClassClassIdAssignersSeatsLayoutsIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/assigners/seats/layouts/index";
 import { Route as AuthenticatedClassClassClassIdAssignersSeatsLayoutsLayoutIdRouteImport } from "./routes/_authenticated/_class/class/$classId/assigners/seats/layouts/$layoutId";
 import { Route as AuthenticatedClassClassClassIdAssignersSeatsSettingsIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/assigners/seats/settings/index";
+import { Route as AuthenticatedClassClassClassIdSwGradeScalesReportsIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/sw/grade-scales/reports/index";
+import { Route as AuthenticatedClassClassClassIdSwGradeScalesScalesIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/sw/grade-scales/scales/index";
+import { Route as AuthenticatedClassClassClassIdSwGradeScalesSubjectsIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/sw/grade-scales/subjects/index";
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: "/_authenticated",
@@ -349,6 +353,12 @@ const AuthenticatedClassClassClassIdAssignmentsAssignmentIdTasksRoute =
     path: "/tasks",
     getParentRoute: () => AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRoute,
   } as any);
+const AuthenticatedClassClassClassIdSwGradeScalesIndexRoute =
+  AuthenticatedClassClassClassIdSwGradeScalesIndexRouteImport.update({
+    id: "/sw/grade-scales/",
+    path: "/sw/grade-scales/",
+    getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
+  } as any);
 const AuthenticatedClassClassClassIdAssignersSeatsChartsIndexRoute =
   AuthenticatedClassClassClassIdAssignersSeatsChartsIndexRouteImport.update({
     id: "/assigners/seats/charts/",
@@ -383,6 +393,24 @@ const AuthenticatedClassClassClassIdAssignersSeatsSettingsIndexRoute =
   AuthenticatedClassClassClassIdAssignersSeatsSettingsIndexRouteImport.update({
     id: "/assigners/seats/settings/",
     path: "/assigners/seats/settings/",
+    getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
+  } as any);
+const AuthenticatedClassClassClassIdSwGradeScalesReportsIndexRoute =
+  AuthenticatedClassClassClassIdSwGradeScalesReportsIndexRouteImport.update({
+    id: "/sw/grade-scales/reports/",
+    path: "/sw/grade-scales/reports/",
+    getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
+  } as any);
+const AuthenticatedClassClassClassIdSwGradeScalesScalesIndexRoute =
+  AuthenticatedClassClassClassIdSwGradeScalesScalesIndexRouteImport.update({
+    id: "/sw/grade-scales/scales/",
+    path: "/sw/grade-scales/scales/",
+    getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
+  } as any);
+const AuthenticatedClassClassClassIdSwGradeScalesSubjectsIndexRoute =
+  AuthenticatedClassClassClassIdSwGradeScalesSubjectsIndexRouteImport.update({
+    id: "/sw/grade-scales/subjects/",
+    path: "/sw/grade-scales/subjects/",
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
   } as any);
 
@@ -434,12 +462,16 @@ export interface FileRoutesByFullPath {
   "/class/$classId/assignments/$assignmentId/tasks": typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdTasksRoute;
   "/class/$classId/assigners/seats/": typeof AuthenticatedClassClassClassIdAssignersSeatsIndexRoute;
   "/class/$classId/assignments/$assignmentId/": typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdIndexRoute;
+  "/class/$classId/sw/grade-scales/": typeof AuthenticatedClassClassClassIdSwGradeScalesIndexRoute;
   "/class/$classId/assigners/seats/charts/$chartId": typeof AuthenticatedClassClassClassIdAssignersSeatsChartsChartIdRoute;
   "/class/$classId/assigners/seats/layouts/$layoutId": typeof AuthenticatedClassClassClassIdAssignersSeatsLayoutsLayoutIdRoute;
   "/class/$classId/assigners/seats/charts/": typeof AuthenticatedClassClassClassIdAssignersSeatsChartsIndexRoute;
   "/class/$classId/assigners/seats/constraints/": typeof AuthenticatedClassClassClassIdAssignersSeatsConstraintsIndexRoute;
   "/class/$classId/assigners/seats/layouts/": typeof AuthenticatedClassClassClassIdAssignersSeatsLayoutsIndexRoute;
   "/class/$classId/assigners/seats/settings/": typeof AuthenticatedClassClassClassIdAssignersSeatsSettingsIndexRoute;
+  "/class/$classId/sw/grade-scales/reports/": typeof AuthenticatedClassClassClassIdSwGradeScalesReportsIndexRoute;
+  "/class/$classId/sw/grade-scales/scales/": typeof AuthenticatedClassClassClassIdSwGradeScalesScalesIndexRoute;
+  "/class/$classId/sw/grade-scales/subjects/": typeof AuthenticatedClassClassClassIdSwGradeScalesSubjectsIndexRoute;
 }
 export interface FileRoutesByTo {
   "/": typeof AuthenticatedAppIndexRoute;
@@ -486,12 +518,16 @@ export interface FileRoutesByTo {
   "/class/$classId/assignments/$assignmentId/tasks": typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdTasksRoute;
   "/class/$classId/assigners/seats": typeof AuthenticatedClassClassClassIdAssignersSeatsIndexRoute;
   "/class/$classId/assignments/$assignmentId": typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdIndexRoute;
+  "/class/$classId/sw/grade-scales": typeof AuthenticatedClassClassClassIdSwGradeScalesIndexRoute;
   "/class/$classId/assigners/seats/charts/$chartId": typeof AuthenticatedClassClassClassIdAssignersSeatsChartsChartIdRoute;
   "/class/$classId/assigners/seats/layouts/$layoutId": typeof AuthenticatedClassClassClassIdAssignersSeatsLayoutsLayoutIdRoute;
   "/class/$classId/assigners/seats/charts": typeof AuthenticatedClassClassClassIdAssignersSeatsChartsIndexRoute;
   "/class/$classId/assigners/seats/constraints": typeof AuthenticatedClassClassClassIdAssignersSeatsConstraintsIndexRoute;
   "/class/$classId/assigners/seats/layouts": typeof AuthenticatedClassClassClassIdAssignersSeatsLayoutsIndexRoute;
   "/class/$classId/assigners/seats/settings": typeof AuthenticatedClassClassClassIdAssignersSeatsSettingsIndexRoute;
+  "/class/$classId/sw/grade-scales/reports": typeof AuthenticatedClassClassClassIdSwGradeScalesReportsIndexRoute;
+  "/class/$classId/sw/grade-scales/scales": typeof AuthenticatedClassClassClassIdSwGradeScalesScalesIndexRoute;
+  "/class/$classId/sw/grade-scales/subjects": typeof AuthenticatedClassClassClassIdSwGradeScalesSubjectsIndexRoute;
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport;
@@ -546,12 +582,16 @@ export interface FileRoutesById {
   "/_authenticated/_class/class/$classId/assignments/$assignmentId/tasks": typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdTasksRoute;
   "/_authenticated/_class/class/$classId/assigners/seats/": typeof AuthenticatedClassClassClassIdAssignersSeatsIndexRoute;
   "/_authenticated/_class/class/$classId/assignments/$assignmentId/": typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdIndexRoute;
+  "/_authenticated/_class/class/$classId/sw/grade-scales/": typeof AuthenticatedClassClassClassIdSwGradeScalesIndexRoute;
   "/_authenticated/_class/class/$classId/assigners/seats/charts/$chartId": typeof AuthenticatedClassClassClassIdAssignersSeatsChartsChartIdRoute;
   "/_authenticated/_class/class/$classId/assigners/seats/layouts/$layoutId": typeof AuthenticatedClassClassClassIdAssignersSeatsLayoutsLayoutIdRoute;
   "/_authenticated/_class/class/$classId/assigners/seats/charts/": typeof AuthenticatedClassClassClassIdAssignersSeatsChartsIndexRoute;
   "/_authenticated/_class/class/$classId/assigners/seats/constraints/": typeof AuthenticatedClassClassClassIdAssignersSeatsConstraintsIndexRoute;
   "/_authenticated/_class/class/$classId/assigners/seats/layouts/": typeof AuthenticatedClassClassClassIdAssignersSeatsLayoutsIndexRoute;
   "/_authenticated/_class/class/$classId/assigners/seats/settings/": typeof AuthenticatedClassClassClassIdAssignersSeatsSettingsIndexRoute;
+  "/_authenticated/_class/class/$classId/sw/grade-scales/reports/": typeof AuthenticatedClassClassClassIdSwGradeScalesReportsIndexRoute;
+  "/_authenticated/_class/class/$classId/sw/grade-scales/scales/": typeof AuthenticatedClassClassClassIdSwGradeScalesScalesIndexRoute;
+  "/_authenticated/_class/class/$classId/sw/grade-scales/subjects/": typeof AuthenticatedClassClassClassIdSwGradeScalesSubjectsIndexRoute;
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
@@ -603,12 +643,16 @@ export interface FileRouteTypes {
     | "/class/$classId/assignments/$assignmentId/tasks"
     | "/class/$classId/assigners/seats/"
     | "/class/$classId/assignments/$assignmentId/"
+    | "/class/$classId/sw/grade-scales/"
     | "/class/$classId/assigners/seats/charts/$chartId"
     | "/class/$classId/assigners/seats/layouts/$layoutId"
     | "/class/$classId/assigners/seats/charts/"
     | "/class/$classId/assigners/seats/constraints/"
     | "/class/$classId/assigners/seats/layouts/"
-    | "/class/$classId/assigners/seats/settings/";
+    | "/class/$classId/assigners/seats/settings/"
+    | "/class/$classId/sw/grade-scales/reports/"
+    | "/class/$classId/sw/grade-scales/scales/"
+    | "/class/$classId/sw/grade-scales/subjects/";
   fileRoutesByTo: FileRoutesByTo;
   to:
     | "/"
@@ -655,12 +699,16 @@ export interface FileRouteTypes {
     | "/class/$classId/assignments/$assignmentId/tasks"
     | "/class/$classId/assigners/seats"
     | "/class/$classId/assignments/$assignmentId"
+    | "/class/$classId/sw/grade-scales"
     | "/class/$classId/assigners/seats/charts/$chartId"
     | "/class/$classId/assigners/seats/layouts/$layoutId"
     | "/class/$classId/assigners/seats/charts"
     | "/class/$classId/assigners/seats/constraints"
     | "/class/$classId/assigners/seats/layouts"
-    | "/class/$classId/assigners/seats/settings";
+    | "/class/$classId/assigners/seats/settings"
+    | "/class/$classId/sw/grade-scales/reports"
+    | "/class/$classId/sw/grade-scales/scales"
+    | "/class/$classId/sw/grade-scales/subjects";
   id:
     | "__root__"
     | "/_authenticated"
@@ -714,12 +762,16 @@ export interface FileRouteTypes {
     | "/_authenticated/_class/class/$classId/assignments/$assignmentId/tasks"
     | "/_authenticated/_class/class/$classId/assigners/seats/"
     | "/_authenticated/_class/class/$classId/assignments/$assignmentId/"
+    | "/_authenticated/_class/class/$classId/sw/grade-scales/"
     | "/_authenticated/_class/class/$classId/assigners/seats/charts/$chartId"
     | "/_authenticated/_class/class/$classId/assigners/seats/layouts/$layoutId"
     | "/_authenticated/_class/class/$classId/assigners/seats/charts/"
     | "/_authenticated/_class/class/$classId/assigners/seats/constraints/"
     | "/_authenticated/_class/class/$classId/assigners/seats/layouts/"
-    | "/_authenticated/_class/class/$classId/assigners/seats/settings/";
+    | "/_authenticated/_class/class/$classId/assigners/seats/settings/"
+    | "/_authenticated/_class/class/$classId/sw/grade-scales/reports/"
+    | "/_authenticated/_class/class/$classId/sw/grade-scales/scales/"
+    | "/_authenticated/_class/class/$classId/sw/grade-scales/subjects/";
   fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
@@ -1089,6 +1141,13 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdTasksRouteImport;
       parentRoute: typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRoute;
     };
+    "/_authenticated/_class/class/$classId/sw/grade-scales/": {
+      id: "/_authenticated/_class/class/$classId/sw/grade-scales/";
+      path: "/sw/grade-scales";
+      fullPath: "/class/$classId/sw/grade-scales/";
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdSwGradeScalesIndexRouteImport;
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
+    };
     "/_authenticated/_class/class/$classId/assigners/seats/charts/": {
       id: "/_authenticated/_class/class/$classId/assigners/seats/charts/";
       path: "/assigners/seats/charts";
@@ -1129,6 +1188,27 @@ declare module "@tanstack/react-router" {
       path: "/assigners/seats/settings";
       fullPath: "/class/$classId/assigners/seats/settings/";
       preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsSettingsIndexRouteImport;
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
+    };
+    "/_authenticated/_class/class/$classId/sw/grade-scales/reports/": {
+      id: "/_authenticated/_class/class/$classId/sw/grade-scales/reports/";
+      path: "/sw/grade-scales/reports";
+      fullPath: "/class/$classId/sw/grade-scales/reports/";
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdSwGradeScalesReportsIndexRouteImport;
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
+    };
+    "/_authenticated/_class/class/$classId/sw/grade-scales/scales/": {
+      id: "/_authenticated/_class/class/$classId/sw/grade-scales/scales/";
+      path: "/sw/grade-scales/scales";
+      fullPath: "/class/$classId/sw/grade-scales/scales/";
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdSwGradeScalesScalesIndexRouteImport;
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
+    };
+    "/_authenticated/_class/class/$classId/sw/grade-scales/subjects/": {
+      id: "/_authenticated/_class/class/$classId/sw/grade-scales/subjects/";
+      path: "/sw/grade-scales/subjects";
+      fullPath: "/class/$classId/sw/grade-scales/subjects/";
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdSwGradeScalesSubjectsIndexRouteImport;
       parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
     };
   }
@@ -1209,12 +1289,16 @@ interface AuthenticatedClassClassClassIdRouteRouteChildren {
   AuthenticatedClassClassClassIdRazIndexRoute: typeof AuthenticatedClassClassClassIdRazIndexRoute;
   AuthenticatedClassClassClassIdTasksIndexRoute: typeof AuthenticatedClassClassClassIdTasksIndexRoute;
   AuthenticatedClassClassClassIdAssignersSeatsIndexRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsIndexRoute;
+  AuthenticatedClassClassClassIdSwGradeScalesIndexRoute: typeof AuthenticatedClassClassClassIdSwGradeScalesIndexRoute;
   AuthenticatedClassClassClassIdAssignersSeatsChartsChartIdRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsChartsChartIdRoute;
   AuthenticatedClassClassClassIdAssignersSeatsLayoutsLayoutIdRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsLayoutsLayoutIdRoute;
   AuthenticatedClassClassClassIdAssignersSeatsChartsIndexRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsChartsIndexRoute;
   AuthenticatedClassClassClassIdAssignersSeatsConstraintsIndexRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsConstraintsIndexRoute;
   AuthenticatedClassClassClassIdAssignersSeatsLayoutsIndexRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsLayoutsIndexRoute;
   AuthenticatedClassClassClassIdAssignersSeatsSettingsIndexRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsSettingsIndexRoute;
+  AuthenticatedClassClassClassIdSwGradeScalesReportsIndexRoute: typeof AuthenticatedClassClassClassIdSwGradeScalesReportsIndexRoute;
+  AuthenticatedClassClassClassIdSwGradeScalesScalesIndexRoute: typeof AuthenticatedClassClassClassIdSwGradeScalesScalesIndexRoute;
+  AuthenticatedClassClassClassIdSwGradeScalesSubjectsIndexRoute: typeof AuthenticatedClassClassClassIdSwGradeScalesSubjectsIndexRoute;
 }
 
 const AuthenticatedClassClassClassIdRouteRouteChildren: AuthenticatedClassClassClassIdRouteRouteChildren =
@@ -1255,6 +1339,8 @@ const AuthenticatedClassClassClassIdRouteRouteChildren: AuthenticatedClassClassC
     AuthenticatedClassClassClassIdTasksIndexRoute: AuthenticatedClassClassClassIdTasksIndexRoute,
     AuthenticatedClassClassClassIdAssignersSeatsIndexRoute:
       AuthenticatedClassClassClassIdAssignersSeatsIndexRoute,
+    AuthenticatedClassClassClassIdSwGradeScalesIndexRoute:
+      AuthenticatedClassClassClassIdSwGradeScalesIndexRoute,
     AuthenticatedClassClassClassIdAssignersSeatsChartsChartIdRoute:
       AuthenticatedClassClassClassIdAssignersSeatsChartsChartIdRoute,
     AuthenticatedClassClassClassIdAssignersSeatsLayoutsLayoutIdRoute:
@@ -1267,6 +1353,12 @@ const AuthenticatedClassClassClassIdRouteRouteChildren: AuthenticatedClassClassC
       AuthenticatedClassClassClassIdAssignersSeatsLayoutsIndexRoute,
     AuthenticatedClassClassClassIdAssignersSeatsSettingsIndexRoute:
       AuthenticatedClassClassClassIdAssignersSeatsSettingsIndexRoute,
+    AuthenticatedClassClassClassIdSwGradeScalesReportsIndexRoute:
+      AuthenticatedClassClassClassIdSwGradeScalesReportsIndexRoute,
+    AuthenticatedClassClassClassIdSwGradeScalesScalesIndexRoute:
+      AuthenticatedClassClassClassIdSwGradeScalesScalesIndexRoute,
+    AuthenticatedClassClassClassIdSwGradeScalesSubjectsIndexRoute:
+      AuthenticatedClassClassClassIdSwGradeScalesSubjectsIndexRoute,
   };
 
 const AuthenticatedClassClassClassIdRouteRouteWithChildren =

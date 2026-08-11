@@ -77,6 +77,7 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
   const { t: tExpectations } = useTranslation("expectations");
   const { t: tRaz } = useTranslation("raz");
   const { t: tAssigners } = useTranslation("assigners");
+  const { t: tStudentWork } = useTranslation("studentWork");
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const { isMobile, state, setOpenMobile } = useSidebar();
   const { can, isPending } = useCan();
@@ -85,6 +86,7 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
   const groupsCollapsed = state === "collapsed" && !isMobile;
   const [peopleOpen, setPeopleOpen] = useState(false);
   const [assignersOpen, setAssignersOpen] = useState(false);
+  const [studentWorkOpen, setStudentWorkOpen] = useState(false);
   const [manageOpen, setManageOpen] = useState(false);
 
   const countFor = (role: MemberListRole | undefined): number | null => {
@@ -118,12 +120,6 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
       title: tAnnouncements("nav"),
       icon: Megaphone,
       to: "/class/$classId/announcements",
-      permission: "class:read",
-    },
-    {
-      title: tAssignments("nav"),
-      icon: ClipboardList,
-      to: "/class/$classId/assignments",
       permission: "class:read",
     },
     {
@@ -238,6 +234,21 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
     },
   ];
 
+  const studentWorkItems: Array<NavItem> = [
+    {
+      title: tAssignments("nav"),
+      icon: ClipboardList,
+      to: "/class/$classId/assignments",
+      permission: "class:read",
+    },
+    {
+      title: tStudentWork("navGradeScales"),
+      icon: GraduationCap,
+      to: "/class/$classId/sw/grade-scales",
+      permission: "gradeScales:read",
+    },
+  ];
+
   const manageItems: Array<NavItem> = [
     ...(catalogsInManageNav
       ? [
@@ -302,10 +313,16 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
   const visibleTopItems = topItems.filter((item) => can(item.permission));
   const visiblePeopleItems = peopleItems.filter((item) => can(item.permission));
   const visibleAssignersItems = assignersItems.filter((item) => can(item.permission));
+  const visibleStudentWorkItems = studentWorkItems.filter((item) => can(item.permission));
   const visibleManageItems = manageItems.filter((item) => can(item.permission));
 
   const peopleActive = visiblePeopleItems.some((item) => pathname === pathFor(item.to, classId));
   const assignersActive = visibleAssignersItems.some(
+    (item) =>
+      pathname === pathFor(item.to, classId) ||
+      pathname.startsWith(`${pathFor(item.to, classId)}/`),
+  );
+  const studentWorkActive = visibleStudentWorkItems.some(
     (item) =>
       pathname === pathFor(item.to, classId) ||
       pathname.startsWith(`${pathFor(item.to, classId)}/`),
@@ -515,6 +532,98 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
                   <CollapsibleContent>
                     <SidebarMenuSub>
                       {visibleAssignersItems.map((item) => {
+                        const href = pathFor(item.to, classId);
+                        const isActive = pathname === href || pathname.startsWith(`${href}/`);
+                        return (
+                          <SidebarMenuSubItem key={item.to}>
+                            <SidebarMenuSubButton
+                              isActive={isActive}
+                              render={
+                                <Link
+                                  to={item.to}
+                                  params={{ classId }}
+                                  onClick={closeMobileSidebar}
+                                />
+                              }
+                            >
+                              <item.icon />
+                              <span>{item.title}</span>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        );
+                      })}
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
+            )}
+          </SidebarMenu>
+        </SidebarGroup>
+      ) : null}
+
+      {visibleStudentWorkItems.length > 0 ? (
+        <SidebarGroup>
+          <SidebarMenu>
+            {groupsCollapsed ? (
+              <SidebarMenuItem>
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    render={
+                      <SidebarMenuButton
+                        tooltip={tStudentWork("navGroup")}
+                        isActive={studentWorkActive}
+                      />
+                    }
+                  >
+                    <GraduationCap />
+                    <span>{tStudentWork("navGroup")}</span>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    className="min-w-56 rounded-lg"
+                    align="start"
+                    side="right"
+                    sideOffset={4}
+                  >
+                    <DropdownMenuGroup>
+                      <DropdownMenuLabel className="text-xs text-muted-foreground">
+                        {tStudentWork("navGroup")}
+                      </DropdownMenuLabel>
+                      {visibleStudentWorkItems.map((item) => (
+                        <DropdownMenuItem
+                          key={item.to}
+                          className="gap-2 p-2"
+                          render={
+                            <Link to={item.to} params={{ classId }} onClick={closeMobileSidebar} />
+                          }
+                        >
+                          <item.icon />
+                          <span className="min-w-0 flex-1 truncate">{item.title}</span>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </SidebarMenuItem>
+            ) : (
+              <Collapsible
+                open={studentWorkOpen || studentWorkActive}
+                onOpenChange={setStudentWorkOpen}
+                className="group/collapsible"
+              >
+                <SidebarMenuItem>
+                  <CollapsibleTrigger className="peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-hidden ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0">
+                    <GraduationCap />
+                    <span>{tStudentWork("navGroup")}</span>
+                    <ChevronRight
+                      className={cn(
+                        "ml-auto transition-transform group-data-[collapsible=icon]:hidden",
+                        (studentWorkOpen || studentWorkActive) && "rotate-90",
+                      )}
+                    />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      {visibleStudentWorkItems.map((item) => {
                         const href = pathFor(item.to, classId);
                         const isActive = pathname === href || pathname.startsWith(`${href}/`);
                         return (

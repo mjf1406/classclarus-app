@@ -11,7 +11,7 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Trans, useTranslation } from "react-i18next";
 
 import { AnnouncementBody } from "@/components/announcements/AnnouncementBody";
@@ -155,6 +155,7 @@ function AssignmentDetailBackLink({ classId }: { classId: Id<"classes"> }) {
       type="button"
       variant="ghost"
       className="w-fit"
+      nativeButton={false}
       render={<Link to="/class/$classId/assignments" params={{ classId }} />}
     >
       <ArrowLeft className="size-4" />
@@ -278,6 +279,7 @@ function AssignmentContentSections({
                 type="button"
                 variant="outline"
                 size="sm"
+                nativeButton={false}
                 render={
                   <Link
                     to="/class/$classId/assignments/$assignmentId/tasks"
@@ -736,6 +738,7 @@ function StaffAssignmentDetailPage({ classId, assignmentId }: AssignmentDetailPa
             <Button
               type="button"
               variant="outline"
+              nativeButton={false}
               render={
                 <Link
                   to="/class/$classId/assignments/$assignmentId/grade"
@@ -749,6 +752,7 @@ function StaffAssignmentDetailPage({ classId, assignmentId }: AssignmentDetailPa
             <Button
               type="button"
               variant="outline"
+              nativeButton={false}
               render={
                 <Link
                   to="/class/$classId/assignments/$assignmentId/edit"
@@ -877,6 +881,7 @@ function PersonalAssignmentDetailPage({ classId, assignmentId }: AssignmentDetai
   const [checkingLinkAccess, setCheckingLinkAccess] = useState(false);
   const [deletingLinkId, setDeletingLinkId] = useState<Id<"assignmentStudentLinks"> | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<Id<"users"> | null>(null);
+  const linkUrlInputRef = useRef<HTMLInputElement>(null);
 
   const assignment = data && isPersonalAssignmentDetail(data) ? data : null;
   const students = useMemo(() => assignment?.students ?? [], [assignment?.students]);
@@ -1210,6 +1215,7 @@ function PersonalAssignmentDetailPage({ classId, assignmentId }: AssignmentDetai
                     });
                     setUrl("");
                     setLabel("");
+                    window.setTimeout(() => linkUrlInputRef.current?.focus(), 0);
                   } catch (error: unknown) {
                     setLinkError(error instanceof Error ? error.message : t("linkSaveFailed"));
                   }
@@ -1219,6 +1225,7 @@ function PersonalAssignmentDetailPage({ classId, assignmentId }: AssignmentDetai
               <Field>
                 <FieldLabel htmlFor="assignment-link-url">{t("linksUrlLabel")}</FieldLabel>
                 <Input
+                  ref={linkUrlInputRef}
                   id="assignment-link-url"
                   value={url}
                   onChange={(event) => setUrl(event.target.value)}

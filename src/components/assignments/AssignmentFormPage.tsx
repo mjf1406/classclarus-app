@@ -29,6 +29,11 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import {
+  rowFocusKeyProps,
+  rowFocusTargetProps,
+  usePendingRowFocus,
+} from "@/hooks/usePendingRowFocus";
 import { useCreateAssignment } from "@/hooks/assignments/useCreateAssignment";
 import { useUpdateAssignment } from "@/hooks/assignments/useUpdateAssignment";
 import { useExpectations } from "@/hooks/expectations/useExpectations";
@@ -87,6 +92,7 @@ export function AssignmentFormPage({ classId, mode, initial }: AssignmentFormPag
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [collapsedSectionKeys, setCollapsedSectionKeys] = useState<Set<string>>(() => new Set());
   const submitErrorRef = useRef<HTMLParagraphElement>(null);
+  const { queueRowFocus } = usePendingRowFocus();
 
   const defaults = useMemo(
     () => (initial ? assignmentFormValuesFromDetail(initial) : emptyAssignmentFormValues()),
@@ -530,6 +536,7 @@ export function AssignmentFormPage({ classId, mode, initial }: AssignmentFormPag
                               <SortableFormItem
                                 key={section.key}
                                 id={section.key}
+                                rowFocusKey={section.key}
                                 disabled={!canReorderSections}
                                 dragLabel={t("sectionDrag")}
                                 className="rounded-xl border border-border"
@@ -577,6 +584,7 @@ export function AssignmentFormPage({ classId, mode, initial }: AssignmentFormPag
                                                 value={nameField.state.value}
                                                 aria-label={t("sectionNameLabel")}
                                                 placeholder={t("sectionNameLabel")}
+                                                {...rowFocusTargetProps()}
                                                 onChange={(event) =>
                                                   nameField.handleChange(event.target.value)
                                                 }
@@ -739,6 +747,7 @@ export function AssignmentFormPage({ classId, mode, initial }: AssignmentFormPag
                                                             <SortableFormItem
                                                               key={level.key}
                                                               id={level.key}
+                                                              rowFocusKey={level.key}
                                                               disabled={!canReorderLevels}
                                                               dragLabel={t("levelDrag")}
                                                               className="flex flex-col gap-3 rounded-lg bg-muted/40 p-3 sm:flex-row sm:items-start"
@@ -778,6 +787,7 @@ export function AssignmentFormPage({ classId, mode, initial }: AssignmentFormPag
                                                                             onBlur={
                                                                               descField.handleBlur
                                                                             }
+                                                                            {...rowFocusTargetProps()}
                                                                             onChange={(event) =>
                                                                               descField.handleChange(
                                                                                 event.target.value,
@@ -845,11 +855,11 @@ export function AssignmentFormPage({ classId, mode, initial }: AssignmentFormPag
                                                         variant="outline"
                                                         size="sm"
                                                         className="w-fit"
-                                                        onClick={() =>
-                                                          levelsField.pushValue(
-                                                            createEmptyRubricEntry(),
-                                                          )
-                                                        }
+                                                        onClick={() => {
+                                                          const entry = createEmptyRubricEntry();
+                                                          levelsField.pushValue(entry);
+                                                          queueRowFocus(entry.key);
+                                                        }}
                                                       >
                                                         <Plus className="size-4" />
                                                         {t("levelAdd")}
@@ -902,6 +912,7 @@ export function AssignmentFormPage({ classId, mode, initial }: AssignmentFormPag
                                                             <SortableFormItem
                                                               key={item.key}
                                                               id={item.key}
+                                                              rowFocusKey={item.key}
                                                               disabled={!canReorderItems}
                                                               dragLabel={t("checkboxDrag")}
                                                               className="flex flex-col gap-3 rounded-lg bg-muted/40 p-3 sm:flex-row sm:items-start"
@@ -941,6 +952,7 @@ export function AssignmentFormPage({ classId, mode, initial }: AssignmentFormPag
                                                                             onBlur={
                                                                               descField.handleBlur
                                                                             }
+                                                                            {...rowFocusTargetProps()}
                                                                             onChange={(event) =>
                                                                               descField.handleChange(
                                                                                 event.target.value,
@@ -1008,11 +1020,11 @@ export function AssignmentFormPage({ classId, mode, initial }: AssignmentFormPag
                                                         variant="outline"
                                                         size="sm"
                                                         className="w-fit"
-                                                        onClick={() =>
-                                                          itemsField.pushValue(
-                                                            createEmptyRubricEntry(),
-                                                          )
-                                                        }
+                                                        onClick={() => {
+                                                          const entry = createEmptyRubricEntry();
+                                                          itemsField.pushValue(entry);
+                                                          queueRowFocus(entry.key);
+                                                        }}
                                                       >
                                                         <Plus className="size-4" />
                                                         {t("checkboxAdd")}
@@ -1036,7 +1048,16 @@ export function AssignmentFormPage({ classId, mode, initial }: AssignmentFormPag
                           type="button"
                           variant="outline"
                           className="w-fit"
-                          onClick={() => field.pushValue(createEmptySection())}
+                          onClick={() => {
+                            const section = createEmptySection();
+                            field.pushValue(section);
+                            setCollapsedSectionKeys((prev) => {
+                              const next = new Set(prev);
+                              next.delete(section.key);
+                              return next;
+                            });
+                            queueRowFocus(section.key);
+                          }}
                         >
                           <Plus className="size-4" />
                           {t("sectionAdd")}
@@ -1076,6 +1097,7 @@ export function AssignmentFormPage({ classId, mode, initial }: AssignmentFormPag
                 {field.state.value.map((step, index) => (
                   <div
                     key={step.key}
+                    {...rowFocusKeyProps(step.key)}
                     className="flex flex-col gap-2 rounded-xl border border-border p-4"
                   >
                     <div className="flex items-center justify-between gap-2">
@@ -1098,6 +1120,7 @@ export function AssignmentFormPage({ classId, mode, initial }: AssignmentFormPag
                             <Textarea
                               value={bodyField.state.value}
                               placeholder={t("procedureStepPlaceholder")}
+                              {...rowFocusTargetProps()}
                               onChange={(event) => bodyField.handleChange(event.target.value)}
                               rows={2}
                             />
@@ -1168,7 +1191,11 @@ export function AssignmentFormPage({ classId, mode, initial }: AssignmentFormPag
                   type="button"
                   variant="outline"
                   className="w-fit"
-                  onClick={() => field.pushValue(createEmptyProcedureStep())}
+                  onClick={() => {
+                    const step = createEmptyProcedureStep();
+                    field.pushValue(step);
+                    queueRowFocus(step.key);
+                  }}
                 >
                   <Plus className="size-4" />
                   {t("procedureAddStep")}

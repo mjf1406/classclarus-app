@@ -17,6 +17,8 @@ import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { rowFocusKeyProps } from "@/hooks/usePendingRowFocus";
+
 function useAssignmentFormSortableSensors() {
   return useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -49,12 +51,14 @@ export function SortableFormItem({
   disabled = false,
   dragLabel,
   className,
+  rowFocusKey,
   children,
 }: {
   id: string;
   disabled?: boolean;
   dragLabel: string;
   className?: string;
+  rowFocusKey?: string;
   children: (dragHandle: ReactNode) => ReactNode;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -84,6 +88,7 @@ export function SortableFormItem({
       }}
       className={className}
       data-dragging={isDragging || undefined}
+      {...(rowFocusKey ? rowFocusKeyProps(rowFocusKey) : {})}
     >
       {children(dragHandle)}
     </div>

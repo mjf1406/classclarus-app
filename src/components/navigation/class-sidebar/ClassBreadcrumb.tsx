@@ -43,6 +43,7 @@ type BreadcrumbTarget =
   | { kind: "raz" }
   | { kind: "razInitialLevels" }
   | { kind: "assignersSeats" }
+  | { kind: "studentWorkGradeScales" }
   | { kind: "seatLayoutDetail"; layoutId: Id<"seatLayouts"> }
   | { kind: "seatChartDetail"; chartId: Id<"seatCharts"> };
 
@@ -160,6 +161,18 @@ function breadcrumbTarget(pathname: string, classId: string): BreadcrumbTarget {
     pathname === `${base}/assigners/seats/settings/`
   ) {
     return { kind: "assignersSeats" };
+  }
+  if (
+    pathname === `${base}/sw/grade-scales` ||
+    pathname === `${base}/sw/grade-scales/` ||
+    pathname === `${base}/sw/grade-scales/scales` ||
+    pathname === `${base}/sw/grade-scales/scales/` ||
+    pathname === `${base}/sw/grade-scales/subjects` ||
+    pathname === `${base}/sw/grade-scales/subjects/` ||
+    pathname === `${base}/sw/grade-scales/reports` ||
+    pathname === `${base}/sw/grade-scales/reports/`
+  ) {
+    return { kind: "studentWorkGradeScales" };
   }
   return { kind: "classesKey", key: "navDashboard" };
 }
@@ -462,6 +475,7 @@ export function ClassBreadcrumb({ classDoc }: ClassBreadcrumbProps) {
   const { t: tExpectations } = useTranslation("expectations");
   const { t: tRaz } = useTranslation("raz");
   const { t: tAssigners } = useTranslation("assigners");
+  const { t: tStudentWork } = useTranslation("studentWork");
   const { t: tCommon } = useTranslation("common");
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const target = breadcrumbTarget(pathname, classDoc._id);
@@ -494,7 +508,9 @@ export function ClassBreadcrumb({ classDoc }: ClassBreadcrumbProps) {
                           target.kind === "seatLayoutDetail" ||
                           target.kind === "seatChartDetail"
                         ? tAssigners("navSeats")
-                        : t(target.key);
+                        : target.kind === "studentWorkGradeScales"
+                          ? tStudentWork("navGradeScales")
+                          : t(target.key);
 
   return (
     <Breadcrumb aria-label={t("breadcrumb")} className="min-w-0">

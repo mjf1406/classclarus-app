@@ -1,0 +1,76 @@
+---
+description: Forms use shared Zod + TanStack Form + shadcn Field; inline errors only
+alwaysApply: true
+---
+
+# Forms (Zod + TanStack Form + shadcn)
+
+## Stack (required)
+
+- **TanStack Form** (`useForm` from `@tanstack/react-form`) — no react-hook-form, Formik, or uncontrolled ad-hoc forms.
+- **shadcn Field primitives** — `FieldGroup`, `Field`, `FieldLabel`, `FieldError` (and inputs from `@/components/ui/*`).
+- **Zod** for validation on **both** client and server.
+
+## Shared schema
+
+Define one Zod schema and reuse it on client and Convex:
+
+1. Prefer `convex/lib/<feature>/*Schema.ts` so the server can import it (Convex cannot import from `src/`).
+2. Client imports that same module (relative path into `convex/lib/...`, like grade scales).
+3. Optional: factory with message maps so the client can inject i18n and the server uses English (`*SchemaEn`).
+
+Do not maintain separate client/server validation rules that can drift.
+
+```ts
+// Client
+validators: { onSubmit: schema },
+// and/or schema.safeParse / schema.parse before mutate
+
+// Server (mutation helper)
+const parsed = schemaEn.safeParse(input);
+if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Invalid input");
+```
+
+Also keep Convex `v.*` arg validators; Zod is the domain/form check on top of that.
+
+## Inline errors — keep dialogs open
+
+Validation and field-level failures must render **inline** via `FieldError` (and form-level banner if needed). Do **not** toast validation errors — toasts would leave the dialog/page looking fine while the user loses context.
+
+- Map Zod / TanStack field `meta.errors` into `FieldError` next to the control.
+- On failed **mutation** after close-then-reopen (Credenza pattern), put the server message in an inline submit error on the form; toast is OK only when there is no form still open to show it (see toast-usage).
+- Never clear form state just to surface a validation message elsewhere.
+
+## Pattern
+
+```tsx
+const form = useForm({
+  defaultValues,
+  validators: { onSubmit: sharedSchema },
+  onSubmit: async ({ value }) => {
+    const parsed = sharedSchema.parse(value);
+    // close dialog → mutate → reopen + inline submitError on failure
+  },
+});
+
+<form.Field name="name">
+  {(field) => {
+    const error = /* first string / { message } from field.state.meta.errors */;
+    return (
+      <Field data-invalid={error ? true : undefined}>
+        <FieldLabel htmlFor="…">{t("…")}</FieldLabel>
+        <Input
+          id="…"
+          value={field.state.value}
+          onBlur={field.handleBlur}
+          onChange={(e) => field.handleChange(e.target.value)}
+          aria-invalid={error ? true : undefined}
+        />
+        {error ? <FieldError>{error}</FieldError> : null}
+      </Field>
+    );
+  }}
+</form.Field>
+```
+
+Reference: `ClassFormCredenza`, `GradeScaleFormCredenza`, `convex/lib/gradeScales/gradeScaleSchema.ts`.

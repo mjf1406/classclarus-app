@@ -70,6 +70,7 @@ function NumberInput({
         type="button"
         variant="outline"
         size="icon"
+        tabIndex={-1}
         disabled={disabled || (value !== null && value <= min)}
         aria-label={t("decreaseValue")}
         aria-controls={id}
@@ -138,6 +139,7 @@ function NumberInput({
         type="button"
         variant="outline"
         size="icon"
+        tabIndex={-1}
         disabled={disabled || (value !== null && value >= max)}
         aria-label={t("increaseValue")}
         aria-controls={id}

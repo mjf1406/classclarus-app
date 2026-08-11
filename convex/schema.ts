@@ -905,6 +905,51 @@ const schema = defineSchema({
   /**
    * Cloud product feedback (message-in-a-bottle). Not used on self-host / Electron.
    */
+  /**
+   * Grade scales — shared system defaults (`classId` absent, `systemKey` set) or class-owned copies.
+   */
+  gradeScales: defineTable({
+    /** Absent for shared system defaults (keyed by `systemKey`). */
+    classId: v.optional(v.id("classes")),
+    systemKey: v.optional(
+      v.union(
+        v.literal("highRange"),
+        v.literal("perfectScore"),
+        v.literal("standard"),
+        v.literal("letterGrades"),
+      ),
+    ),
+    /** Class-owned scale name. System rows use `nameKey` for i18n instead. */
+    name: v.optional(v.string()),
+    nameKey: v.optional(v.string()),
+    levels: v.array(
+      v.object({
+        key: v.string(),
+        label: v.string(),
+        minPercent: v.number(),
+        maxPercent: v.number(),
+      }),
+    ),
+    createdBy: v.optional(v.id("users")),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_classId", ["classId"])
+    .index("by_systemKey", ["systemKey"]),
+  /** Per-class visibility override for shared system grade scales. */
+  gradeScaleHiddenDefaults: defineTable({
+    classId: v.id("classes"),
+    systemKey: v.union(
+      v.literal("highRange"),
+      v.literal("perfectScore"),
+      v.literal("standard"),
+      v.literal("letterGrades"),
+    ),
+    hiddenBy: v.id("users"),
+    hiddenAt: v.number(),
+  })
+    .index("by_classId", ["classId"])
+    .index("by_classId_systemKey", ["classId", "systemKey"]),
   feedback: defineTable({
     userId: v.id("users"),
     type: v.union(v.literal("bug"), v.literal("feature"), v.literal("concern"), v.literal("other")),

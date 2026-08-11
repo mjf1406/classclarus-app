@@ -58,6 +58,11 @@ export const permissions = definePermissions({
    */
   assigners: { read: true, manage: true },
   /**
+   * Grade scales (student work) — read is assistant_teacher+;
+   * manage (CRUD on class-owned scales) is teacher+.
+   */
+  gradeScales: { read: true, manage: true },
+  /**
    * Fine-grained staff permission overrides — manage is owner-only.
    * Used by the class Permissions page under Manage.
    */
@@ -74,6 +79,7 @@ export const roles = defineRoles(permissions, {
     points: ["read"],
     expectations: ["read"],
     raz: ["read"],
+    gradeScales: ["read"],
   },
   guardian: {
     inherits: "class_member",
@@ -81,6 +87,7 @@ export const roles = defineRoles(permissions, {
     points: ["read"],
     expectations: ["read"],
     raz: ["read"],
+    gradeScales: ["read"],
   },
   assistant_teacher: {
     inherits: "class_member",
@@ -95,6 +102,7 @@ export const roles = defineRoles(permissions, {
     expectations: ["read"],
     raz: ["read"],
     assigners: ["read"],
+    gradeScales: ["read"],
   },
   teacher: {
     inherits: "assistant_teacher",
@@ -113,6 +121,7 @@ export const roles = defineRoles(permissions, {
     expectations: ["manage"],
     raz: ["read", "manage"],
     assigners: ["read", "manage"],
+    gradeScales: ["read", "manage"],
   },
   owner: {
     inherits: "teacher",
