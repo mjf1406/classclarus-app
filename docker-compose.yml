@@ -72,6 +72,7 @@ services:
       WEB_PORT: "${WEB_PORT:-8088}"
       # Label prefix for deploy marker; convex/ content hash always appended.
       APP_VERSION: "${APP_VERSION:-0.0.0}"
+      CLASS_PRESENCE_ENABLED: "${CLASS_PRESENCE_ENABLED:-true}"
     depends_on:
       backend:
         condition: service_healthy
@@ -98,6 +99,7 @@ services:
       SITE_PROXY_PORT: "${SITE_PROXY_PORT:-3211}"
       VITE_AUTH_PASSWORD_ENABLED: "true"
       VITE_SELF_HOSTED: "true"
+      CLASS_PRESENCE_ENABLED: "${CLASS_PRESENCE_ENABLED:-true}"
       # Optional runtime override; 0.0.0/empty keeps the git-stamped build version.
       APP_VERSION: "${APP_VERSION:-0.0.0}"
       NGINX_ENVSUBST_FILTER: "^(PUBLIC_HOST|PORT|SITE_PROXY_PORT)$"

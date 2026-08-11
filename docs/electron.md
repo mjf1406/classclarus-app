@@ -1,6 +1,6 @@
 # Electron classroom app
 
-Downloadable desktop build for teachers. It runs the **same self-host mode** as [SELF_HOSTING.md](./SELF_HOSTING.md) (password auth, Polar off, local Convex), without Docker. The installer / Task Manager name comes from [`APP_CONFIG.name`](../convex/appConfig.ts).
+Downloadable desktop build for teachers. It runs the **same self-host mode** as [SELF_HOSTING.md](./SELF_HOSTING.md) (password auth, Polar off, local Convex), without Docker. Class **online presence** (who is viewing a class) is on by default in Electron; Docker self-host can disable it with `CLASS_PRESENCE_ENABLED=false`. The installer / Task Manager name comes from [`APP_CONFIG.name`](../convex/appConfig.ts).
 
 Students join from a normal browser on the **same Wi‑Fi**. They do not install Electron.
 

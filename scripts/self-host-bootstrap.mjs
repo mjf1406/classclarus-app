@@ -225,6 +225,7 @@ export async function runSelfHostBootstrap(options) {
 
   await setEnv("SELF_HOSTED", "true");
   await setEnv("SITE_URL", options.siteUrl);
+  await setEnv("CLASS_PRESENCE_ENABLED", process.env.CLASS_PRESENCE_ENABLED ?? "true");
 
   if (!existsSync(authKeysFile)) {
     log("Generating auth JWT keys...");

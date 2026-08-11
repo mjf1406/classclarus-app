@@ -26,6 +26,12 @@ Hostname or LAN IP that **browsers** use to reach the server (not a Docker servi
 | Same machine as Docker    | `localhost`         |
 | Other devices on your LAN | e.g. `192.168.1.50` |
 
+## `CLASS_PRESENCE_ENABLED`
+
+Self-host shows **who is online in a class** (header chip and green dots on member avatars). Enabled by default on Docker self-host and Electron. Set `CLASS_PRESENCE_ENABLED=false` in `.env` / Portainer to disable presence heartbeats and UI. Hosted cloud deployments never run presence (no DB reads/writes).
+
+The deploy service syncs this to Convex; the web container injects `VITE_CLASS_PRESENCE_ENABLED` for the SPA at runtime.
+
 ## Option A — Clone and run
 
 Requires Docker Compose v2 and enough RAM to build (see below).
@@ -161,6 +167,7 @@ Or wipe the volume and start fresh (`sudo docker compose down -v`) if you do not
 | Backend  | Convex Cloud               | Convex in Docker            |
 | Auth     | Google (optional password) | Password only               |
 | Billing  | Polar + trial              | Always entitled / Polar off |
+| Presence | Off                        | On by default (opt out)     |
 | SPA host | e.g. Cloudflare Pages      | nginx in Compose            |
 
 ## Instance admin (password resets)

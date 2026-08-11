@@ -6,6 +6,7 @@ export type StaticEnv = {
   VITE_CONVEX_URL: string;
   VITE_CONVEX_SITE_URL: string;
   VITE_AUTH_PASSWORD_ENABLED: string;
+  VITE_CLASS_PRESENCE_ENABLED: string;
   VITE_SELF_HOSTED: string;
 };
 

@@ -9,6 +9,7 @@ export PUBLIC_HOST PORT SITE_PROXY_PORT
 export VITE_CONVEX_URL="http://${PUBLIC_HOST}:${PORT}"
 export VITE_CONVEX_SITE_URL="http://${PUBLIC_HOST}:${SITE_PROXY_PORT}"
 export VITE_AUTH_PASSWORD_ENABLED="${VITE_AUTH_PASSWORD_ENABLED:-true}"
+export VITE_CLASS_PRESENCE_ENABLED="${CLASS_PRESENCE_ENABLED:-true}"
 export VITE_SELF_HOSTED="${VITE_SELF_HOSTED:-true}"
 
 # Runtime override only when explicitly set to a real semver. Empty / 0.0.0
@@ -24,7 +25,7 @@ case "$APP_VERSION_VALUE" in
   ;;
 esac
 
-envsubst '${VITE_CONVEX_URL} ${VITE_CONVEX_SITE_URL} ${VITE_AUTH_PASSWORD_ENABLED} ${VITE_SELF_HOSTED} ${VITE_APP_VERSION}' \
+envsubst '${VITE_CONVEX_URL} ${VITE_CONVEX_SITE_URL} ${VITE_AUTH_PASSWORD_ENABLED} ${VITE_CLASS_PRESENCE_ENABLED} ${VITE_SELF_HOSTED} ${VITE_APP_VERSION}' \
   < /self-host-env.template.js \
   > /usr/share/nginx/html/self-host-env.js
 

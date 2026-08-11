@@ -34,6 +34,8 @@ await cp(path.join("resources", "convex-backend", platformDir), bundleDir, {
 
 process.env.VITE_SELF_HOSTED = "true";
 process.env.VITE_AUTH_PASSWORD_ENABLED = "true";
+process.env.VITE_CLASS_PRESENCE_ENABLED = "true";
+process.env.CLASS_PRESENCE_ENABLED = "true";
 process.env.VITE_CONVEX_URL = "http://127.0.0.1:3210";
 process.env.VITE_CONVEX_SITE_URL = "http://127.0.0.1:3211";
 process.env.DISABLE_REACT_COMPILER = "true";

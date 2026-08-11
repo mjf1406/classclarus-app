@@ -5,7 +5,8 @@ import { useTranslation } from "react-i18next";
 import { ClassRoleSelectLabel } from "@/components/badges/ClassRoleBadges";
 import { Can } from "@/components/permissions/Can";
 import { useClassPermissionsContext } from "@/components/permissions/classPermissionsContext";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useIsClassMemberOnline } from "@/components/presence/classPresenceContext";
+import { Avatar, AvatarBadge, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -213,6 +214,7 @@ export function MemberRow({
   const removePermission = removePermissionForMember(member.role);
   const showRemove = !isSelf && removePermission !== null;
   const safeImage = sanitizeAvatarUrl(member.image);
+  const isOnline = useIsClassMemberOnline(member.userId);
 
   const showRoleSelect =
     !isSelf && canChangeMemberRole(actorRole, member.role) && isJoinCodeRole(member.role);
@@ -228,6 +230,12 @@ export function MemberRow({
             <AvatarImage src={safeImage} alt={displayName} referrerPolicy="no-referrer" />
           ) : null}
           <AvatarFallback>{initials}</AvatarFallback>
+          {isOnline ? (
+            <AvatarBadge
+              className="size-3.5 bg-emerald-500 p-0 text-transparent"
+              aria-label={t("presenceOnlineNow")}
+            />
+          ) : null}
         </Avatar>
         <div className="flex min-w-0 flex-col items-center gap-1">
           <div className="flex min-w-0 flex-wrap items-center justify-center gap-2">

@@ -41,6 +41,7 @@ let currentEnv: StaticEnv = {
   VITE_CONVEX_URL: session.convexUrl,
   VITE_CONVEX_SITE_URL: session.convexSiteUrl,
   VITE_AUTH_PASSWORD_ENABLED: "true",
+  VITE_CLASS_PRESENCE_ENABLED: "true",
   VITE_SELF_HOSTED: "true",
 };
 
@@ -70,6 +71,7 @@ function buildEnv(
     VITE_CONVEX_URL: `http://${host}:${ports.convexPort}`,
     VITE_CONVEX_SITE_URL: `http://${host}:${ports.sitePort}`,
     VITE_AUTH_PASSWORD_ENABLED: "true",
+    VITE_CLASS_PRESENCE_ENABLED: "true",
     VITE_SELF_HOSTED: "true",
   };
 }
@@ -161,6 +163,7 @@ async function startClassroom(): Promise<void> {
 
     setSession({ status: "deploying" });
     const siteUrlForAuth = lanBaseUrl ?? loopbackBaseUrl;
+    process.env.CLASS_PRESENCE_ENABLED = "true";
     // Fingerprint convex/ so code edits redeploy (package version alone stays 0.0.0).
     const sourceFp = await fingerprintConvexSource(deployProjectDir());
     const deployVersion = `${app.getVersion()}-${sourceFp}`;

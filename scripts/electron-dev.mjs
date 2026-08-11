@@ -34,6 +34,8 @@ const viteEnv = {
   ...process.env,
   VITE_SELF_HOSTED: "true",
   VITE_AUTH_PASSWORD_ENABLED: "true",
+  VITE_CLASS_PRESENCE_ENABLED: "true",
+  CLASS_PRESENCE_ENABLED: "true",
   VITE_CONVEX_URL: `http://127.0.0.1:${CONVEX_PORT}`,
   VITE_CONVEX_SITE_URL: `http://127.0.0.1:${SITE_PORT}`,
 };
