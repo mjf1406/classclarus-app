@@ -13,7 +13,7 @@ type GradeScalesTabsProps = {
 
 const TAB_ROUTES: Record<GradeScalesTab, string> = {
   scales: "/class/$classId/sw/grade-scales/scales",
-  subjects: "/class/$classId/sw/grade-scales/subjects",
+  subjects: "/class/$classId/sw/graded-subjects",
   reports: "/class/$classId/sw/grade-scales/reports",
 };
 

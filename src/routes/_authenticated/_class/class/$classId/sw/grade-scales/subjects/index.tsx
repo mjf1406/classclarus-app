@@ -1,20 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
-
-import { GradedSubjectsPlaceholderPage } from "@/components/student-work/GradedSubjectsPlaceholderPage";
-import { RequirePermission } from "@/components/permissions/RequirePermission";
-import type { Id } from "../../../../../../../../../convex/_generated/dataModel";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute(
   "/_authenticated/_class/class/$classId/sw/grade-scales/subjects/",
 )({
-  component: function ClassGradedSubjectsPage() {
-    const { classId } = Route.useParams();
-    const typedClassId = classId as Id<"classes">;
-
-    return (
-      <RequirePermission permission="gradeScales:read">
-        <GradedSubjectsPlaceholderPage classId={typedClassId} />
-      </RequirePermission>
-    );
+  beforeLoad: ({ params }) => {
+    throw redirect({
+      to: "/class/$classId/sw/graded-subjects",
+      params: { classId: params.classId },
+    });
   },
 });

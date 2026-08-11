@@ -950,6 +950,24 @@ const schema = defineSchema({
   })
     .index("by_classId", ["classId"])
     .index("by_classId_systemKey", ["classId", "systemKey"]),
+  /** Weighted composition of assignment sections for gradebook subjects. */
+  gradedSubjects: defineTable({
+    classId: v.id("classes"),
+    name: v.string(),
+    /** Font Awesome icon id (`fas:…` / `far:…`), same format as class/group icons. */
+    icon: v.optional(v.string()),
+    gradeScaleId: v.id("gradeScales"),
+    items: v.array(
+      v.object({
+        assignmentId: v.id("assignments"),
+        sectionKey: v.optional(v.string()),
+        weight: v.number(),
+      }),
+    ),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_classId", ["classId"]),
   feedback: defineTable({
     userId: v.id("users"),
     type: v.union(v.literal("bug"), v.literal("feature"), v.literal("concern"), v.literal("other")),

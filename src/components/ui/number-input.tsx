@@ -18,10 +18,27 @@ type NumberInputProps = Omit<
   step?: number;
   /** Decorative text shown inside the field before the value (e.g. "×"). */
   prefix?: ReactNode;
+  /** Decorative text shown inside the field after the value (e.g. "%"). */
+  suffix?: ReactNode;
+  /** Extra classes for the numeric input element. */
+  inputClassName?: string;
 };
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
+}
+
+/** Avoid float drift like `0.1 + 0.1 + 0.1 === 0.30000000000000004`. */
+function snapToStep(value: number, step: number): number {
+  if (!Number.isFinite(value)) return value;
+  if (!Number.isFinite(step) || step <= 0) return value;
+  if (Number.isInteger(step)) return Math.trunc(value);
+  const decimals = (() => {
+    const text = String(step);
+    const dot = text.indexOf(".");
+    return dot === -1 ? 0 : text.length - dot - 1;
+  })();
+  return Number(value.toFixed(decimals));
 }
 
 function NumberInput({
@@ -34,6 +51,8 @@ function NumberInput({
   className,
   id,
   prefix,
+  suffix,
+  inputClassName,
   onBlur,
   ...props
 }: NumberInputProps) {
@@ -47,8 +66,7 @@ function NumberInput({
 
   const setClamped = (next: number) => {
     if (!Number.isFinite(next)) return;
-    const normalized = Number.isInteger(step) ? Math.trunc(next) : next;
-    onValueChange(clamp(normalized, min, max));
+    onValueChange(snapToStep(clamp(next, min, max), step));
   };
 
   const commitDraftOrRevert = () => {
@@ -128,12 +146,28 @@ function NumberInput({
             onBlur?.(event);
           }}
           className={cn(
-            "w-16 rounded-none tabular-nums focus-visible:z-10",
-            prefix != null ? "pr-2 pl-5 text-left" : "text-center",
+            "rounded-none tabular-nums focus-visible:z-10",
+            suffix != null || prefix != null ? "w-28" : "w-16",
+            prefix != null && suffix != null
+              ? "pr-5 pl-5 text-center"
+              : prefix != null
+                ? "pr-2 pl-5 text-left"
+                : suffix != null
+                  ? "pr-7 pl-2 text-right"
+                  : "text-center",
             "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
+            inputClassName,
           )}
           {...props}
         />
+        {suffix != null ? (
+          <span
+            aria-hidden
+            className="pointer-events-none absolute top-1/2 right-2 z-10 -translate-y-1/2 text-sm text-muted-foreground select-none"
+          >
+            {suffix}
+          </span>
+        ) : null}
       </div>
       <Button
         type="button"

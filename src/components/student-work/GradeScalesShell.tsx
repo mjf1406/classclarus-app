@@ -21,12 +21,13 @@ export function GradeScalesShell({
 }: GradeScalesShellProps) {
   const { t } = useTranslation("studentWork");
 
+  const titleKey =
+    tab === "subjects" ? "navGradedSubjects" : tab === "reports" ? "tabReports" : "navGradeScales";
+
   return (
     <div className="flex w-full flex-col gap-4 px-4 py-8 sm:px-8">
       <div className="flex items-center justify-between gap-3">
-        <h1 className="min-w-0 text-2xl font-semibold tracking-tight sm:text-3xl">
-          {t("navGradeScales")}
-        </h1>
+        <h1 className="min-w-0 text-2xl font-semibold tracking-tight sm:text-3xl">{t(titleKey)}</h1>
         {action ? <div className="shrink-0">{action}</div> : null}
       </div>
 

@@ -44,6 +44,7 @@ type BreadcrumbTarget =
   | { kind: "razInitialLevels" }
   | { kind: "assignersSeats" }
   | { kind: "studentWorkGradeScales" }
+  | { kind: "studentWorkGradedSubjects" }
   | { kind: "seatLayoutDetail"; layoutId: Id<"seatLayouts"> }
   | { kind: "seatChartDetail"; chartId: Id<"seatCharts"> };
 
@@ -161,6 +162,13 @@ function breadcrumbTarget(pathname: string, classId: string): BreadcrumbTarget {
     pathname === `${base}/assigners/seats/settings/`
   ) {
     return { kind: "assignersSeats" };
+  }
+  if (
+    pathname === `${base}/sw/graded-subjects` ||
+    pathname === `${base}/sw/graded-subjects/` ||
+    pathname.startsWith(`${base}/sw/graded-subjects/`)
+  ) {
+    return { kind: "studentWorkGradedSubjects" };
   }
   if (
     pathname === `${base}/sw/grade-scales` ||
@@ -510,7 +518,9 @@ export function ClassBreadcrumb({ classDoc }: ClassBreadcrumbProps) {
                         ? tAssigners("navSeats")
                         : target.kind === "studentWorkGradeScales"
                           ? tStudentWork("navGradeScales")
-                          : t(target.key);
+                          : target.kind === "studentWorkGradedSubjects"
+                            ? tStudentWork("navGradedSubjects")
+                            : t(target.key);
 
   return (
     <Breadcrumb aria-label={t("breadcrumb")} className="min-w-0">

@@ -247,6 +247,12 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
       to: "/class/$classId/sw/grade-scales",
       permission: "gradeScales:read",
     },
+    {
+      title: tStudentWork("navGradedSubjects"),
+      icon: BookOpen,
+      to: "/class/$classId/sw/graded-subjects",
+      permission: "gradeScales:read",
+    },
   ];
 
   const manageItems: Array<NavItem> = [

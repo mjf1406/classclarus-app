@@ -15,6 +15,7 @@ export type ClassNavTo =
   | "/class/$classId/groups"
   | "/class/$classId/assigners/seats"
   | "/class/$classId/sw/grade-scales"
+  | "/class/$classId/sw/graded-subjects"
   | "/class/$classId/teachers"
   | "/class/$classId/assistant-teachers"
   | "/class/$classId/students"
@@ -38,6 +39,7 @@ const REST_TO_ROUTE: Record<string, ClassNavTo> = {
   "/groups": "/class/$classId/groups",
   "/assigners/seats": "/class/$classId/assigners/seats",
   "/sw/grade-scales": "/class/$classId/sw/grade-scales",
+  "/sw/graded-subjects": "/class/$classId/sw/graded-subjects",
   "/teachers": "/class/$classId/teachers",
   "/assistant-teachers": "/class/$classId/assistant-teachers",
   "/students": "/class/$classId/students",
@@ -79,6 +81,8 @@ export function pathFor(to: ClassNavTo, classId: string): string {
       return `/class/${classId}/assigners/seats`;
     case "/class/$classId/sw/grade-scales":
       return `/class/${classId}/sw/grade-scales`;
+    case "/class/$classId/sw/graded-subjects":
+      return `/class/${classId}/sw/graded-subjects`;
     case "/class/$classId/teachers":
       return `/class/${classId}/teachers`;
     case "/class/$classId/assistant-teachers":
@@ -119,6 +123,9 @@ export function classRouteFromPathname(pathname: string, classId: string): Class
   }
   if (rest === "/sw/grade-scales" || rest.startsWith("/sw/grade-scales/")) {
     return "/class/$classId/sw/grade-scales";
+  }
+  if (rest === "/sw/graded-subjects" || rest.startsWith("/sw/graded-subjects/")) {
+    return "/class/$classId/sw/graded-subjects";
   }
   return REST_TO_ROUTE[rest] ?? "/class/$classId";
 }
