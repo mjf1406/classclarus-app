@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Id } from "../../../convex/_generated/dataModel";
 
-export type AssignersSeatsTab = "layouts" | "constraints" | "charts";
+export type AssignersSeatsTab = "layouts" | "constraints" | "charts" | "settings";
 
 type AssignersSeatsTabsProps = {
   classId: Id<"classes">;
@@ -15,6 +15,7 @@ const TAB_ROUTES: Record<AssignersSeatsTab, string> = {
   layouts: "/class/$classId/assigners/seats/layouts",
   constraints: "/class/$classId/assigners/seats/constraints",
   charts: "/class/$classId/assigners/seats/charts",
+  settings: "/class/$classId/assigners/seats/settings",
 };
 
 export function AssignersSeatsTabs({ classId, value }: AssignersSeatsTabsProps) {
@@ -36,6 +37,7 @@ export function AssignersSeatsTabs({ classId, value }: AssignersSeatsTabsProps) 
         <TabsTrigger value="layouts">{t("tabLayouts")}</TabsTrigger>
         <TabsTrigger value="constraints">{t("tabConstraints")}</TabsTrigger>
         <TabsTrigger value="charts">{t("tabCharts")}</TabsTrigger>
+        <TabsTrigger value="settings">{t("tabSettings")}</TabsTrigger>
       </TabsList>
     </Tabs>
   );

@@ -1,5 +1,5 @@
 import { useBlocker, useNavigate } from "@tanstack/react-router";
-import { Minus, Plus } from "lucide-react";
+import { Minus, Plus, TriangleAlert } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -10,6 +10,7 @@ import {
 import { SeatLayoutToolbar } from "@/components/assigners/SeatLayoutToolbar";
 import { SeatLayoutUnsavedChangesDialog } from "@/components/assigners/SeatLayoutUnsavedChangesDialog";
 import { DeleteNamedCredenza } from "@/components/groups/DeleteNamedCredenza";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/error-state";
 import { HelpTip } from "@/components/ui/help-tip";
@@ -22,6 +23,7 @@ import { useSeatLayout } from "@/hooks/assigners/useSeatLayout";
 import { useClass } from "@/hooks/classes/useClass";
 import { useGroupsBoard } from "@/hooks/groups/useGroupsBoard";
 import { useCan } from "@/hooks/permissions/useCan";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   cloneSeatSnapshot,
   emptySeatHistory,
@@ -163,6 +165,7 @@ const CANVAS_EDGE_LABEL_KEYS = {
 export function SeatLayoutEditorPage({ classId, layoutId }: SeatLayoutEditorPageProps) {
   const { t } = useTranslation("assigners");
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const { can } = useCan();
   const canManage = can("assigners:manage");
   const { data: layout, isPending, isError, refetch } = useSeatLayout(classId, layoutId);
@@ -833,6 +836,18 @@ export function SeatLayoutEditorPage({ classId, layoutId }: SeatLayoutEditorPage
       throw new Error("print failed");
     }
   };
+
+  if (isMobile) {
+    return (
+      <div className="flex h-[calc(100dvh-4rem)] items-center justify-center p-6">
+        <Alert variant="warning" className="max-w-md">
+          <TriangleAlert />
+          <AlertTitle>{t("chartMobileUnsupportedTitle")}</AlertTitle>
+          <AlertDescription>{t("chartMobileUnsupportedDescription")}</AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 
   if (isPending || !hydrated) {
     return (

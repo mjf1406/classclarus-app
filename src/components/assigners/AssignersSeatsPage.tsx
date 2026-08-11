@@ -1,8 +1,9 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Pencil, Plus, RockingChair, Trash2 } from "lucide-react";
+import { Cpu, Pencil, Plus, RockingChair, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { AutoAssignSeatingHost } from "@/components/assigners/AutoAssignSeatingHost";
 import { AssignersSeatsShell } from "@/components/assigners/AssignersSeatsShell";
 import { SeatLayoutCreateCredenza } from "@/components/assigners/SeatLayoutCreateCredenza";
 import { SeatLayoutNameCredenza } from "@/components/assigners/SeatLayoutNameCredenza";
@@ -72,6 +73,7 @@ export function AssignersSeatsPage({ classId }: AssignersSeatsPageProps) {
   const [deleting, setDeleting] = useState<SeatLayoutListItem | null>(null);
   const [sortKey, setSortKey] = useState<SeatLayoutSortKey>("updated");
   const [sortDirection, setSortDirection] = useState<SeatLayoutSortDirection>("desc");
+  const [autoAssignLayout, setAutoAssignLayout] = useState<SeatLayoutListItem | null>(null);
 
   const sorted = useMemo(
     () => (data ? sortSeatLayouts(data, sortKey, sortDirection) : []),
@@ -161,6 +163,14 @@ export function AssignersSeatsPage({ classId }: AssignersSeatsPageProps) {
         <ul className={SEATS_GRID_CLASS}>
           {sorted.map((layout) => {
             const menuItems: Array<ActionMenuItem> = [
+              {
+                id: "auto-assign",
+                label: t("autoAssign"),
+                icon: <Cpu />,
+                permission: "assigners:manage",
+                group: "manage",
+                onSelect: () => setAutoAssignLayout(layout),
+              },
               {
                 id: "edit",
                 label: t("editAction"),
@@ -267,6 +277,15 @@ export function AssignersSeatsPage({ classId }: AssignersSeatsPageProps) {
               if (!deleting) return;
               await removeLayout.mutateAsync({ classId, layoutId: deleting._id });
             }}
+          />
+          <AutoAssignSeatingHost
+            classId={classId}
+            open={autoAssignLayout !== null}
+            onOpenChange={(open) => {
+              if (!open) setAutoAssignLayout(null);
+            }}
+            fixedLayoutId={autoAssignLayout?._id}
+            fixedLayoutName={autoAssignLayout?.name}
           />
         </>
       ) : null}

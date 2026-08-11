@@ -19,27 +19,36 @@ import type { Id } from "../../../convex/_generated/dataModel";
 type GroupTeamFilterButtonsProps = {
   classId: Id<"classes">;
   className?: string;
+  /** Smaller icon buttons for tight headers. */
+  compact?: boolean;
 };
 
 type FilterIconButtonProps = {
   label: string;
   pressed: boolean;
   onClick: () => void;
+  compact?: boolean;
   children: ReactNode;
 };
 
-function FilterIconButton({ label, pressed, onClick, children }: FilterIconButtonProps) {
+function FilterIconButton({
+  label,
+  pressed,
+  onClick,
+  compact = false,
+  children,
+}: FilterIconButtonProps) {
   return (
     <Tooltip>
       <TooltipTrigger
         render={
           <Button
             type="button"
-            size="icon"
+            size={compact ? "icon-sm" : "icon"}
             variant={pressed ? "default" : "outline"}
             aria-pressed={pressed}
             onClick={onClick}
-            className="size-10 shrink-0 p-0.5"
+            className={cn("shrink-0 p-0.5", compact ? "size-8" : "size-10")}
           />
         }
       >
@@ -53,7 +62,11 @@ function FilterIconButton({ label, pressed, onClick, children }: FilterIconButto
   );
 }
 
-export function GroupTeamFilterButtons({ classId, className }: GroupTeamFilterButtonsProps) {
+export function GroupTeamFilterButtons({
+  classId,
+  className,
+  compact = false,
+}: GroupTeamFilterButtonsProps) {
   const { t } = useTranslation("classes");
   const { data: board } = useGroupsBoard(classId);
   const {
@@ -107,6 +120,7 @@ export function GroupTeamFilterButtons({ classId, className }: GroupTeamFilterBu
   });
 
   const ungroupedLabel = t("groupsUngroupedTitle");
+  const iconClassName = compact ? "size-3.5" : "size-4";
 
   return (
     <div className={cn("flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center", className)}>
@@ -118,6 +132,7 @@ export function GroupTeamFilterButtons({ classId, className }: GroupTeamFilterBu
         <FilterIconButton
           label={ungroupedLabel}
           pressed={includeUngrouped}
+          compact={compact}
           onClick={() => {
             toggleUngrouped();
           }}
@@ -130,7 +145,7 @@ export function GroupTeamFilterButtons({ classId, className }: GroupTeamFilterBu
                 : "bg-muted text-muted-foreground",
             )}
           >
-            <UsersRound className="size-4" />
+            <UsersRound className={iconClassName} />
           </div>
         </FilterIconButton>
 
@@ -141,6 +156,7 @@ export function GroupTeamFilterButtons({ classId, className }: GroupTeamFilterBu
               key={group._id}
               label={group.name}
               pressed={pressed}
+              compact={compact}
               onClick={() => {
                 toggleGroup(group._id);
               }}
@@ -150,7 +166,7 @@ export function GroupTeamFilterButtons({ classId, className }: GroupTeamFilterBu
                 icon={group.icon}
                 alt=""
                 className="size-full rounded-[1.1rem]"
-                iconClassName="size-4"
+                iconClassName={iconClassName}
               />
             </FilterIconButton>
           );
@@ -184,6 +200,7 @@ export function GroupTeamFilterButtons({ classId, className }: GroupTeamFilterBu
                 key={team._id}
                 label={team.name}
                 pressed={pressed}
+                compact={compact}
                 onClick={() => {
                   toggleTeam(team._id);
                 }}
@@ -193,7 +210,7 @@ export function GroupTeamFilterButtons({ classId, className }: GroupTeamFilterBu
                   icon={team.icon}
                   alt=""
                   className="size-full rounded-[1.1rem]"
-                  iconClassName="size-4"
+                  iconClassName={iconClassName}
                 />
               </FilterIconButton>
             );

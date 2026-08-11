@@ -1,8 +1,9 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Archive, LayoutGrid, Pencil, Plus } from "lucide-react";
+import { Archive, Cpu, LayoutGrid, Pencil, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { AutoAssignSeatingHost } from "@/components/assigners/AutoAssignSeatingHost";
 import { AssignersSeatsShell } from "@/components/assigners/AssignersSeatsShell";
 import { SeatChartCreateCredenza } from "@/components/assigners/SeatChartCreateCredenza";
 import { SeatChartNameCredenza } from "@/components/assigners/SeatChartNameCredenza";
@@ -54,6 +55,7 @@ export function AssignersSeatsChartsPage({ classId }: AssignersSeatsChartsPagePr
   const [renaming, setRenaming] = useState<SeatChartListItem | null>(null);
   const [sortKey, setSortKey] = useState<SeatChartSortKey>("updated");
   const [sortDirection, setSortDirection] = useState<SeatChartSortDirection>("desc");
+  const [autoAssignOpen, setAutoAssignOpen] = useState(false);
 
   const sorted = useMemo(
     () => (data ? sortSeatCharts(data, sortKey, sortDirection) : []),
@@ -67,10 +69,16 @@ export function AssignersSeatsChartsPage({ classId }: AssignersSeatsChartsPagePr
       description={t("chartsDescription")}
       action={
         canManage ? (
-          <Button type="button" onClick={() => setCreateOpen(true)}>
-            <Plus className="size-4" />
-            {t("createChart")}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button type="button" variant="outline" onClick={() => setAutoAssignOpen(true)}>
+              <Cpu className="size-4" />
+              {t("autoAssign")}
+            </Button>
+            <Button type="button" onClick={() => setCreateOpen(true)}>
+              <Plus className="size-4" />
+              {t("createChart")}
+            </Button>
+          </div>
         ) : null
       }
     >
@@ -222,6 +230,11 @@ export function AssignersSeatsChartsPage({ classId }: AssignersSeatsChartsPagePr
               if (!renaming) return;
               await renameChart.mutateAsync({ classId, chartId: renaming._id, name });
             }}
+          />
+          <AutoAssignSeatingHost
+            classId={classId}
+            open={autoAssignOpen}
+            onOpenChange={setAutoAssignOpen}
           />
         </>
       ) : null}

@@ -407,6 +407,48 @@ const schema = defineSchema({
     .index("by_chart_student_dimension", ["chartId", "studentUserId", "dimension"])
     .index("by_chart_student_dimension_key", ["chartId", "studentUserId", "dimension", "key"]),
   /**
+   * Longitudinal seating statistics per student and layout (same-layout history for auto-assign).
+   */
+  seatLayoutAggregates: defineTable({
+    classId: v.id("classes"),
+    layoutId: v.id("seatLayouts"),
+    studentUserId: v.id("users"),
+    dimension: v.union(
+      v.literal("total"),
+      v.literal("seat"),
+      v.literal("zone"),
+      v.literal("team"),
+      v.literal("neighbor"),
+      v.literal("combination"),
+    ),
+    key: v.string(),
+    label: v.string(),
+    count: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_layout_student", ["layoutId", "studentUserId"])
+    .index("by_layout_student_dimension", ["layoutId", "studentUserId", "dimension"])
+    .index("by_layout_student_dimension_key", ["layoutId", "studentUserId", "dimension", "key"]),
+  /**
+   * Class-scoped auto-assign algorithm weights and preferences.
+   */
+  seatAlgorithmSettings: defineTable({
+    classId: v.id("classes"),
+    weights: v.object({
+      seat: v.number(),
+      zone: v.number(),
+      team: v.number(),
+      neighbor: v.number(),
+      gender: v.number(),
+      combination: v.number(),
+    }),
+    genderParity: v.object({
+      mode: v.union(v.literal("off"), v.literal("oddEven")),
+    }),
+    updatedAt: v.number(),
+    updatedBy: v.id("users"),
+  }).index("by_class", ["classId"]),
+  /**
    * Many-to-many guardian ↔ student links within a class.
    * Cleared when either side leaves the guardian/student role.
    */

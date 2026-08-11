@@ -35,10 +35,12 @@ function ProgressButton({
   onSuccess,
   className,
   children,
+  size,
   ...props
 }: ProgressButtonProps) {
   const [succeeded, setSucceeded] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const iconOnly = size === "icon" || size === "icon-sm";
 
   useEffect(() => {
     return () => {
@@ -106,6 +108,7 @@ function ProgressButton({
       disabled={resolvedDisabled || succeeded}
       aria-busy={pending || undefined}
       onClick={handleClick}
+      size={size}
       className={cn("relative overflow-hidden", className)}
       {...props}
     >
@@ -127,7 +130,11 @@ function ProgressButton({
       {showProgress ? (
         <span className="absolute inset-0 z-10 flex items-center justify-center gap-1.5">
           <Spinner />
-          <span className="tabular-nums">{displayPercent}%</span>
+          {iconOnly ? null : (
+            <span data-slot="progress-label" className="tabular-nums">
+              {displayPercent}%
+            </span>
+          )}
         </span>
       ) : null}
       {succeeded ? (

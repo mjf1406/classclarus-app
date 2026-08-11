@@ -22,6 +22,7 @@ export const ACTIVITY_RESOURCE_TYPES = [
   "seatLayout",
   "seatConstraint",
   "seatChart",
+  "seatAlgorithmSettings",
 ] as const;
 export type ActivityResourceType = (typeof ACTIVITY_RESOURCE_TYPES)[number];
 

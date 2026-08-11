@@ -48,7 +48,7 @@ const router = createRouter({
   defaultErrorComponent: RootErrorComponent,
   defaultPendingMs: 150,
   defaultPendingMinMs: 300,
-  defaultPreload: "intent",
+  defaultPreload: "viewport",
 });
 
 declare module "@tanstack/react-router" {

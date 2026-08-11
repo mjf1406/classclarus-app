@@ -155,7 +155,9 @@ function breadcrumbTarget(pathname: string, classId: string): BreadcrumbTarget {
     pathname === `${base}/assigners/seats/constraints` ||
     pathname === `${base}/assigners/seats/constraints/` ||
     pathname === `${base}/assigners/seats/charts` ||
-    pathname === `${base}/assigners/seats/charts/`
+    pathname === `${base}/assigners/seats/charts/` ||
+    pathname === `${base}/assigners/seats/settings` ||
+    pathname === `${base}/assigners/seats/settings/`
   ) {
     return { kind: "assignersSeats" };
   }

@@ -3,25 +3,28 @@ import type { MutationCtx, QueryCtx } from "../_generated/server.js";
 import { classScope } from "./authzModel.js";
 import { getClassRoleForUser } from "./guardianLinks.js";
 import { formatRosterNameParts, resolveRosterNameFormat } from "./rosterNameFormat.js";
+import {
+  deskItemsById,
+  findStrictDeskNeighborIds,
+  slotKey,
+  type ChartAssignment,
+  type ChartAssignmentInput,
+  type SeatLayoutItemSnapshot,
+} from "./seatChartGeometry.js";
+
+export {
+  deskItemsById,
+  findStrictDeskNeighborIds,
+  slotKey,
+  type ChartAssignment,
+  type ChartAssignmentInput,
+  type SeatLayoutItemSnapshot,
+} from "./seatChartGeometry.js";
 
 export const MAX_CHART_NAME_LENGTH = 80;
 export const MAX_ASSIGNMENTS = 200;
 export const DEFAULT_HISTORY_LIMIT = 20;
 export const MAX_HISTORY_LIMIT = 100;
-
-export type SeatLayoutItemSnapshot = Doc<"seatLayouts">["items"][number];
-
-export type ChartAssignmentInput = {
-  deskItemId: string;
-  groupId?: Id<"groups">;
-  studentUserId: Id<"users">;
-};
-
-export type ChartAssignment = {
-  deskItemId: string;
-  groupId: Id<"groups">;
-  studentUserId: Id<"users">;
-};
 
 export type PlacementSnapshot = {
   studentUserId: Id<"users">;
@@ -103,16 +106,6 @@ export async function resolveStudentDisplayName(
   return rosterName ?? user?.name?.trim() ?? user?.email?.trim() ?? studentUserId;
 }
 
-export function deskItemsById(
-  items: Array<SeatLayoutItemSnapshot>,
-): Map<string, SeatLayoutItemSnapshot> {
-  return new Map(items.filter((item) => item.kind === "desk").map((item) => [item.id, item]));
-}
-
-export function slotKey(deskItemId: string, groupId: Id<"groups">): string {
-  return `${deskItemId}:${groupId}`;
-}
-
 export async function normalizeDraftAssignments(
   ctx: QueryCtx | MutationCtx,
   classId: Id<"classes">,
@@ -161,66 +154,6 @@ export async function normalizeDraftAssignments(
   }
 
   return normalized;
-}
-
-/** Cardinal adjacency: shared edge within 1px; corners do not count. */
-export function findStrictDeskNeighborIds(
-  items: Array<SeatLayoutItemSnapshot>,
-): Map<string, Array<string>> {
-  const gapTolerance = 1;
-  const minOverlapPx = 1;
-  const desks = items.filter((item) => item.kind === "desk");
-  const neighbors = new Map<string, Array<string>>();
-
-  const addNeighbor = (fromId: string, toId: string) => {
-    const existing = neighbors.get(fromId) ?? [];
-    if (!existing.includes(toId)) {
-      existing.push(toId);
-      neighbors.set(fromId, existing);
-    }
-  };
-
-  for (let i = 0; i < desks.length; i += 1) {
-    const a = desks[i];
-    if (!a) continue;
-    for (let j = i + 1; j < desks.length; j += 1) {
-      const b = desks[j];
-      if (!b) continue;
-
-      const aRight = a.x + a.width;
-      const aBottom = a.y + a.height;
-      const bRight = b.x + b.width;
-      const bBottom = b.y + b.height;
-      const overlapX = Math.min(aRight, bRight) - Math.max(a.x, b.x);
-      const overlapY = Math.min(aBottom, bBottom) - Math.max(a.y, b.y);
-
-      const gapEast = b.x - aRight;
-      if (gapEast >= -1 && gapEast <= gapTolerance && overlapY >= minOverlapPx) {
-        addNeighbor(a.id, b.id);
-        addNeighbor(b.id, a.id);
-        continue;
-      }
-      const gapWest = a.x - bRight;
-      if (gapWest >= -1 && gapWest <= gapTolerance && overlapY >= minOverlapPx) {
-        addNeighbor(a.id, b.id);
-        addNeighbor(b.id, a.id);
-        continue;
-      }
-      const gapSouth = b.y - aBottom;
-      if (gapSouth >= -1 && gapSouth <= gapTolerance && overlapX >= minOverlapPx) {
-        addNeighbor(a.id, b.id);
-        addNeighbor(b.id, a.id);
-        continue;
-      }
-      const gapNorth = a.y - bBottom;
-      if (gapNorth >= -1 && gapNorth <= gapTolerance && overlapX >= minOverlapPx) {
-        addNeighbor(a.id, b.id);
-        addNeighbor(b.id, a.id);
-      }
-    }
-  }
-
-  return neighbors;
 }
 
 export async function resolveTeamLabelForDesk(
@@ -706,6 +639,132 @@ export async function incrementAggregate(
   });
 }
 
+export async function incrementLayoutAggregate(
+  ctx: MutationCtx,
+  args: {
+    classId: Id<"classes">;
+    layoutId: Id<"seatLayouts">;
+    studentUserId: Id<"users">;
+    dimension: Doc<"seatLayoutAggregates">["dimension"];
+    key: string;
+    label: string;
+    now: number;
+  },
+): Promise<void> {
+  const existing = await ctx.db
+    .query("seatLayoutAggregates")
+    .withIndex("by_layout_student_dimension_key", (q) =>
+      q
+        .eq("layoutId", args.layoutId)
+        .eq("studentUserId", args.studentUserId)
+        .eq("dimension", args.dimension)
+        .eq("key", args.key),
+    )
+    .unique();
+
+  if (existing) {
+    await ctx.db.patch("seatLayoutAggregates", existing._id, {
+      count: existing.count + 1,
+      label: args.label,
+      updatedAt: args.now,
+    });
+    return;
+  }
+
+  await ctx.db.insert("seatLayoutAggregates", {
+    classId: args.classId,
+    layoutId: args.layoutId,
+    studentUserId: args.studentUserId,
+    dimension: args.dimension,
+    key: args.key,
+    label: args.label,
+    count: 1,
+    updatedAt: args.now,
+  });
+}
+
+export async function applyLayoutPlacementAggregates(
+  ctx: MutationCtx,
+  args: {
+    classId: Id<"classes">;
+    layoutId: Id<"seatLayouts">;
+    placement: PlacementSnapshot;
+    now: number;
+  },
+): Promise<void> {
+  const { classId, layoutId, placement, now } = args;
+  const studentUserId = placement.studentUserId;
+
+  await incrementLayoutAggregate(ctx, {
+    classId,
+    layoutId,
+    studentUserId,
+    dimension: "total",
+    key: "total",
+    label: "",
+    now,
+  });
+
+  await incrementLayoutAggregate(ctx, {
+    classId,
+    layoutId,
+    studentUserId,
+    dimension: "seat",
+    key: seatAggregateKey(layoutId, placement.deskItemId),
+    label: seatAggregateLabel(placement.deskNumber),
+    now,
+  });
+
+  if (placement.zoneName) {
+    await incrementLayoutAggregate(ctx, {
+      classId,
+      layoutId,
+      studentUserId,
+      dimension: "zone",
+      key: placement.zoneName,
+      label: placement.zoneName,
+      now,
+    });
+  }
+
+  if (placement.teamKey && placement.teamLabel) {
+    await incrementLayoutAggregate(ctx, {
+      classId,
+      layoutId,
+      studentUserId,
+      dimension: "team",
+      key: placement.teamKey,
+      label: placement.teamLabel,
+      now,
+    });
+  }
+
+  for (let i = 0; i < placement.neighborStudentIds.length; i += 1) {
+    const neighborId = placement.neighborStudentIds[i];
+    const neighborLabel = placement.neighborDisplayNames[i] ?? neighborId;
+    if (!neighborId) continue;
+    await incrementLayoutAggregate(ctx, {
+      classId,
+      layoutId,
+      studentUserId,
+      dimension: "neighbor",
+      key: neighborId,
+      label: neighborLabel,
+      now,
+    });
+  }
+
+  await incrementLayoutAggregate(ctx, {
+    classId,
+    layoutId,
+    studentUserId,
+    dimension: "combination",
+    key: placement.combinationKey,
+    label: buildCombinationLabel(placement),
+    now,
+  });
+}
+
 export async function applyPlacementAggregates(
   ctx: MutationCtx,
   args: {
@@ -785,6 +844,13 @@ export async function applyPlacementAggregates(
     dimension: "combination",
     key: placement.combinationKey,
     label: buildCombinationLabel(placement),
+    now,
+  });
+
+  await applyLayoutPlacementAggregates(ctx, {
+    classId,
+    layoutId,
+    placement,
     now,
   });
 }

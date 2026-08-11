@@ -61,20 +61,6 @@ function placementFilterFromDraft(
   };
 }
 
-function formatDraftPlacement(
-  draft: NonNullable<SeatChartStudentSummary["draftPlacement"]>,
-  t: (key: string, options?: Record<string, string | number>) => string,
-): string {
-  return [
-    draft.deskNumber !== undefined ? t("chartCurrentSeat", { seat: draft.deskNumber }) : null,
-    draft.zoneName,
-    draft.teamLabel,
-    draft.neighborDisplayNames.length > 0 ? draft.neighborDisplayNames.join(", ") : null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
-}
-
 export function SeatChartStudentInspector({
   classId,
   chartId,
@@ -112,11 +98,11 @@ export function SeatChartStudentInspector({
   const combinationStat = summary.currentContextCounts.combination;
 
   return (
-    <Card size="sm" className="flex max-h-full flex-col overflow-hidden">
-      <CardHeader className="border-b py-3">
+    <Card size="sm" className="flex h-full min-h-0 flex-col overflow-hidden">
+      <CardHeader className="shrink-0 border-b py-3">
         <CardTitle className="text-sm">{studentName}</CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col gap-2 overflow-y-auto p-3">
+      <CardContent className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3">
         {violations.length > 0 ? (
           <SeatChartViolationsAlert
             violations={violations}
@@ -128,13 +114,6 @@ export function SeatChartStudentInspector({
           <p className="text-xs text-muted-foreground">{t("chartInspectorUnseated")}</p>
         ) : (
           <>
-            <div className="flex flex-col gap-0.5">
-              <p className="text-xs font-medium">
-                {formatDraftPlacement(summary.draftPlacement, t)}
-              </p>
-              <p className="text-[11px] text-muted-foreground">{t("chartDraftPlacementNote")}</p>
-            </div>
-
             {placementStats.length > 0 || combinationStat !== undefined ? (
               <div className="flex flex-col gap-1">
                 <div className="text-xs font-medium">{t("chartCurrentContextTitle")}</div>

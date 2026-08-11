@@ -1,8 +1,9 @@
 import { useBlocker } from "@tanstack/react-router";
-import { Redo2, Save, ShuffleIcon, Undo2 } from "lucide-react";
+import { ClipboardCheck, Cpu, Redo2, Save, ShuffleIcon, TriangleAlert, Undo2 } from "lucide-react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { AutoAssignSeatingHost } from "@/components/assigners/AutoAssignSeatingHost";
 import { GroupTeamFilterButtons } from "@/components/groups/GroupTeamFilterButtons";
 import { GroupImageIcon } from "@/components/groups/GroupImageIcon";
 import { SeatChartRecordConfirmCredenza } from "@/components/assigners/SeatChartRecordConfirmCredenza";
@@ -10,24 +11,25 @@ import { SeatChartRecordViewerCredenza } from "@/components/assigners/SeatChartR
 import { SeatChartStudentInspector } from "@/components/assigners/SeatChartStudentInspector";
 import { SeatLayoutUnsavedChangesDialog } from "@/components/assigners/SeatLayoutUnsavedChangesDialog";
 import { RosterStudentChip } from "@/components/students/RosterStudentChip";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/error-state";
 import { HelpTip } from "@/components/ui/help-tip";
 import { ProgressButton } from "@/components/ui/progress-button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "@/components/ui/toast-manager";
 import { useIsSiteAdmin } from "@/hooks/admin/useIsSiteAdmin";
 import { useClass } from "@/hooks/classes/useClass";
+import { useCan } from "@/hooks/permissions/useCan";
 import { useGroupsBoard } from "@/hooks/groups/useGroupsBoard";
 import { useRecordSeatChart } from "@/hooks/assigners/useRecordSeatChart";
 import { useSaveSeatChartDraft } from "@/hooks/assigners/useSaveSeatChartDraft";
 import { useSeatChart } from "@/hooks/assigners/useSeatChart";
 import { useStudentRoster } from "@/hooks/roster/useStudentRoster";
-import { useCan } from "@/hooks/permissions/useCan";
 import { useGroupTeamFilterState } from "@/hooks/groups/useGroupTeamFilterState";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   compressSeatItemGaps,
   resolveTeamLabel,
@@ -48,13 +50,12 @@ import {
   randomAssignSeatsByGroup,
   studentAssignmentMap,
   type SeatChartAssignment,
-  type SeatChartCohortFilter,
   type SeatChartViolation,
   unassignDeskSlot,
   violationsForStudent,
 } from "@/lib/assigners/seatCharts";
-import { buildMembershipIndex, hasGroupTeamMembershipFilters } from "@/lib/groups/groupTeamFilters";
-import { collectStudentsInGroup, type GroupsBoard } from "@/lib/groups/groups";
+import { buildMembershipIndex } from "@/lib/groups/groupTeamFilters";
+import { collectStudentsInGroup } from "@/lib/groups/groups";
 import { useStudentRosterFilter } from "@/hooks/students/useStudentRosterFilter";
 import { cn } from "@/lib/utils";
 import { useConvex } from "convex/react";
@@ -77,29 +78,10 @@ type SeatChartEditorPageProps = {
   chartId: Id<"seatCharts">;
 };
 
-function studentInCohort(
-  board: GroupsBoard | undefined,
-  cohort: SeatChartCohortFilter,
-  filterState: ReturnType<typeof useGroupTeamFilterState>,
-  userId: Id<"users">,
-): boolean {
-  if (cohort === "class") return true;
-  if (!board) return true;
-  const membership = buildMembershipIndex(board)[userId];
-  if (cohort === "group") {
-    if (!hasGroupTeamMembershipFilters(filterState)) return true;
-    if (filterState.includeUngrouped && !membership?.groupId) return true;
-    if (membership?.groupId && filterState.groupIds.includes(membership.groupId)) return true;
-    return false;
-  }
-  if (!hasGroupTeamMembershipFilters(filterState)) return true;
-  if (membership?.teamId && filterState.teamIds.includes(membership.teamId)) return true;
-  return false;
-}
-
 export function SeatChartEditorPage({ classId, chartId }: SeatChartEditorPageProps) {
   const { t } = useTranslation("assigners");
   const { t: tCommon } = useTranslation("common");
+  const isMobile = useIsMobile();
   const convex = useConvex();
   const { can } = useCan();
   const canManage = can("assigners:manage");
@@ -118,13 +100,13 @@ export function SeatChartEditorPage({ classId, chartId }: SeatChartEditorPagePro
   const [selectedDeskId, setSelectedDeskId] = useState<string | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<SelectedSlot | null>(null);
   const [selectedStudentId, setSelectedStudentId] = useState<Id<"users"> | null>(null);
-  const [cohort, setCohort] = useState<SeatChartCohortFilter>("class");
   const [orientation] = useState<SeatOrientation>("front");
   const [recordOpen, setRecordOpen] = useState(false);
   const [recordViewerId, setRecordViewerId] = useState<Id<"seatChartRecords"> | null>(null);
   const [violations, setViolations] = useState<Array<SeatChartViolation>>([]);
   const [liveViolations, setLiveViolations] = useState<Array<SeatChartViolation>>([]);
   const [recordCheckProgress, setRecordCheckProgress] = useState(0);
+  const [autoAssignOpen, setAutoAssignOpen] = useState(false);
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
   const [dragStudentId, setDragStudentId] = useState<Id<"users"> | null>(null);
@@ -227,28 +209,26 @@ export function SeatChartEditorPage({ classId, chartId }: SeatChartEditorPagePro
 
   const tryAssignStudent = useCallback(
     (deskId: string, studentUserId: Id<"users">, groupId?: Id<"groups">) => {
-      const resolvedGroupId = groupId ?? membershipIndex[studentUserId]?.groupId;
-      if (!resolvedGroupId) {
+      const studentGroupId = membershipIndex[studentUserId]?.groupId;
+      if (!studentGroupId) {
         toast.add({ type: "error", title: t("chartSlotUngrouped") });
         return;
       }
-      assignToSlot(deskId, resolvedGroupId, studentUserId);
+      if (groupId !== undefined && groupId !== studentGroupId) {
+        toast.add({ type: "error", title: t("chartSlotWrongGroup") });
+        return;
+      }
+      assignToSlot(deskId, groupId ?? studentGroupId, studentUserId);
     },
     [assignToSlot, membershipIndex, t],
   );
 
-  const { filtered: filteredRoster } = useStudentRosterFilter({
+  const { filtered: visibleStudents } = useStudentRosterFilter({
     members: roster,
     query: "",
     membershipByUserId: board ? buildMembershipIndex(board) : {},
-    filterState:
-      cohort === "class" ? { groupIds: [], teamIds: [], includeUngrouped: false } : filterState,
+    filterState,
   });
-
-  const visibleStudents = useMemo(() => {
-    const base = filteredRoster ?? roster ?? [];
-    return base.filter((student) => studentInCohort(board, cohort, filterState, student.userId));
-  }, [board, cohort, filterState, filteredRoster, roster]);
 
   const highlightedNeighborDesks = useMemo(() => {
     if (!selectedDeskId && !selectedStudentId) return new Set<string>();
@@ -370,6 +350,18 @@ export function SeatChartEditorPage({ classId, chartId }: SeatChartEditorPagePro
     rect: t("defaultRectLabel"),
   };
 
+  if (isMobile) {
+    return (
+      <div className="flex h-[calc(100dvh-4rem)] items-center justify-center p-6">
+        <Alert variant="warning" className="max-w-md">
+          <TriangleAlert />
+          <AlertTitle>{t("chartMobileUnsupportedTitle")}</AlertTitle>
+          <AlertDescription>{t("chartMobileUnsupportedDescription")}</AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
   if (isPending || !chart) {
     return <Skeleton className="mx-4 my-8 h-[70vh] w-auto rounded-2xl" />;
   }
@@ -471,12 +463,29 @@ export function SeatChartEditorPage({ classId, chartId }: SeatChartEditorPagePro
           {isSiteAdmin && !archived ? (
             <Button
               type="button"
+              size="sm"
               variant="outline"
+              aria-label={t("chartAssignRandom")}
               disabled={!board || chart.layout.items.every((item) => item.kind !== "desk")}
               onClick={handleRandomAssign}
+              className="max-lg:size-8 max-lg:gap-0 max-lg:px-0 max-lg:has-data-[icon=inline-start]:pl-0"
             >
               <ShuffleIcon data-icon="inline-start" />
-              {t("chartAssignRandom")}
+              <span className="hidden lg:inline">{t("chartAssignRandom")}</span>
+            </Button>
+          ) : null}
+          {canManage && !archived ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              aria-label={t("autoAssign")}
+              disabled={!chart || chart.layout.items.every((item) => item.kind !== "desk")}
+              onClick={() => setAutoAssignOpen(true)}
+              className="max-lg:size-8 max-lg:gap-0 max-lg:px-0 max-lg:has-data-[icon=inline-start]:pl-0"
+            >
+              <Cpu data-icon="inline-start" />
+              <span className="hidden lg:inline">{t("autoAssign")}</span>
             </Button>
           ) : null}
           {canManage && !archived ? (
@@ -512,18 +521,23 @@ export function SeatChartEditorPage({ classId, chartId }: SeatChartEditorPagePro
               </Tooltip>
               <ProgressButton
                 type="button"
+                size="sm"
+                variant="default"
+                aria-label={t("chartRecordAction")}
                 progress={recordCheckProgress}
                 disabled={recordOpen}
                 onClick={() => handleRecordClick()}
+                className="max-lg:size-8 max-lg:gap-0 max-lg:px-0 max-lg:has-data-[icon=inline-start]:pl-0 max-lg:[&_[data-slot=progress-label]]:hidden"
               >
-                {t("chartRecordAction")}
+                <ClipboardCheck data-icon="inline-start" />
+                <span className="hidden lg:inline">{t("chartRecordAction")}</span>
               </ProgressButton>
             </>
           ) : null}
         </div>
       </div>
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[minmax(0,1fr)_minmax(14rem,38%)] lg:grid-cols-[minmax(0,1fr)_20rem] lg:grid-rows-[minmax(0,1fr)]">
         <div className="flex min-h-0 flex-col p-4">
           <div
             ref={canvasViewportRef}
@@ -757,105 +771,108 @@ export function SeatChartEditorPage({ classId, chartId }: SeatChartEditorPagePro
           </div>
         </div>
 
-        <aside className="flex min-h-0 flex-col gap-3 border-t p-4 lg:border-t-0 lg:border-l">
-          <div className="flex items-center gap-2">
-            <div className="text-sm font-medium">{t("chartRosterTitle")}</div>
-            <HelpTip title={t("chartRosterTitle")} description={t("chartRosterHelp")} />
-          </div>
-          <ToggleGroup
-            variant="outline"
-            spacing={0}
-            value={[cohort]}
-            onValueChange={(values) => {
-              const next = values[0] as SeatChartCohortFilter | undefined;
-              if (next) setCohort(next);
-            }}
-            className="flex-wrap"
-          >
-            <ToggleGroupItem value="class">{t("chartCohortClass")}</ToggleGroupItem>
-            <ToggleGroupItem value="group">{t("chartCohortGroup")}</ToggleGroupItem>
-            <ToggleGroupItem value="team">{t("chartCohortTeam")}</ToggleGroupItem>
-          </ToggleGroup>
-          {cohort !== "class" ? <GroupTeamFilterButtons classId={classId} /> : null}
-          <ul className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-            {visibleStudents.map((student) => {
-              const displayName = getRosterDisplayName(student, unnamed, nameFormat);
-              const seated = byStudent.has(student.userId);
-              return (
-                <li key={student.userId}>
-                  <RosterStudentChip
-                    userId={student.userId}
-                    displayName={displayName}
-                    rosterNumber={student.rosterNumber}
-                    image={student.image}
-                    email={student.email}
-                    showGrip={canManage && !archived}
-                    className={cn(
-                      "hover:bg-accent/40",
-                      canManage && !archived && "cursor-grab active:cursor-grabbing",
-                      selectedStudentId === student.userId && "ring-2 ring-primary",
-                    )}
-                    trailing={
-                      seated ? (
-                        <Badge variant="secondary" className="shrink-0">
-                          {t("chartSeatedBadge")}
-                        </Badge>
-                      ) : null
-                    }
-                    render={
-                      <button
-                        type="button"
-                        draggable={canManage && !archived}
-                        onDragStart={(event) => {
-                          event.dataTransfer.setData(
-                            "application/x-seat-chart-student",
-                            student.userId,
-                          );
-                          setDragStudentId(student.userId);
-                        }}
-                        onDragEnd={() => setDragStudentId(null)}
-                        onClick={() => {
-                          setSelectedStudentId(student.userId);
-                          const assignment = byStudent.get(student.userId);
-                          if (assignment) {
-                            setSelectedDeskId(assignment.deskItemId);
-                            setSelectedSlot({
-                              deskId: assignment.deskItemId,
-                              groupId: assignment.groupId,
-                            });
-                          }
-                          if (selectedSlot && canManage && !archived && !assignment) {
-                            tryAssignStudent(
-                              selectedSlot.deskId,
-                              student.userId,
-                              selectedSlot.groupId,
-                            );
-                          }
-                        }}
-                      />
-                    }
-                  />
-                </li>
-              );
-            })}
-          </ul>
-
-          {selectedStudentId ? (
-            <SeatChartStudentInspector
+        <aside className="flex min-h-0 flex-col gap-3 overflow-hidden border-t p-4 lg:border-t-0 lg:border-l">
+          <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between lg:flex-col lg:items-stretch">
+            <div className="flex shrink-0 items-center gap-2">
+              <div className="text-sm font-medium">{t("chartRosterTitle")}</div>
+              <HelpTip title={t("chartRosterTitle")} description={t("chartRosterHelp")} />
+            </div>
+            <GroupTeamFilterButtons
               classId={classId}
-              chartId={chartId}
-              studentUserId={selectedStudentId}
-              assignments={assignments}
-              studentName={getRosterDisplayName(
-                roster?.find((s) => s.userId === selectedStudentId) ?? {
-                  userId: selectedStudentId,
-                },
-                unnamed,
-                nameFormat,
-              )}
-              violations={violationsForStudent(liveViolations, selectedStudentId)}
+              compact
+              className="min-w-0 sm:justify-end lg:justify-start"
             />
-          ) : null}
+          </div>
+          <div
+            className={cn(
+              "grid min-h-0 flex-1 basis-0 gap-3",
+              selectedStudentId
+                ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 lg:grid-rows-[minmax(0,1fr)_minmax(8rem,40%)]"
+                : "grid-cols-1",
+            )}
+          >
+            <ul className="flex min-h-0 flex-col gap-2 overflow-y-auto">
+              {visibleStudents.map((student) => {
+                const displayName = getRosterDisplayName(student, unnamed, nameFormat);
+                const seated = byStudent.has(student.userId);
+                return (
+                  <li key={student.userId}>
+                    <RosterStudentChip
+                      userId={student.userId}
+                      displayName={displayName}
+                      rosterNumber={student.rosterNumber}
+                      image={student.image}
+                      email={student.email}
+                      showGrip={canManage && !archived}
+                      className={cn(
+                        "hover:bg-accent/40",
+                        canManage && !archived && "cursor-grab active:cursor-grabbing",
+                        selectedStudentId === student.userId && "ring-2 ring-primary",
+                      )}
+                      trailing={
+                        seated ? (
+                          <Badge variant="secondary" className="shrink-0">
+                            {t("chartSeatedBadge")}
+                          </Badge>
+                        ) : null
+                      }
+                      render={
+                        <button
+                          type="button"
+                          draggable={canManage && !archived}
+                          onDragStart={(event) => {
+                            event.dataTransfer.setData(
+                              "application/x-seat-chart-student",
+                              student.userId,
+                            );
+                            setDragStudentId(student.userId);
+                          }}
+                          onDragEnd={() => setDragStudentId(null)}
+                          onClick={() => {
+                            setSelectedStudentId(student.userId);
+                            const assignment = byStudent.get(student.userId);
+                            if (assignment) {
+                              setSelectedDeskId(assignment.deskItemId);
+                              setSelectedSlot({
+                                deskId: assignment.deskItemId,
+                                groupId: assignment.groupId,
+                              });
+                            }
+                            if (selectedSlot && canManage && !archived && !assignment) {
+                              tryAssignStudent(
+                                selectedSlot.deskId,
+                                student.userId,
+                                selectedSlot.groupId,
+                              );
+                            }
+                          }}
+                        />
+                      }
+                    />
+                  </li>
+                );
+              })}
+            </ul>
+
+            {selectedStudentId ? (
+              <div className="flex min-h-0 flex-col overflow-hidden">
+                <SeatChartStudentInspector
+                  classId={classId}
+                  chartId={chartId}
+                  studentUserId={selectedStudentId}
+                  assignments={assignments}
+                  studentName={getRosterDisplayName(
+                    roster?.find((s) => s.userId === selectedStudentId) ?? {
+                      userId: selectedStudentId,
+                    },
+                    unnamed,
+                    nameFormat,
+                  )}
+                  violations={violationsForStudent(liveViolations, selectedStudentId)}
+                />
+              </div>
+            ) : null}
+          </div>
         </aside>
       </div>
 
@@ -887,6 +904,28 @@ export function SeatChartEditorPage({ classId, chartId }: SeatChartEditorPagePro
           blocker.proceed?.();
         }}
       />
+
+      {chart ? (
+        <AutoAssignSeatingHost
+          classId={classId}
+          open={autoAssignOpen}
+          onOpenChange={setAutoAssignOpen}
+          mode="update"
+          fixedLayoutId={chart.layoutId}
+          fixedLayoutName={chart.layout.name}
+          targetChartId={chartId}
+          lockedAssignments={assignments}
+          onGenerated={({ assignments: next }) => {
+            setAssignments(next.map((assignment) => ({ ...assignment })));
+            setDirty(true);
+            pastRef.current = [];
+            futureRef.current = [];
+            setCanUndo(false);
+            setCanRedo(false);
+          }}
+          currentOrientation={orientation}
+        />
+      ) : null}
     </div>
   );
 }

@@ -1115,6 +1115,14 @@ const it = {
     activitySummary_archivedSeatChart: 'Archiviato piano posti "{{name}}"',
     activitySummary_recordedSeatChart: 'Registrati i posti per il piano "{{name}}"',
 
+    activitySummary_generatedSeatChart: 'Piano posti "{{name}}" assegnato automaticamente',
+    activitySummary_autoAssignedExistingSeatChart:
+      'Posti assegnati automaticamente sul piano "{{name}}"',
+    activitySummary_updatedSeatAlgorithmSettings: "Impostazioni assegnazione automatica aggiornate",
+    activitySummary_importedSeatAlgorithmSettings:
+      'Impostazioni assegnazione automatica importate da "{{sourceClassName}}"',
+    activitySummary_exportedSeatChartPdf: 'PDF del piano "{{chartName}}" esportato',
+
     activitySummary_recordedRazAssessment:
       "Valutazione RAZ registrata ({{result}}) → livello {{level}}",
     activitySummary_setRazManualStatus: "Stato RAZ impostato su {{status}}",
@@ -2087,6 +2095,44 @@ const it = {
     tabLayouts: "Piante",
     tabConstraints: "Vincoli",
     tabCharts: "Piani",
+    tabSettings: "Impostazioni",
+    settingsDescription:
+      "Regola come l'assegnazione automatica pesa varietà posto, zona, squadra, vicini, parità di genere e combinazioni.",
+    settingsTitle: "Pesi assegnazione automatica",
+    settingsImport: "Importa impostazioni",
+    settingsImportTitle: "Importa impostazioni assegnazione automatica",
+    settingsImportDescription: "Copia le preferenze di peso da un'altra classe visibile.",
+    settingsImportSourceLabel: "Classe origine",
+    settingsImportSourcePlaceholder: "Seleziona una classe",
+    settingsImportNoSources: "Nessun'altra classe disponibile.",
+    settingsImportAction: "Importa",
+    settingsImportFailed: "Impossibile importare le impostazioni.",
+    settingsSaveFailed: "Impossibile salvare le impostazioni.",
+    settingsWeightSeat: "Varietà posto",
+    settingsWeightSeatHint: "Evita di ripetere lo stesso numero di posto.",
+    settingsWeightZone: "Varietà zona",
+    settingsWeightZoneHint: "Distribuisce gli studenti tra le zone nominate.",
+    settingsWeightTeam: "Varietà squadra",
+    settingsWeightTeamHint: "Ruota le assegnazioni squadra ai banchi.",
+    settingsWeightNeighbor: "Varietà vicini",
+    settingsWeightNeighborHint: "Evita di ripetere gli stessi vicini.",
+    settingsWeightGender: "Parità di genere",
+    settingsWeightGenderHint:
+      "Assegna casualmente ragazzi a posti dispari o pari a ogni esecuzione; le ragazze prendono la parità opposta.",
+    settingsWeightCombination: "Varietà combinazione",
+    settingsWeightCombinationHint: "Scoraggia di ripetere la stessa situazione completa.",
+    settingsGenderParityLabel: "Modalità parità di genere",
+    settingsGenderParityOff: "Disattivato",
+    settingsGenderParityOddEven: "Posti dispari / pari",
+    autoAssign: "Assegna automaticamente",
+    autoAssignTitle: "Assegnazione automatica posti",
+    autoAssignDescriptionCreate:
+      "Crea un nuovo piano, assegna posti a tutta la classe, registra il risultato e apre la stampa.",
+    autoAssignDescriptionUpdate:
+      "Riempie i posti vuoti di tutta la classe su questo piano. Chi è già seduto resta. Poi registra e apre la stampa.",
+    autoAssignAction: "Assegna automaticamente",
+    autoAssignFailed: "Impossibile assegnare automaticamente i posti.",
+    autoAssignNotImplemented: "L'assegnazione automatica non è ancora disponibile.",
     chartsDescription:
       "Posiziona gli studenti ai banchi manualmente e registra la cronologia dei posti.",
     createChart: "Nuovo piano",
@@ -2144,6 +2190,10 @@ const it = {
       "{{student}} è nella zona {{currentZone}}, ma non deve essere nella zona {{targetZone}}.",
     chartSlotEmpty: "Empty",
     chartSlotUngrouped: "Assign this student to a group before seating.",
+    chartSlotWrongGroup: "Questo studente non appartiene a quel gruppo.",
+    chartMobileUnsupportedTitle: "Non disponibile su mobile",
+    chartMobileUnsupportedDescription:
+      "Questa pagina non può funzionare su mobile a causa delle dimensioni limitate dello schermo. Aprila su un tablet o un computer.",
     chartDeskSlotAria: "{{group}} — {{name}}",
     chartMultiSlotDesk: "Multi-slot desk",
     chartArchivedBadge: "Archiviato",
