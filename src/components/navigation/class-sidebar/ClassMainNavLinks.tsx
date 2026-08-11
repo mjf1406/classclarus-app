@@ -14,6 +14,7 @@ import {
   Mail,
   Megaphone,
   RockingChair,
+  Dices,
   SmilePlus,
   Settings2,
   Shield,
@@ -230,6 +231,12 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
       title: tAssigners("navSeats"),
       icon: RockingChair,
       to: "/class/$classId/assigners/seats",
+      permission: "assigners:read",
+    },
+    {
+      title: tAssigners("navRandom"),
+      icon: Dices,
+      to: "/class/$classId/assigners/random",
       permission: "assigners:read",
     },
   ];

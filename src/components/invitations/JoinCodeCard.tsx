@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CopyButton } from "@/components/ui/copy-button";
 import { formatCountdownUntil, formatLocalizedDateTime } from "@/i18n/formatDate";
+import { openDisplayTab } from "@/lib/display/openDisplayTab";
 import {
   isPendingJoinCode,
   joinCodeDisplayUrl,
@@ -69,7 +70,7 @@ export function JoinCodeCard({ code, classArchived, onRevoke }: JoinCodeCardProp
                   size="icon"
                   aria-label={t("showInviteCodeDisplay")}
                   onClick={() => {
-                    window.open(joinCodeDisplayUrl(code.code), "_blank", "noopener,noreferrer");
+                    openDisplayTab(joinCodeDisplayUrl(code.code));
                   }}
                 >
                   <PresentationIcon aria-hidden="true" />

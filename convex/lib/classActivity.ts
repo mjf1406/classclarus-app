@@ -25,6 +25,7 @@ export const ACTIVITY_RESOURCE_TYPES = [
   "seatAlgorithmSettings",
   "gradeScale",
   "gradedSubject",
+  "randomAssigner",
 ] as const;
 export type ActivityResourceType = (typeof ACTIVITY_RESOURCE_TYPES)[number];
 

@@ -43,6 +43,7 @@ type BreadcrumbTarget =
   | { kind: "raz" }
   | { kind: "razInitialLevels" }
   | { kind: "assignersSeats" }
+  | { kind: "assignersRandom" }
   | { kind: "studentWorkGradeScales" }
   | { kind: "studentWorkGradedSubjects" }
   | { kind: "seatLayoutDetail"; layoutId: Id<"seatLayouts"> }
@@ -148,6 +149,13 @@ function breadcrumbTarget(pathname: string, classId: string): BreadcrumbTarget {
     if (chartId) {
       return { kind: "seatChartDetail", chartId: chartId as Id<"seatCharts"> };
     }
+  }
+  if (
+    pathname === `${base}/assigners/random` ||
+    pathname === `${base}/assigners/random/` ||
+    pathname.startsWith(`${base}/assigners/random/`)
+  ) {
+    return { kind: "assignersRandom" };
   }
   if (
     pathname === `${base}/assigners/seats` ||
@@ -516,11 +524,13 @@ export function ClassBreadcrumb({ classDoc }: ClassBreadcrumbProps) {
                           target.kind === "seatLayoutDetail" ||
                           target.kind === "seatChartDetail"
                         ? tAssigners("navSeats")
-                        : target.kind === "studentWorkGradeScales"
-                          ? tStudentWork("navGradeScales")
-                          : target.kind === "studentWorkGradedSubjects"
-                            ? tStudentWork("navGradedSubjects")
-                            : t(target.key);
+                        : target.kind === "assignersRandom"
+                          ? tAssigners("navRandom")
+                          : target.kind === "studentWorkGradeScales"
+                            ? tStudentWork("navGradeScales")
+                            : target.kind === "studentWorkGradedSubjects"
+                              ? tStudentWork("navGradedSubjects")
+                              : t(target.key);
 
   return (
     <Breadcrumb aria-label={t("breadcrumb")} className="min-w-0">

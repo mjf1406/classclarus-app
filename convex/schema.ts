@@ -968,6 +968,42 @@ const schema = defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_classId", ["classId"]),
+  /** Fungible-item random assigners (e.g. Chromebooks). */
+  randomAssigners: defineTable({
+    classId: v.id("classes"),
+    name: v.string(),
+    items: v.array(v.string()),
+    defaultReplicates: v.boolean(),
+    defaultScope: v.union(v.literal("class"), v.literal("groups")),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_classId", ["classId"]),
+  /** Immutable snapshots of random assigner runs. */
+  randomAssignerRuns: defineTable({
+    classId: v.id("classes"),
+    assignerId: v.id("randomAssigners"),
+    ranAt: v.number(),
+    ranBy: v.id("users"),
+    scope: v.union(v.literal("class"), v.literal("groups")),
+    replicates: v.boolean(),
+    itemsSnapshot: v.array(v.string()),
+    assignments: v.array(
+      v.object({
+        studentUserId: v.id("users"),
+        studentDisplayName: v.string(),
+        item: v.string(),
+        rosterNumber: v.optional(v.number()),
+        firstName: v.optional(v.string()),
+        lastName: v.optional(v.string()),
+        groupId: v.optional(v.id("groups")),
+        groupName: v.optional(v.string()),
+      }),
+    ),
+  })
+    .index("by_classId", ["classId"])
+    .index("by_assignerId", ["assignerId"])
+    .index("by_assignerId_ranAt", ["assignerId", "ranAt"]),
   feedback: defineTable({
     userId: v.id("users"),
     type: v.union(v.literal("bug"), v.literal("feature"), v.literal("concern"), v.literal("other")),
