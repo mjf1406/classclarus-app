@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 
 import { ClassRoleIconBadge } from "@/components/badges/ClassRoleBadges";
 import { ClassFormCredenza } from "@/components/classes/ClassFormCredenza";
+import { ClassIconDisplay } from "@/components/classes/ClassIconDisplay";
 import { useClassPermissionsContext } from "@/components/permissions/classPermissionsContext";
 import { useEntitlement } from "@/hooks/billing/useEntitlement";
 import { useCreateClass } from "@/hooks/classes/useCreateClass";
@@ -84,9 +85,13 @@ export function ClassSwitcher({ currentClass }: ClassSwitcherProps) {
                 />
               }
             >
-              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary text-sm font-semibold text-sidebar-primary-foreground">
-                {currentClass.name.slice(0, 1).toUpperCase()}
-              </div>
+              <ClassIconDisplay
+                icon={currentClass.icon}
+                className="size-8 bg-sidebar-primary text-sm text-sidebar-primary-foreground"
+                fallbackClassName="size-8 bg-sidebar-primary text-sm font-semibold text-sidebar-primary-foreground"
+                iconClassName="text-sm"
+                fallback={currentClass.name.slice(0, 1).toUpperCase()}
+              />
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{currentClass.name}</span>
                 <span className="truncate text-xs text-muted-foreground">{currentClass.year}</span>
@@ -118,9 +123,13 @@ export function ClassSwitcher({ currentClass }: ClassSwitcherProps) {
                       });
                     }}
                   >
-                    <div className="flex size-6 items-center justify-center rounded-md border text-xs font-medium">
-                      {classDoc.name.slice(0, 1).toUpperCase()}
-                    </div>
+                    <ClassIconDisplay
+                      icon={classDoc.icon}
+                      className="size-6 rounded-md border bg-transparent text-xs"
+                      fallbackClassName="size-6 rounded-md border bg-transparent text-xs font-medium"
+                      iconClassName="text-xs"
+                      fallback={classDoc.name.slice(0, 1).toUpperCase()}
+                    />
                     <span className="min-w-0 flex-1 truncate">{classDoc.name}</span>
                     <ClassRoleIconBadge role={classDoc.role} />
                   </DropdownMenuItem>

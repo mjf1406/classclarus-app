@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { BookOpen, Pencil, Plus, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { FontAwesomeIconFromId } from "@/components/icons/FontAwesomeIconFromId";
@@ -20,7 +20,6 @@ import {
 import { ErrorState } from "@/components/ui/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAssignments } from "@/hooks/assignments/useAssignments";
-import { useGradeScales } from "@/hooks/gradeScales/useGradeScales";
 import { useGradedSubjects } from "@/hooks/gradedSubjects/useGradedSubjects";
 import { useRemoveGradedSubject } from "@/hooks/gradedSubjects/useRemoveGradedSubject";
 import { useCan } from "@/hooks/permissions/useCan";
@@ -46,21 +45,11 @@ export function GradedSubjectsPage({ classId }: GradedSubjectsPageProps) {
   const { can } = useCan();
   const canManage = can("gradeScales:manage");
   const { data, isPending, isError, refetch } = useGradedSubjects(classId);
-  const { data: gradeScales } = useGradeScales(classId);
   const { data: assignments } = useAssignments(classId);
   const removeSubject = useRemoveGradedSubject();
   const [deleting, setDeleting] = useState<GradedSubjectListItem | null>(null);
 
   const assignmentRows = assignments ?? [];
-
-  const scaleNameById = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const scale of gradeScales ?? []) {
-      if (scale.isHidden) continue;
-      map.set(scale._id, resolveGradeScaleDisplayName(scale, t, t("unnamedScale")));
-    }
-    return map;
-  }, [gradeScales, t]);
 
   return (
     <GradeScalesShell
@@ -123,7 +112,11 @@ export function GradedSubjectsPage({ classId }: GradedSubjectsPageProps) {
       {!isPending && !isError && data && data.length > 0 ? (
         <ul className={GRID_CLASS}>
           {data.map((subject) => {
-            const scaleName = scaleNameById.get(subject.gradeScaleId) ?? t("unnamedScale");
+            const scaleName = resolveGradeScaleDisplayName(
+              subject.gradeScale,
+              t,
+              t("unnamedScale"),
+            );
             const weightPercents = subject.items.map((item) => item.weight * 100);
             const weightDecimals = weightPercentDisplayDecimals(weightPercents);
             const menuItems: Array<ActionMenuItem> = [

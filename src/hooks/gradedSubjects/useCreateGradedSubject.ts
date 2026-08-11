@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { toast } from "@/components/ui/toast-manager";
+import { gradeScalesListQueryKey, type GradeScaleList } from "@/hooks/gradeScales/useGradeScales";
 import {
   gradedSubjectsListQueryKey,
   type GradedSubjectList,
@@ -18,6 +19,21 @@ type CreateGradedSubjectArgs = {
   classId: Id<"classes">;
   values: GradedSubjectFormValues;
 };
+
+function gradeScaleSummaryFromCache(
+  scales: GradeScaleList | undefined,
+  gradeScaleId: Id<"gradeScales">,
+) {
+  const scale = scales?.find((row) => row._id === gradeScaleId);
+  if (!scale) {
+    return { isSystem: false as const };
+  }
+  return {
+    isSystem: scale.isSystem,
+    name: scale.name,
+    nameKey: scale.nameKey,
+  };
+}
 
 export function useCreateGradedSubject() {
   const { t } = useTranslation("studentWork");
@@ -38,6 +54,9 @@ export function useCreateGradedSubject() {
       const payload = gradedSubjectMutationPayloadFromForm(args.values);
       const now = Date.now();
       const optimisticId = `optimistic:${randomClientId()}` as Id<"gradedSubjects">;
+      const scales = queryClient.getQueryData<GradeScaleList>(
+        gradeScalesListQueryKey(args.classId),
+      );
 
       queryClient.setQueryData<GradedSubjectList>(key, (old) => {
         const next = {
@@ -46,6 +65,7 @@ export function useCreateGradedSubject() {
           name: payload.name,
           icon: payload.icon,
           gradeScaleId: payload.gradeScaleId,
+          gradeScale: gradeScaleSummaryFromCache(scales, payload.gradeScaleId),
           items: payload.items,
           createdBy: `optimistic:${randomClientId()}` as Id<"users">,
           createdAt: now,

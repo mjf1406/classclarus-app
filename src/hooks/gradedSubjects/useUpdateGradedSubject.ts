@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { toast } from "@/components/ui/toast-manager";
+import { gradeScalesListQueryKey, type GradeScaleList } from "@/hooks/gradeScales/useGradeScales";
 import {
   gradedSubjectDetailQueryKey,
   gradedSubjectsListQueryKey,
@@ -19,6 +20,22 @@ type UpdateGradedSubjectArgs = {
   gradedSubjectId: Id<"gradedSubjects">;
   values: GradedSubjectFormValues;
 };
+
+function gradeScaleSummaryFromCache(
+  scales: GradeScaleList | undefined,
+  gradeScaleId: Id<"gradeScales">,
+  fallback?: GradedSubjectList[number]["gradeScale"],
+) {
+  const scale = scales?.find((row) => row._id === gradeScaleId);
+  if (!scale) {
+    return fallback ?? { isSystem: false as const };
+  }
+  return {
+    isSystem: scale.isSystem,
+    name: scale.name,
+    nameKey: scale.nameKey,
+  };
+}
 
 export function useUpdateGradedSubject() {
   const { t } = useTranslation("studentWork");
@@ -43,6 +60,9 @@ export function useUpdateGradedSubject() {
       const now = Date.now();
       const listKey = gradedSubjectsListQueryKey(args.classId);
       const detailKey = gradedSubjectDetailQueryKey(args.classId, args.gradedSubjectId);
+      const scales = queryClient.getQueryData<GradeScaleList>(
+        gradeScalesListQueryKey(args.classId),
+      );
 
       queryClient.setQueryData<GradedSubjectList>(listKey, (old) => {
         if (!old) return old;
@@ -53,6 +73,11 @@ export function useUpdateGradedSubject() {
                 name: payload.name,
                 icon: payload.icon,
                 gradeScaleId: payload.gradeScaleId,
+                gradeScale: gradeScaleSummaryFromCache(
+                  scales,
+                  payload.gradeScaleId,
+                  subject.gradeScale,
+                ),
                 items: payload.items,
                 updatedAt: now,
               }

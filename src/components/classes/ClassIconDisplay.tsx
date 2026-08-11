@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 import { FontAwesomeIconFromId } from "@/components/icons/FontAwesomeIconFromId";
 import { isEmojiIcon, isFontAwesomeIconId } from "@/lib/classes/classFormSchema";
 import { cn } from "@/lib/utils";
@@ -6,9 +8,19 @@ type ClassIconDisplayProps = {
   icon?: string | null;
   className?: string;
   fallbackClassName?: string;
+  /** Shown when `icon` is missing or not a recognized emoji / Font Awesome id. */
+  fallback?: ReactNode;
+  /** Size/color classes for the Font Awesome glyph (default `text-lg`). */
+  iconClassName?: string;
 };
 
-export function ClassIconDisplay({ icon, className, fallbackClassName }: ClassIconDisplayProps) {
+export function ClassIconDisplay({
+  icon,
+  className,
+  fallbackClassName,
+  fallback,
+  iconClassName,
+}: ClassIconDisplayProps) {
   const trimmed = icon?.trim() ?? "";
 
   if (trimmed && isEmojiIcon(trimmed)) {
@@ -35,7 +47,7 @@ export function ClassIconDisplay({ icon, className, fallbackClassName }: ClassIc
       >
         <FontAwesomeIconFromId
           id={trimmed}
-          className="text-lg"
+          className={cn("text-lg", iconClassName)}
           fallback={<span className="size-4 rounded bg-muted" />}
         />
       </span>
@@ -49,6 +61,8 @@ export function ClassIconDisplay({ icon, className, fallbackClassName }: ClassIc
         fallbackClassName ?? className,
       )}
       aria-hidden="true"
-    />
+    >
+      {fallback}
+    </span>
   );
 }

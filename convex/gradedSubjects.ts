@@ -23,12 +23,19 @@ const gradedSubjectItemInputValidator = v.object({
   weight: v.number(),
 });
 
+const gradedSubjectGradeScaleSummaryValidator = v.object({
+  isSystem: v.boolean(),
+  name: v.optional(v.string()),
+  nameKey: v.optional(v.string()),
+});
+
 const gradedSubjectListItemValidator = v.object({
   _id: v.id("gradedSubjects"),
   _creationTime: v.number(),
   name: v.string(),
   icon: v.optional(v.string()),
   gradeScaleId: v.id("gradeScales"),
+  gradeScale: gradedSubjectGradeScaleSummaryValidator,
   items: v.array(gradedSubjectItemValidator),
   createdBy: v.id("users"),
   createdAt: v.number(),
@@ -142,13 +149,30 @@ async function validateItemsForClass(
   }
 }
 
-function toListItem(doc: Doc<"gradedSubjects">) {
+function gradeScaleSummary(scale: Doc<"gradeScales"> | null): {
+  isSystem: boolean;
+  name?: string;
+  nameKey?: string;
+} {
+  if (!scale) {
+    return { isSystem: false };
+  }
+  return {
+    isSystem: isSystemScale(scale),
+    name: scale.name,
+    nameKey: scale.nameKey,
+  };
+}
+
+async function toListItem(ctx: QueryCtx | MutationCtx, doc: Doc<"gradedSubjects">) {
+  const scale = await ctx.db.get("gradeScales", doc.gradeScaleId);
   return {
     _id: doc._id,
     _creationTime: doc._creationTime,
     name: doc.name,
     icon: doc.icon,
     gradeScaleId: doc.gradeScaleId,
+    gradeScale: gradeScaleSummary(scale),
     items: doc.items,
     createdBy: doc.createdBy,
     createdAt: doc.createdAt,
@@ -160,14 +184,14 @@ export const listForClass = classQuery({
   args: {},
   returns: v.array(gradedSubjectListItemValidator),
   handler: async (ctx) => {
-    await ctx.require("gradeScales:read");
+    // View uses class:read (via classQuery). Manage stays gradeScales:manage.
     // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded list
     const rows = await ctx.db
       .query("gradedSubjects")
       .withIndex("by_classId", (q) => q.eq("classId", ctx.classDoc._id))
       .collect();
     rows.sort((a, b) => a.name.localeCompare(b.name));
-    return rows.map(toListItem);
+    return await Promise.all(rows.map((row) => toListItem(ctx, row)));
   },
 });
 
@@ -177,7 +201,7 @@ export const get = classQuery({
   },
   returns: gradedSubjectDetailValidator,
   handler: async (ctx, args) => {
-    await ctx.require("gradeScales:read");
+    // View uses class:read (via classQuery). Create/update/remove stay manage-gated.
     const subject = await requireGradedSubject(ctx, ctx.classDoc._id, args.gradedSubjectId);
     return {
       _id: subject._id,

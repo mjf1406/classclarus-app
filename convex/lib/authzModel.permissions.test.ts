@@ -38,6 +38,15 @@ describe("grantable class permissions", () => {
     expect(permissionsForRole("owner")).toContain("permissions:manage");
     expect(permissionsForRole("teacher")).not.toContain("permissions:manage");
   });
+
+  test("grade scales read is staff-only; students/guardians use class:read for subjects", () => {
+    expect(permissionsForRole("assistant_teacher")).toContain("gradeScales:read");
+    expect(permissionsForRole("teacher")).toContain("gradeScales:manage");
+    expect(permissionsForRole("student")).not.toContain("gradeScales:read");
+    expect(permissionsForRole("guardian")).not.toContain("gradeScales:read");
+    expect(permissionsForRole("student")).toContain("class:read");
+    expect(permissionsForRole("guardian")).toContain("class:read");
+  });
 });
 
 describe("permission override helpers", () => {

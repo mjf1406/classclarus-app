@@ -258,7 +258,7 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
       title: tStudentWork("navGradedSubjects"),
       icon: BookOpen,
       to: "/class/$classId/sw/graded-subjects",
-      permission: "gradeScales:read",
+      permission: "class:read",
     },
   ];
 

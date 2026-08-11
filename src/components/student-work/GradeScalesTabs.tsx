@@ -2,6 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useCan } from "@/hooks/permissions/useCan";
 import type { Id } from "../../../convex/_generated/dataModel";
 
 export type GradeScalesTab = "scales" | "subjects" | "reports";
@@ -20,6 +21,13 @@ const TAB_ROUTES: Record<GradeScalesTab, string> = {
 export function GradeScalesTabs({ classId, value }: GradeScalesTabsProps) {
   const { t } = useTranslation("studentWork");
   const navigate = useNavigate();
+  const { can } = useCan();
+  const canReadScales = can("gradeScales:read");
+
+  // Students/guardians see graded subjects via class:read but not scales/reports.
+  if (!canReadScales) {
+    return null;
+  }
 
   return (
     <Tabs

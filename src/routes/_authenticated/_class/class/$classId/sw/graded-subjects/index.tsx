@@ -10,7 +10,7 @@ export const Route = createFileRoute("/_authenticated/_class/class/$classId/sw/g
     const typedClassId = classId as Id<"classes">;
 
     return (
-      <RequirePermission permission="gradeScales:read">
+      <RequirePermission permission="class:read">
         <GradedSubjectsPage classId={typedClassId} />
       </RequirePermission>
     );
