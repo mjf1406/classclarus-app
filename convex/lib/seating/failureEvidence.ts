@@ -1,5 +1,5 @@
 import type { Id } from "../../_generated/dataModel.js";
-import { slotKey } from "../seatChartGeometry.js";
+import { slotKey } from "./seatChartGeometry.js";
 import type {
   LockedAssignment,
   SeatingAlgorithmInput,

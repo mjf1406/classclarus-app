@@ -1098,6 +1098,7 @@ const ko = {
     activitySummary_updatedSeatLayoutGenderParity:
       '좌석 배치 "{{name}}"의 성별 균형을 {{mode}}(으)로 업데이트',
     activitySummary_exportedSeatChartPdf: '좌석표 "{{chartName}}" PDF 내보냄',
+    activitySummary_exportedSeatChartTablePdf: '좌석표 "{{chartName}}" 표보냄',
 
     activitySummary_recordedRazAssessment: "RAZ 평가 기록 ({{result}}) → 레벨 {{level}}",
     activitySummary_setRazManualStatus: "RAZ 상태를 {{status}}(으)로 설정",
@@ -2278,6 +2279,27 @@ const ko = {
     tabConstraints: "제약",
     tabCharts: "좌석표",
     tabData: "데이터",
+    tabStats: "통계",
+    seatsStatsDescription: "이 수업의 현재 자리와 좌석 기록입니다.",
+    seatsStatsCurrentTitle: "현재 자리",
+    seatsStatsSeatLabel: "자리",
+    seatsStatsTeamLabel: "팀",
+    seatsStatsZoneLabel: "구역",
+    seatsStatsNeighborsLabel: "옆자리",
+    seatsStatsNoRecordingTitle: "아직 기록된 좌석이 없습니다",
+    seatsStatsNoRecordingDescription: "선생님이 좌석표를 확정하면 기록됩니다.",
+    seatsStatsHistoryTitle: "좌석 기록",
+    seatsStatsHistoryEmpty: "기록된 좌석이 아직 없습니다.",
+    seatsStatsHistorySearchPlaceholder: "팀, 구역 또는 레이아웃으로 검색",
+    seatsStatsHistorySearchClear: "검색 지우기",
+    seatsStatsHistorySearchResults: "{{count}}개 결과",
+    seatsStatsHistorySearchEmpty: "일치하는 좌석이 없습니다.",
+    seatsStatsHistoryLayoutLabel: "레이아웃",
+    seatsStatsHistoryDateLabel: "날짜",
+    seatsStatsLoadFailed: "좌석 통계를 불러올 수 없습니다.",
+    seatsStatsLoadFailedDescription: "잠시 후 다시 시도하세요.",
+    seatsStatsStudentsEmptyTitle: "학생 없음",
+    seatsStatsStudentsEmptyDescription: "이 수업에 학생으로 등록되어 있지 않습니다.",
     seatsDataDescription: "레이아웃 «{{layoutName}}»의 학생별 {{dimension}} 횟수({{count}}열).",
     seatsDataDescriptionFallback: "레이아웃별 기록된 좌석 횟수를 학생별로 표시합니다.",
     seatsDataEmptyStudents: "이 수업에 아직 학생이 없습니다.",
@@ -2557,6 +2579,21 @@ const ko = {
     constraintRelationTeammate: "팀원",
     constraintSummaryPair: "{{student}}은(는) {{other}}의 {{relation}}이어야 {{polarity}}",
     constraintSummaryZone: "{{student}}은(는) {{zone}}에 앉아야 {{polarity}}",
+    constraintsViewPlain: "쉬운 설명",
+    constraintsViewTable: "표",
+    constraintPlain_neighbor_must:
+      "<bold>{{student}}</bold>은(는) <bold>{{other}}</bold>와(과) 이웃으로 앉아야 합니다.",
+    constraintPlain_neighbor_mustNot:
+      "<bold>{{student}}</bold>은(는) <bold>{{other}}</bold>와(과) 이웃으로 앉으면 안 됩니다.",
+    constraintPlain_teammate_must:
+      "<bold>{{student}}</bold>은(는) <bold>{{other}}</bold>와(과) 같은 팀이어야 합니다.",
+    constraintPlain_teammate_mustNot:
+      "<bold>{{student}}</bold>은(는) <bold>{{other}}</bold>와(과) 같은 팀이면 안 됩니다.",
+    constraintPlain_zone_must:
+      "<bold>{{student}}</bold>은(는) <bold>{{zone}}</bold> 구역에 앉아야 합니다.",
+    constraintPlain_zone_mustNot:
+      "<bold>{{student}}</bold>은(는) <bold>{{zone}}</bold> 구역에 앉으면 안 됩니다.",
+    constraintsPlainEmpty: "검색과 일치하는 제약이 없습니다.",
     constraintSaveFailed: "제약을 저장할 수 없습니다.",
     constraintLoadFailed: "제약을 불러올 수 없습니다.",
     constraintLoadFailedDescription: "연결을 확인하고 다시 시도하세요.",
@@ -2612,6 +2649,9 @@ const ko = {
     orientationLeft: "왼쪽",
     orientationRight: "오른쪽",
     printPdf: "PDF 내보내기",
+    printLayout: "배치도 인쇄",
+    printTable: "표 인쇄",
+    printTableSeatColumn: "좌석",
     printPdfFailed: "인쇄 대화상자를 열 수 없습니다.",
     printOptionsTitle: "좌석 배치 인쇄",
     printOptionsDescription:

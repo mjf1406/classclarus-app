@@ -1116,6 +1116,7 @@ const uk = {
     activitySummary_updatedSeatLayoutGenderParity:
       "Оновлено гендерну парність схеми «{{name}}» на {{mode}}",
     activitySummary_exportedSeatChartPdf: "Експорт PDF схеми «{{chartName}}»",
+    activitySummary_exportedSeatChartTablePdf: "Експорт таблиці схеми «{{chartName}}»",
 
     activitySummary_recordedRazAssessment: "Записано оцінку RAZ ({{result}}) → рівень {{level}}",
     activitySummary_setRazManualStatus: "Статус RAZ встановлено: {{status}}",
@@ -2328,6 +2329,27 @@ const uk = {
     tabConstraints: "Обмеження",
     tabCharts: "Розсадки",
     tabData: "Дані",
+    tabStats: "Статистика",
+    seatsStatsDescription: "Ваше поточне місце та історія розсадки для цього класу.",
+    seatsStatsCurrentTitle: "Поточне місце",
+    seatsStatsSeatLabel: "Місце",
+    seatsStatsTeamLabel: "Група",
+    seatsStatsZoneLabel: "Зона",
+    seatsStatsNeighborsLabel: "Сусіди",
+    seatsStatsNoRecordingTitle: "Розсадку ще не записано",
+    seatsStatsNoRecordingDescription: "Учитель записує розсадку після затвердження плану.",
+    seatsStatsHistoryTitle: "Історія розсадки",
+    seatsStatsHistoryEmpty: "Записаної розсадки ще немає.",
+    seatsStatsHistorySearchPlaceholder: "Пошук по групі, зоні або плану",
+    seatsStatsHistorySearchClear: "Очистити пошук",
+    seatsStatsHistorySearchResults: "{{count}} результатів",
+    seatsStatsHistorySearchEmpty: "Немає відповідних записів.",
+    seatsStatsHistoryLayoutLabel: "План",
+    seatsStatsHistoryDateLabel: "Дата",
+    seatsStatsLoadFailed: "Не вдалося завантажити статистику розсадки.",
+    seatsStatsLoadFailedDescription: "Спробуйте ще раз через мить.",
+    seatsStatsStudentsEmptyTitle: "Немає учнів",
+    seatsStatsStudentsEmptyDescription: "Ви не зачислені як учень у цьому класі.",
     seatsDataDescription:
       "Лічильники {{dimension}} на учня для схеми «{{layoutName}}» ({{count}} стовпців).",
     seatsDataDescriptionFallback: "Записані лічильники місць на учня для схеми.",
@@ -2612,6 +2634,20 @@ const uk = {
     constraintRelationTeammate: "членом команди",
     constraintSummaryPair: "{{student}} {{polarity}} бути {{relation}} {{other}}",
     constraintSummaryZone: "{{student}} {{polarity}} сидіти в {{zone}}",
+    constraintsViewPlain: "Проста мова",
+    constraintsViewTable: "Таблиця",
+    constraintPlain_neighbor_must:
+      "<bold>{{student}}</bold> має сидіти поруч із <bold>{{other}}</bold>.",
+    constraintPlain_neighbor_mustNot:
+      "<bold>{{student}}</bold> не має сидіти поруч із <bold>{{other}}</bold>.",
+    constraintPlain_teammate_must:
+      "<bold>{{student}}</bold> має бути в одній команді з <bold>{{other}}</bold>.",
+    constraintPlain_teammate_mustNot:
+      "<bold>{{student}}</bold> не має бути в одній команді з <bold>{{other}}</bold>.",
+    constraintPlain_zone_must: "<bold>{{student}}</bold> має сидіти в зоні <bold>{{zone}}</bold>.",
+    constraintPlain_zone_mustNot:
+      "<bold>{{student}}</bold> не має сидіти в зоні <bold>{{zone}}</bold>.",
+    constraintsPlainEmpty: "Немає обмежень, що відповідають пошуку.",
     constraintSaveFailed: "Не вдалося зберегти обмеження.",
     constraintLoadFailed: "Не вдалося завантажити обмеження.",
     constraintLoadFailedDescription: "Перевірте з’єднання й спробуйте знову.",
@@ -2667,6 +2703,9 @@ const uk = {
     orientationLeft: "Зліва",
     orientationRight: "Справа",
     printPdf: "Експорт PDF",
+    printLayout: "Друк схеми",
+    printTable: "Друк таблиці",
+    printTableSeatColumn: "Місце",
     printPdfFailed: "Не вдалося відкрити діалог друку.",
     printOptionsTitle: "Друк плану розсадки",
     printOptionsDescription:

@@ -1118,6 +1118,7 @@ const ru = {
     activitySummary_updatedSeatLayoutGenderParity:
       "Обновлена гендерная парность схемы «{{name}}» на {{mode}}",
     activitySummary_exportedSeatChartPdf: "Экспорт PDF схемы «{{chartName}}»",
+    activitySummary_exportedSeatChartTablePdf: "Экспорт таблицы схемы «{{chartName}}»",
 
     activitySummary_recordedRazAssessment: "Записана оценка RAZ ({{result}}) → уровень {{level}}",
     activitySummary_setRazManualStatus: "Статус RAZ установлен: {{status}}",
@@ -2332,6 +2333,27 @@ const ru = {
     tabConstraints: "Ограничения",
     tabCharts: "Рассадки",
     tabData: "Данные",
+    tabStats: "Статистика",
+    seatsStatsDescription: "Ваше текущее место и история рассадки для этого класса.",
+    seatsStatsCurrentTitle: "Текущее место",
+    seatsStatsSeatLabel: "Место",
+    seatsStatsTeamLabel: "Группа",
+    seatsStatsZoneLabel: "Зона",
+    seatsStatsNeighborsLabel: "Соседи",
+    seatsStatsNoRecordingTitle: "Рассадка ещё не записана",
+    seatsStatsNoRecordingDescription: "Учитель записывает рассадку после утверждения плана.",
+    seatsStatsHistoryTitle: "История рассадки",
+    seatsStatsHistoryEmpty: "Записанной рассадки ещё нет.",
+    seatsStatsHistorySearchPlaceholder: "Поиск по группе, зоне или плану",
+    seatsStatsHistorySearchClear: "Очистить поиск",
+    seatsStatsHistorySearchResults: "{{count}} результатов",
+    seatsStatsHistorySearchEmpty: "Нет подходящих записей.",
+    seatsStatsHistoryLayoutLabel: "План",
+    seatsStatsHistoryDateLabel: "Дата",
+    seatsStatsLoadFailed: "Не удалось загрузить статистику рассадки.",
+    seatsStatsLoadFailedDescription: "Попробуйте снова через мгновение.",
+    seatsStatsStudentsEmptyTitle: "Нет учеников",
+    seatsStatsStudentsEmptyDescription: "Вы не зачислены как ученик в этом классе.",
     seatsDataDescription:
       "Счётчики {{dimension}} по ученикам для схемы «{{layoutName}}» ({{count}} столбцов).",
     seatsDataDescriptionFallback: "Записанные счётчики мест по ученикам для схемы.",
@@ -2617,6 +2639,21 @@ const ru = {
     constraintRelationTeammate: "товарищем по команде",
     constraintSummaryPair: "{{student}} {{polarity}} быть {{relation}} {{other}}",
     constraintSummaryZone: "{{student}} {{polarity}} сидеть в {{zone}}",
+    constraintsViewPlain: "Простой язык",
+    constraintsViewTable: "Таблица",
+    constraintPlain_neighbor_must:
+      "<bold>{{student}}</bold> должен(на) сидеть рядом с <bold>{{other}}</bold>.",
+    constraintPlain_neighbor_mustNot:
+      "<bold>{{student}}</bold> не должен(на) сидеть рядом с <bold>{{other}}</bold>.",
+    constraintPlain_teammate_must:
+      "<bold>{{student}}</bold> должен(на) быть в одной команде с <bold>{{other}}</bold>.",
+    constraintPlain_teammate_mustNot:
+      "<bold>{{student}}</bold> не должен(на) быть в одной команде с <bold>{{other}}</bold>.",
+    constraintPlain_zone_must:
+      "<bold>{{student}}</bold> должен(на) сидеть в зоне <bold>{{zone}}</bold>.",
+    constraintPlain_zone_mustNot:
+      "<bold>{{student}}</bold> не должен(на) сидеть в зоне <bold>{{zone}}</bold>.",
+    constraintsPlainEmpty: "Нет ограничений, соответствующих поиску.",
     constraintSaveFailed: "Не удалось сохранить ограничение.",
     constraintLoadFailed: "Не удалось загрузить ограничения.",
     constraintLoadFailedDescription: "Проверьте соединение и попробуйте снова.",
@@ -2673,6 +2710,9 @@ const ru = {
     orientationLeft: "Слева",
     orientationRight: "Справа",
     printPdf: "Экспорт PDF",
+    printLayout: "Печать схемы",
+    printTable: "Печать таблицы",
+    printTableSeatColumn: "Место",
     printPdfFailed: "Не удалось открыть диалог печати.",
     printOptionsTitle: "Печать плана рассадки",
     printOptionsDescription:

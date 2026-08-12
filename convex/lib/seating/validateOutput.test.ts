@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
 
 import type { Id } from "../../_generated/dataModel.js";
-import type { ChartAssignment, SeatLayoutItemSnapshot } from "../seatChartGeometry.js";
+import type { ChartAssignment, SeatLayoutItemSnapshot } from "./seatChartGeometry.js";
 import { validateMergedAssignments } from "./validateOutput.js";
 
 const groupId = "group" as Id<"groups">;

@@ -391,7 +391,8 @@ const schema = defineSchema({
   })
     .index("by_record", ["recordId"])
     .index("by_chart_student_recorded", ["chartId", "studentUserId", "recordedAt"])
-    .index("by_layout_student_recorded", ["layoutId", "studentUserId", "recordedAt"]),
+    .index("by_layout_student_recorded", ["layoutId", "studentUserId", "recordedAt"])
+    .index("by_classId_student_recorded", ["classId", "studentUserId", "recordedAt"]),
   /**
    * Longitudinal seating statistics per student and chart.
    */

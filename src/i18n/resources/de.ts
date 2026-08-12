@@ -1134,6 +1134,7 @@ const de = {
     activitySummary_updatedSeatLayoutGenderParity:
       'Geschlechterparität auf Sitzplan "{{name}}" auf {{mode}} aktualisiert',
     activitySummary_exportedSeatChartPdf: "Sitzplan-PDF „{{chartName}}“ exportiert",
+    activitySummary_exportedSeatChartTablePdf: "Sitzplan-Tabelle „{{chartName}}“ exportiert",
 
     activitySummary_recordedRazAssessment: "RAZ-Bewertung erfasst ({{result}}) ? Stufe {{level}}",
     activitySummary_setRazManualStatus: "RAZ-Status auf {{status}} gesetzt",
@@ -2364,6 +2365,28 @@ const de = {
     tabConstraints: "Einschr�nkungen",
     tabCharts: "Sitzpläne",
     tabData: "Daten",
+    tabStats: "Statistik",
+    seatsStatsDescription: "Ihr aktueller Sitzplatz und die Sitzplatz-Historie für diese Klasse.",
+    seatsStatsCurrentTitle: "Aktueller Sitzplatz",
+    seatsStatsSeatLabel: "Sitz",
+    seatsStatsTeamLabel: "Team",
+    seatsStatsZoneLabel: "Zone",
+    seatsStatsNeighborsLabel: "Nachbarn",
+    seatsStatsNoRecordingTitle: "Noch kein Sitzplatz aufgezeichnet",
+    seatsStatsNoRecordingDescription:
+      "Ihr Lehrer zeichnet die Sitzplätze auf, wenn der Plan festgelegt ist.",
+    seatsStatsHistoryTitle: "Sitzplatz-Historie",
+    seatsStatsHistoryEmpty: "Noch keine aufgezeichneten Sitzplätze.",
+    seatsStatsHistorySearchPlaceholder: "Nach Team, Zone oder Layout suchen",
+    seatsStatsHistorySearchClear: "Suche löschen",
+    seatsStatsHistorySearchResults: "{{count}} Ergebnisse",
+    seatsStatsHistorySearchEmpty: "Keine passenden Sitzplätze.",
+    seatsStatsHistoryLayoutLabel: "Layout",
+    seatsStatsHistoryDateLabel: "Datum",
+    seatsStatsLoadFailed: "Sitzplatz-Statistik konnte nicht geladen werden.",
+    seatsStatsLoadFailedDescription: "Versuchen Sie es in einem Moment erneut.",
+    seatsStatsStudentsEmptyTitle: "Keine Schüler",
+    seatsStatsStudentsEmptyDescription: "Sie sind in dieser Klasse nicht als Schüler eingetragen.",
     seatsDataDescription:
       "{{dimension}}-Zählungen pro Schüler für Plan „{{layoutName}}“ ({{count}} Spalten).",
     seatsDataDescriptionFallback: "Aufgezeichnete Sitzplatz-Zählungen pro Schüler für einen Plan.",
@@ -2652,6 +2675,21 @@ const de = {
     constraintRelationTeammate: "Teamkollege",
     constraintSummaryPair: "{{student}} {{polarity}} {{relation}} von {{other}} sein",
     constraintSummaryZone: "{{student}} {{polarity}} in {{zone}} sitzen",
+    constraintsViewPlain: "Klartext",
+    constraintsViewTable: "Tabelle",
+    constraintPlain_neighbor_must:
+      "<bold>{{student}}</bold> muss Nachbar von <bold>{{other}}</bold> sein.",
+    constraintPlain_neighbor_mustNot:
+      "<bold>{{student}}</bold> darf kein Nachbar von <bold>{{other}}</bold> sein.",
+    constraintPlain_teammate_must:
+      "<bold>{{student}}</bold> muss Teamkollege von <bold>{{other}}</bold> sein.",
+    constraintPlain_teammate_mustNot:
+      "<bold>{{student}}</bold> darf kein Teamkollege von <bold>{{other}}</bold> sein.",
+    constraintPlain_zone_must:
+      "<bold>{{student}}</bold> muss in der Zone <bold>{{zone}}</bold> sitzen.",
+    constraintPlain_zone_mustNot:
+      "<bold>{{student}}</bold> darf nicht in der Zone <bold>{{zone}}</bold> sitzen.",
+    constraintsPlainEmpty: "Keine Regeln entsprechen Ihrer Suche.",
     constraintSaveFailed: "Einschränkung konnte nicht gespeichert werden.",
     constraintLoadFailed: "Einschränkungen konnten nicht geladen werden.",
     constraintLoadFailedDescription: "Prüfen Sie die Verbindung und versuchen Sie es erneut.",
@@ -2709,6 +2747,9 @@ const de = {
     orientationLeft: "Links",
     orientationRight: "Rechts",
     printPdf: "PDF exportieren",
+    printLayout: "Grundriss drucken",
+    printTable: "Tabelle drucken",
+    printTableSeatColumn: "Platz",
     printPdfFailed: "Druckdialog konnte nicht ge?ffnet werden.",
     printOptionsTitle: "Sitzplan drucken",
     printOptionsDescription:

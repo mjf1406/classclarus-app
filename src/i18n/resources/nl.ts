@@ -1123,6 +1123,7 @@ const nl = {
     activitySummary_updatedSeatLayoutGenderParity:
       'Genderpariteit op plattegrond "{{name}}" bijgewerkt naar {{mode}}',
     activitySummary_exportedSeatChartPdf: 'PDF van plattegrond "{{chartName}}" geëxporteerd',
+    activitySummary_exportedSeatChartTablePdf: 'Tabel van plattegrond "{{chartName}}" geëxporteerd',
 
     activitySummary_recordedRazAssessment:
       "RAZ-beoordeling vastgelegd ({{result}}) → niveau {{level}}",
@@ -2345,6 +2346,28 @@ const nl = {
     tabConstraints: "Beperkingen",
     tabCharts: "Plattegronden",
     tabData: "Gegevens",
+    tabStats: "Statistieken",
+    seatsStatsDescription: "Je huidige plek en zitplaatsgeschiedenis voor deze klas.",
+    seatsStatsCurrentTitle: "Huidige plek",
+    seatsStatsSeatLabel: "Plek",
+    seatsStatsTeamLabel: "Team",
+    seatsStatsZoneLabel: "Zone",
+    seatsStatsNeighborsLabel: "Buren",
+    seatsStatsNoRecordingTitle: "Nog geen zitplaatsen geregistreerd",
+    seatsStatsNoRecordingDescription:
+      "Je leerkracht registreert zitplaatsen wanneer het plan definitief is.",
+    seatsStatsHistoryTitle: "Zitplaatsgeschiedenis",
+    seatsStatsHistoryEmpty: "Nog geen geregistreerde zitplaatsen.",
+    seatsStatsHistorySearchPlaceholder: "Zoek op team, zone of layout",
+    seatsStatsHistorySearchClear: "Zoekopdracht wissen",
+    seatsStatsHistorySearchResults: "{{count}} resultaten",
+    seatsStatsHistorySearchEmpty: "Geen overeenkomende zitplaatsen.",
+    seatsStatsHistoryLayoutLabel: "Layout",
+    seatsStatsHistoryDateLabel: "Datum",
+    seatsStatsLoadFailed: "Zitplaatsstatistieken konden niet worden geladen.",
+    seatsStatsLoadFailedDescription: "Probeer het over een moment opnieuw.",
+    seatsStatsStudentsEmptyTitle: "Geen leerlingen",
+    seatsStatsStudentsEmptyDescription: "Je bent niet ingeschreven als leerling in deze klas.",
     seatsDataDescription:
       "{{dimension}}-tellingen per leerling voor plattegrond «{{layoutName}}» ({{count}} kolommen).",
     seatsDataDescriptionFallback:
@@ -2633,6 +2656,21 @@ const nl = {
     constraintRelationTeammate: "teamgenoot",
     constraintSummaryPair: "{{student}} {{polarity}} {{relation}} zijn van {{other}}",
     constraintSummaryZone: "{{student}} {{polarity}} in {{zone}} zitten",
+    constraintsViewPlain: "Eenvoudige taal",
+    constraintsViewTable: "Tabel",
+    constraintPlain_neighbor_must:
+      "<bold>{{student}}</bold> moet naast <bold>{{other}}</bold> zitten.",
+    constraintPlain_neighbor_mustNot:
+      "<bold>{{student}}</bold> mag niet naast <bold>{{other}}</bold> zitten.",
+    constraintPlain_teammate_must:
+      "<bold>{{student}}</bold> moet teamgenoot zijn van <bold>{{other}}</bold>.",
+    constraintPlain_teammate_mustNot:
+      "<bold>{{student}}</bold> mag geen teamgenoot zijn van <bold>{{other}}</bold>.",
+    constraintPlain_zone_must:
+      "<bold>{{student}}</bold> moet in zone <bold>{{zone}}</bold> zitten.",
+    constraintPlain_zone_mustNot:
+      "<bold>{{student}}</bold> mag niet in zone <bold>{{zone}}</bold> zitten.",
+    constraintsPlainEmpty: "Geen regels komen overeen met je zoekopdracht.",
     constraintSaveFailed: "Beperking kon niet worden opgeslagen.",
     constraintLoadFailed: "Beperkingen konden niet worden geladen.",
     constraintLoadFailedDescription: "Controleer je verbinding en probeer opnieuw.",
@@ -2688,6 +2726,9 @@ const nl = {
     orientationLeft: "Links",
     orientationRight: "Rechts",
     printPdf: "PDF exporteren",
+    printLayout: "Indeling afdrukken",
+    printTable: "Tabel afdrukken",
+    printTableSeatColumn: "Plaats",
     printPdfFailed: "Kon het afdrukvenster niet openen.",
     printOptionsTitle: "Zitplattegrond afdrukken",
     printOptionsDescription:

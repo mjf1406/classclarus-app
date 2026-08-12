@@ -1143,6 +1143,7 @@ const fr = {
     activitySummary_updatedSeatLayoutGenderParity:
       'Parité de genre du plan "{{name}}" mise à jour vers {{mode}}',
     activitySummary_exportedSeatChartPdf: "PDF du plan « {{chartName}} » exporté",
+    activitySummary_exportedSeatChartTablePdf: "Tableau du plan « {{chartName}} » exporté",
 
     activitySummary_recordedRazAssessment:
       "Évaluation RAZ enregistrée ({{result}}) → niveau {{level}}",
@@ -2382,6 +2383,28 @@ const fr = {
     tabConstraints: "Contraintes",
     tabCharts: "Plans",
     tabData: "Données",
+    tabStats: "Statistiques",
+    seatsStatsDescription: "Votre place actuelle et l'historique des places pour cette classe.",
+    seatsStatsCurrentTitle: "Place actuelle",
+    seatsStatsSeatLabel: "Place",
+    seatsStatsTeamLabel: "Équipe",
+    seatsStatsZoneLabel: "Zone",
+    seatsStatsNeighborsLabel: "Voisins",
+    seatsStatsNoRecordingTitle: "Aucune place enregistrée",
+    seatsStatsNoRecordingDescription:
+      "Votre enseignant enregistrera les places lorsque le plan sera finalisé.",
+    seatsStatsHistoryTitle: "Historique des places",
+    seatsStatsHistoryEmpty: "Aucune place enregistrée pour le moment.",
+    seatsStatsHistorySearchPlaceholder: "Rechercher par équipe, zone ou disposition",
+    seatsStatsHistorySearchClear: "Effacer la recherche",
+    seatsStatsHistorySearchResults: "{{count}} résultats",
+    seatsStatsHistorySearchEmpty: "Aucune place correspondante.",
+    seatsStatsHistoryLayoutLabel: "Disposition",
+    seatsStatsHistoryDateLabel: "Date",
+    seatsStatsLoadFailed: "Impossible de charger les statistiques de places.",
+    seatsStatsLoadFailedDescription: "Réessayez dans un instant.",
+    seatsStatsStudentsEmptyTitle: "Aucun élève",
+    seatsStatsStudentsEmptyDescription: "Vous n'êtes pas inscrit comme élève dans cette classe.",
     seatsDataDescription:
       "Comptages {{dimension}} par élève pour le plan « {{layoutName}} » ({{count}} colonnes).",
     seatsDataDescriptionFallback: "Comptages d'assises enregistrés par élève pour un plan.",
@@ -2669,6 +2692,21 @@ const fr = {
     constraintRelationTeammate: "coéquipier",
     constraintSummaryPair: "{{student}} {{polarity}} être {{relation}} de {{other}}",
     constraintSummaryZone: "{{student}} {{polarity}} s’asseoir dans {{zone}}",
+    constraintsViewPlain: "Langage simple",
+    constraintsViewTable: "Tableau",
+    constraintPlain_neighbor_must:
+      "<bold>{{student}}</bold> doit être voisin de <bold>{{other}}</bold>.",
+    constraintPlain_neighbor_mustNot:
+      "<bold>{{student}}</bold> ne doit pas être voisin de <bold>{{other}}</bold>.",
+    constraintPlain_teammate_must:
+      "<bold>{{student}}</bold> doit être coéquipier de <bold>{{other}}</bold>.",
+    constraintPlain_teammate_mustNot:
+      "<bold>{{student}}</bold> ne doit pas être coéquipier de <bold>{{other}}</bold>.",
+    constraintPlain_zone_must:
+      "<bold>{{student}}</bold> doit s’asseoir dans la zone <bold>{{zone}}</bold>.",
+    constraintPlain_zone_mustNot:
+      "<bold>{{student}}</bold> ne doit pas s’asseoir dans la zone <bold>{{zone}}</bold>.",
+    constraintsPlainEmpty: "Aucune contrainte ne correspond à votre recherche.",
     constraintSaveFailed: "Impossible d’enregistrer la contrainte.",
     constraintLoadFailed: "Impossible de charger les contraintes.",
     constraintLoadFailedDescription: "Vérifiez votre connexion et réessayez.",
@@ -2725,6 +2763,9 @@ const fr = {
     orientationLeft: "Gauche",
     orientationRight: "Droite",
     printPdf: "Exporter en PDF",
+    printLayout: "Imprimer le plan",
+    printTable: "Imprimer le tableau",
+    printTableSeatColumn: "Place",
     printPdfFailed: "Impossible d’ouvrir la boîte de dialogue d’impression.",
     printOptionsTitle: "Imprimer le plan de places",
     printOptionsDescription:

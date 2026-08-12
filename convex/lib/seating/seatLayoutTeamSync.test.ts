@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import type { Id } from "../_generated/dataModel.js";
+import type { Id } from "../../_generated/dataModel.js";
 import {
   deskTeamAssignmentAppliesToGroup,
   formatUnresolvedDeskTeamError,

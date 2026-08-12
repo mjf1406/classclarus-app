@@ -1,5 +1,5 @@
 import type { Id } from "../../_generated/dataModel.js";
-import { slotKey, type ChartAssignment } from "../seatChartGeometry.js";
+import { slotKey, type ChartAssignment } from "./seatChartGeometry.js";
 import { seatHistoryKey } from "./historyKeys.js";
 import {
   buildCapacityExceededEvidence,

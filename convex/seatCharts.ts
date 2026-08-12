@@ -4,7 +4,9 @@ import type { Doc, Id } from "./_generated/dataModel.js";
 import type { MutationCtx, QueryCtx } from "./_generated/server.js";
 import { recordClassActivity } from "./lib/classActivity.js";
 import { classMutation, classQuery } from "./lib/customFunctions.js";
+import { assertPersonalStudentAccess, resolvePersonalStudentIds } from "./lib/guardianLinks.js";
 import { rateLimiter } from "./lib/rateLimiter.js";
+import { resolveUserImageUrl } from "./lib/userImage.js";
 import {
   applyPlacementAggregates,
   evaluateConstraintViolations,
@@ -168,6 +170,31 @@ const historyItemValidator = v.object({
   combinationLabel: v.string(),
 });
 
+const personalSeatStudentValidator = v.object({
+  userId: v.id("users"),
+  rosterNumber: v.number(),
+  firstName: v.optional(v.string()),
+  lastName: v.optional(v.string()),
+  name: v.optional(v.string()),
+  image: v.optional(v.string()),
+  email: v.optional(v.string()),
+});
+
+const personalCurrentPlacementValidator = v.object({
+  recordedAt: v.number(),
+  chartName: v.string(),
+  layoutName: v.string(),
+  deskNumber: v.optional(v.number()),
+  zoneName: v.optional(v.string()),
+  teamLabel: v.optional(v.string()),
+  neighborDisplayNames: v.array(v.string()),
+});
+
+const personalStatsValidator = v.object({
+  current: v.optional(personalCurrentPlacementValidator),
+  history: v.array(historyItemValidator),
+});
+
 const recordValidator = v.object({
   _id: v.id("seatChartRecords"),
   recordedAt: v.number(),
@@ -299,6 +326,55 @@ async function loadLayoutPlacementsForStudent(
       q.eq("layoutId", layoutId).eq("studentUserId", studentUserId),
     )
     .collect();
+}
+
+async function loadClassPlacementsForStudent(
+  ctx: QueryCtx,
+  classId: Id<"classes">,
+  studentUserId: Id<"users">,
+): Promise<Array<Doc<"seatChartPlacements">>> {
+  // eslint-disable-next-line @convex-dev/no-collect-in-query -- school-year bounded seating history per student
+  return await ctx.db
+    .query("seatChartPlacements")
+    .withIndex("by_classId_student_recorded", (q) =>
+      q.eq("classId", classId).eq("studentUserId", studentUserId),
+    )
+    .order("desc")
+    .collect();
+}
+
+async function historyItemsFromPlacements(
+  ctx: QueryCtx,
+  placements: Array<Doc<"seatChartPlacements">>,
+) {
+  const recordIds = [...new Set(placements.map((row) => row.recordId))];
+  const recordsById = new Map<Id<"seatChartRecords">, Doc<"seatChartRecords">>();
+  for (const recordId of recordIds) {
+    const record = await ctx.db.get("seatChartRecords", recordId);
+    if (record) {
+      recordsById.set(recordId, record);
+    }
+  }
+
+  const items: Array<{
+    recordId: Id<"seatChartRecords">;
+    recordedAt: number;
+    chartName: string;
+    layoutName: string;
+    deskNumber?: number;
+    zoneName?: string;
+    teamLabel?: string;
+    neighborDisplayNames: Array<string>;
+    combinationLabel: string;
+  }> = [];
+
+  for (const row of placements) {
+    const record = recordsById.get(row.recordId);
+    if (!record) continue;
+    items.push(historyItemFromPlacementRow(row, record));
+  }
+
+  return items;
 }
 
 function breakdownsFromPlacements(
@@ -1121,5 +1197,91 @@ export const studentSummary = classQuery({
       currentContextCounts,
       breakdowns,
     };
+  },
+});
+
+/**
+ * Personal audience: linked students for the seat-stats picker (student self or guardian children).
+ */
+export const personalStudentsForAudience = classQuery({
+  args: {},
+  returns: v.array(personalSeatStudentValidator),
+  handler: async (ctx) => {
+    const classId = ctx.classDoc._id;
+    const studentUserIds = await resolvePersonalStudentIds(ctx, classId);
+    if (studentUserIds.length === 0) {
+      return [];
+    }
+
+    const students: Array<{
+      userId: Id<"users">;
+      rosterNumber: number;
+      firstName?: string;
+      lastName?: string;
+      name?: string;
+      image?: string;
+      email?: string;
+    }> = [];
+
+    for (const studentUserId of studentUserIds) {
+      const roster = await ctx.db
+        .query("studentRosters")
+        .withIndex("by_classId_userId", (q) => q.eq("classId", classId).eq("userId", studentUserId))
+        .unique();
+      if (!roster) continue;
+      const user = await ctx.db.get("users", studentUserId);
+      if (!user) continue;
+      students.push({
+        userId: studentUserId,
+        rosterNumber: roster.rosterNumber,
+        firstName: roster.firstName,
+        lastName: roster.lastName,
+        name: user.name,
+        image: await resolveUserImageUrl(ctx, user),
+        email: user.email,
+      });
+    }
+
+    students.sort((a, b) => a.rosterNumber - b.rosterNumber);
+    return students;
+  },
+});
+
+/**
+ * Personal audience: latest recorded placement + full class seating history for one student.
+ */
+export const personalStatsForAudience = classQuery({
+  args: {
+    studentUserId: v.id("users"),
+  },
+  returns: personalStatsValidator,
+  handler: async (ctx, args) => {
+    const classId = ctx.classDoc._id;
+    await assertPersonalStudentAccess(ctx, classId, args.studentUserId);
+
+    const placements = await loadClassPlacementsForStudent(ctx, classId, args.studentUserId);
+    const history = await historyItemsFromPlacements(ctx, placements);
+
+    const latest = placements[0];
+    if (!latest) {
+      return { history };
+    }
+
+    const latestRecord = await ctx.db.get("seatChartRecords", latest.recordId);
+    if (!latestRecord) {
+      return { history };
+    }
+
+    const current = {
+      recordedAt: latest.recordedAt,
+      chartName: latestRecord.chartName,
+      layoutName: latestRecord.layoutName,
+      ...(latest.deskNumber !== undefined ? { deskNumber: latest.deskNumber } : {}),
+      ...(latest.zoneName !== undefined ? { zoneName: latest.zoneName } : {}),
+      ...(latest.teamLabel !== undefined ? { teamLabel: latest.teamLabel } : {}),
+      neighborDisplayNames: latest.neighborDisplayNames,
+    };
+
+    return { current, history };
   },
 });

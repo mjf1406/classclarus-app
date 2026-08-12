@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 
 import { AssignersSeatsShell } from "@/components/assigners/AssignersSeatsShell";
 import { SeatConstraintCredenza } from "@/components/assigners/SeatConstraintCredenza";
-import { SeatConstraintsRosterTable } from "@/components/assigners/SeatConstraintsRosterTable";
+import { SeatConstraintsView } from "@/components/assigners/SeatConstraintsView";
 import { DeleteNamedCredenza } from "@/components/groups/DeleteNamedCredenza";
 import { Button } from "@/components/ui/button";
 import {
@@ -152,7 +152,7 @@ export function AssignersSeatsConstraintsPage({
           ) : null}
         </Empty>
       ) : (
-        <SeatConstraintsRosterTable
+        <SeatConstraintsView
           classId={classId}
           constraints={data}
           roster={roster ?? []}

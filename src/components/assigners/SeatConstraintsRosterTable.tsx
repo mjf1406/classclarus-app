@@ -1,5 +1,5 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { ChevronsUpDownIcon, Pencil, SearchIcon, Trash2, XIcon } from "lucide-react";
+import { ChevronsUpDownIcon, Pencil, Trash2, XIcon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -8,7 +8,6 @@ import {
   ConstraintKindIcons,
 } from "@/components/assigners/SeatConstraintKind";
 import { DataTableSortableHeader } from "@/components/feedback/DataTableSortableHeader";
-import { RosterColumnVisibilityMenu } from "@/components/roster/RosterColumnVisibilityMenu";
 import { RosterTable } from "@/components/roster/RosterTable";
 import { ActionMenu, type ActionMenuItem } from "@/components/ui/action-menu";
 import { Badge } from "@/components/ui/badge";
@@ -23,14 +22,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupButton,
-  InputGroupInput,
-} from "@/components/ui/input-group";
-import { useClassUserSettings } from "@/hooks/roster/useClassUserSettings";
-import { useRosterConsumerColumnVisibility } from "@/hooks/roster/useRosterConsumerColumnVisibility";
 import { constraintKindLabel } from "@/lib/assigners/seatConstraints";
 import {
   buildSeatConstraintRosterRows,
@@ -43,14 +34,11 @@ import {
 import { memberMatchesQuery, normalizeSearchText } from "@/lib/members/memberSearch";
 import {
   getRosterDisplayName,
-  normalizeColumnOrder,
-  normalizeColumnVisibility,
+  type RosterColumnId,
   type RosterNameFormat,
   type StudentRosterEntry,
 } from "@/lib/roster/roster";
 import type { Id } from "../../../convex/_generated/dataModel";
-
-const SEAT_CONSTRAINTS_ROSTER_SURFACE = "seat-constraints";
 
 type ConstraintKindFilter = `${SeatConstraintPolarity}:${SeatConstraintType}`;
 
@@ -64,10 +52,12 @@ const CONSTRAINT_KIND_FILTERS: ConstraintKindFilter[] = [
 ];
 
 type SeatConstraintsRosterTableProps = {
-  classId: Id<"classes">;
   constraints: SeatConstraintList;
   roster: StudentRosterEntry[];
   nameFormat: RosterNameFormat;
+  nameQuery: string;
+  columnOrder: RosterColumnId[];
+  columnVisibility: Record<RosterColumnId, boolean>;
   canManage: boolean;
   onEdit: (constraint: SeatConstraint) => void;
   onDelete: (constraint: SeatConstraint) => void;
@@ -187,35 +177,21 @@ function TypeMultiSelectFilter({
 }
 
 export function SeatConstraintsRosterTable({
-  classId,
   constraints,
   roster,
   nameFormat,
+  nameQuery,
+  columnOrder,
+  columnVisibility,
   canManage,
   onEdit,
   onDelete,
 }: SeatConstraintsRosterTableProps) {
   const { t } = useTranslation("assigners");
   const { t: tClasses } = useTranslation("classes");
-  const { data: settings } = useClassUserSettings(classId);
 
-  const [nameQuery, setNameQuery] = useState("");
   const [targetQuery, setTargetQuery] = useState("");
   const [selectedKinds, setSelectedKinds] = useState<ConstraintKindFilter[]>([]);
-
-  const columnOrder = useMemo(
-    () => normalizeColumnOrder(settings?.studentsColumnOrder),
-    [settings?.studentsColumnOrder],
-  );
-  const baseColumnVisibility = useMemo(
-    () => normalizeColumnVisibility(settings?.studentsColumnVisibility),
-    [settings?.studentsColumnVisibility],
-  );
-  const { columnVisibility, setColumnVisibility } = useRosterConsumerColumnVisibility(
-    classId,
-    SEAT_CONSTRAINTS_ROSTER_SURFACE,
-    baseColumnVisibility,
-  );
 
   const unnamed = tClasses("unnamedMember");
   const constraintById = useMemo(() => {
@@ -395,47 +371,13 @@ export function SeatConstraintsRosterTable({
   );
 
   return (
-    <div className="flex min-w-0 flex-col gap-3">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <InputGroup className="max-w-md">
-          <InputGroupAddon>
-            <SearchIcon aria-hidden="true" />
-          </InputGroupAddon>
-          <InputGroupInput
-            value={nameQuery}
-            onChange={(event) => setNameQuery(event.target.value)}
-            placeholder={t("constraintNameSearchPlaceholder")}
-            aria-label={t("constraintNameSearchLabel")}
-            autoComplete="off"
-            spellCheck={false}
-          />
-          {nameQuery ? (
-            <InputGroupAddon align="inline-end">
-              <InputGroupButton
-                size="icon-xs"
-                variant="ghost"
-                aria-label={tClasses("membersSearchClear")}
-                onClick={() => setNameQuery("")}
-              >
-                <XIcon />
-              </InputGroupButton>
-            </InputGroupAddon>
-          ) : null}
-        </InputGroup>
-        <RosterColumnVisibilityMenu
-          columnOrder={columnOrder}
-          columnVisibility={columnVisibility}
-          onColumnVisibilityChange={setColumnVisibility}
-        />
-      </div>
-      <RosterTable
-        data={filteredRows}
-        columnOrder={columnOrder}
-        columnVisibility={columnVisibility}
-        extraColumns={extraColumns}
-        getRowId={(row) => (isSeatConstraintRosterRow(row) ? row.constraintId : row.userId)}
-        renderRowActions={canManage ? renderRowActions : undefined}
-      />
-    </div>
+    <RosterTable
+      data={filteredRows}
+      columnOrder={columnOrder}
+      columnVisibility={columnVisibility}
+      extraColumns={extraColumns}
+      getRowId={(row) => (isSeatConstraintRosterRow(row) ? row.constraintId : row.userId)}
+      renderRowActions={canManage ? renderRowActions : undefined}
+    />
   );
 }

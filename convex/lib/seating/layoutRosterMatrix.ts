@@ -1,5 +1,5 @@
 import type { Doc, Id } from "../../_generated/dataModel.js";
-import { seatAggregateKey, seatAggregateLabel } from "../seatChartLogic.js";
+import { seatAggregateKey, seatAggregateLabel } from "./seatChartLogic.js";
 
 export type SeatLayoutMatrixDimension = "seat" | "zone" | "team" | "neighbor";
 

@@ -1111,6 +1111,7 @@ const ja = {
     activitySummary_updatedSeatLayoutGenderParity:
       "座席レイアウト「{{name}}」の性別パリティを{{mode}}に更新",
     activitySummary_exportedSeatChartPdf: "座席表「{{chartName}}」PDFを書き出し",
+    activitySummary_exportedSeatChartTablePdf: "座席表「{{chartName}}」表を書き出し",
 
     activitySummary_recordedRazAssessment: "RAZアセスメントを記録（{{result}}）→ レベル {{level}}",
     activitySummary_setRazManualStatus: "RAZステータスを{{status}}に設定",
@@ -2308,6 +2309,27 @@ const ja = {
     tabConstraints: "制約",
     tabCharts: "座席表",
     tabData: "データ",
+    tabStats: "統計",
+    seatsStatsDescription: "このクラスの現在の席と座席履歴です。",
+    seatsStatsCurrentTitle: "現在の席",
+    seatsStatsSeatLabel: "席",
+    seatsStatsTeamLabel: "チーム",
+    seatsStatsZoneLabel: "ゾーン",
+    seatsStatsNeighborsLabel: "隣の席",
+    seatsStatsNoRecordingTitle: "まだ座席が記録されていません",
+    seatsStatsNoRecordingDescription: "先生が座席表を確定すると記録されます。",
+    seatsStatsHistoryTitle: "座席履歴",
+    seatsStatsHistoryEmpty: "記録された座席はまだありません。",
+    seatsStatsHistorySearchPlaceholder: "チーム、ゾーン、レイアウトで検索",
+    seatsStatsHistorySearchClear: "検索をクリア",
+    seatsStatsHistorySearchResults: "{{count}} 件",
+    seatsStatsHistorySearchEmpty: "一致する座席がありません。",
+    seatsStatsHistoryLayoutLabel: "レイアウト",
+    seatsStatsHistoryDateLabel: "日付",
+    seatsStatsLoadFailed: "座席統計を読み込めませんでした。",
+    seatsStatsLoadFailedDescription: "しばらくしてから再度お試しください。",
+    seatsStatsStudentsEmptyTitle: "生徒がありません",
+    seatsStatsStudentsEmptyDescription: "このクラスの生徒として登録されていません。",
     seatsDataDescription:
       "レイアウト「{{layoutName}}」の{{dimension}}ごとの生徒別回数（{{count}}列）。",
     seatsDataDescriptionFallback: "レイアウトごとの記録済み座席回数を生徒別に表示します。",
@@ -2587,6 +2609,21 @@ const ja = {
     constraintRelationTeammate: "チームメイト",
     constraintSummaryPair: "{{student}} は {{other}} の{{relation}}で{{polarity}}",
     constraintSummaryZone: "{{student}} は {{zone}} に座るのが{{polarity}}",
+    constraintsViewPlain: "わかりやすい表現",
+    constraintsViewTable: "表",
+    constraintPlain_neighbor_must:
+      "<bold>{{student}}</bold>は<bold>{{other}}</bold>の隣に座る必要があります。",
+    constraintPlain_neighbor_mustNot:
+      "<bold>{{student}}</bold>は<bold>{{other}}</bold>の隣に座ってはいけません。",
+    constraintPlain_teammate_must:
+      "<bold>{{student}}</bold>は<bold>{{other}}</bold>と同じチームである必要があります。",
+    constraintPlain_teammate_mustNot:
+      "<bold>{{student}}</bold>は<bold>{{other}}</bold>と同じチームであってはいけません。",
+    constraintPlain_zone_must:
+      "<bold>{{student}}</bold>は<bold>{{zone}}</bold>ゾーンに座る必要があります。",
+    constraintPlain_zone_mustNot:
+      "<bold>{{student}}</bold>は<bold>{{zone}}</bold>ゾーンに座ってはいけません。",
+    constraintsPlainEmpty: "検索に一致する制約はありません。",
     constraintSaveFailed: "制約を保存できませんでした。",
     constraintLoadFailed: "制約を読み込めませんでした。",
     constraintLoadFailedDescription: "接続を確認して再試行してください。",
@@ -2642,6 +2679,9 @@ const ja = {
     orientationLeft: "左",
     orientationRight: "右",
     printPdf: "PDFを書き出す",
+    printLayout: "レイアウトを印刷",
+    printTable: "表を印刷",
+    printTableSeatColumn: "席",
     printPdfFailed: "印刷ダイアログを開けませんでした。",
     printOptionsTitle: "座席レイアウトを印刷",
     printOptionsDescription:

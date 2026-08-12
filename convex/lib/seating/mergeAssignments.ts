@@ -1,6 +1,6 @@
 import type { Id } from "../../_generated/dataModel.js";
-import type { ChartAssignment } from "../seatChartGeometry.js";
-import { slotKey } from "../seatChartGeometry.js";
+import type { ChartAssignment } from "./seatChartGeometry.js";
+import { slotKey } from "./seatChartGeometry.js";
 
 export function mergeAlgorithmAssignments(args: {
   locked: ReadonlyArray<ChartAssignment>;

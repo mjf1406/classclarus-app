@@ -1131,6 +1131,7 @@ const it = {
     activitySummary_updatedSeatLayoutGenderParity:
       'Aggiornata la parità di genere del piano "{{name}}" a {{mode}}',
     activitySummary_exportedSeatChartPdf: 'PDF del piano "{{chartName}}" esportato',
+    activitySummary_exportedSeatChartTablePdf: 'Esportata tabella del piano "{{chartName}}"',
 
     activitySummary_recordedRazAssessment:
       "Valutazione RAZ registrata ({{result}}) → livello {{level}}",
@@ -2359,6 +2360,28 @@ const it = {
     tabConstraints: "Vincoli",
     tabCharts: "Piani",
     tabData: "Dati",
+    tabStats: "Statistiche",
+    seatsStatsDescription: "Il tuo posto attuale e la cronologia dei posti per questa classe.",
+    seatsStatsCurrentTitle: "Posto attuale",
+    seatsStatsSeatLabel: "Posto",
+    seatsStatsTeamLabel: "Squadra",
+    seatsStatsZoneLabel: "Zona",
+    seatsStatsNeighborsLabel: "Vicini",
+    seatsStatsNoRecordingTitle: "Nessun posto registrato",
+    seatsStatsNoRecordingDescription:
+      "Il docente registrerà i posti quando il piano sarà finalizzato.",
+    seatsStatsHistoryTitle: "Cronologia posti",
+    seatsStatsHistoryEmpty: "Nessun posto registrato.",
+    seatsStatsHistorySearchPlaceholder: "Cerca per squadra, zona o layout",
+    seatsStatsHistorySearchClear: "Cancella ricerca",
+    seatsStatsHistorySearchResults: "{{count}} risultati",
+    seatsStatsHistorySearchEmpty: "Nessun posto corrispondente.",
+    seatsStatsHistoryLayoutLabel: "Layout",
+    seatsStatsHistoryDateLabel: "Data",
+    seatsStatsLoadFailed: "Impossibile caricare le statistiche dei posti.",
+    seatsStatsLoadFailedDescription: "Riprova tra un momento.",
+    seatsStatsStudentsEmptyTitle: "Nessuno studente",
+    seatsStatsStudentsEmptyDescription: "Non sei iscritto come studente in questa classe.",
     seatsDataDescription:
       "Conteggi {{dimension}} per studente per il piano «{{layoutName}}» ({{count}} colonne).",
     seatsDataDescriptionFallback: "Conteggi dei posti registrati per studente per un piano.",
@@ -2646,6 +2669,21 @@ const it = {
     constraintRelationTeammate: "compagno di squadra",
     constraintSummaryPair: "{{student}} {{polarity}} essere {{relation}} di {{other}}",
     constraintSummaryZone: "{{student}} {{polarity}} sedersi in {{zone}}",
+    constraintsViewPlain: "Linguaggio semplice",
+    constraintsViewTable: "Tabella",
+    constraintPlain_neighbor_must:
+      "<bold>{{student}}</bold> deve essere vicino a <bold>{{other}}</bold>.",
+    constraintPlain_neighbor_mustNot:
+      "<bold>{{student}}</bold> non deve essere vicino a <bold>{{other}}</bold>.",
+    constraintPlain_teammate_must:
+      "<bold>{{student}}</bold> deve essere compagno di squadra di <bold>{{other}}</bold>.",
+    constraintPlain_teammate_mustNot:
+      "<bold>{{student}}</bold> non deve essere compagno di squadra di <bold>{{other}}</bold>.",
+    constraintPlain_zone_must:
+      "<bold>{{student}}</bold> deve sedersi nella zona <bold>{{zone}}</bold>.",
+    constraintPlain_zone_mustNot:
+      "<bold>{{student}}</bold> non deve sedersi nella zona <bold>{{zone}}</bold>.",
+    constraintsPlainEmpty: "Nessun vincolo corrisponde alla ricerca.",
     constraintSaveFailed: "Impossibile salvare il vincolo.",
     constraintLoadFailed: "Impossibile caricare i vincoli.",
     constraintLoadFailedDescription: "Controlla la connessione e riprova.",
@@ -2701,6 +2739,9 @@ const it = {
     orientationLeft: "Sinistra",
     orientationRight: "Destra",
     printPdf: "Esporta PDF",
+    printLayout: "Stampa layout",
+    printTable: "Stampa tabella",
+    printTableSeatColumn: "Posto",
     printPdfFailed: "Impossibile aprire la finestra di stampa.",
     printOptionsTitle: "Stampa pianta dei posti",
     printOptionsDescription:

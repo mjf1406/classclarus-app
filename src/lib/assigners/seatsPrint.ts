@@ -196,12 +196,12 @@ function itemHtml(item: SeatsPrintItem, scale: number, degrees: number): string 
         : item.kind === "board"
           ? "board"
           : "rect";
-  const fontPx = Math.max(10, Math.round(11 * scale));
-  const deskNumPx = Math.max(10, Math.round(11 * scale));
-  const teamPx = Math.max(9, Math.round(10 * scale));
-  const zonePx = Math.max(9, Math.round(10 * scale));
-  const labelPadTop = Math.max(12, Math.round(16 * scale));
-  const labelPadX = Math.max(4, Math.round(6 * scale));
+  const fontPx = Math.max(7, Math.round(8 * scale));
+  const deskNumPx = Math.max(7, Math.round(8 * scale));
+  const teamPx = Math.max(6, Math.round(7 * scale));
+  const zonePx = Math.max(6, Math.round(7 * scale));
+  const labelPadTop = Math.max(8, Math.round(10 * scale));
+  const labelPadX = Math.max(2, Math.round(4 * scale));
   const displayLabel = item.studentLabel?.trim() || item.label.trim();
   return `<div class="item ${kindClass}" style="left:${item.x}px;top:${item.y}px;width:${item.width}px;height:${item.height}px;font-size:${fontPx}px">
     ${item.kind === "desk" && item.deskNumber !== undefined ? `<span class="desk-num" style="font-size:${deskNumPx}px;transform:rotate(${-degrees}deg)">${item.deskNumber}</span>` : ""}
@@ -293,9 +293,9 @@ export function buildSeatsPrintHtml(
       break-after: auto;
       page-break-after: auto;
     }
-    .brand { margin-bottom: 12px; }
-    h1 { font-size: 20px; margin: 0 0 4px; }
-    .meta { margin: 0 0 12px; color: #52525b; font-size: 13px; }
+    .brand { margin-bottom: 10px; }
+    h1 { font-size: 16px; margin: 0 0 4px; }
+    .meta { margin: 0 0 10px; color: #52525b; font-size: 11px; }
     .tiles {
       display: grid;
       gap: ${PRINT_TILE_GAP}px;
@@ -306,9 +306,9 @@ export function buildSeatsPrintHtml(
     .tiles.grid-4 { grid-template-columns: 1fr 1fr; }
     .tile { min-width: 0; }
     .tile-caption {
-      margin: 0 0 6px;
+      margin: 0 0 4px;
       color: #52525b;
-      font-size: 12px;
+      font-size: 10px;
       font-weight: 600;
     }
     .stage-wrap {
@@ -343,6 +343,7 @@ export function buildSeatsPrintHtml(
       display: block;
       text-align: center;
       word-break: break-word;
+      line-height: 1.15;
       transform-origin: center center;
     }
     .team,
@@ -350,7 +351,8 @@ export function buildSeatsPrintHtml(
       display: block;
       text-align: center;
       color: #3f3f46;
-      padding: 0 4px 4px;
+      line-height: 1.15;
+      padding: 0 3px 3px;
       transform-origin: center center;
     }
   </style>

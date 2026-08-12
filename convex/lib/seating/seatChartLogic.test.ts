@@ -1,8 +1,8 @@
 import { describe, expect, test } from "vitest";
 
-import { areDeskTeammates, sameGroupNeighborStudentIds } from "../../convex/lib/seatChartLogic.js";
-import type { Id } from "../../convex/_generated/dataModel.js";
-import { slotKey } from "../../convex/lib/seatChartGeometry.js";
+import { areDeskTeammates, sameGroupNeighborStudentIds } from "./seatChartLogic.js";
+import type { Id } from "../../_generated/dataModel.js";
+import { slotKey } from "./seatChartGeometry.js";
 
 const studentA = "studentA" as Id<"users">;
 const studentB = "studentB" as Id<"users">;

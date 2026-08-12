@@ -222,7 +222,7 @@ bunx --bun shadcn@latest apply <preset-code> --only theme,font
 
 Do this **after** auth + branding smoke-test. ClassClarus-style clones can keep most of this and only retarget brand/URLs/prices.
 
-See `convex/lib/authzModel.ts`, `convex/schema.ts`, routes under `src/routes/_authenticated/_class/`, and feature folders under `src/components/classes|members|invitations`.
+See `convex/lib/auth/authzModel.ts`, `convex/schema.ts`, routes under `src/routes/_authenticated/_class/`, and feature folders under `src/components/classes|members|invitations`.
 
 <!-- clone:domain-authz -->
 

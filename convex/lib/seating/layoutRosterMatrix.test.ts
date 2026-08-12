@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
 
 import type { Id } from "../../_generated/dataModel";
-import { seatAggregateKey } from "../seatChartLogic";
+import { seatAggregateKey } from "./seatChartLogic";
 import {
   buildSeatLayoutRosterMatrixCounts,
   layoutValuesForSeat,

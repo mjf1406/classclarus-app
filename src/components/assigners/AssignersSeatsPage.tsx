@@ -1,10 +1,14 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Cpu, Pencil, Plus, RockingChair, Trash2 } from "lucide-react";
+import { Cpu, LayoutGrid, Pencil, Plus, RockingChair, Table2, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { AutoAssignSeatingHost } from "@/components/assigners/AutoAssignSeatingHost";
 import { AssignersSeatsShell } from "@/components/assigners/AssignersSeatsShell";
+import {
+  SeatChartPrintHost,
+  type SeatChartPrintMode,
+} from "@/components/assigners/SeatChartPrintHost";
 import { SeatLayoutCreateCredenza } from "@/components/assigners/SeatLayoutCreateCredenza";
 import { SeatLayoutNameCredenza } from "@/components/assigners/SeatLayoutNameCredenza";
 import { DeleteNamedCredenza } from "@/components/groups/DeleteNamedCredenza";
@@ -26,9 +30,11 @@ import { useCopySeatLayout } from "@/hooks/assigners/useCopySeatLayout";
 import { useCreateSeatLayout } from "@/hooks/assigners/useCreateSeatLayout";
 import { useRemoveSeatLayout } from "@/hooks/assigners/useRemoveSeatLayout";
 import { useRenameSeatLayout } from "@/hooks/assigners/useRenameSeatLayout";
+import { useSeatCharts } from "@/hooks/assigners/useSeatCharts";
 import { useSeatLayouts } from "@/hooks/assigners/useSeatLayouts";
 import { useCan } from "@/hooks/permissions/useCan";
 import { formatLocalizedDateTime } from "@/i18n/formatDate";
+import { latestChartForLayout } from "@/lib/assigners/seatCharts";
 import {
   nextSeatLayoutSortState,
   sortSeatLayouts,
@@ -64,6 +70,7 @@ export function AssignersSeatsPage({ classId }: AssignersSeatsPageProps) {
   const { can } = useCan();
   const canManage = can("assigners:manage");
   const { data, isPending, isError, refetch } = useSeatLayouts(classId);
+  const { data: charts } = useSeatCharts(classId);
   const createLayout = useCreateSeatLayout();
   const copyLayout = useCopySeatLayout();
   const renameLayout = useRenameSeatLayout();
@@ -74,6 +81,10 @@ export function AssignersSeatsPage({ classId }: AssignersSeatsPageProps) {
   const [sortKey, setSortKey] = useState<SeatLayoutSortKey>("updated");
   const [sortDirection, setSortDirection] = useState<SeatLayoutSortDirection>("desc");
   const [autoAssignLayout, setAutoAssignLayout] = useState<SeatLayoutListItem | null>(null);
+  const [printRequest, setPrintRequest] = useState<{
+    chartId: Id<"seatCharts">;
+    mode: SeatChartPrintMode;
+  } | null>(null);
 
   const sorted = useMemo(
     () => (data ? sortSeatLayouts(data, sortKey, sortDirection) : []),
@@ -162,6 +173,7 @@ export function AssignersSeatsPage({ classId }: AssignersSeatsPageProps) {
       {!isPending && !isError && sorted.length > 0 ? (
         <ul className={SEATS_GRID_CLASS}>
           {sorted.map((layout) => {
+            const latestChart = charts ? latestChartForLayout(charts, layout._id) : null;
             const menuItems: Array<ActionMenuItem> = [
               {
                 id: "auto-assign",
@@ -171,6 +183,24 @@ export function AssignersSeatsPage({ classId }: AssignersSeatsPageProps) {
                 group: "manage",
                 onSelect: () => setAutoAssignLayout(layout),
               },
+              ...(latestChart
+                ? [
+                    {
+                      id: "print-layout",
+                      label: t("printLayout"),
+                      icon: <LayoutGrid />,
+                      group: "view",
+                      onSelect: () => setPrintRequest({ chartId: latestChart._id, mode: "layout" }),
+                    } satisfies ActionMenuItem,
+                    {
+                      id: "print-table",
+                      label: t("printTable"),
+                      icon: <Table2 />,
+                      group: "view",
+                      onSelect: () => setPrintRequest({ chartId: latestChart._id, mode: "table" }),
+                    } satisfies ActionMenuItem,
+                  ]
+                : []),
               {
                 id: "edit",
                 label: t("editAction"),
@@ -221,6 +251,16 @@ export function AssignersSeatsPage({ classId }: AssignersSeatsPageProps) {
           })}
         </ul>
       ) : null}
+
+      <SeatChartPrintHost
+        classId={classId}
+        chartId={printRequest?.chartId ?? null}
+        mode={printRequest?.mode ?? "layout"}
+        open={printRequest !== null}
+        onOpenChange={(open) => {
+          if (!open) setPrintRequest(null);
+        }}
+      />
 
       {canManage ? (
         <>

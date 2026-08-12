@@ -17,6 +17,55 @@ import {
 import type { GroupsBoard } from "@/lib/groups/groups";
 import type { SeatLayoutPrintSelection } from "@/components/assigners/SeatLayoutPrintCredenza";
 
+function rosterNameInitial(part: string): string {
+  const trimmed = part.trim();
+  if (!trimmed) return "";
+  return `${trimmed.charAt(0)}.`;
+}
+
+function formatCompactRosterNameParts(
+  firstName: string | undefined,
+  lastName: string | undefined,
+  format: RosterNameFormat,
+): string | undefined {
+  const first = firstName?.trim() || undefined;
+  const last = lastName?.trim() || undefined;
+  if (!first && !last) return undefined;
+
+  const sep = format.space ? " " : "";
+
+  if (first && last) {
+    if (format.order === "lastFirst") {
+      return `${last}${sep}${rosterNameInitial(first)}`;
+    }
+    return `${first}${sep}${rosterNameInitial(last)}`;
+  }
+  if (first) return first;
+  if (last) {
+    return format.order === "lastFirst" ? last : rosterNameInitial(last);
+  }
+  return undefined;
+}
+
+export function formatSeatChartPrintStudentLabel(
+  student: Pick<
+    StudentRosterEntry,
+    "userId" | "firstName" | "lastName" | "name" | "email" | "rosterNumber"
+  >,
+  unnamedFallback: string,
+  nameFormat: RosterNameFormat,
+): string {
+  const rosterSuffix = `#${student.rosterNumber}`;
+  const compactName = formatCompactRosterNameParts(student.firstName, student.lastName, nameFormat);
+
+  if (compactName) {
+    return `${compactName} ${rosterSuffix}`;
+  }
+
+  const fallback = getRosterDisplayName(student, unnamedFallback, nameFormat);
+  return fallback ? `${fallback} ${rosterSuffix}` : rosterSuffix;
+}
+
 export function buildSeatChartPrintItems(args: {
   layoutItems: ReadonlyArray<SeatLayoutItem>;
   assignments: ReadonlyArray<SeatChartAssignment>;
@@ -40,7 +89,7 @@ export function buildSeatChartPrintItems(args: {
       const student = rosterById.get(assignment.studentUserId);
       const group = args.board.groups.find((g) => g._id === assignment.groupId);
       const displayName = student
-        ? getRosterDisplayName(student, args.unnamedLabel, args.nameFormat)
+        ? formatSeatChartPrintStudentLabel(student, args.unnamedLabel, args.nameFormat)
         : args.unnamedLabel;
       const groupLabel = group?.name?.trim();
       return groupLabel ? `${displayName} (${groupLabel})` : displayName;

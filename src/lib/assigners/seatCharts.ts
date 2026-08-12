@@ -175,6 +175,25 @@ export function sortSeatCharts(
   return [...charts].sort((a, b) => compareSeatCharts(a, b, sortKey, direction));
 }
 
+/** Most recently updated active chart for a layout, or null if none. */
+export function latestChartForLayout(
+  charts: readonly SeatChartListItem[],
+  layoutId: Id<"seatLayouts">,
+): SeatChartListItem | null {
+  let latest: SeatChartListItem | null = null;
+  for (const chart of charts) {
+    if (chart.layoutId !== layoutId) continue;
+    if (
+      !latest ||
+      chart.updatedAt > latest.updatedAt ||
+      (chart.updatedAt === latest.updatedAt && chart._creationTime > latest._creationTime)
+    ) {
+      latest = chart;
+    }
+  }
+  return latest;
+}
+
 export function assignmentsEqual(
   a: ReadonlyArray<SeatChartAssignment>,
   b: ReadonlyArray<SeatChartAssignment>,

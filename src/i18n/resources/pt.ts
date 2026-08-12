@@ -1121,6 +1121,7 @@ const pt = {
     activitySummary_updatedSeatLayoutGenderParity:
       'Atualizou a paridade de género do plano "{{name}}" para {{mode}}',
     activitySummary_exportedSeatChartPdf: 'PDF do plano "{{chartName}}" exportado',
+    activitySummary_exportedSeatChartTablePdf: 'Tabela do plano "{{chartName}}" exportada',
     activitySummary_createdRandomAssigner: 'Atribuidor aleatório "{{name}}" criado',
     activitySummary_updatedRandomAssigner: 'Atribuidor aleatório "{{name}}" atualizado',
     activitySummary_deletedRandomAssigner: 'Atribuidor aleatório "{{name}}" eliminado',
@@ -2342,6 +2343,28 @@ const pt = {
     tabConstraints: "Restri��es",
     tabCharts: "Planos",
     tabData: "Dados",
+    tabStats: "Estatísticas",
+    seatsStatsDescription: "O seu lugar atual e histórico de lugares para esta turma.",
+    seatsStatsCurrentTitle: "Lugar atual",
+    seatsStatsSeatLabel: "Lugar",
+    seatsStatsTeamLabel: "Equipa",
+    seatsStatsZoneLabel: "Zona",
+    seatsStatsNeighborsLabel: "Vizinhos",
+    seatsStatsNoRecordingTitle: "Ainda sem lugares registados",
+    seatsStatsNoRecordingDescription:
+      "O professor registará os lugares quando o plano estiver finalizado.",
+    seatsStatsHistoryTitle: "Histórico de lugares",
+    seatsStatsHistoryEmpty: "Ainda não há lugares registados.",
+    seatsStatsHistorySearchPlaceholder: "Pesquisar por equipa, zona ou layout",
+    seatsStatsHistorySearchClear: "Limpar pesquisa",
+    seatsStatsHistorySearchResults: "{{count}} resultados",
+    seatsStatsHistorySearchEmpty: "Sem lugares correspondentes.",
+    seatsStatsHistoryLayoutLabel: "Layout",
+    seatsStatsHistoryDateLabel: "Data",
+    seatsStatsLoadFailed: "Não foi possível carregar as estatísticas de lugares.",
+    seatsStatsLoadFailedDescription: "Tente novamente em instantes.",
+    seatsStatsStudentsEmptyTitle: "Sem alunos",
+    seatsStatsStudentsEmptyDescription: "Você não está matriculado como aluno nesta turma.",
     seatsDataDescription:
       "Contagens de {{dimension}} por aluno para o plano «{{layoutName}}» ({{count}} colunas).",
     seatsDataDescriptionFallback: "Contagens de lugares registadas por aluno para um plano.",
@@ -2629,6 +2652,21 @@ const pt = {
     constraintRelationTeammate: "colega de equipe",
     constraintSummaryPair: "{{student}} {{polarity}} ser {{relation}} de {{other}}",
     constraintSummaryZone: "{{student}} {{polarity}} sentar-se em {{zone}}",
+    constraintsViewPlain: "Linguagem simples",
+    constraintsViewTable: "Tabela",
+    constraintPlain_neighbor_must:
+      "<bold>{{student}}</bold> deve ser vizinho de <bold>{{other}}</bold>.",
+    constraintPlain_neighbor_mustNot:
+      "<bold>{{student}}</bold> não deve ser vizinho de <bold>{{other}}</bold>.",
+    constraintPlain_teammate_must:
+      "<bold>{{student}}</bold> deve ser colega de equipe de <bold>{{other}}</bold>.",
+    constraintPlain_teammate_mustNot:
+      "<bold>{{student}}</bold> não deve ser colega de equipe de <bold>{{other}}</bold>.",
+    constraintPlain_zone_must:
+      "<bold>{{student}}</bold> deve sentar-se na zona <bold>{{zone}}</bold>.",
+    constraintPlain_zone_mustNot:
+      "<bold>{{student}}</bold> não deve sentar-se na zona <bold>{{zone}}</bold>.",
+    constraintsPlainEmpty: "Nenhuma restrição corresponde à sua pesquisa.",
     constraintSaveFailed: "Não foi possível guardar a restrição.",
     constraintLoadFailed: "Não foi possível carregar as restrições.",
     constraintLoadFailedDescription: "Verifique a ligação e tente novamente.",
@@ -2684,6 +2722,9 @@ const pt = {
     orientationLeft: "Esquerda",
     orientationRight: "Direita",
     printPdf: "Exportar PDF",
+    printLayout: "Imprimir layout",
+    printTable: "Imprimir tabela",
+    printTableSeatColumn: "Lugar",
     printPdfFailed: "N?o foi poss?vel abrir a caixa de di?logo de impress?o.",
     printOptionsTitle: "Imprimir planta de assentos",
     printOptionsDescription:

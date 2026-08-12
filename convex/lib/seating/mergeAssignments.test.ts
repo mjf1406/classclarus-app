@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 
 import type { Id } from "../../_generated/dataModel.js";
 import { mergeAlgorithmAssignments } from "./mergeAssignments.js";
-import type { ChartAssignment } from "../seatChartGeometry.js";
+import type { ChartAssignment } from "./seatChartGeometry.js";
 
 const groupA = "groupA" as Id<"groups">;
 const groupB = "groupB" as Id<"groups">;

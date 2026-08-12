@@ -1,5 +1,5 @@
 import type { Id } from "../../_generated/dataModel.js";
-import type { ChartAssignment } from "../seatChartGeometry.js";
+import type { ChartAssignment } from "./seatChartGeometry.js";
 import { emptyStudentHistory } from "./history.js";
 import { seatHistoryKey } from "./historyKeys.js";
 import type {

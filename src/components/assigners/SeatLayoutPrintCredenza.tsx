@@ -83,11 +83,10 @@ export function SeatLayoutPrintCredenza({
       perPage: mode === "current" ? 1 : perPage,
     };
     setIsSubmitting(true);
-    onOpenChange(false);
     try {
       await onConfirm(selection);
+      onOpenChange(false);
     } catch {
-      onOpenChange(true);
       setIsSubmitting(false);
     }
   };

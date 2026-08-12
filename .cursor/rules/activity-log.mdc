@@ -17,7 +17,7 @@ Skip pure UI chrome, failed attempts, and high-frequency noise unless the produc
 
 ## How (server mutations)
 
-Prefer `recordClassActivity` from `convex/lib/classActivity.ts` inside the mutation after a successful write:
+Prefer `recordClassActivity` from `convex/lib/activity/classActivity.ts` inside the mutation after a successful write:
 
 ```ts
 await recordClassActivity(ctx, {
@@ -37,7 +37,7 @@ await recordClassActivity(ctx, {
 1. Call `recordClassActivity` (or client `useLogClassAccess` for intentional reads).
 2. Add `activitySummary_<key>` to **`en.ts`** and **every** locale under `src/i18n/resources/` (same i18n rule as other UI copy).
 3. Put interpolation values in `metadata` (strings only); keep `summary` English as fallback.
-4. Reuse an existing `resourceType` when possible; extend `ACTIVITY_RESOURCE_TYPES` in `convex/lib/classActivity.ts` when introducing a new one.
+4. Reuse an existing `resourceType` when possible; extend `ACTIVITY_RESOURCE_TYPES` in `convex/lib/activity/classActivity.ts` when introducing a new one.
 5. If the summary needs special formatting, update `src/lib/activity/formatActivitySummary.ts` (and its tests).
 
 ## If unsure

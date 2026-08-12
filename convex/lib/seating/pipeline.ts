@@ -4,7 +4,7 @@ import {
   findStrictDeskNeighborIds,
   type ChartAssignment,
   type SeatLayoutItemSnapshot,
-} from "../seatChartGeometry.js";
+} from "./seatChartGeometry.js";
 import { assignGenderParity, genderBucketFromRoster } from "./gender.js";
 import { buildLayoutHistoryStats } from "./history.js";
 import { mergeAlgorithmAssignments } from "./mergeAssignments.js";

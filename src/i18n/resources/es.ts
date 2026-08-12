@@ -1128,6 +1128,7 @@ const es = {
     activitySummary_updatedSeatLayoutGenderParity:
       'Actualizó la paridad de género del plano "{{name}}" a {{mode}}',
     activitySummary_exportedSeatChartPdf: 'Exportó PDF del plan "{{chartName}}"',
+    activitySummary_exportedSeatChartTablePdf: 'Exportó tabla del plan "{{chartName}}"',
 
     activitySummary_recordedRazAssessment:
       "Evaluación RAZ registrada ({{result}}) → nivel {{level}}",
@@ -2355,6 +2356,28 @@ const es = {
     tabConstraints: "Restricciones",
     tabCharts: "Planes",
     tabData: "Datos",
+    tabStats: "Estadísticas",
+    seatsStatsDescription: "Tu asiento actual e historial de asientos para esta clase.",
+    seatsStatsCurrentTitle: "Asiento actual",
+    seatsStatsSeatLabel: "Asiento",
+    seatsStatsTeamLabel: "Equipo",
+    seatsStatsZoneLabel: "Zona",
+    seatsStatsNeighborsLabel: "Vecinos",
+    seatsStatsNoRecordingTitle: "Aún no hay asientos registrados",
+    seatsStatsNoRecordingDescription:
+      "Tu maestro registrará los asientos cuando el plan esté finalizado.",
+    seatsStatsHistoryTitle: "Historial de asientos",
+    seatsStatsHistoryEmpty: "Aún no hay asientos registrados.",
+    seatsStatsHistorySearchPlaceholder: "Buscar por equipo, zona o diseño",
+    seatsStatsHistorySearchClear: "Limpiar búsqueda",
+    seatsStatsHistorySearchResults: "{{count}} resultados",
+    seatsStatsHistorySearchEmpty: "No hay asientos que coincidan.",
+    seatsStatsHistoryLayoutLabel: "Diseño",
+    seatsStatsHistoryDateLabel: "Fecha",
+    seatsStatsLoadFailed: "No se pudieron cargar las estadísticas de asientos.",
+    seatsStatsLoadFailedDescription: "Inténtalo de nuevo en un momento.",
+    seatsStatsStudentsEmptyTitle: "Sin estudiantes",
+    seatsStatsStudentsEmptyDescription: "No estás inscrito como estudiante en esta clase.",
     seatsDataDescription:
       "Recuentos de {{dimension}} por estudiante para el plan «{{layoutName}}» ({{count}} columnas).",
     seatsDataDescriptionFallback: "Recuentos de asientos registrados por estudiante para un plan.",
@@ -2642,6 +2665,21 @@ const es = {
     constraintRelationTeammate: "compañero de equipo",
     constraintSummaryPair: "{{student}} {{polarity}} ser {{relation}} de {{other}}",
     constraintSummaryZone: "{{student}} {{polarity}} sentarse en {{zone}}",
+    constraintsViewPlain: "Lenguaje sencillo",
+    constraintsViewTable: "Tabla",
+    constraintPlain_neighbor_must:
+      "<bold>{{student}}</bold> debe ser vecino/a de <bold>{{other}}</bold>.",
+    constraintPlain_neighbor_mustNot:
+      "<bold>{{student}}</bold> no debe ser vecino/a de <bold>{{other}}</bold>.",
+    constraintPlain_teammate_must:
+      "<bold>{{student}}</bold> debe ser compañero/a de equipo de <bold>{{other}}</bold>.",
+    constraintPlain_teammate_mustNot:
+      "<bold>{{student}}</bold> no debe ser compañero/a de equipo de <bold>{{other}}</bold>.",
+    constraintPlain_zone_must:
+      "<bold>{{student}}</bold> debe sentarse en la zona <bold>{{zone}}</bold>.",
+    constraintPlain_zone_mustNot:
+      "<bold>{{student}}</bold> no debe sentarse en la zona <bold>{{zone}}</bold>.",
+    constraintsPlainEmpty: "Ninguna restricción coincide con tu búsqueda.",
     constraintSaveFailed: "No se pudo guardar la restricción.",
     constraintLoadFailed: "No se pudieron cargar las restricciones.",
     constraintLoadFailedDescription: "Comprueba la conexión e inténtalo de nuevo.",
@@ -2697,6 +2735,9 @@ const es = {
     orientationLeft: "Izquierda",
     orientationRight: "Derecha",
     printPdf: "Exportar PDF",
+    printLayout: "Imprimir diseño",
+    printTable: "Imprimir tabla",
+    printTableSeatColumn: "Asiento",
     printPdfFailed: "No se pudo abrir el diálogo de impresión.",
     printOptionsTitle: "Imprimir plano de asientos",
     printOptionsDescription:

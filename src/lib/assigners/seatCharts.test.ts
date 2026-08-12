@@ -4,11 +4,13 @@ import {
   assignStudentToSlot,
   assignmentsEqual,
   formatViolationReason,
+  latestChartForLayout,
   neighborDeskIdsForDesk,
   randomAssignSeatsByGroup,
   slotKey,
   swapDeskAssignments,
   unassignDeskSlot,
+  type SeatChartListItem,
 } from "@/lib/assigners/seatCharts";
 import type { Id } from "../../../convex/_generated/dataModel";
 
@@ -224,5 +226,77 @@ describe("strict chart neighbors", () => {
       { id: "b", kind: "desk" as const, label: "B", x: 80, y: 61, width: 80, height: 60 },
     ];
     expect(neighborDeskIdsForDesk(diagonalOnly, "a")).toEqual([]);
+  });
+});
+
+describe("latestChartForLayout", () => {
+  const layoutA = "layoutA" as Id<"seatLayouts">;
+  const layoutB = "layoutB" as Id<"seatLayouts">;
+
+  function chart(
+    overrides: Pick<SeatChartListItem, "_id" | "layoutId" | "updatedAt" | "_creationTime"> &
+      Partial<SeatChartListItem>,
+  ): SeatChartListItem {
+    return {
+      name: "Chart",
+      layoutName: "Layout",
+      recordCount: 0,
+      seatedCount: 0,
+      ...overrides,
+    };
+  }
+
+  test("returns null when no charts match the layout", () => {
+    const charts = [
+      chart({
+        _id: "c1" as Id<"seatCharts">,
+        layoutId: layoutB,
+        updatedAt: 100,
+        _creationTime: 100,
+      }),
+    ];
+    expect(latestChartForLayout(charts, layoutA)).toBeNull();
+  });
+
+  test("picks the most recently updated chart for the layout", () => {
+    const charts = [
+      chart({
+        _id: "older" as Id<"seatCharts">,
+        layoutId: layoutA,
+        updatedAt: 100,
+        _creationTime: 100,
+      }),
+      chart({
+        _id: "other" as Id<"seatCharts">,
+        layoutId: layoutB,
+        updatedAt: 999,
+        _creationTime: 999,
+      }),
+      chart({
+        _id: "newer" as Id<"seatCharts">,
+        layoutId: layoutA,
+        updatedAt: 200,
+        _creationTime: 150,
+      }),
+    ];
+    expect(latestChartForLayout(charts, layoutA)?._id).toBe("newer");
+  });
+
+  test("breaks ties with creation time", () => {
+    const charts = [
+      chart({
+        _id: "first" as Id<"seatCharts">,
+        layoutId: layoutA,
+        updatedAt: 100,
+        _creationTime: 50,
+      }),
+      chart({
+        _id: "second" as Id<"seatCharts">,
+        layoutId: layoutA,
+        updatedAt: 100,
+        _creationTime: 80,
+      }),
+    ];
+    expect(latestChartForLayout(charts, layoutA)?._id).toBe("second");
   });
 });

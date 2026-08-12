@@ -1104,6 +1104,7 @@ const en = {
     activitySummary_updatedSeatLayoutGenderParity:
       'Updated gender parity on seat layout "{{name}}" to {{mode}}',
     activitySummary_exportedSeatChartPdf: 'Exported seating chart "{{chartName}}" PDF',
+    activitySummary_exportedSeatChartTablePdf: 'Exported seating chart "{{chartName}}" table PDF',
     activitySummary_recordedRazAssessment: "Recorded RAZ assessment ({{result}}) → level {{level}}",
     activitySummary_setRazManualStatus: "Set RAZ status to {{status}}",
     activitySummary_createdAnnouncement: 'Created announcement "{{name}}"',
@@ -2304,6 +2305,28 @@ const en = {
     tabConstraints: "Constraints",
     tabCharts: "Charts",
     tabData: "Data",
+    tabStats: "Stats",
+    seatsStatsDescription: "Your current seat and seating history for this class.",
+    seatsStatsCurrentTitle: "Current seat",
+    seatsStatsSeatLabel: "Seat",
+    seatsStatsTeamLabel: "Team",
+    seatsStatsZoneLabel: "Zone",
+    seatsStatsNeighborsLabel: "Neighbors",
+    seatsStatsNoRecordingTitle: "No seating recorded yet",
+    seatsStatsNoRecordingDescription:
+      "Your teacher will record seating when the chart is finalized.",
+    seatsStatsHistoryTitle: "Seating history",
+    seatsStatsHistoryEmpty: "No recorded seating yet.",
+    seatsStatsHistorySearchPlaceholder: "Search by team, zone, or layout",
+    seatsStatsHistorySearchClear: "Clear search",
+    seatsStatsHistorySearchResults: "{{count}} results",
+    seatsStatsHistorySearchEmpty: "No matching seatings.",
+    seatsStatsHistoryLayoutLabel: "Layout",
+    seatsStatsHistoryDateLabel: "Date",
+    seatsStatsLoadFailed: "Could not load seating stats.",
+    seatsStatsLoadFailedDescription: "Try again in a moment.",
+    seatsStatsStudentsEmptyTitle: "No students",
+    seatsStatsStudentsEmptyDescription: "You are not enrolled as a student in this class.",
     seatsDataDescription:
       "{{dimension}} counts per student for layout “{{layoutName}}” ({{count}} columns).",
     seatsDataDescriptionFallback: "Recorded seating counts per student for a layout.",
@@ -2586,6 +2609,21 @@ const en = {
     constraintRelationTeammate: "teammate",
     constraintSummaryPair: "{{student}} {{polarity}} be {{relation}} of {{other}}",
     constraintSummaryZone: "{{student}} {{polarity}} sit in {{zone}}",
+    constraintsViewPlain: "Plain language",
+    constraintsViewTable: "Table",
+    constraintPlain_neighbor_must:
+      "<bold>{{student}}</bold> must be neighbors with <bold>{{other}}</bold>.",
+    constraintPlain_neighbor_mustNot:
+      "<bold>{{student}}</bold> must not be neighbors with <bold>{{other}}</bold>.",
+    constraintPlain_teammate_must:
+      "<bold>{{student}}</bold> must be a teammate with <bold>{{other}}</bold>.",
+    constraintPlain_teammate_mustNot:
+      "<bold>{{student}}</bold> must not be a teammate with <bold>{{other}}</bold>.",
+    constraintPlain_zone_must:
+      "<bold>{{student}}</bold> must sit in the <bold>{{zone}}</bold> zone.",
+    constraintPlain_zone_mustNot:
+      "<bold>{{student}}</bold> must not sit in the <bold>{{zone}}</bold> zone.",
+    constraintsPlainEmpty: "No constraints match your search.",
     constraintSaveFailed: "Could not save constraint.",
     constraintLoadFailed: "Could not load constraints.",
     constraintLoadFailedDescription: "Check your connection and try again.",
@@ -2641,6 +2679,9 @@ const en = {
     orientationLeft: "Left",
     orientationRight: "Right",
     printPdf: "Export PDF",
+    printLayout: "Print layout",
+    printTable: "Print table",
+    printTableSeatColumn: "Seat",
     printPdfFailed: "Could not open the print dialog.",
     printOptionsTitle: "Print seat layout",
     printOptionsDescription:

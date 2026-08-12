@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import type { Id } from "../_generated/dataModel.js";
+import type { Id } from "../../_generated/dataModel.js";
 import { copySeatLayoutItems, type SeatLayoutItemForCopy } from "./seatLayoutCopy.js";
 
 const groupId = "group1" as Id<"groups">;

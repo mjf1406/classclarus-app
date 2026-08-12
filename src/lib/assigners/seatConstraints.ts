@@ -76,6 +76,48 @@ export function buildSeatConstraintRosterRows(
   return rows;
 }
 
+export type SeatConstraintPlainLanguageKey =
+  `constraintPlain_${SeatConstraintType}_${SeatConstraintPolarity}`;
+
+export type SeatConstraintPlainLanguageParts = {
+  key: SeatConstraintPlainLanguageKey;
+  values: Record<string, string>;
+};
+
+export function seatConstraintPlainLanguageParts(
+  constraint: SeatConstraint,
+  studentName: (userId: Id<"users">) => string,
+  t: (key: string, options?: Record<string, string>) => string,
+): SeatConstraintPlainLanguageParts {
+  const student = studentName(constraint.studentUserId);
+  const key: SeatConstraintPlainLanguageKey = `constraintPlain_${constraint.type}_${constraint.polarity}`;
+
+  if (constraint.type === "zone") {
+    return {
+      key,
+      values: {
+        student,
+        zone: constraint.zoneName?.trim() || t("constraintUnknownStudent"),
+      },
+    };
+  }
+
+  const other = constraint.otherStudentUserId
+    ? studentName(constraint.otherStudentUserId)
+    : t("constraintUnknownStudent");
+
+  return { key, values: { student, other } };
+}
+
+export function formatSeatConstraintPlainLanguage(
+  constraint: SeatConstraint,
+  studentName: (userId: Id<"users">) => string,
+  t: (key: string, options?: Record<string, string>) => string,
+): string {
+  const { key, values } = seatConstraintPlainLanguageParts(constraint, studentName, t);
+  return t(key, values);
+}
+
 export function seatConstraintSummary(
   constraint: SeatConstraint,
   studentName: (userId: Id<"users">) => string,

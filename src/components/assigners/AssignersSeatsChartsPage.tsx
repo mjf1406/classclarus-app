@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Cpu, LayoutGrid, Pencil, Plus, Trash2 } from "lucide-react";
+import { Cpu, LayoutGrid, Pencil, Plus, Table2, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -7,6 +7,10 @@ import { AutoAssignSeatingHost } from "@/components/assigners/AutoAssignSeatingH
 import { AssignersSeatsShell } from "@/components/assigners/AssignersSeatsShell";
 import { SeatChartCreateCredenza } from "@/components/assigners/SeatChartCreateCredenza";
 import { SeatChartNameCredenza } from "@/components/assigners/SeatChartNameCredenza";
+import {
+  SeatChartPrintHost,
+  type SeatChartPrintMode,
+} from "@/components/assigners/SeatChartPrintHost";
 import { DeleteNamedCredenza } from "@/components/groups/DeleteNamedCredenza";
 import { ActionMenu, type ActionMenuItem } from "@/components/ui/action-menu";
 import { Badge } from "@/components/ui/badge";
@@ -58,6 +62,10 @@ export function AssignersSeatsChartsPage({ classId }: AssignersSeatsChartsPagePr
   const [sortKey, setSortKey] = useState<SeatChartSortKey>("updated");
   const [sortDirection, setSortDirection] = useState<SeatChartSortDirection>("desc");
   const [autoAssignOpen, setAutoAssignOpen] = useState(false);
+  const [printRequest, setPrintRequest] = useState<{
+    chartId: Id<"seatCharts">;
+    mode: SeatChartPrintMode;
+  } | null>(null);
 
   const sorted = useMemo(
     () => (data ? sortSeatCharts(data, sortKey, sortDirection) : []),
@@ -154,6 +162,20 @@ export function AssignersSeatsChartsPage({ classId }: AssignersSeatsChartsPagePr
           {sorted.map((chart) => {
             const menuItems: Array<ActionMenuItem> = [
               {
+                id: "print-layout",
+                label: t("printLayout"),
+                icon: <LayoutGrid />,
+                group: "view",
+                onSelect: () => setPrintRequest({ chartId: chart._id, mode: "layout" }),
+              },
+              {
+                id: "print-table",
+                label: t("printTable"),
+                icon: <Table2 />,
+                group: "view",
+                onSelect: () => setPrintRequest({ chartId: chart._id, mode: "table" }),
+              },
+              {
                 id: "rename",
                 label: t("renameChart"),
                 icon: <Pencil />,
@@ -205,6 +227,16 @@ export function AssignersSeatsChartsPage({ classId }: AssignersSeatsChartsPagePr
           })}
         </ul>
       ) : null}
+
+      <SeatChartPrintHost
+        classId={classId}
+        chartId={printRequest?.chartId ?? null}
+        mode={printRequest?.mode ?? "layout"}
+        open={printRequest !== null}
+        onOpenChange={(open) => {
+          if (!open) setPrintRequest(null);
+        }}
+      />
 
       {canManage ? (
         <>

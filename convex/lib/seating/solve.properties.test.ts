@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import type { ChartAssignment } from "../seatChartGeometry.js";
+import type { ChartAssignment } from "./seatChartGeometry.js";
 import { expectStructuralInvariants, testInput } from "./seatingTestHelpers.js";
 import { evaluateSeatingFairness, solveSeating } from "./solve.js";
 

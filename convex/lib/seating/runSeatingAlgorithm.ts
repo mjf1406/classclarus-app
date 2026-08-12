@@ -1,5 +1,5 @@
 import type { Id } from "../../_generated/dataModel.js";
-import type { SeatLayoutItemSnapshot } from "../seatChartGeometry.js";
+import type { SeatLayoutItemSnapshot } from "./seatChartGeometry.js";
 import { finishSeatingAlgorithm, prepareSeatingAlgorithmInput } from "./pipeline.js";
 import { teamHistoryKey } from "./historyKeys.js";
 import type { GroupMembershipRow } from "./scope.js";
@@ -56,4 +56,4 @@ export function runSeatingAlgorithm(
   });
 }
 
-export { slotKey } from "../seatChartGeometry.js";
+export { slotKey } from "./seatChartGeometry.js";

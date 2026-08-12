@@ -9,7 +9,7 @@ When adding or changing a **class capability** (something gated by authz, a new 
 
 ## Source of truth
 
-- Permissions and role defaults live in `convex/lib/authzModel.ts` (`definePermissions` / `defineRoles`).
+- Permissions and role defaults live in `convex/lib/auth/authzModel.ts` (`definePermissions` / `defineRoles`).
 - The Permissions UI lists **grantable** permissions via `GRANTABLE_CLASS_PERMISSIONS` / `grantablePermissionGroups()` (owner catalog minus `NON_GRANTABLE_CLASS_PERMISSIONS`).
 - Labels come from i18n: `perm_<resource>_<action>` and `permGroup_<resource>` (see `src/lib/permissions/permissionLabels.ts`).
 - Page UI: `src/components/permissions/ClassPermissionsPage.tsx`.

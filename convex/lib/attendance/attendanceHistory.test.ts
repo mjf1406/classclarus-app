@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vite-plus/test";
 
-import type { Id } from "../_generated/dataModel.js";
+import type { Id } from "../../_generated/dataModel.js";
 import {
   isHistoryRowAfterCursor,
   mergeAttendanceHistoryPage,

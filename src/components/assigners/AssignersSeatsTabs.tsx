@@ -5,7 +5,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCan } from "@/hooks/permissions/useCan";
 import type { Id } from "../../../convex/_generated/dataModel";
 
-export type AssignersSeatsTab = "layouts" | "constraints" | "charts" | "data";
+export type AssignersSeatsTab = "stats" | "layouts" | "constraints" | "charts" | "data";
 
 type AssignersSeatsTabsProps = {
   classId: Id<"classes">;
@@ -13,6 +13,7 @@ type AssignersSeatsTabsProps = {
 };
 
 const TAB_ROUTES: Record<AssignersSeatsTab, string> = {
+  stats: "/class/$classId/assigners/seats/stats",
   layouts: "/class/$classId/assigners/seats/layouts",
   constraints: "/class/$classId/assigners/seats/constraints",
   charts: "/class/$classId/assigners/seats/charts",
@@ -27,6 +28,7 @@ export function AssignersSeatsTabs({ classId, value }: AssignersSeatsTabsProps) 
   // still see layouts + charts via class:read.
   const isStaff = can("students:read");
   const canManageAssigners = can("assigners:manage");
+  const isPersonalAudience = !isStaff;
 
   return (
     <Tabs
@@ -40,6 +42,7 @@ export function AssignersSeatsTabs({ classId, value }: AssignersSeatsTabsProps) 
       }}
     >
       <TabsList variant="line">
+        {isPersonalAudience ? <TabsTrigger value="stats">{t("tabStats")}</TabsTrigger> : null}
         <TabsTrigger value="layouts">{t("tabLayouts")}</TabsTrigger>
         {isStaff ? <TabsTrigger value="constraints">{t("tabConstraints")}</TabsTrigger> : null}
         <TabsTrigger value="charts">{t("tabCharts")}</TabsTrigger>

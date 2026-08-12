@@ -1,5 +1,5 @@
 import type { Doc, Id } from "../../_generated/dataModel.js";
-import type { ChartAssignment } from "../seatChartGeometry.js";
+import type { ChartAssignment } from "./seatChartGeometry.js";
 
 export type SeatingFairnessDimension = "neighbor" | "seat" | "zone" | "team";
 
