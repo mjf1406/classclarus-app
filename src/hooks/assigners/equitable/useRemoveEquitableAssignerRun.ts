@@ -9,6 +9,7 @@ import {
   equitableAssignersListQueryKey,
   type EquitableAssignerList,
 } from "@/hooks/assigners/equitable/useEquitableAssigners";
+import { equitableRosterMatrixQueryKey } from "@/hooks/assigners/equitable/useEquitableRosterMatrix";
 import { useOptimisticMutation } from "@/hooks/useOptimisticMutation";
 import { messageFromError } from "@/lib/errors/convexError";
 
@@ -33,6 +34,7 @@ export function useRemoveEquitableAssignerRun() {
     queryKeys: (args) => [
       equitableAssignersListQueryKey(args.classId),
       equitableAssignerRunsQueryKey(args.classId, args.assignerId),
+      equitableRosterMatrixQueryKey(args.classId, args.assignerId),
     ],
     applyOptimisticUpdate: (queryClient, args) => {
       queryClient.setQueryData<EquitableAssignerList>(

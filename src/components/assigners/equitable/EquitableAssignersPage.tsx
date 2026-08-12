@@ -130,6 +130,7 @@ export function EquitableAssignersPage({ classId }: EquitableAssignersPageProps)
           assignerId: assigner._id,
           scope: assigner.defaultScope,
           balanceGender: assigner.defaultBalanceGender,
+          genderBuckets: assigner.defaultGenderBuckets,
         });
         try {
           await printRun(assigner, runId);
@@ -214,7 +215,7 @@ export function EquitableAssignersPage({ classId }: EquitableAssignersPageProps)
               canManage={canManage}
               onNavigate={() => {
                 void navigate({
-                  to: "/class/$classId/assigners/equitable/$assignerId",
+                  to: "/class/$classId/assigners/equitable/$assignerId/dashboard",
                   params: { classId, assignerId: assigner._id },
                 });
               }}

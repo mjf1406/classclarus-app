@@ -9,6 +9,7 @@ describe("equitableAssignerFormSchemaEn", () => {
       items: ["Line leader", "Door holder"],
       defaultBalanceGender: true,
       defaultScope: "class",
+      defaultGenderBuckets: ["m", "f"],
     });
     expect(parsed.success).toBe(true);
   });
@@ -19,6 +20,7 @@ describe("equitableAssignerFormSchemaEn", () => {
       items: ["A", "a"],
       defaultBalanceGender: false,
       defaultScope: "groups",
+      defaultGenderBuckets: ["m", "f", "other", "unknown"],
     });
     expect(parsed.success).toBe(false);
   });

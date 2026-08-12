@@ -986,6 +986,9 @@ const schema = defineSchema({
     items: v.array(v.string()),
     defaultBalanceGender: v.boolean(),
     defaultScope: v.union(v.literal("class"), v.literal("groups")),
+    defaultGenderBuckets: v.optional(
+      v.array(v.union(v.literal("m"), v.literal("f"), v.literal("other"), v.literal("unknown"))),
+    ),
     createdBy: v.id("users"),
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -1023,6 +1026,9 @@ const schema = defineSchema({
     ranBy: v.id("users"),
     scope: v.union(v.literal("class"), v.literal("groups")),
     balanceGender: v.boolean(),
+    genderBuckets: v.optional(
+      v.array(v.union(v.literal("m"), v.literal("f"), v.literal("other"), v.literal("unknown"))),
+    ),
     itemsSnapshot: v.array(v.string()),
     assignments: v.array(
       v.object({

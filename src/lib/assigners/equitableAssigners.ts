@@ -1,4 +1,17 @@
 import {
+  ALL_EQUITABLE_GENDER_BUCKETS,
+  equitableGenderBucketsEqual,
+  normalizeEquitableGenderBuckets,
+  type EquitableGenderBucket,
+} from "../../../convex/lib/assigners/equitableGenderBuckets";
+
+export {
+  ALL_EQUITABLE_GENDER_BUCKETS,
+  equitableGenderBucketsEqual,
+  normalizeEquitableGenderBuckets,
+  type EquitableGenderBucket,
+};
+import {
   createEquitableAssignerFormSchema,
   EQUITABLE_ASSIGNER_MESSAGES_EN,
   type EquitableAssignerFormValues,
@@ -13,6 +26,7 @@ export type EquitableAssignerListItem = {
   items: string[];
   defaultBalanceGender: boolean;
   defaultScope: EquitableAssignerScope;
+  defaultGenderBuckets: EquitableGenderBucket[];
   createdBy: Id<"users">;
   createdAt: number;
   updatedAt: number;
@@ -29,6 +43,7 @@ export type EquitableAssignerDetail = {
   items: string[];
   defaultBalanceGender: boolean;
   defaultScope: EquitableAssignerScope;
+  defaultGenderBuckets: EquitableGenderBucket[];
   createdBy: Id<"users">;
   createdAt: number;
   updatedAt: number;
@@ -42,6 +57,7 @@ export type EquitableAssignerRunListItem = {
   ranBy: Id<"users">;
   scope: EquitableAssignerScope;
   balanceGender: boolean;
+  genderBuckets: EquitableGenderBucket[];
   assignmentCount: number;
 };
 
@@ -79,6 +95,7 @@ export type EquitableAssignerRunDetail = {
   ranBy: Id<"users">;
   scope: EquitableAssignerScope;
   balanceGender: boolean;
+  genderBuckets: EquitableGenderBucket[];
   itemsSnapshot: string[];
   assignments: EquitableAssignerAssignment[];
 };
@@ -102,6 +119,7 @@ export function emptyEquitableAssignerFormValues(): EquitableAssignerFormValues 
     items: [""],
     defaultBalanceGender: false,
     defaultScope: "class",
+    defaultGenderBuckets: [...ALL_EQUITABLE_GENDER_BUCKETS],
   };
 }
 
@@ -113,6 +131,7 @@ export function equitableAssignerFormValuesFromDetail(
     items: detail.items.length > 0 ? [...detail.items] : [""],
     defaultBalanceGender: detail.defaultBalanceGender,
     defaultScope: detail.defaultScope,
+    defaultGenderBuckets: normalizeEquitableGenderBuckets(detail.defaultGenderBuckets),
   };
 }
 
@@ -123,6 +142,7 @@ export function equitableAssignerMutationPayloadFromForm(values: EquitableAssign
     items: trimmedItems,
     defaultBalanceGender: values.defaultBalanceGender,
     defaultScope: values.defaultScope,
+    defaultGenderBuckets: normalizeEquitableGenderBuckets(values.defaultGenderBuckets),
   };
 }
 
@@ -142,6 +162,22 @@ export function formatEquitableAssignerBalanceGender(
   t: (key: string) => string,
 ): string {
   return balanceGender ? t("equitableBalanceGenderOn") : t("equitableBalanceGenderOff");
+}
+
+export function formatEquitableGenderBucketLabel(
+  bucket: EquitableGenderBucket,
+  t: (key: string) => string,
+): string {
+  switch (bucket) {
+    case "m":
+      return t("equitableManualGenderBoy");
+    case "f":
+      return t("equitableManualGenderGirl");
+    case "other":
+      return t("equitableGenderBucketOther");
+    case "unknown":
+      return t("equitableGenderBucketUnknown");
+  }
 }
 
 export type EquitableAssignerRunSortKey = "ranAt" | "scope" | "balanceGender" | "assignmentCount";

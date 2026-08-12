@@ -1209,6 +1209,8 @@ const fr = {
     activitySummary_createdEquitableManualRun:
       "Attribution équitable manuelle créée pour « {{name}} »",
     activitySummary_viewedEquitableManualEditor: "Assignateur équitable manuel « {{name}} » ouvert",
+    activitySummary_viewedEquitableAssignerData:
+      "Données de l'assignateur équitable « {{name}} » consultées",
     activitySummary_duplicatedGradeScale: "Barème de notation dupliqué sous « {{name}} »",
     activitySummary_hiddenGradeScaleDefault: "Barème de notation par défaut « {{nameKey}} » masqué",
     activitySummary_shownGradeScaleDefault:
@@ -2230,7 +2232,7 @@ const fr = {
     randomHistoryCount: "Assignations",
     randomHistoryEmpty:
       "Aucune exécution pour l'instant. Exécutez une assignation pour créer un historique.",
-    randomDeleteRun: "Supprimer l'exécution",
+    randomDeleteRun: "Supprimer",
     randomRunDeleteTitle: "Supprimer l'exécution ?",
     randomRunDeleteDescription: "Retirer cette assignation de l'historique ?",
     randomPreviewTitle: "Aperçu de l'assignation",
@@ -2279,6 +2281,12 @@ const fr = {
       "Lorsque c'est activé, chaque élément est attribué à un garçon et une fille, il y aura donc deux de chaque élément.",
     equitableBalanceGenderOn: "Équilibrage du genre activé",
     equitableBalanceGenderOff: "Équilibrage du genre désactivé",
+    equitableGenderBucketsLabel: "Included gender buckets",
+    equitableGenderBucketsHint:
+      "Only buckets with at least one student in each class or group create slots.",
+    equitableGenderBucketsRequired: "Select at least one gender bucket",
+    equitableGenderBucketOther: "Other / prefer not to say",
+    equitableGenderBucketUnknown: "Unknown",
     equitableRunScopeLabel: "Portée",
     equitableRunAction: "Exécuter",
     equitableRunDialogTitle: "Exécuter l'attribution",
@@ -2307,6 +2315,16 @@ const fr = {
     equitableDeleteDescription: "Supprimer « {{name}} » et tout son historique d'exécutions ?",
     equitableDeleteConfirm: "Supprimer",
     equitableBackToList: "Retour aux répartiteurs équitables",
+    equitableTabDashboard: "Tableau de bord",
+    equitableTabData: "Données",
+    equitableDashboardDescription: "{{count}} éléments dans cette liste",
+    equitableDataDescription: "Nombre d'assignations par élève sur {{count}} éléments.",
+    equitableDataEmptyStudents: "Aucun élève dans cette classe pour le moment.",
+    equitableDataEmptyItems:
+      "Ajoutez des éléments à ce répartiteur pour afficher des colonnes de données.",
+    equitableDataCellToggle: "{{count}} assignations pour {{item}}",
+    equitableDataHistoryFailed: "Impossible de charger les dates d'assignation.",
+    equitableDataHistoryEmpty: "Aucune assignation enregistrée.",
     equitableHistoryDescription: "{{count}} éléments dans cette liste",
     equitableHistoryWhen: "Quand",
     equitableHistoryScope: "Portée",
@@ -2314,7 +2332,7 @@ const fr = {
     equitableHistoryCount: "Attributions",
     equitableHistoryEmpty:
       "Aucune exécution pour l'instant. Exécutez une attribution pour créer un historique.",
-    equitableDeleteRun: "Supprimer l'exécution",
+    equitableDeleteRun: "Supprimer",
     equitableRunDeleteTitle: "Supprimer l'exécution ?",
     equitableRunDeleteDescription: "Retirer cette attribution de l'historique ?",
     equitablePreviewTitle: "Aperçu de l'attribution",
@@ -2335,7 +2353,7 @@ const fr = {
     equitableManualSaveFailed: "Impossible d'enregistrer l'attribution manuelle",
     equitableManualReset: "Tout effacer",
     equitableManualFillRemaining: "Attribuer équitablement",
-    equitableManualFillRemainingHint: "Disponible lorsque l'algorithme équitable sera implémenté.",
+    equitableManualFillRemainingHint: "Fill empty slots using equitable assignment history.",
     equitableManualAssignRandom: "Attribuer au hasard",
     equitableManualRosterTitle: "Élèves",
     equitableManualAssignedBadge: "Attribué",

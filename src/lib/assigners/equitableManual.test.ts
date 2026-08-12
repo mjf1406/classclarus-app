@@ -44,12 +44,13 @@ describe("buildEquitableManualSlots", () => {
     expect(slots.map((slot) => slot.item)).toEqual(["A", "B"]);
   });
 
-  it("doubles slots when balancing gender", () => {
+  it("doubles slots when balancing gender with eligible students", () => {
     const slots = buildEquitableManualSlots({
       items: ["A"],
       scope: "class",
       balanceGender: true,
       groups: [],
+      recipients: [{ genderBucket: "m" }, { genderBucket: "f" }],
     });
     expect(slots).toHaveLength(2);
     expect(slots.map((slot) => slot.genderRequired)).toEqual(["m", "f"]);
@@ -120,6 +121,7 @@ describe("validateEquitableManualAssignments", () => {
       scope: "class",
       balanceGender: true,
       groups: [],
+      recipients: [{ genderBucket: "m" }, { genderBucket: "f" }],
     });
     const boySlot = genderSlots.find((slot) => slot.genderRequired === "m");
     expect(boySlot).toBeDefined();
@@ -167,15 +169,16 @@ describe("randomAssignRemaining", () => {
   });
 
   it("respects gender-balanced slots", () => {
+    const students = [student("boy", "m"), student("girl", "f")];
     const slots = buildEquitableManualSlots({
       items: ["A"],
       scope: "class",
       balanceGender: true,
       groups: [],
+      recipients: students.map((row) => ({ genderBucket: row.genderBucket })),
     });
     const boySlot = slots.find((slot) => slot.genderRequired === "m")!;
     const girlSlot = slots.find((slot) => slot.genderRequired === "f")!;
-    const students = [student("boy", "m"), student("girl", "f")];
 
     const result = randomAssignRemaining({
       slots,
@@ -235,15 +238,15 @@ describe("randomAssignRemaining", () => {
   });
 
   it("leaves slots empty when no eligible students remain", () => {
+    const students = [student("boy", "m")];
     const slots = buildEquitableManualSlots({
       items: ["A", "B"],
       scope: "class",
       balanceGender: true,
       groups: [],
+      recipients: students.map((row) => ({ genderBucket: row.genderBucket })),
     });
-    const boySlot = slots.find((slot) => slot.genderRequired === "m")!;
-    const girlSlot = slots.find((slot) => slot.genderRequired === "f")!;
-    const students = [student("boy", "m")];
+    const boySlots = slots.filter((slot) => slot.genderRequired === "m");
 
     const result = randomAssignRemaining({
       slots,
@@ -254,8 +257,8 @@ describe("randomAssignRemaining", () => {
     });
 
     expect(result).toHaveLength(1);
-    expect(result[0]!.slotId).toBe(boySlot.id);
-    expect(result.some((row) => row.slotId === girlSlot.id)).toBe(false);
+    expect(boySlots.some((slot) => slot.id === result[0]!.slotId)).toBe(true);
+    expect(slots.filter((slot) => slot.genderRequired === "f")).toHaveLength(0);
   });
 
   it("reports when random assignment is possible", () => {
@@ -292,6 +295,7 @@ describe("randomAssignRemaining", () => {
       scope: "class",
       balanceGender: true,
       groups: [],
+      recipients: [{ genderBucket: "m" }, { genderBucket: "f" }],
     });
     const boySlot = slots.find((slot) => slot.genderRequired === "m")!;
     expect(studentEligibleForSlot(student("boy", "m"), boySlot, "class")).toBe(true);

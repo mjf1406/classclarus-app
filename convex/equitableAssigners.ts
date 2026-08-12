@@ -10,10 +10,16 @@ import {
   validateEquitableManualAssignments,
   type EquitableManualSlotAssignmentInput,
 } from "./lib/assigners/equitableManualSlots.js";
+import { buildEquitableRosterMatrixCounts } from "./lib/assigners/equitableRosterMatrix.js";
 import {
   equitableAssignerFormSchemaEn,
+  normalizeStoredGenderBuckets,
   type EquitableAssignerFormValues,
 } from "./lib/assigners/equitableAssignerSchema.js";
+import {
+  type EquitableGenderBucket,
+  normalizeEquitableGenderBuckets,
+} from "./lib/assigners/equitableGenderBuckets.js";
 import {
   assignerRunAssignmentValidator,
   projectAssignerRunAssignments,
@@ -36,6 +42,7 @@ const genderBucketValidator = v.union(
   v.literal("other"),
   v.literal("unknown"),
 );
+const genderBucketsValidator = v.array(genderBucketValidator);
 
 const manualSlotValidator = v.object({
   id: v.string(),
@@ -43,7 +50,7 @@ const manualSlotValidator = v.object({
   scope: scopeValidator,
   groupId: v.optional(v.id("groups")),
   groupName: v.optional(v.string()),
-  genderRequired: v.optional(v.union(v.literal("m"), v.literal("f"))),
+  genderRequired: v.optional(genderBucketValidator),
 });
 
 const manualStudentValidator = v.object({
@@ -92,8 +99,41 @@ const equitableHistoryItemValidator = v.object({
   groupName: v.optional(v.string()),
 });
 
+const equitableRosterMatrixStudentValidator = v.object({
+  userId: v.id("users"),
+  rosterNumber: v.number(),
+  firstName: v.optional(v.string()),
+  lastName: v.optional(v.string()),
+  name: v.optional(v.string()),
+  image: v.optional(v.string()),
+  email: v.optional(v.string()),
+});
+
+const equitableRosterMatrixCountValidator = v.object({
+  item: v.string(),
+  count: v.number(),
+});
+
+const equitableRosterMatrixRowValidator = v.object({
+  studentUserId: v.id("users"),
+  counts: v.array(equitableRosterMatrixCountValidator),
+});
+
+const equitableRosterMatrixValidator = v.object({
+  items: v.array(v.string()),
+  students: v.array(equitableRosterMatrixStudentValidator),
+  countsByStudent: v.array(equitableRosterMatrixRowValidator),
+});
+
 const DEFAULT_HISTORY_LIMIT = 20;
 const MAX_HISTORY_LIMIT = 50;
+
+const priorAssignmentValidator = v.object({
+  studentUserId: v.id("users"),
+  item: v.string(),
+  groupId: v.optional(v.id("groups")),
+  groupName: v.optional(v.string()),
+});
 
 const equitableAssignerListItemValidator = v.object({
   _id: v.id("equitableAssigners"),
@@ -102,6 +142,7 @@ const equitableAssignerListItemValidator = v.object({
   items: v.array(v.string()),
   defaultBalanceGender: v.boolean(),
   defaultScope: scopeValidator,
+  defaultGenderBuckets: genderBucketsValidator,
   createdBy: v.id("users"),
   createdAt: v.number(),
   updatedAt: v.number(),
@@ -118,6 +159,7 @@ const equitableAssignerDetailValidator = v.object({
   items: v.array(v.string()),
   defaultBalanceGender: v.boolean(),
   defaultScope: scopeValidator,
+  defaultGenderBuckets: genderBucketsValidator,
   createdBy: v.id("users"),
   createdAt: v.number(),
   updatedAt: v.number(),
@@ -128,6 +170,7 @@ const manualSetupValidator = v.object({
   students: v.array(manualStudentValidator),
   groups: v.array(manualGroupValidator),
   slots: v.array(manualSlotValidator),
+  priorAssignments: v.array(priorAssignmentValidator),
 });
 
 const equitableAssignerRunListItemValidator = v.object({
@@ -138,6 +181,7 @@ const equitableAssignerRunListItemValidator = v.object({
   ranBy: v.id("users"),
   scope: scopeValidator,
   balanceGender: v.boolean(),
+  genderBuckets: genderBucketsValidator,
   assignmentCount: v.number(),
 });
 
@@ -151,6 +195,7 @@ const equitableAssignerRunDetailValidator = v.object({
   ranBy: v.id("users"),
   scope: scopeValidator,
   balanceGender: v.boolean(),
+  genderBuckets: genderBucketsValidator,
   itemsSnapshot: v.array(v.string()),
   assignments: v.array(assignerRunAssignmentValidator),
 });
@@ -165,6 +210,7 @@ const equitableAssignerDisplayRunValidator = v.object({
   ranBy: v.id("users"),
   scope: scopeValidator,
   balanceGender: v.boolean(),
+  genderBuckets: genderBucketsValidator,
   itemsSnapshot: v.array(v.string()),
   assignments: v.array(assignerRunAssignmentValidator),
   nameFormat: v.object({
@@ -178,6 +224,7 @@ function parseFormInput(input: {
   items: string[];
   defaultBalanceGender: boolean;
   defaultScope: "class" | "groups";
+  defaultGenderBuckets: EquitableGenderBucket[];
 }): EquitableAssignerFormValues {
   const parsed = equitableAssignerFormSchemaEn.safeParse(input);
   if (!parsed.success) {
@@ -187,6 +234,32 @@ function parseFormInput(input: {
     });
   }
   return parsed.data;
+}
+
+function assignerDetailFromDoc(assigner: Doc<"equitableAssigners">) {
+  return {
+    _id: assigner._id,
+    _creationTime: assigner._creationTime,
+    classId: assigner.classId,
+    name: assigner.name,
+    items: assigner.items,
+    defaultBalanceGender: assigner.defaultBalanceGender,
+    defaultScope: assigner.defaultScope,
+    defaultGenderBuckets: normalizeStoredGenderBuckets(assigner.defaultGenderBuckets),
+    createdBy: assigner.createdBy,
+    createdAt: assigner.createdAt,
+    updatedAt: assigner.updatedAt,
+  };
+}
+
+function resolveRunGenderBuckets(
+  assigner: Doc<"equitableAssigners">,
+  requested?: ReadonlyArray<EquitableGenderBucket>,
+): EquitableGenderBucket[] {
+  if (requested && requested.length > 0) {
+    return normalizeEquitableGenderBuckets(requested);
+  }
+  return normalizeStoredGenderBuckets(assigner.defaultGenderBuckets);
 }
 
 async function requireEquitableAssigner(
@@ -346,13 +419,14 @@ async function loadRecipientsForRun(
 }
 
 async function loadPriorAssignments(
-  ctx: MutationCtx,
+  ctx: MutationCtx | QueryCtx,
   assignerId: Id<"equitableAssigners">,
 ): Promise<Array<{ studentUserId: string; item: string; groupId?: string; groupName?: string }>> {
   // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded history
   const runs = await ctx.db
     .query("equitableAssignerRuns")
-    .withIndex("by_assignerId", (q) => q.eq("assignerId", assignerId))
+    .withIndex("by_assignerId_ranAt", (q) => q.eq("assignerId", assignerId))
+    .order("asc")
     .collect();
   const prior: Array<{
     studentUserId: string;
@@ -595,6 +669,7 @@ export const listForClass = classQuery({
         items: row.items,
         defaultBalanceGender: row.defaultBalanceGender,
         defaultScope: row.defaultScope,
+        defaultGenderBuckets: normalizeStoredGenderBuckets(row.defaultGenderBuckets),
         createdBy: row.createdBy,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
@@ -612,18 +687,7 @@ export const get = classQuery({
   returns: equitableAssignerDetailValidator,
   handler: async (ctx, args) => {
     const assigner = await requireEquitableAssigner(ctx, ctx.classDoc._id, args.assignerId);
-    return {
-      _id: assigner._id,
-      _creationTime: assigner._creationTime,
-      classId: assigner.classId,
-      name: assigner.name,
-      items: assigner.items,
-      defaultBalanceGender: assigner.defaultBalanceGender,
-      defaultScope: assigner.defaultScope,
-      createdBy: assigner.createdBy,
-      createdAt: assigner.createdAt,
-      updatedAt: assigner.updatedAt,
-    };
+    return assignerDetailFromDoc(assigner);
   },
 });
 
@@ -646,6 +710,7 @@ export const listRuns = classQuery({
       ranBy: run.ranBy,
       scope: run.scope,
       balanceGender: run.balanceGender,
+      genderBuckets: normalizeStoredGenderBuckets(run.genderBuckets),
       assignmentCount: run.assignments.length,
     }));
   },
@@ -676,6 +741,7 @@ export const getRun = classQuery({
       ranBy: run.ranBy,
       scope: run.scope,
       balanceGender: run.balanceGender,
+      genderBuckets: normalizeStoredGenderBuckets(run.genderBuckets),
       itemsSnapshot: run.itemsSnapshot,
       assignments: projectAssignerRunAssignments(run.assignments, canReadStudents),
     };
@@ -711,6 +777,7 @@ export const getRunById = authedQuery({
       ranBy: run.ranBy,
       scope: run.scope,
       balanceGender: run.balanceGender,
+      genderBuckets: normalizeStoredGenderBuckets(run.genderBuckets),
       itemsSnapshot: run.itemsSnapshot,
       assignments: projectAssignerRunAssignments(run.assignments, canReadStudents),
       nameFormat: resolveRosterNameFormat(classDoc),
@@ -724,6 +791,7 @@ export const create = classMutation({
     items: v.array(v.string()),
     defaultBalanceGender: v.boolean(),
     defaultScope: scopeValidator,
+    defaultGenderBuckets: genderBucketsValidator,
   },
   returns: v.id("equitableAssigners"),
   handler: async (ctx, args) => {
@@ -736,6 +804,7 @@ export const create = classMutation({
       items: parsed.items,
       defaultBalanceGender: parsed.defaultBalanceGender,
       defaultScope: parsed.defaultScope,
+      defaultGenderBuckets: parsed.defaultGenderBuckets,
       createdBy: ctx.userId,
       createdAt: now,
       updatedAt: now,
@@ -763,6 +832,7 @@ export const update = classMutation({
     items: v.array(v.string()),
     defaultBalanceGender: v.boolean(),
     defaultScope: scopeValidator,
+    defaultGenderBuckets: genderBucketsValidator,
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -774,6 +844,7 @@ export const update = classMutation({
       items: parsed.items,
       defaultBalanceGender: parsed.defaultBalanceGender,
       defaultScope: parsed.defaultScope,
+      defaultGenderBuckets: parsed.defaultGenderBuckets,
       updatedAt: Date.now(),
     });
 
@@ -830,6 +901,7 @@ export const run = classMutation({
     assignerId: v.id("equitableAssigners"),
     scope: scopeValidator,
     balanceGender: v.boolean(),
+    genderBuckets: v.optional(genderBucketsValidator),
   },
   returns: v.id("equitableAssignerRuns"),
   handler: async (ctx, args) => {
@@ -842,6 +914,7 @@ export const run = classMutation({
       });
     }
 
+    const genderBuckets = resolveRunGenderBuckets(assigner, args.genderBuckets);
     const recipients = await loadRecipientsForRun(ctx, ctx.classDoc._id, args.scope);
     if (recipients.length === 0) {
       throw new ConvexError({
@@ -858,6 +931,7 @@ export const run = classMutation({
       recipients,
       scope: args.scope,
       balanceGender: args.balanceGender,
+      genderBuckets,
       priorAssignments,
     });
 
@@ -883,6 +957,7 @@ export const run = classMutation({
       ranBy: ctx.userId,
       scope: args.scope,
       balanceGender: args.balanceGender,
+      genderBuckets,
       itemsSnapshot: [...assigner.items],
       assignments,
     });
@@ -934,36 +1009,40 @@ export const manualSetup = classQuery({
     assignerId: v.id("equitableAssigners"),
     scope: scopeValidator,
     balanceGender: v.boolean(),
+    genderBuckets: v.optional(genderBucketsValidator),
   },
   returns: manualSetupValidator,
   handler: async (ctx, args) => {
     await ctx.require("assigners:manage");
     const assigner = await requireEquitableAssigner(ctx, ctx.classDoc._id, args.assignerId);
+    const genderBuckets = resolveRunGenderBuckets(assigner, args.genderBuckets);
     const groups = await loadGroupsForClass(ctx, ctx.classDoc._id);
     const students = await loadManualStudents(ctx, ctx.classDoc._id, args.scope);
+    const manualRecipients = students.map((student) => ({
+      genderBucket: student.genderBucket,
+      groupId: student.groupId,
+    }));
     const slots = buildEquitableManualSlots({
       items: assigner.items,
       scope: args.scope,
       balanceGender: args.balanceGender,
+      genderBuckets,
       groups,
+      recipients: manualRecipients,
     });
+    const priorRows = await loadPriorAssignments(ctx, assigner._id);
 
     return {
-      assigner: {
-        _id: assigner._id,
-        _creationTime: assigner._creationTime,
-        classId: assigner.classId,
-        name: assigner.name,
-        items: assigner.items,
-        defaultBalanceGender: assigner.defaultBalanceGender,
-        defaultScope: assigner.defaultScope,
-        createdBy: assigner.createdBy,
-        createdAt: assigner.createdAt,
-        updatedAt: assigner.updatedAt,
-      },
+      assigner: assignerDetailFromDoc(assigner),
       students,
       groups,
       slots,
+      priorAssignments: priorRows.map((row) => ({
+        studentUserId: row.studentUserId as Id<"users">,
+        item: row.item,
+        ...(row.groupId ? { groupId: row.groupId as Id<"groups"> } : {}),
+        ...(row.groupName ? { groupName: row.groupName } : {}),
+      })),
     };
   },
 });
@@ -973,6 +1052,7 @@ export const createManualRun = classMutation({
     assignerId: v.id("equitableAssigners"),
     scope: scopeValidator,
     balanceGender: v.boolean(),
+    genderBuckets: v.optional(genderBucketsValidator),
     assignments: v.array(manualSlotAssignmentInputValidator),
   },
   returns: v.id("equitableAssignerRuns"),
@@ -986,6 +1066,7 @@ export const createManualRun = classMutation({
       });
     }
 
+    const genderBuckets = resolveRunGenderBuckets(assigner, args.genderBuckets);
     const groups = await loadGroupsForClass(ctx, ctx.classDoc._id);
     const students = await loadManualStudents(ctx, ctx.classDoc._id, args.scope);
     if (students.length === 0) {
@@ -996,11 +1077,17 @@ export const createManualRun = classMutation({
       });
     }
 
+    const manualRecipients = students.map((student) => ({
+      genderBucket: student.genderBucket,
+      groupId: student.groupId,
+    }));
     const slots = buildEquitableManualSlots({
       items: assigner.items,
       scope: args.scope,
       balanceGender: args.balanceGender,
+      genderBuckets,
       groups,
+      recipients: manualRecipients,
     });
 
     const validation = validateEquitableManualAssignments({
@@ -1044,6 +1131,7 @@ export const createManualRun = classMutation({
       ranBy: ctx.userId,
       scope: args.scope,
       balanceGender: args.balanceGender,
+      genderBuckets,
       itemsSnapshot: [...assigner.items],
       assignments,
     });
@@ -1070,17 +1158,25 @@ export const studentSummary = classQuery({
     draftSlotId: v.optional(v.string()),
     scope: scopeValidator,
     balanceGender: v.boolean(),
+    genderBuckets: v.optional(genderBucketsValidator),
   },
   returns: equitableStudentSummaryValidator,
   handler: async (ctx, args) => {
     await ctx.require("assigners:manage");
     const assigner = await requireEquitableAssigner(ctx, ctx.classDoc._id, args.assignerId);
+    const genderBuckets = resolveRunGenderBuckets(assigner, args.genderBuckets);
     const groups = await loadGroupsForClass(ctx, ctx.classDoc._id);
+    const students = await loadManualStudents(ctx, ctx.classDoc._id, args.scope);
     const slots = buildEquitableManualSlots({
       items: assigner.items,
       scope: args.scope,
       balanceGender: args.balanceGender,
+      genderBuckets,
       groups,
+      recipients: students.map((student) => ({
+        genderBucket: student.genderBucket,
+        groupId: student.groupId,
+      })),
     });
     const slotById = new Map(slots.map((slot) => [slot.id, slot]));
 
@@ -1178,6 +1274,39 @@ export const studentHistory = classQuery({
     return {
       items,
       ...(filtered.length > limit && last ? { nextBeforeRanAt: last.ranAt } : {}),
+    };
+  },
+});
+
+export const rosterMatrix = classQuery({
+  args: {
+    assignerId: v.id("equitableAssigners"),
+  },
+  returns: equitableRosterMatrixValidator,
+  handler: async (ctx, args) => {
+    await ctx.require("assigners:manage");
+    const assigner = await requireEquitableAssigner(ctx, ctx.classDoc._id, args.assignerId);
+    const students = await loadManualStudents(ctx, ctx.classDoc._id, "class");
+    const priorRows = await loadPriorAssignments(ctx, assigner._id);
+    const studentUserIds = students.map((student) => student.userId);
+    const countsByStudent = buildEquitableRosterMatrixCounts(
+      assigner.items,
+      studentUserIds,
+      priorRows,
+    );
+
+    return {
+      items: assigner.items,
+      students: students.map((student) => ({
+        userId: student.userId,
+        rosterNumber: student.rosterNumber ?? Number.MAX_SAFE_INTEGER,
+        ...(student.firstName !== undefined ? { firstName: student.firstName } : {}),
+        ...(student.lastName !== undefined ? { lastName: student.lastName } : {}),
+        name: student.displayName,
+        ...(student.image !== undefined ? { image: student.image } : {}),
+        ...(student.email !== undefined ? { email: student.email } : {}),
+      })),
+      countsByStudent,
     };
   },
 });

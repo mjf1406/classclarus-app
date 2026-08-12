@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { RandomAssignerItemPresetsCredenza } from "@/components/assigners/random/RandomAssignerItemPresetsCredenza";
+import { EquitableGenderBucketsField } from "@/components/assigners/equitable/EquitableGenderBucketsField";
 import { AsyncButton } from "@/components/ui/async-button";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -72,6 +73,7 @@ export function EquitableAssignerFormPage({
         itemRequired: t("equitableItemRequired"),
         itemTooLong: t("equitableItemTooLong"),
         duplicateItem: t("equitableDuplicateItem"),
+        genderBucketsRequired: t("equitableGenderBucketsRequired"),
       }),
     [t],
   );
@@ -90,7 +92,7 @@ export function EquitableAssignerFormPage({
       if (mode === "create") {
         const assignerId = await createAssigner.mutateAsync({ classId, values: parsed });
         void navigate({
-          to: "/class/$classId/assigners/equitable/$assignerId",
+          to: "/class/$classId/assigners/equitable/$assignerId/dashboard",
           params: { classId, assignerId },
         });
         return;
@@ -102,7 +104,7 @@ export function EquitableAssignerFormPage({
         values: parsed,
       });
       void navigate({
-        to: "/class/$classId/assigners/equitable/$assignerId",
+        to: "/class/$classId/assigners/equitable/$assignerId/dashboard",
         params: { classId, assignerId: initial._id },
       });
     },
@@ -128,7 +130,7 @@ export function EquitableAssignerFormPage({
             <Link
               to={
                 mode === "edit" && initial
-                  ? "/class/$classId/assigners/equitable/$assignerId"
+                  ? "/class/$classId/assigners/equitable/$assignerId/dashboard"
                   : "/class/$classId/assigners/equitable"
               }
               params={
@@ -301,6 +303,22 @@ export function EquitableAssignerFormPage({
               </Field>
             )}
           </form.Field>
+
+          <form.Subscribe selector={(state) => state.values.defaultBalanceGender}>
+            {(defaultBalanceGender) =>
+              defaultBalanceGender ? (
+                <form.Field name="defaultGenderBuckets">
+                  {(field) => (
+                    <EquitableGenderBucketsField
+                      value={field.state.value}
+                      onChange={field.handleChange}
+                      idPrefix="equitable-default-gender"
+                    />
+                  )}
+                </form.Field>
+              ) : null
+            }
+          </form.Subscribe>
         </FieldGroup>
 
         <div className="flex flex-wrap gap-2">
@@ -315,7 +333,7 @@ export function EquitableAssignerFormPage({
               <Link
                 to={
                   mode === "edit" && initial
-                    ? "/class/$classId/assigners/equitable/$assignerId"
+                    ? "/class/$classId/assigners/equitable/$assignerId/dashboard"
                     : "/class/$classId/assigners/equitable"
                 }
                 params={

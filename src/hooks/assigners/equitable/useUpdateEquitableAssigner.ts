@@ -54,6 +54,7 @@ export function useUpdateEquitableAssigner() {
                   items: payload.items,
                   defaultBalanceGender: payload.defaultBalanceGender,
                   defaultScope: payload.defaultScope,
+                  defaultGenderBuckets: payload.defaultGenderBuckets,
                   updatedAt: now,
                 }
               : row,

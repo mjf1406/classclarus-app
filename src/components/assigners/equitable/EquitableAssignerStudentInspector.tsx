@@ -7,7 +7,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useEquitableStudentHistory } from "@/hooks/assigners/equitable/useEquitableStudentHistory";
 import { useEquitableStudentSummary } from "@/hooks/assigners/equitable/useEquitableStudentSummary";
 import { formatLocalizedSeatChartHistoryDate } from "@/i18n/formatDate";
-import type { EquitableAssignerScope } from "@/lib/assigners/equitableAssigners";
+import type {
+  EquitableAssignerScope,
+  EquitableGenderBucket,
+} from "@/lib/assigners/equitableAssigners";
 import type { Id } from "../../../../convex/_generated/dataModel";
 
 type EquitableAssignerStudentInspectorProps = {
@@ -17,6 +20,7 @@ type EquitableAssignerStudentInspectorProps = {
   studentName: string;
   scope: EquitableAssignerScope;
   balanceGender: boolean;
+  genderBuckets: EquitableGenderBucket[];
   draftSlotId?: string | null;
 };
 
@@ -53,6 +57,7 @@ export function EquitableAssignerStudentInspector({
   studentName,
   scope,
   balanceGender,
+  genderBuckets,
   draftSlotId,
 }: EquitableAssignerStudentInspectorProps) {
   const { t } = useTranslation("assigners");
@@ -62,6 +67,7 @@ export function EquitableAssignerStudentInspector({
     studentUserId,
     scope,
     balanceGender,
+    genderBuckets,
     draftSlotId,
   );
 

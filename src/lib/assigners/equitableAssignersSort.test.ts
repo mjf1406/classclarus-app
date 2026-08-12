@@ -17,6 +17,7 @@ function run(
     ranBy: "user" as Id<"users">,
     scope: "class",
     balanceGender: false,
+    genderBuckets: [],
     assignmentCount: 0,
     ...partial,
   };

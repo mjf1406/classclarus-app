@@ -1,7 +1,11 @@
 import type { Id } from "../../_generated/dataModel.js";
 import type { EquitableAssignScope } from "./equitableAssign.js";
+import {
+  type EquitableGenderBucket,
+  normalizeEquitableGenderBuckets,
+} from "./equitableGenderBuckets.js";
 
-export type EquitableManualGenderBucket = "m" | "f" | "other" | "unknown";
+export type EquitableManualGenderBucket = EquitableGenderBucket;
 
 export type EquitableManualGroup = {
   groupId: Id<"groups">;
@@ -14,7 +18,7 @@ export type EquitableManualSlot = {
   scope: EquitableAssignScope;
   groupId?: Id<"groups">;
   groupName?: string;
-  genderRequired?: "m" | "f";
+  genderRequired?: EquitableGenderBucket;
 };
 
 export type EquitableManualSlotAssignmentInput = {
@@ -36,44 +40,97 @@ export type EquitableManualValidationError =
   | "GENDER_MISMATCH"
   | "GROUP_MISMATCH";
 
+type ManualStudentPool = {
+  genderBucket: EquitableManualGenderBucket;
+  groupId?: Id<"groups">;
+};
+
+function encodeItem(item: string): string {
+  return encodeURIComponent(item);
+}
+
+function activeGenderBucketsForPool(
+  recipients: ReadonlyArray<ManualStudentPool>,
+  genderBuckets: ReadonlyArray<EquitableGenderBucket>,
+): EquitableGenderBucket[] {
+  const present = new Set<EquitableGenderBucket>();
+  for (const recipient of recipients) {
+    present.add(recipient.genderBucket);
+  }
+  return genderBuckets.filter((bucket) => present.has(bucket));
+}
+
+function recipientsInPool(
+  recipients: ReadonlyArray<ManualStudentPool>,
+  scope: EquitableAssignScope,
+  group?: EquitableManualGroup,
+): ManualStudentPool[] {
+  if (scope === "groups" && group) {
+    return recipients.filter((recipient) => recipient.groupId === group.groupId);
+  }
+  return [...recipients];
+}
+
+function pushItemSlots(
+  slots: EquitableManualSlot[],
+  item: string,
+  scope: EquitableAssignScope,
+  balanceGender: boolean,
+  genderBuckets: ReadonlyArray<EquitableGenderBucket>,
+  poolRecipients: ReadonlyArray<ManualStudentPool>,
+  group?: EquitableManualGroup,
+): void {
+  const prefix = group ? `group:${group.groupId}:${encodeItem(item)}` : `class:${encodeItem(item)}`;
+  const base = {
+    item,
+    scope,
+    ...(group ? { groupId: group.groupId, groupName: group.groupName } : {}),
+  };
+
+  if (balanceGender) {
+    const activeBuckets = activeGenderBucketsForPool(poolRecipients, genderBuckets);
+    for (const bucket of activeBuckets) {
+      slots.push({ id: `${prefix}:${bucket}`, ...base, genderRequired: bucket });
+    }
+    return;
+  }
+
+  slots.push({ id: prefix, ...base });
+}
+
 export function buildEquitableManualSlots(args: {
   items: ReadonlyArray<string>;
   scope: EquitableAssignScope;
   balanceGender: boolean;
+  genderBuckets?: ReadonlyArray<EquitableGenderBucket>;
   groups: ReadonlyArray<EquitableManualGroup>;
+  recipients?: ReadonlyArray<ManualStudentPool>;
 }): EquitableManualSlot[] {
+  const genderBuckets = normalizeEquitableGenderBuckets(args.genderBuckets);
+  const recipients = args.recipients ?? [];
   const slots: EquitableManualSlot[] = [];
-
-  const pushItemSlots = (item: string, group?: EquitableManualGroup) => {
-    const prefix = group
-      ? `group:${group.groupId}:${encodeURIComponent(item)}`
-      : `class:${encodeURIComponent(item)}`;
-    const base = {
-      item,
-      scope: args.scope,
-      ...(group ? { groupId: group.groupId, groupName: group.groupName } : {}),
-    };
-
-    if (args.balanceGender) {
-      slots.push({ id: `${prefix}:m`, ...base, genderRequired: "m" });
-      slots.push({ id: `${prefix}:f`, ...base, genderRequired: "f" });
-      return;
-    }
-
-    slots.push({ id: prefix, ...base });
-  };
 
   if (args.scope === "groups") {
     for (const group of args.groups) {
+      const poolRecipients = recipientsInPool(recipients, args.scope, group);
       for (const item of args.items) {
-        pushItemSlots(item, group);
+        pushItemSlots(
+          slots,
+          item,
+          args.scope,
+          args.balanceGender,
+          genderBuckets,
+          poolRecipients,
+          group,
+        );
       }
     }
     return slots;
   }
 
+  const poolRecipients = recipientsInPool(recipients, args.scope);
   for (const item of args.items) {
-    pushItemSlots(item);
+    pushItemSlots(slots, item, args.scope, args.balanceGender, genderBuckets, poolRecipients);
   }
 
   return slots;

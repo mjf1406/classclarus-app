@@ -16,6 +16,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { useTranslation } from "react-i18next";
 
 import { EquitableAssignerStudentInspector } from "@/components/assigners/equitable/EquitableAssignerStudentInspector";
+import { EquitableGenderBucketsField } from "@/components/assigners/equitable/EquitableGenderBucketsField";
 import { GroupTeamFilterButtons } from "@/components/groups/GroupTeamFilterButtons";
 import { SeatLayoutUnsavedChangesDialog } from "@/components/assigners/SeatLayoutUnsavedChangesDialog";
 import { RosterStudentChip } from "@/components/students/RosterStudentChip";
@@ -55,6 +56,8 @@ import {
   assignmentMap,
   assignmentsEqual,
   assignStudentToSlot,
+  equitableAssignRemaining,
+  hasEquitableAssignableRemaining,
   hasRandomAssignableRemaining,
   randomAssignRemaining,
   studentEligibleForSlot,
@@ -64,6 +67,12 @@ import {
   type EquitableManualStudent,
 } from "@/lib/assigners/equitableManual";
 import type { EquitableAssignerScope } from "@/lib/assigners/equitableAssigners";
+import {
+  formatEquitableGenderBucketLabel,
+  equitableGenderBucketsEqual,
+  normalizeEquitableGenderBuckets,
+  type EquitableGenderBucket,
+} from "@/lib/assigners/equitableAssigners";
 import type { MembershipByUserId } from "@/lib/groups/groupTeamFilters";
 import { getRosterDisplayName, resolveRosterNameFormat } from "@/lib/roster/roster";
 import { cn } from "@/lib/utils";
@@ -79,6 +88,7 @@ type AssignmentSnapshot = { assignments: EquitableManualDraftAssignment[] };
 type PendingRunOptions = {
   scope: EquitableAssignerScope;
   balanceGender: boolean;
+  genderBuckets: EquitableGenderBucket[];
 };
 
 function cloneSnapshot(snapshot: AssignmentSnapshot): AssignmentSnapshot {
@@ -206,9 +216,7 @@ function ManualSlot({
         ) : null}
         {slot.genderRequired ? (
           <Badge variant="outline" className="h-5 px-1 text-[10px]">
-            {slot.genderRequired === "m"
-              ? t("equitableManualGenderBoy")
-              : t("equitableManualGenderGirl")}
+            {formatEquitableGenderBucketLabel(slot.genderRequired, t)}
           </Badge>
         ) : null}
       </button>
@@ -242,6 +250,7 @@ export function EquitableAssignerManualPage({
 
   const [scope, setScope] = useState<EquitableAssignerScope>("class");
   const [balanceGender, setBalanceGender] = useState(false);
+  const [genderBuckets, setGenderBuckets] = useState<EquitableGenderBucket[]>([]);
   const [optionsHydrated, setOptionsHydrated] = useState(false);
   const [assignments, setAssignments] = useState<EquitableManualDraftAssignment[]>([]);
   const [dirty, setDirty] = useState(false);
@@ -265,7 +274,7 @@ export function EquitableAssignerManualPage({
     isPending,
     isError,
     refetch,
-  } = useEquitableManualSetup(classId, assignerId, scope, balanceGender);
+  } = useEquitableManualSetup(classId, assignerId, scope, balanceGender, genderBuckets);
 
   useLogClassAccessOnce(
     setup !== undefined,
@@ -285,6 +294,7 @@ export function EquitableAssignerManualPage({
     if (!setup || optionsHydrated) return;
     setScope(setup.assigner.defaultScope);
     setBalanceGender(setup.assigner.defaultBalanceGender);
+    setGenderBuckets(normalizeEquitableGenderBuckets(setup.assigner.defaultGenderBuckets));
     setOptionsHydrated(true);
   }, [optionsHydrated, setup]);
 
@@ -301,7 +311,7 @@ export function EquitableAssignerManualPage({
     setDirty(false);
     setCanUndo(false);
     setCanRedo(false);
-  }, [setupAssignerId, setupSlots, scope, balanceGender]);
+  }, [setupAssignerId, setupSlots, scope, balanceGender, genderBuckets]);
 
   useEffect(() => {
     if (!baselineRef.current) return;
@@ -420,7 +430,12 @@ export function EquitableAssignerManualPage({
 
   const requestOptionsChange = useCallback(
     (next: PendingRunOptions) => {
-      if (next.scope === scope && next.balanceGender === balanceGender) return;
+      if (
+        next.scope === scope &&
+        next.balanceGender === balanceGender &&
+        equitableGenderBucketsEqual(next.genderBuckets, genderBuckets)
+      )
+        return;
       if (dirty) {
         setPendingOptions(next);
         setOptionsDialogOpen(true);
@@ -428,17 +443,19 @@ export function EquitableAssignerManualPage({
       }
       setScope(next.scope);
       setBalanceGender(next.balanceGender);
+      setGenderBuckets(next.genderBuckets);
       setAssignments([]);
       setSelectedStudentId(null);
       setSelectedSlotId(null);
     },
-    [balanceGender, dirty, scope],
+    [balanceGender, dirty, genderBuckets, scope],
   );
 
   const confirmOptionsChange = useCallback(() => {
     if (!pendingOptions) return;
     setScope(pendingOptions.scope);
     setBalanceGender(pendingOptions.balanceGender);
+    setGenderBuckets(pendingOptions.genderBuckets);
     setAssignments([]);
     setSelectedStudentId(null);
     setSelectedSlotId(null);
@@ -456,13 +473,14 @@ export function EquitableAssignerManualPage({
       assignerId,
       scope,
       balanceGender,
+      genderBuckets,
       assignments,
     });
     baselineRef.current = cloneSnapshot({ assignments });
     dirtyNavRef.current = false;
     setDirty(false);
     await navigate({
-      to: "/class/$classId/assigners/equitable/$assignerId",
+      to: "/class/$classId/assigners/equitable/$assignerId/dashboard",
       params: { classId, assignerId },
       search: { previewRunId: runId },
     });
@@ -470,6 +488,7 @@ export function EquitableAssignerManualPage({
     assignerId,
     assignments,
     balanceGender,
+    genderBuckets,
     canManage,
     classId,
     createManualRun,
@@ -505,6 +524,15 @@ export function EquitableAssignerManualPage({
 
   const saveEnabled =
     setup !== undefined && assignmentsComplete(setup.slots, assignments) && canManage;
+
+  const canAssignEquitable =
+    setup !== undefined &&
+    hasEquitableAssignableRemaining({
+      slots: setup.slots,
+      students: setup.students,
+      assignments,
+      scope,
+    });
 
   const canAssignRandom =
     setup !== undefined &&
@@ -564,7 +592,7 @@ export function EquitableAssignerManualPage({
               nativeButton={false}
               render={
                 <Link
-                  to="/class/$classId/assigners/equitable/$assignerId"
+                  to="/class/$classId/assigners/equitable/$assignerId/dashboard"
                   params={{ classId, assignerId }}
                 />
               }
@@ -631,9 +659,23 @@ export function EquitableAssignerManualPage({
               type="button"
               size="sm"
               variant="outline"
-              disabled
+              disabled={!canAssignEquitable}
               aria-label={t("equitableManualFillRemaining")}
-              title={t("equitableManualFillRemainingHint")}
+              onClick={() => {
+                if (!setup) return;
+                applyAssignments(
+                  equitableAssignRemaining({
+                    items: setup.assigner.items,
+                    slots: setup.slots,
+                    students: setup.students,
+                    assignments,
+                    scope,
+                    balanceGender,
+                    genderBuckets,
+                    priorAssignments: setup.priorAssignments,
+                  }),
+                );
+              }}
               className="max-lg:size-8 max-lg:gap-0 max-lg:px-0 max-lg:has-data-[icon=inline-start]:pl-0"
             >
               <Cpu data-icon="inline-start" className="size-4" />
@@ -684,7 +726,11 @@ export function EquitableAssignerManualPage({
                 <Select
                   value={scope}
                   onValueChange={(value) =>
-                    requestOptionsChange({ scope: value as EquitableAssignerScope, balanceGender })
+                    requestOptionsChange({
+                      scope: value as EquitableAssignerScope,
+                      balanceGender,
+                      genderBuckets,
+                    })
                   }
                 >
                   <SelectTrigger className="w-full">
@@ -703,7 +749,11 @@ export function EquitableAssignerManualPage({
                   id="manual-balance-gender"
                   checked={balanceGender}
                   onCheckedChange={(checked) =>
-                    requestOptionsChange({ scope, balanceGender: checked === true })
+                    requestOptionsChange({
+                      scope,
+                      balanceGender: checked === true,
+                      genderBuckets,
+                    })
                   }
                 />
                 <FieldLabel htmlFor="manual-balance-gender" className="font-normal">
@@ -711,6 +761,15 @@ export function EquitableAssignerManualPage({
                 </FieldLabel>
               </Field>
             </div>
+            {balanceGender ? (
+              <EquitableGenderBucketsField
+                value={genderBuckets}
+                onChange={(next) =>
+                  requestOptionsChange({ scope, balanceGender, genderBuckets: next })
+                }
+                idPrefix="equitable-manual-gender"
+              />
+            ) : null}
 
             {scope === "groups" ? (
               Array.from(slotsByGroup.entries()).map(([groupKey, slots]) => {
@@ -847,6 +906,7 @@ export function EquitableAssignerManualPage({
                     )}
                     scope={scope}
                     balanceGender={balanceGender}
+                    genderBuckets={genderBuckets}
                     draftSlotId={selectedDraftSlotId}
                   />
                 </div>

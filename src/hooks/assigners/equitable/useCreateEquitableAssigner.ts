@@ -47,6 +47,7 @@ export function useCreateEquitableAssigner() {
           items: payload.items,
           defaultBalanceGender: payload.defaultBalanceGender,
           defaultScope: payload.defaultScope,
+          defaultGenderBuckets: payload.defaultGenderBuckets,
           createdBy: `optimistic:${randomClientId()}` as Id<"users">,
           createdAt: now,
           updatedAt: now,

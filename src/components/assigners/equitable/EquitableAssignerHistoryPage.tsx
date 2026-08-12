@@ -1,9 +1,12 @@
-import { Link } from "@tanstack/react-router";
-import { ArrowLeft, Hand, Monitor, Pencil, Play, Trash2 } from "lucide-react";
+import { convexQuery } from "@convex-dev/react-query";
+import { FileDown, Monitor, Play, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { AssignerRunPreviewTable } from "@/components/assigners/AssignerRunPreviewTable";
+import { EquitableGenderBucketsField } from "@/components/assigners/equitable/EquitableGenderBucketsField";
+import { EquitableAssignerShell } from "@/components/assigners/equitable/EquitableAssignerShell";
 import { DeleteNamedCredenza } from "@/components/groups/DeleteNamedCredenza";
 import { DataTableSortableHeader } from "@/components/feedback/DataTableSortableHeader";
 import { ActionMenu, type ActionMenuItem } from "@/components/ui/action-menu";
@@ -30,6 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "@/components/ui/toast-manager";
 import {
   Table,
   TableBody,
@@ -38,6 +42,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useLogClassAccess } from "@/hooks/activity/useLogClassAccess";
 import { useRemoveEquitableAssignerRun } from "@/hooks/assigners/equitable/useRemoveEquitableAssignerRun";
 import { useRunEquitableAssigner } from "@/hooks/assigners/equitable/useRunEquitableAssigner";
 import {
@@ -45,6 +50,7 @@ import {
   useEquitableAssignerRun,
   useEquitableAssignerRuns,
 } from "@/hooks/assigners/equitable/useEquitableAssigners";
+import { useClass } from "@/hooks/classes/useClass";
 import { useCan } from "@/hooks/permissions/useCan";
 import {
   equitableAssignerDisplayUrl,
@@ -55,10 +61,18 @@ import {
   type EquitableAssignerRunListItem,
   type EquitableAssignerRunSortDirection,
   type EquitableAssignerRunSortKey,
+  normalizeEquitableGenderBuckets,
   type EquitableAssignerScope,
+  type EquitableGenderBucket,
 } from "@/lib/assigners/equitableAssigners";
+import {
+  printRandomAssignerRun,
+  randomAssignerPrintLogoAlt,
+} from "@/lib/assigners/randomAssignerPrint";
 import { openDisplayTab } from "@/lib/display/openDisplayTab";
 import { messageFromError } from "@/lib/errors/convexError";
+import { resolveRosterNameFormat } from "@/lib/roster/roster";
+import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 
 type EquitableAssignerHistoryPageProps = {
@@ -73,8 +87,12 @@ export function EquitableAssignerHistoryPage({
   initialPreviewRunId,
 }: EquitableAssignerHistoryPageProps) {
   const { t } = useTranslation("assigners");
+  const queryClient = useQueryClient();
+  const logAccess = useLogClassAccess();
   const { can } = useCan();
   const canManage = can("assigners:manage");
+  const { data: classDoc } = useClass(classId);
+  const nameFormat = resolveRosterNameFormat(classDoc ?? {});
   const {
     data: assigner,
     isPending: assignerPending,
@@ -91,6 +109,7 @@ export function EquitableAssignerHistoryPage({
   const removeRun = useRemoveEquitableAssignerRun();
   const [scope, setScope] = useState<EquitableAssignerScope>("class");
   const [balanceGender, setBalanceGender] = useState(false);
+  const [genderBuckets, setGenderBuckets] = useState<EquitableGenderBucket[]>([]);
   const [runDialogOpen, setRunDialogOpen] = useState(false);
   const [runError, setRunError] = useState<string | null>(null);
   const [deletingRun, setDeletingRun] = useState<EquitableAssignerRunListItem | null>(null);
@@ -126,6 +145,7 @@ export function EquitableAssignerHistoryPage({
     if (!assigner) return;
     setScope(assigner.defaultScope);
     setBalanceGender(assigner.defaultBalanceGender);
+    setGenderBuckets(normalizeEquitableGenderBuckets(assigner.defaultGenderBuckets));
     setRunError(null);
   }, [assigner]);
 
@@ -150,13 +170,60 @@ export function EquitableAssignerHistoryPage({
         assignerId,
         scope,
         balanceGender,
+        genderBuckets,
       });
       setRunDialogOpen(false);
       setPreviewRunId(runId);
     } catch (error) {
       setRunError(messageFromError(error, t("equitableRunFailed")));
     }
-  }, [assigner, assignerId, balanceGender, classId, runMutation, scope, t]);
+  }, [assigner, assignerId, balanceGender, classId, genderBuckets, runMutation, scope, t]);
+
+  const fetchRun = useCallback(
+    async (runId: Id<"equitableAssignerRuns">) =>
+      queryClient.fetchQuery(
+        convexQuery(api.equitableAssigners.getRun, { classId, assignerId, runId }),
+      ),
+    [assignerId, classId, queryClient],
+  );
+
+  const handlePrint = useCallback(
+    async (runId: Id<"equitableAssignerRuns">, assignerName: string) => {
+      try {
+        const run = await fetchRun(runId);
+        await printRandomAssignerRun(
+          run,
+          {
+            documentTitle: `${assignerName} — ${t("equitablePrintDocumentTitle")}`,
+            heading: assignerName,
+            subtitle: t("equitablePrintSubtitle", {
+              count: run.assignments.length,
+              date: new Date(run.ranAt).toLocaleString(),
+            }),
+            itemColumn: t("equitablePrintItemColumn"),
+            classColumn: t("equitableScopeClass"),
+            ungroupedColumn: t("randomUngroupedLabel"),
+            logoAlt: randomAssignerPrintLogoAlt(),
+          },
+          nameFormat,
+        );
+        logAccess.mutate({
+          classId,
+          resourceType: "equitableAssigner",
+          resourceId: runId,
+          summary: `Exported equitable assigner "${assignerName}" PDF`,
+          summaryKey: "activitySummary_exportedEquitableAssignerPdf",
+          metadata: { name: assignerName },
+        });
+      } catch (error) {
+        toast.add({
+          title: messageFromError(error, t("printPdfFailed")),
+          type: "error",
+        });
+      }
+    },
+    [classId, fetchRun, logAccess, nameFormat, t],
+  );
 
   const handleDisplay = useCallback((runId: Id<"equitableAssignerRuns">) => {
     openDisplayTab(equitableAssignerDisplayUrl(runId));
@@ -190,67 +257,13 @@ export function EquitableAssignerHistoryPage({
   }
 
   return (
-    <div className="flex w-full flex-col gap-6 px-4 py-8 sm:px-8">
-      <div className="flex flex-wrap items-start gap-3">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          nativeButton={false}
-          render={
-            <Link
-              to="/class/$classId/assigners/equitable"
-              params={{ classId }}
-              aria-label={t("equitableBackToList")}
-            />
-          }
-        >
-          <ArrowLeft className="size-4" />
-        </Button>
-        <div className="min-w-0 flex-1">
-          <h1 className="text-2xl font-semibold tracking-tight">{assigner.name}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {t("equitableHistoryDescription", { count: assigner.items.length })}
-          </p>
-        </div>
-        {canManage ? (
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              nativeButton={false}
-              render={
-                <Link
-                  to="/class/$classId/assigners/equitable/$assignerId/manual"
-                  params={{ classId, assignerId }}
-                />
-              }
-            >
-              <Hand className="size-4" />
-              {t("equitableManualAction")}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              nativeButton={false}
-              render={
-                <Link
-                  to="/class/$classId/assigners/equitable/$assignerId/edit"
-                  params={{ classId, assignerId }}
-                />
-              }
-            >
-              <Pencil className="size-4" />
-              {t("equitableEdit")}
-            </Button>
-            <Button type="button" onClick={() => handleRunDialogOpenChange(true)}>
-              <Play className="size-4" />
-              {t("equitableRunAction")}
-            </Button>
-          </div>
-        ) : null}
-      </div>
-
+    <EquitableAssignerShell
+      classId={classId}
+      assignerId={assignerId}
+      tab="dashboard"
+      description={t("equitableDashboardDescription", { count: assigner.items.length })}
+      onRunClick={canManage ? () => handleRunDialogOpenChange(true) : undefined}
+    >
       <Credenza open={runDialogOpen} onOpenChange={handleRunDialogOpenChange}>
         <CredenzaContent className="sm:max-w-md">
           <CredenzaHeader>
@@ -286,6 +299,13 @@ export function EquitableAssignerHistoryPage({
                   {t("equitableBalanceGenderLabel")}
                 </FieldLabel>
               </Field>
+              {balanceGender ? (
+                <EquitableGenderBucketsField
+                  value={genderBuckets}
+                  onChange={setGenderBuckets}
+                  idPrefix="equitable-run-gender"
+                />
+              ) : null}
               {runError ? <FieldError>{runError}</FieldError> : null}
             </FieldGroup>
           </CredenzaBody>
@@ -355,6 +375,12 @@ export function EquitableAssignerHistoryPage({
                     icon: <Monitor />,
                     onSelect: () => handleDisplay(run._id),
                   },
+                  {
+                    id: "print",
+                    label: t("printPdf"),
+                    icon: <FileDown />,
+                    onSelect: () => void handlePrint(run._id, assigner.name),
+                  },
                 ];
                 if (canManage) {
                   menuItems.push({
@@ -420,7 +446,7 @@ export function EquitableAssignerHistoryPage({
           setDeletingRun(null);
         }}
       />
-    </div>
+    </EquitableAssignerShell>
   );
 }
 

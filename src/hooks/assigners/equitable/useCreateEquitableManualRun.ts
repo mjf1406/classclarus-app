@@ -9,8 +9,10 @@ import {
   equitableAssignersListQueryKey,
   type EquitableAssignerList,
 } from "@/hooks/assigners/equitable/useEquitableAssigners";
+import { equitableRosterMatrixQueryKey } from "@/hooks/assigners/equitable/useEquitableRosterMatrix";
 import { useOptimisticMutation } from "@/hooks/useOptimisticMutation";
 import type { EquitableAssignerScope } from "@/lib/assigners/equitableAssigners";
+import type { EquitableGenderBucket } from "@/lib/assigners/equitableAssigners";
 import type { EquitableManualDraftAssignment } from "@/lib/assigners/equitableManual";
 import { messageFromError } from "@/lib/errors/convexError";
 import { randomClientId } from "@/lib/optimistic";
@@ -20,6 +22,7 @@ type CreateEquitableManualRunArgs = {
   assignerId: Id<"equitableAssigners">;
   scope: EquitableAssignerScope;
   balanceGender: boolean;
+  genderBuckets: EquitableGenderBucket[];
   assignments: EquitableManualDraftAssignment[];
 };
 
@@ -35,11 +38,13 @@ export function useCreateEquitableManualRun() {
         assignerId: args.assignerId,
         scope: args.scope,
         balanceGender: args.balanceGender,
+        genderBuckets: args.genderBuckets,
         assignments: args.assignments,
       }),
     queryKeys: (args) => [
       equitableAssignersListQueryKey(args.classId),
       equitableAssignerRunsQueryKey(args.classId, args.assignerId),
+      equitableRosterMatrixQueryKey(args.classId, args.assignerId),
     ],
     applyOptimisticUpdate: (queryClient, args) => {
       const now = Date.now();

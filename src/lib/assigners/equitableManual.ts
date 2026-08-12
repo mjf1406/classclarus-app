@@ -1,5 +1,9 @@
 import type { Id } from "../../../convex/_generated/dataModel";
 import {
+  assignEquitableSlots,
+  type EquitableAssignAssignment,
+} from "../../../convex/lib/assigners/equitableAssign";
+import {
   assignmentsComplete,
   buildEquitableManualSlots,
   validateEquitableManualAssignments,
@@ -8,6 +12,7 @@ import {
   type EquitableManualSlot,
   type EquitableManualSlotAssignmentInput,
 } from "../../../convex/lib/assigners/equitableManualSlots";
+import type { EquitableGenderBucket } from "../../../convex/lib/assigners/equitableGenderBuckets";
 import type { EquitableAssignerScope } from "./equitableAssigners";
 
 export type EquitableManualDraftAssignment = EquitableManualSlotAssignmentInput;
@@ -39,9 +44,21 @@ export function buildSlotsForRunOptions(args: {
   items: string[];
   scope: EquitableAssignerScope;
   balanceGender: boolean;
+  genderBuckets?: ReadonlyArray<EquitableGenderBucket>;
   groups: EquitableManualGroup[];
+  students?: ReadonlyArray<EquitableManualStudent>;
 }): EquitableManualSlot[] {
-  return buildEquitableManualSlots(args);
+  return buildEquitableManualSlots({
+    items: args.items,
+    scope: args.scope,
+    balanceGender: args.balanceGender,
+    genderBuckets: args.genderBuckets,
+    groups: args.groups,
+    recipients: args.students?.map((student) => ({
+      genderBucket: student.genderBucket,
+      groupId: student.groupId,
+    })),
+  });
 }
 
 export function studentEligibleForSlot(
@@ -168,4 +185,60 @@ export function randomAssignRemaining(args: {
   }
 
   return result;
+}
+
+export function hasEquitableAssignableRemaining(args: {
+  slots: ReadonlyArray<EquitableManualSlot>;
+  students: ReadonlyArray<EquitableManualStudent>;
+  assignments: ReadonlyArray<EquitableManualDraftAssignment>;
+  scope: EquitableAssignerScope;
+}): boolean {
+  return hasRandomAssignableRemaining(args);
+}
+
+export function equitableAssignRemaining(args: {
+  items: string[];
+  slots: ReadonlyArray<EquitableManualSlot>;
+  students: ReadonlyArray<EquitableManualStudent>;
+  assignments: ReadonlyArray<EquitableManualDraftAssignment>;
+  scope: EquitableAssignerScope;
+  balanceGender: boolean;
+  genderBuckets?: ReadonlyArray<EquitableGenderBucket>;
+  priorAssignments: ReadonlyArray<EquitableAssignAssignment>;
+  random?: () => number;
+}): EquitableManualDraftAssignment[] {
+  const lockedAssignments = args.assignments.map((row) => ({
+    slotId: row.slotId,
+    studentUserId: row.studentUserId,
+  }));
+
+  const slotResults = assignEquitableSlots({
+    items: args.items,
+    slots: args.slots.map((slot) => ({
+      id: slot.id,
+      item: slot.item,
+      scope: slot.scope,
+      groupId: slot.groupId,
+      groupName: slot.groupName,
+      genderRequired: slot.genderRequired,
+    })),
+    recipients: args.students.map((student) => ({
+      studentUserId: student.userId,
+      genderBucket: student.genderBucket,
+      groupId: student.groupId,
+      groupName: student.groupName,
+      rosterNumber: student.rosterNumber,
+    })),
+    scope: args.scope,
+    balanceGender: args.balanceGender,
+    genderBuckets: args.genderBuckets,
+    priorAssignments: args.priorAssignments,
+    lockedAssignments,
+    random: args.random,
+  });
+
+  return slotResults.map((row) => ({
+    slotId: row.slotId,
+    studentUserId: row.studentUserId as Id<"users">,
+  }));
 }

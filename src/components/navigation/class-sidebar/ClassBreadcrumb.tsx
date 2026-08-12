@@ -185,10 +185,12 @@ function breadcrumbTarget(pathname: string, classId: string): BreadcrumbTarget {
           assignerId: assignerId as Id<"equitableAssigners">,
         };
       }
-      return {
-        kind: "equitableAssignerDetail",
-        assignerId: assignerId as Id<"equitableAssigners">,
-      };
+      if (action === "dashboard" || action === "data" || !action) {
+        return {
+          kind: "equitableAssignerDetail",
+          assignerId: assignerId as Id<"equitableAssigners">,
+        };
+      }
     }
   }
   if (
@@ -478,7 +480,7 @@ function EquitableAssignerBreadcrumbItems({
               <BreadcrumbLink
                 render={
                   <Link
-                    to="/class/$classId/assigners/equitable/$assignerId"
+                    to="/class/$classId/assigners/equitable/$assignerId/dashboard"
                     params={{ classId, assignerId }}
                   />
                 }
