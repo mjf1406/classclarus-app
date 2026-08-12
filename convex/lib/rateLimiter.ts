@@ -178,7 +178,7 @@ const rateLimits = {
   seatConstraintRemove: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 20 },
   seatChartCreate: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 20 },
   seatChartRename: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 30 },
-  seatChartArchive: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 20 },
+  seatChartRemove: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 20 },
   seatChartSaveDraft: { kind: "token bucket" as const, rate: 240, period: HOUR, capacity: 80 },
   seatChartRecord: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 30 },
   seatChartGenerate: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 30 },

@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 
 import type { Doc, Id } from "./_generated/dataModel.js";
-import type { QueryCtx } from "./_generated/server.js";
+import type { MutationCtx, QueryCtx } from "./_generated/server.js";
 import { recordClassActivity } from "./lib/classActivity.js";
 import { classMutation, classQuery } from "./lib/customFunctions.js";
 import { rateLimiter } from "./lib/rateLimiter.js";
@@ -391,14 +391,12 @@ function breakdownsFromPlacements(
 }
 
 /**
- * List seating charts for a class (active first, then archived).
+ * List active seating charts for a class (excludes legacy soft-archived rows).
  */
 export const list = classQuery({
-  args: {
-    includeArchived: v.optional(v.boolean()),
-  },
+  args: {},
   returns: v.array(chartListItemValidator),
-  handler: async (ctx, args) => {
+  handler: async (ctx) => {
     const classId = ctx.classDoc._id;
     // eslint-disable-next-line @convex-dev/no-collect-in-query -- class-bounded chart list
     const charts = await ctx.db
@@ -406,13 +404,10 @@ export const list = classQuery({
       .withIndex("by_class", (q) => q.eq("classId", classId))
       .collect();
 
-    const includeArchived = args.includeArchived === true;
-    const filtered = includeArchived
-      ? charts
-      : charts.filter((chart) => chart.archivedAt === undefined);
+    const active = charts.filter((chart) => chart.archivedAt === undefined);
 
     const rows = await Promise.all(
-      filtered.map(async (chart) => ({
+      active.map(async (chart) => ({
         _id: chart._id,
         _creationTime: chart._creationTime,
         name: chart.name,
@@ -421,16 +416,10 @@ export const list = classQuery({
         updatedAt: chart.updatedAt,
         recordCount: await recordCountForChart(ctx, chart._id),
         seatedCount: chart.assignments.length,
-        ...(chart.archivedAt !== undefined ? { archivedAt: chart.archivedAt } : {}),
       })),
     );
 
-    return rows.sort(
-      (a, b) =>
-        (a.archivedAt !== undefined ? 1 : 0) - (b.archivedAt !== undefined ? 1 : 0) ||
-        b.updatedAt - a.updatedAt ||
-        b._creationTime - a._creationTime,
-    );
+    return rows.sort((a, b) => b.updatedAt - a.updatedAt || b._creationTime - a._creationTime);
   },
 });
 
@@ -547,34 +536,60 @@ export const rename = classMutation({
   },
 });
 
+async function deleteSeatChartCascade(ctx: MutationCtx, chartId: Id<"seatCharts">): Promise<void> {
+  // eslint-disable-next-line @convex-dev/no-collect-in-query -- chart-bounded record list
+  const records = await ctx.db
+    .query("seatChartRecords")
+    .withIndex("by_chart", (q) => q.eq("chartId", chartId))
+    .collect();
+
+  for (const record of records) {
+    // eslint-disable-next-line @convex-dev/no-collect-in-query -- record-bounded placement list
+    const placements = await ctx.db
+      .query("seatChartPlacements")
+      .withIndex("by_record", (q) => q.eq("recordId", record._id))
+      .collect();
+    for (const placement of placements) {
+      await ctx.db.delete("seatChartPlacements", placement._id);
+    }
+    await ctx.db.delete("seatChartRecords", record._id);
+  }
+
+  // eslint-disable-next-line @convex-dev/no-collect-in-query -- chart-bounded aggregate list
+  const aggregates = await ctx.db
+    .query("seatChartAggregates")
+    .withIndex("by_chart_student", (q) => q.eq("chartId", chartId))
+    .collect();
+  for (const aggregate of aggregates) {
+    await ctx.db.delete("seatChartAggregates", aggregate._id);
+  }
+
+  await ctx.db.delete("seatCharts", chartId);
+}
+
 /**
- * Archive a seating chart (records remain viewable).
+ * Permanently delete a seating chart and its history.
  */
-export const archive = classMutation({
+export const remove = classMutation({
   args: {
     chartId: v.id("seatCharts"),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    await rateLimiter.limit(ctx, "seatChartArchive", { key: ctx.userId, throws: true });
+    await rateLimiter.limit(ctx, "seatChartRemove", { key: ctx.userId, throws: true });
     await ctx.require("assigners:manage");
 
     const chart = await getOwnedChart(ctx, args.chartId);
-    if (chart.archivedAt !== undefined) {
-      return null;
-    }
-
-    const now = Date.now();
-    await ctx.db.patch("seatCharts", args.chartId, { archivedAt: now, updatedAt: now });
+    await deleteSeatChartCascade(ctx, args.chartId);
 
     await recordClassActivity(ctx, {
       classId: ctx.classDoc._id,
       actorUserId: ctx.userId,
-      action: "update",
+      action: "delete",
       resourceType: "seatChart",
       resourceId: args.chartId,
-      summary: `Archived seating chart "${chart.name}"`,
-      summaryKey: "activitySummary_archivedSeatChart",
+      summary: `Deleted seating chart "${chart.name}"`,
+      summaryKey: "activitySummary_deletedSeatChart",
       metadata: { name: chart.name },
     });
 

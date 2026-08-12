@@ -436,6 +436,7 @@ const schema = defineSchema({
     updatedAt: v.number(),
   })
     .index("by_layout", ["layoutId"])
+    .index("by_layout_dimension", ["layoutId", "dimension"])
     .index("by_layout_student", ["layoutId", "studentUserId"])
     .index("by_layout_student_dimension", ["layoutId", "studentUserId", "dimension"])
     .index("by_layout_student_dimension_key", ["layoutId", "studentUserId", "dimension", "key"]),

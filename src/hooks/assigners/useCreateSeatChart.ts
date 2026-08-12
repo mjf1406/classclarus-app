@@ -23,32 +23,24 @@ export function useCreateSeatChart() {
 
   return useOptimisticMutation({
     mutationFn: (args: CreateSeatChartArgs) => mutationFn(args),
-    queryKeys: (args) => [
-      seatChartsListQueryKey(args.classId),
-      seatChartsListQueryKey(args.classId, true),
-    ],
+    queryKeys: (args) => [seatChartsListQueryKey(args.classId)],
     applyOptimisticUpdate: (queryClient, args) => {
       const now = Date.now();
       const optimisticId = `optimistic:${randomClientId()}` as Id<"seatCharts">;
-      const patchList = (includeArchived?: boolean) => {
-        const queryKey = seatChartsListQueryKey(args.classId, includeArchived);
-        queryClient.setQueryData<SeatChartList>(queryKey, (old) => {
-          const next = {
-            _id: optimisticId,
-            _creationTime: now,
-            name: args.name.trim(),
-            layoutId: args.layoutId,
-            layoutName: "",
-            updatedAt: now,
-            recordCount: 0,
-            seatedCount: 0,
-          };
-          if (!old) return [next];
-          return [next, ...old];
-        });
-      };
-      patchList(false);
-      patchList(true);
+      queryClient.setQueryData<SeatChartList>(seatChartsListQueryKey(args.classId), (old) => {
+        const next = {
+          _id: optimisticId,
+          _creationTime: now,
+          name: args.name.trim(),
+          layoutId: args.layoutId,
+          layoutName: "",
+          updatedAt: now,
+          recordCount: 0,
+          seatedCount: 0,
+        };
+        if (!old) return [next];
+        return [next, ...old];
+      });
     },
     onError: (error) => {
       toast.add({

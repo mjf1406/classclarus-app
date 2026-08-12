@@ -31,7 +31,6 @@ export function useRecordSeatChart() {
     queryKeys: (args) => [
       seatChartQueryKey(args.classId, args.chartId),
       seatChartsListQueryKey(args.classId),
-      seatChartsListQueryKey(args.classId, true),
     ],
     invalidateQueryKeys: (args) => {
       const studentIds = [...new Set(args.assignments.map((a) => a.studentUserId))];
@@ -59,24 +58,18 @@ export function useRecordSeatChart() {
             }
           : old,
       );
-      const patchList = (includeArchived?: boolean) => {
-        queryClient.setQueryData<SeatChartList>(
-          seatChartsListQueryKey(args.classId, includeArchived),
-          (old) =>
-            old?.map((chart) =>
-              chart._id === args.chartId
-                ? {
-                    ...chart,
-                    seatedCount: args.assignments.length,
-                    recordCount: chart.recordCount + 1,
-                    updatedAt: now,
-                  }
-                : chart,
-            ),
-        );
-      };
-      patchList(false);
-      patchList(true);
+      queryClient.setQueryData<SeatChartList>(seatChartsListQueryKey(args.classId), (old) =>
+        old?.map((chart) =>
+          chart._id === args.chartId
+            ? {
+                ...chart,
+                seatedCount: args.assignments.length,
+                recordCount: chart.recordCount + 1,
+                updatedAt: now,
+              }
+            : chart,
+        ),
+      );
     },
     onError: (error) => {
       toast.add({

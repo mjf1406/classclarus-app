@@ -26,19 +26,13 @@ export function useRenameSeatChart() {
     mutationFn: (args: RenameSeatChartArgs) => mutationFn(args),
     queryKeys: (args) => [
       seatChartsListQueryKey(args.classId),
-      seatChartsListQueryKey(args.classId, true),
       seatChartQueryKey(args.classId, args.chartId),
     ],
     applyOptimisticUpdate: (queryClient, args) => {
       const name = args.name.trim();
-      const patchList = (includeArchived?: boolean) => {
-        queryClient.setQueryData<SeatChartList>(
-          seatChartsListQueryKey(args.classId, includeArchived),
-          (old) => old?.map((chart) => (chart._id === args.chartId ? { ...chart, name } : chart)),
-        );
-      };
-      patchList(false);
-      patchList(true);
+      queryClient.setQueryData<SeatChartList>(seatChartsListQueryKey(args.classId), (old) =>
+        old?.map((chart) => (chart._id === args.chartId ? { ...chart, name } : chart)),
+      );
       queryClient.setQueryData<SeatChart>(seatChartQueryKey(args.classId, args.chartId), (old) =>
         old ? { ...old, name } : old,
       );

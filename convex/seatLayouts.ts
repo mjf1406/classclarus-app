@@ -1,15 +1,28 @@
 import { ConvexError, v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 
+import { APP_CONFIG } from "./appConfig.js";
 import { authz } from "./authz.js";
-import type { Id } from "./_generated/dataModel.js";
+import { components } from "./_generated/api.js";
+import type { Doc, Id } from "./_generated/dataModel.js";
+import type { QueryCtx } from "./_generated/server.js";
 import { classScope } from "./lib/authzModel.js";
 import { recordClassActivity } from "./lib/classActivity.js";
 import { classMutation, classQuery } from "./lib/customFunctions.js";
 import { rateLimiter } from "./lib/rateLimiter.js";
-import { activeChartsForLayout } from "./lib/seatChartLogic.js";
+import { activeChartsForLayout, resolveTeamLabelForDesk } from "./lib/seatChartLogic.js";
 import { copySeatLayoutItems } from "./lib/seatLayoutCopy.js";
+import {
+  buildSeatLayoutRosterMatrixCounts,
+  layoutValuesForSeat,
+  layoutValuesForZone,
+  mergeMatrixValues,
+  type SeatLayoutMatrixDimension,
+  type SeatLayoutMatrixValue,
+  valuesFromAggregateLabels,
+} from "./lib/seating/layoutRosterMatrix.js";
 import { resolveLayoutGenderParityMode } from "./lib/seating/settings.js";
+import { resolveUserImageUrl } from "./lib/userImage.js";
 
 const MAX_LAYOUT_NAME_LENGTH = 80;
 const MAX_ITEM_LABEL_LENGTH = 80;
@@ -87,6 +100,75 @@ const algorithmHistoryRowValidator = v.object({
   count: v.number(),
 });
 
+const seatLayoutMatrixDimensionValidator = v.union(
+  v.literal("seat"),
+  v.literal("zone"),
+  v.literal("team"),
+  v.literal("neighbor"),
+);
+
+const rosterMatrixStudentValidator = v.object({
+  userId: v.id("users"),
+  rosterNumber: v.number(),
+  firstName: v.optional(v.string()),
+  lastName: v.optional(v.string()),
+  name: v.optional(v.string()),
+  image: v.optional(v.string()),
+  email: v.optional(v.string()),
+  gender: v.optional(
+    v.union(
+      v.literal("male"),
+      v.literal("female"),
+      v.literal("transMale"),
+      v.literal("transFemale"),
+      v.literal("nonBinary"),
+      v.literal("selfDescribe"),
+      v.literal("preferNotToSay"),
+    ),
+  ),
+  genderSelfDescribe: v.optional(v.string()),
+  pronouns: v.optional(
+    v.union(
+      v.literal("heHim"),
+      v.literal("sheHer"),
+      v.literal("theyThem"),
+      v.literal("heThey"),
+      v.literal("sheThey"),
+      v.literal("useNameOnly"),
+      v.literal("askSelfDescribe"),
+      v.literal("preferNotToSay"),
+    ),
+  ),
+  pronounsSelfDescribe: v.optional(v.string()),
+  role: v.literal("student"),
+});
+
+const seatLayoutMatrixValueValidator = v.object({
+  key: v.string(),
+  label: v.string(),
+});
+
+const seatLayoutMatrixCountValidator = v.object({
+  key: v.string(),
+  count: v.number(),
+});
+
+const seatLayoutMatrixRowValidator = v.object({
+  studentUserId: v.id("users"),
+  counts: v.array(seatLayoutMatrixCountValidator),
+});
+
+const seatLayoutRosterMatrixValidator = v.object({
+  layout: v.object({
+    _id: v.id("seatLayouts"),
+    name: v.string(),
+  }),
+  dimension: seatLayoutMatrixDimensionValidator,
+  values: v.array(seatLayoutMatrixValueValidator),
+  students: v.array(rosterMatrixStudentValidator),
+  countsByStudent: v.array(seatLayoutMatrixRowValidator),
+});
+
 function normalizeName(name: string): string {
   const trimmed = name.trim();
   if (!trimmed) {
@@ -96,6 +178,102 @@ function normalizeName(name: string): string {
     throw new Error(`Name must be at most ${MAX_LAYOUT_NAME_LENGTH} characters`);
   }
   return trimmed;
+}
+
+async function listStudentUserIds(
+  ctx: QueryCtx,
+  classId: Id<"classes">,
+): Promise<Array<Id<"users">>> {
+  const users = await ctx.runQuery(components.authz.queries.getUsersWithRole, {
+    tenantId: APP_CONFIG.authzTenantId,
+    role: "student",
+    scope: classScope(classId),
+  });
+  return users.map((entry: { userId: string }) => entry.userId as Id<"users">);
+}
+
+async function loadRosterStudentsForMatrix(ctx: QueryCtx, classId: Id<"classes">) {
+  const studentUserIds = await listStudentUserIds(ctx, classId);
+  const studentSet = new Set(studentUserIds);
+
+  // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded roster
+  const rosterRows = await ctx.db
+    .query("studentRosters")
+    .withIndex("by_classId_rosterNumber", (q) => q.eq("classId", classId))
+    .collect();
+
+  const students: Array<{
+    userId: Id<"users">;
+    rosterNumber: number;
+    firstName?: string;
+    lastName?: string;
+    name?: string;
+    image?: string;
+    email?: string;
+    gender?: Doc<"studentRosters">["gender"];
+    genderSelfDescribe?: string;
+    pronouns?: Doc<"studentRosters">["pronouns"];
+    pronounsSelfDescribe?: string;
+    role: "student";
+  }> = [];
+
+  for (const row of rosterRows) {
+    if (!studentSet.has(row.userId)) continue;
+    const user = await ctx.db.get("users", row.userId);
+    if (!user) continue;
+    students.push({
+      userId: row.userId,
+      rosterNumber: row.rosterNumber,
+      firstName: row.firstName,
+      lastName: row.lastName,
+      name: user.name,
+      image: await resolveUserImageUrl(ctx, user),
+      email: user.email,
+      gender: row.gender,
+      genderSelfDescribe: row.genderSelfDescribe,
+      pronouns: row.pronouns,
+      pronounsSelfDescribe: row.pronounsSelfDescribe,
+      role: "student",
+    });
+  }
+
+  students.sort((a, b) => a.rosterNumber - b.rosterNumber);
+  return students;
+}
+
+async function layoutValuesForTeam(
+  ctx: QueryCtx,
+  layout: Doc<"seatLayouts">,
+): Promise<SeatLayoutMatrixValue[]> {
+  const values = new Map<string, string>();
+  for (const item of layout.items) {
+    if (item.kind !== "desk") continue;
+    const resolved = await resolveTeamLabelForDesk(ctx, item);
+    if (resolved.teamKey && resolved.teamLabel) {
+      values.set(resolved.teamKey, resolved.teamLabel);
+    }
+  }
+  return [...values.entries()]
+    .map(([key, label]) => ({ key, label }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+}
+
+async function deriveMatrixValues(
+  ctx: QueryCtx,
+  layout: Doc<"seatLayouts">,
+  dimension: SeatLayoutMatrixDimension,
+  aggregateLabels: Array<Pick<Doc<"seatLayoutAggregates">, "key" | "label">>,
+): Promise<SeatLayoutMatrixValue[]> {
+  if (dimension === "neighbor") {
+    return valuesFromAggregateLabels(aggregateLabels);
+  }
+  if (dimension === "seat") {
+    return mergeMatrixValues(layoutValuesForSeat(layout), aggregateLabels);
+  }
+  if (dimension === "zone") {
+    return mergeMatrixValues(layoutValuesForZone(layout), aggregateLabels);
+  }
+  return mergeMatrixValues(await layoutValuesForTeam(ctx, layout), aggregateLabels);
 }
 
 function normalizeLabel(label: string): string {
@@ -351,6 +529,57 @@ export const getAlgorithmHistory = classQuery({
   },
 });
 
+/** Per-student seating history matrix for one layout dimension (staff data tab). */
+export const rosterMatrix = classQuery({
+  args: {
+    layoutId: v.id("seatLayouts"),
+    dimension: seatLayoutMatrixDimensionValidator,
+  },
+  returns: seatLayoutRosterMatrixValidator,
+  handler: async (ctx, args) => {
+    await ctx.require("assigners:manage");
+    const layout = await ctx.db.get("seatLayouts", args.layoutId);
+    if (!layout || layout.classId !== ctx.classDoc._id) {
+      throw new Error("Layout not found");
+    }
+
+    // eslint-disable-next-line @convex-dev/no-collect-in-query -- dimension-scoped layout history
+    const aggregateRows = await ctx.db
+      .query("seatLayoutAggregates")
+      .withIndex("by_layout_dimension", (q) =>
+        q.eq("layoutId", args.layoutId).eq("dimension", args.dimension),
+      )
+      .collect();
+
+    const aggregateLabels = aggregateRows.map((row) => ({
+      key: row.key,
+      label: row.label,
+    }));
+    const values = await deriveMatrixValues(ctx, layout, args.dimension, aggregateLabels);
+    const students = await loadRosterStudentsForMatrix(ctx, ctx.classDoc._id);
+    const countsByStudent = buildSeatLayoutRosterMatrixCounts(
+      values,
+      students.map((student) => student.userId),
+      aggregateRows.map((row) => ({
+        studentUserId: row.studentUserId,
+        key: row.key,
+        count: row.count,
+      })),
+    );
+
+    return {
+      layout: {
+        _id: layout._id,
+        name: layout.name,
+      },
+      dimension: args.dimension,
+      values,
+      students,
+      countsByStudent,
+    };
+  },
+});
+
 /**
  * Create an empty named seat layout.
  */
@@ -564,7 +793,7 @@ export const remove = classMutation({
 
     const activeCharts = await activeChartsForLayout(ctx, args.layoutId);
     if (activeCharts.length > 0) {
-      throw new Error("Remove or archive seating charts that use this layout first");
+      throw new Error("Remove seating charts that use this layout first");
     }
 
     await ctx.db.delete("seatLayouts", args.layoutId);

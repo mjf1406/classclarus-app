@@ -105,6 +105,7 @@ import type * as lib_seatLayoutTeamSync from "../lib/seatLayoutTeamSync.js";
 import type * as lib_seating_gender from "../lib/seating/gender.js";
 import type * as lib_seating_history from "../lib/seating/history.js";
 import type * as lib_seating_historyKeys from "../lib/seating/historyKeys.js";
+import type * as lib_seating_layoutRosterMatrix from "../lib/seating/layoutRosterMatrix.js";
 import type * as lib_seating_mergeAssignments from "../lib/seating/mergeAssignments.js";
 import type * as lib_seating_pipeline from "../lib/seating/pipeline.js";
 import type * as lib_seating_runSeatingAlgorithm from "../lib/seating/runSeatingAlgorithm.js";
@@ -248,6 +249,7 @@ declare const fullApi: ApiFromModules<{
   "lib/seating/gender": typeof lib_seating_gender;
   "lib/seating/history": typeof lib_seating_history;
   "lib/seating/historyKeys": typeof lib_seating_historyKeys;
+  "lib/seating/layoutRosterMatrix": typeof lib_seating_layoutRosterMatrix;
   "lib/seating/mergeAssignments": typeof lib_seating_mergeAssignments;
   "lib/seating/pipeline": typeof lib_seating_pipeline;
   "lib/seating/runSeatingAlgorithm": typeof lib_seating_runSeatingAlgorithm;

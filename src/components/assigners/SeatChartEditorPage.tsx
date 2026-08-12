@@ -389,7 +389,6 @@ export function SeatChartEditorPage({ classId, chartId }: SeatChartEditorPagePro
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {dirty ? <Badge variant="outline">{t("editorSaveStatusUnsaved")}</Badge> : null}
-          {archived ? <Badge variant="secondary">{t("chartArchivedBadge")}</Badge> : null}
           <Tooltip>
             {canUndo ? (
               <TooltipTrigger

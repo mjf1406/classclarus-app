@@ -26,7 +26,6 @@ export function useSaveSeatChartDraft() {
     queryKeys: (args) => [
       seatChartQueryKey(args.classId, args.chartId),
       seatChartsListQueryKey(args.classId),
-      seatChartsListQueryKey(args.classId, true),
     ],
     applyOptimisticUpdate: (queryClient, args) => {
       const now = Date.now();
@@ -39,19 +38,13 @@ export function useSaveSeatChartDraft() {
             }
           : old,
       );
-      const patchList = (includeArchived?: boolean) => {
-        queryClient.setQueryData<SeatChartList>(
-          seatChartsListQueryKey(args.classId, includeArchived),
-          (old) =>
-            old?.map((chart) =>
-              chart._id === args.chartId
-                ? { ...chart, seatedCount: args.assignments.length, updatedAt: now }
-                : chart,
-            ),
-        );
-      };
-      patchList(false);
-      patchList(true);
+      queryClient.setQueryData<SeatChartList>(seatChartsListQueryKey(args.classId), (old) =>
+        old?.map((chart) =>
+          chart._id === args.chartId
+            ? { ...chart, seatedCount: args.assignments.length, updatedAt: now }
+            : chart,
+        ),
+      );
     },
     onError: (error) => {
       toast.add({

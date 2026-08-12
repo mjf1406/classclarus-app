@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Archive, Cpu, LayoutGrid, Pencil, Plus } from "lucide-react";
+import { Cpu, LayoutGrid, Pencil, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -7,6 +7,7 @@ import { AutoAssignSeatingHost } from "@/components/assigners/AutoAssignSeatingH
 import { AssignersSeatsShell } from "@/components/assigners/AssignersSeatsShell";
 import { SeatChartCreateCredenza } from "@/components/assigners/SeatChartCreateCredenza";
 import { SeatChartNameCredenza } from "@/components/assigners/SeatChartNameCredenza";
+import { DeleteNamedCredenza } from "@/components/groups/DeleteNamedCredenza";
 import { ActionMenu, type ActionMenuItem } from "@/components/ui/action-menu";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,8 +23,8 @@ import {
 import { ErrorState } from "@/components/ui/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useArchiveSeatChart } from "@/hooks/assigners/useArchiveSeatChart";
 import { useCreateSeatChart } from "@/hooks/assigners/useCreateSeatChart";
+import { useRemoveSeatChart } from "@/hooks/assigners/useRemoveSeatChart";
 import { useRenameSeatChart } from "@/hooks/assigners/useRenameSeatChart";
 import { useSeatCharts } from "@/hooks/assigners/useSeatCharts";
 import { useCan } from "@/hooks/permissions/useCan";
@@ -50,9 +51,10 @@ export function AssignersSeatsChartsPage({ classId }: AssignersSeatsChartsPagePr
   const { data, isPending, isError, refetch } = useSeatCharts(classId);
   const createChart = useCreateSeatChart();
   const renameChart = useRenameSeatChart();
-  const archiveChart = useArchiveSeatChart();
+  const removeChart = useRemoveSeatChart();
   const [createOpen, setCreateOpen] = useState(false);
   const [renaming, setRenaming] = useState<SeatChartListItem | null>(null);
+  const [deleting, setDeleting] = useState<SeatChartListItem | null>(null);
   const [sortKey, setSortKey] = useState<SeatChartSortKey>("updated");
   const [sortDirection, setSortDirection] = useState<SeatChartSortDirection>("desc");
   const [autoAssignOpen, setAutoAssignOpen] = useState(false);
@@ -160,13 +162,13 @@ export function AssignersSeatsChartsPage({ classId }: AssignersSeatsChartsPagePr
                 onSelect: () => setRenaming(chart),
               },
               {
-                id: "archive",
-                label: t("archiveChart"),
-                icon: <Archive />,
+                id: "delete",
+                label: t("deleteChart"),
+                icon: <Trash2 />,
                 permission: "assigners:manage",
                 variant: "destructive",
                 group: "danger",
-                onSelect: () => void archiveChart.mutateAsync({ classId, chartId: chart._id }),
+                onSelect: () => setDeleting(chart),
               },
             ];
 
@@ -229,6 +231,19 @@ export function AssignersSeatsChartsPage({ classId }: AssignersSeatsChartsPagePr
             onSubmit={async (name) => {
               if (!renaming) return;
               await renameChart.mutateAsync({ classId, chartId: renaming._id, name });
+            }}
+          />
+          <DeleteNamedCredenza
+            open={deleting !== null}
+            onOpenChange={(open) => {
+              if (!open) setDeleting(null);
+            }}
+            title={t("deleteChartTitle")}
+            description={t("deleteChartDescription", { name: deleting?.name ?? "" })}
+            confirmLabel={t("confirmDelete")}
+            onConfirm={async () => {
+              if (!deleting) return;
+              await removeChart.mutateAsync({ classId, chartId: deleting._id });
             }}
           />
           <AutoAssignSeatingHost
