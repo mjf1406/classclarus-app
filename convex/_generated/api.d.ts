@@ -102,6 +102,8 @@ import type * as lib_seatChartGeometry from "../lib/seatChartGeometry.js";
 import type * as lib_seatChartLogic from "../lib/seatChartLogic.js";
 import type * as lib_seatLayoutCopy from "../lib/seatLayoutCopy.js";
 import type * as lib_seatLayoutTeamSync from "../lib/seatLayoutTeamSync.js";
+import type * as lib_seating_diagnose from "../lib/seating/diagnose.js";
+import type * as lib_seating_failureEvidence from "../lib/seating/failureEvidence.js";
 import type * as lib_seating_gender from "../lib/seating/gender.js";
 import type * as lib_seating_history from "../lib/seating/history.js";
 import type * as lib_seating_historyKeys from "../lib/seating/historyKeys.js";
@@ -246,6 +248,8 @@ declare const fullApi: ApiFromModules<{
   "lib/seatChartLogic": typeof lib_seatChartLogic;
   "lib/seatLayoutCopy": typeof lib_seatLayoutCopy;
   "lib/seatLayoutTeamSync": typeof lib_seatLayoutTeamSync;
+  "lib/seating/diagnose": typeof lib_seating_diagnose;
+  "lib/seating/failureEvidence": typeof lib_seating_failureEvidence;
   "lib/seating/gender": typeof lib_seating_gender;
   "lib/seating/history": typeof lib_seating_history;
   "lib/seating/historyKeys": typeof lib_seating_historyKeys;

@@ -2306,6 +2306,114 @@ const ko = {
     autoAssignInfeasible: "모든 좌석 규칙을 충족할 수 없습니다.",
     autoAssignSearchExhausted:
       "유효한 좌석 배치를 찾지 못했습니다. 다시 시도하거나 좌석 규칙을 조정하세요.",
+    autoAssignFailureTitle: "자동 좌석 배정 실패",
+    autoAssignFailureGeneric: "현재 레이아웃과 설정으로는 좌석 규칙을 모두 충족할 수 없습니다.",
+    autoAssignFailureMinimalConflict:
+      "이 규칙들은 서로 충돌합니다. 선택한 규칙을 이 차트에만 일시적으로 완화하거나 저장된 규칙을 편집할 수 있습니다.",
+    autoAssignFailureUnknown:
+      "자동 배정을 완료하지 못했습니다. 다시 시도하거나 레이아웃과 규칙을 수동으로 검토하세요.",
+    autoAssignFailureUnknownSearch:
+      "안전 검색 한도 내에서 유효한 좌석 배치를 찾지 못했습니다. 다시 시도하거나 레이아웃과 규칙을 수동으로 검토하세요.",
+    autoAssignFailureUnknownTitle: "정확한 충돌을 확인하지 못함",
+    autoAssignFailureUnknownHint:
+      "솔버가 어떤 규칙이 충돌하는지 증명하지 못했습니다. 큰 학급에서 발생할 수 있습니다. 다시 시도하거나 규칙과 레이아웃을 수동으로 검토하세요.",
+    autoAssignFailureConflictSetTitle: "충돌하는 규칙",
+    autoAssignFailureConflictSetHint:
+      "동시에 충족할 수 없는 최소 규칙 집합입니다. 다른 충돌 집합이 있을 수 있습니다.",
+    autoAssignFailureRelaxLabel: "이 차트에만 일시적으로 완화",
+    autoAssignFailureRetry: "다시 시도",
+    autoAssignFailureGenerateExceptions: "예외와 함께 생성",
+    autoAssignFailureEditConstraints: "규칙 편집",
+    autoAssignFailureEditLayout: "레이아웃 편집",
+    autoAssignExceptionGenderParity: "홀수/짝수 성별 패리티",
+    autoAssignExceptionLockedSeat: "{{student}}의 고정 좌석",
+    autoAssignExceptionMissingConstraint: "좌석 규칙(더 이상 사용 불가)",
+    autoAssignRecordExceptionsTitle: "일시적 예외",
+    autoAssignRecordExceptionsDescription:
+      "이 차트는 아래 규칙을 일시적으로 무시하고 생성되었습니다. 저장된 학급 규칙은 변경되지 않았습니다.",
+    autoAssignStructural_unavailableSeat:
+      "수동 배치된 학생이 이 레이아웃에서 사용할 수 없는 좌석에 배정되어 있습니다.",
+    autoAssignStructural_duplicateManual: "수동 배치에서 동일한 학생 또는 좌석이 중복됩니다.",
+    autoAssignStructural_capacityExceeded:
+      "필수 규칙에 필요한 좌석이 그룹의 가용 좌석보다 많습니다.",
+    autoAssignStructural_unavailableStudent:
+      "필수 규칙이 이번 실행에서 배치할 수 없는 학생을 참조합니다.",
+    autoAssignStructural_noValidSeat:
+      "규칙과 패리티 적용 후 유효한 좌석이 없는 학생이 최소 한 명 있습니다.",
+    autoAssignStructural_manualConstraintConflict: "수동 배치가 필수 규칙과 충돌합니다.",
+    autoAssignStructural_parityLockedConflict:
+      "A locked seat conflicts with odd/even gender parity for that desk.",
+    autoAssignStructural_constraintParityConflict:
+      "The seating rules and odd/even parity cannot all be satisfied together.",
+    autoAssignReportSummaryTitle: "Summary",
+    autoAssignReportNoNamedStudents: "affected students",
+    autoAssignReportSummary_unavailableSeat:
+      "{{students}} cannot be seated because a locked seat is not on this layout.",
+    autoAssignReportSummary_duplicateManual:
+      "Manual seating has duplicate students or seats ({{students}}).",
+    autoAssignReportSummary_capacityExceeded:
+      "Required rules need more seats than available for {{students}}.",
+    autoAssignReportSummary_unavailableStudent:
+      "{{students}} are referenced by required rules but cannot be seated in this run.",
+    autoAssignReportSummary_noValidSeat:
+      "{{students}} have no valid seat after applying rules and parity.",
+    autoAssignReportSummary_manualConstraintConflict:
+      "Locked seating conflicts with required rules for {{students}}.",
+    autoAssignReportSummary_parityLockedConflict:
+      "Locked seats conflict with gender parity for {{students}}.",
+    autoAssignReportSummary_constraintParityConflict: "Rules and parity conflict for {{students}}.",
+    autoAssignReportWhatTitle: "What happened",
+    autoAssignReportWhyTitle: "Why",
+    autoAssignReportSettingsTitle: "Current settings",
+    autoAssignReportFixTitle: "How to fix it",
+    autoAssignReportStudentUnknown: "Unknown student",
+    autoAssignReportStudentUngrouped: "Not assigned to a group",
+    autoAssignReportStudentNotOnBoard: "Not on the groups board",
+    autoAssignReportStudentStaleRoster: "No longer on the class roster",
+    autoAssignReportStudentInGroup: "In group {{group}}",
+    autoAssignReportStudentGrouped: "On the groups board",
+    autoAssignReportRole_primary: "primary student",
+    autoAssignReportRole_other: "other student",
+    autoAssignReportCapacityGroup:
+      "Group “{{group}}” needs {{required}} required seats but only {{available}} are available ({{students}}).",
+    autoAssignReportUnknownGroup: "Unknown group",
+    autoAssignReportNoValidSeatStudent:
+      "{{student}} in {{group}} has {{candidates}} of {{total}} seats left after rule filtering.",
+    autoAssignReportLockedSeat: "{{student}} locked to desk {{desk}} ({{zone}}).",
+    autoAssignReportNoZone: "no zone",
+    autoAssignReportConflictingConstraints:
+      "{{count}} required rule(s) conflict with locked seats.",
+    autoAssignReportDuplicateStudents: "Duplicate students: {{students}}.",
+    autoAssignReportDuplicateDesks: "{{count}} desk(s) used more than once.",
+    autoAssignReportConstraintParity: "Parity and rules conflict for {{students}}.",
+    autoAssignReportSearchExhaustedWhat:
+      "The solver ran out of search time before proving a cause.",
+    autoAssignReportWhyNoValidSeat:
+      "Seats eliminated by parity: {{parity}}, zone rules: {{zone}}, already occupied: {{occupied}}.",
+    autoAssignReportWhyCapacity:
+      "More students are required by “must” rules than there are open seats in at least one group.",
+    autoAssignReportWhyUnavailableStudents:
+      "필수 규칙이 더 이상 수업 명단에 없거나, 그룹에 배정되지 않았거나, 그룹 보드에 없는 학생을 참조합니다.",
+    autoAssignReportWhySearchStudents: "{{count}} movable students in this run",
+    autoAssignReportWhySearchConstraints: "{{count}} seating rules",
+    autoAssignReportWhySearchSlots: "{{count}} desk slots on the layout",
+    autoAssignReportWhyParityLocked:
+      "Locked students must sit on desks matching parity ({{direction}}).",
+    autoAssignReportWhyConstraintParity:
+      "No assignment satisfies all required rules with parity set to {{direction}}.",
+    autoAssignReportWhyGeneric: "The current rules and layout cannot all be satisfied.",
+    autoAssignReportParityMalesOdd: "males on odd desks",
+    autoAssignReportParityMalesEven: "males on even desks",
+    autoAssignReportParityOn: "On ({{direction}})",
+    autoAssignReportParityOff: "Off",
+    autoAssignReportSettingsParity: "Gender parity: {{mode}}",
+    autoAssignReportSettingsCounts:
+      "{{students}} students, {{seats}} seats, {{constraints}} rules, {{locked}} locked.",
+    autoAssignReportSettingsLocked: "{{count}} locked seat(s) in this run.",
+    autoAssignReportFixAssignGroup: "Assign student to a group",
+    autoAssignReportFixEditConstraint: "Edit seating rule",
+    autoAssignReportFixEditLayout: "Edit layout",
+    autoAssignReportFixEditChart: "Edit seating chart",
     chartsDescription: "학생을 책상에 직접 배치하고 좌석 이력을 기록합니다.",
     createChart: "새 좌석표",
     createChartTitle: "새 좌석표",
@@ -2444,6 +2552,7 @@ const ko = {
     constraintStudentsMustDiffer: "서로 다른 두 학생을 선택하세요.",
     constraintZoneRequired: "구역을 선택하세요.",
     constraintUnknownStudent: "알 수 없는 학생",
+    constraintRemovedStudent: "제거된 학생",
     constraintRelationNeighbor: "이웃",
     constraintRelationTeammate: "팀원",
     constraintSummaryPair: "{{student}}은(는) {{other}}의 {{relation}}이어야 {{polarity}}",

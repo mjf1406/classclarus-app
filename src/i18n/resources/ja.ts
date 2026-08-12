@@ -2337,6 +2337,114 @@ const ja = {
     autoAssignInfeasible: "すべての座席ルールを満たすことができません。",
     autoAssignSearchExhausted:
       "有効な座席配置が見つかりませんでした。もう一度試すか、座席ルールを調整してください。",
+    autoAssignFailureTitle: "自動座席割り当てに失敗しました",
+    autoAssignFailureGeneric: "現在のレイアウトと設定では座席ルールをすべて満たせませんでした。",
+    autoAssignFailureMinimalConflict:
+      "これらのルールは互いに矛盾しています。選択したルールをこのチャートのみ一時的に緩和するか、保存済みルールを編集できます。",
+    autoAssignFailureUnknown:
+      "自動割り当てを完了できませんでした。再試行するか、レイアウトとルールを手動で確認してください。",
+    autoAssignFailureUnknownSearch:
+      "安全な検索上限内で有効な座席配置が見つかりませんでした。再試行するか、レイアウトとルールを手動で確認してください。",
+    autoAssignFailureUnknownTitle: "正確な矛盾を特定できませんでした",
+    autoAssignFailureUnknownHint:
+      "ソルバーはどのルールが矛盾しているかを証明できませんでした。大きなクラスで起こることがあります。再試行するか、ルールとレイアウトを手動で確認してください。",
+    autoAssignFailureConflictSetTitle: "矛盾するルール",
+    autoAssignFailureConflictSetHint:
+      "同時に満たせない最小のルール集合です。他の矛盾集合が存在する場合があります。",
+    autoAssignFailureRelaxLabel: "このチャートのみ一時的に緩和",
+    autoAssignFailureRetry: "再試行",
+    autoAssignFailureGenerateExceptions: "例外付きで生成",
+    autoAssignFailureEditConstraints: "ルールを編集",
+    autoAssignFailureEditLayout: "レイアウトを編集",
+    autoAssignExceptionGenderParity: "奇数/偶数の性別パリティ",
+    autoAssignExceptionLockedSeat: "{{student}} の固定席",
+    autoAssignExceptionMissingConstraint: "座席ルール（利用不可）",
+    autoAssignRecordExceptionsTitle: "一時的な例外",
+    autoAssignRecordExceptionsDescription:
+      "このチャートは以下のルールを一時的に無視して生成されました。保存済みのクラスルールは変更されていません。",
+    autoAssignStructural_unavailableSeat:
+      "手動配置の生徒が、このレイアウトで利用できない席に割り当てられています。",
+    autoAssignStructural_duplicateManual: "手動配置で同じ生徒または席が重複しています。",
+    autoAssignStructural_capacityExceeded:
+      "必須ルールに必要な席がグループの利用可能席を超えています。",
+    autoAssignStructural_unavailableStudent:
+      "必須ルールが、この実行で座らせられない生徒を参照しています。",
+    autoAssignStructural_noValidSeat:
+      "ルールとパリティ適用後、有効な席がない生徒が少なくとも1人います。",
+    autoAssignStructural_manualConstraintConflict: "手動配置が必須ルールと矛盾しています。",
+    autoAssignStructural_parityLockedConflict:
+      "A locked seat conflicts with odd/even gender parity for that desk.",
+    autoAssignStructural_constraintParityConflict:
+      "The seating rules and odd/even parity cannot all be satisfied together.",
+    autoAssignReportSummaryTitle: "Summary",
+    autoAssignReportNoNamedStudents: "affected students",
+    autoAssignReportSummary_unavailableSeat:
+      "{{students}} cannot be seated because a locked seat is not on this layout.",
+    autoAssignReportSummary_duplicateManual:
+      "Manual seating has duplicate students or seats ({{students}}).",
+    autoAssignReportSummary_capacityExceeded:
+      "Required rules need more seats than available for {{students}}.",
+    autoAssignReportSummary_unavailableStudent:
+      "{{students}} are referenced by required rules but cannot be seated in this run.",
+    autoAssignReportSummary_noValidSeat:
+      "{{students}} have no valid seat after applying rules and parity.",
+    autoAssignReportSummary_manualConstraintConflict:
+      "Locked seating conflicts with required rules for {{students}}.",
+    autoAssignReportSummary_parityLockedConflict:
+      "Locked seats conflict with gender parity for {{students}}.",
+    autoAssignReportSummary_constraintParityConflict: "Rules and parity conflict for {{students}}.",
+    autoAssignReportWhatTitle: "What happened",
+    autoAssignReportWhyTitle: "Why",
+    autoAssignReportSettingsTitle: "Current settings",
+    autoAssignReportFixTitle: "How to fix it",
+    autoAssignReportStudentUnknown: "Unknown student",
+    autoAssignReportStudentUngrouped: "Not assigned to a group",
+    autoAssignReportStudentNotOnBoard: "Not on the groups board",
+    autoAssignReportStudentStaleRoster: "No longer on the class roster",
+    autoAssignReportStudentInGroup: "In group {{group}}",
+    autoAssignReportStudentGrouped: "On the groups board",
+    autoAssignReportRole_primary: "primary student",
+    autoAssignReportRole_other: "other student",
+    autoAssignReportCapacityGroup:
+      "Group “{{group}}” needs {{required}} required seats but only {{available}} are available ({{students}}).",
+    autoAssignReportUnknownGroup: "Unknown group",
+    autoAssignReportNoValidSeatStudent:
+      "{{student}} in {{group}} has {{candidates}} of {{total}} seats left after rule filtering.",
+    autoAssignReportLockedSeat: "{{student}} locked to desk {{desk}} ({{zone}}).",
+    autoAssignReportNoZone: "no zone",
+    autoAssignReportConflictingConstraints:
+      "{{count}} required rule(s) conflict with locked seats.",
+    autoAssignReportDuplicateStudents: "Duplicate students: {{students}}.",
+    autoAssignReportDuplicateDesks: "{{count}} desk(s) used more than once.",
+    autoAssignReportConstraintParity: "Parity and rules conflict for {{students}}.",
+    autoAssignReportSearchExhaustedWhat:
+      "The solver ran out of search time before proving a cause.",
+    autoAssignReportWhyNoValidSeat:
+      "Seats eliminated by parity: {{parity}}, zone rules: {{zone}}, already occupied: {{occupied}}.",
+    autoAssignReportWhyCapacity:
+      "More students are required by “must” rules than there are open seats in at least one group.",
+    autoAssignReportWhyUnavailableStudents:
+      "必須ルールが、クラス名簿にいない、グループ未所属、またはグループボードにいない生徒を参照しています。",
+    autoAssignReportWhySearchStudents: "{{count}} movable students in this run",
+    autoAssignReportWhySearchConstraints: "{{count}} seating rules",
+    autoAssignReportWhySearchSlots: "{{count}} desk slots on the layout",
+    autoAssignReportWhyParityLocked:
+      "Locked students must sit on desks matching parity ({{direction}}).",
+    autoAssignReportWhyConstraintParity:
+      "No assignment satisfies all required rules with parity set to {{direction}}.",
+    autoAssignReportWhyGeneric: "The current rules and layout cannot all be satisfied.",
+    autoAssignReportParityMalesOdd: "males on odd desks",
+    autoAssignReportParityMalesEven: "males on even desks",
+    autoAssignReportParityOn: "On ({{direction}})",
+    autoAssignReportParityOff: "Off",
+    autoAssignReportSettingsParity: "Gender parity: {{mode}}",
+    autoAssignReportSettingsCounts:
+      "{{students}} students, {{seats}} seats, {{constraints}} rules, {{locked}} locked.",
+    autoAssignReportSettingsLocked: "{{count}} locked seat(s) in this run.",
+    autoAssignReportFixAssignGroup: "Assign student to a group",
+    autoAssignReportFixEditConstraint: "Edit seating rule",
+    autoAssignReportFixEditLayout: "Edit layout",
+    autoAssignReportFixEditChart: "Edit seating chart",
     chartsDescription: "生徒を机に手動で配置し、座席の履歴を記録します。",
     createChart: "新しい座席表",
     createChartTitle: "新しい座席表",
@@ -2474,6 +2582,7 @@ const ja = {
     constraintStudentsMustDiffer: "異なる二人の生徒を選んでください。",
     constraintZoneRequired: "ゾーンを選択してください。",
     constraintUnknownStudent: "不明な生徒",
+    constraintRemovedStudent: "削除された生徒",
     constraintRelationNeighbor: "隣",
     constraintRelationTeammate: "チームメイト",
     constraintSummaryPair: "{{student}} は {{other}} の{{relation}}で{{polarity}}",

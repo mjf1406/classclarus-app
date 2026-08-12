@@ -8,10 +8,18 @@ import {
   finishSeatingAlgorithm,
   prepareSeatingAlgorithmInput,
 } from "../../../../convex/lib/seating/pipeline";
-import type { GenderParityMode } from "../../../../convex/lib/seating/types";
+import {
+  applySeatingRelaxations,
+  diagnoseSeatingConflicts,
+} from "../../../../convex/lib/seating/diagnose";
+import type {
+  GenderParityMode,
+  SeatingConflictDiagnosis,
+  SeatingRelaxations,
+} from "../../../../convex/lib/seating/types";
 import { teamHistoryKey } from "../../../../convex/lib/seating/historyKeys";
 import type { Doc } from "../../../../convex/_generated/dataModel";
-import type { GroupsBoard } from "@/lib/groups/groups";
+import { collectAllStudents, type GroupsBoard } from "@/lib/groups/groups";
 import type { SeatChartAssignment } from "@/lib/assigners/seatCharts";
 
 export type ClientSeatConstraint = {
@@ -38,6 +46,16 @@ export type RunClientSeatingAlgorithmArgs = {
     Pick<Doc<"seatLayoutAggregates">, "studentUserId" | "dimension" | "key" | "count">
   >;
   randomSeed?: string;
+  /** Temporary relaxations for this attempt only — saved constraints are unchanged. */
+  relaxations?: SeatingRelaxations;
+};
+
+export type RunClientSeatingAlgorithmFailure = {
+  status: "invalid";
+  message: string;
+  code: string;
+  diagnosis: SeatingConflictDiagnosis;
+  solverStudentIds: Array<Id<"users">>;
 };
 
 export type RunClientSeatingAlgorithmResult =
@@ -46,8 +64,9 @@ export type RunClientSeatingAlgorithmResult =
       assignments: Array<SeatChartAssignment>;
       unseatedStudentIds: Array<Id<"users">>;
       violationCount: number;
+      appliedRelaxations?: SeatingRelaxations;
     }
-  | { status: "invalid"; message: string; code: string };
+  | RunClientSeatingAlgorithmFailure;
 
 function membershipsFromBoard(board: GroupsBoard): Array<GroupMembershipRow> {
   const byStudent = new Map<Id<"users">, GroupMembershipRow>();
@@ -94,6 +113,21 @@ function genderByStudentFromBoard(
   return map;
 }
 
+/** Drop rules that reference students no longer present on the groups board. */
+export function filterConstraintsForBoard(
+  constraints: ReadonlyArray<ClientSeatConstraint>,
+  board: GroupsBoard,
+): Array<ClientSeatConstraint> {
+  const boardStudentIds = new Set(collectAllStudents(board).map((student) => student.userId));
+  return constraints.filter((constraint) => {
+    if (!boardStudentIds.has(constraint.studentUserId)) return false;
+    if (constraint.otherStudentUserId && !boardStudentIds.has(constraint.otherStudentUserId)) {
+      return false;
+    }
+    return true;
+  });
+}
+
 function resolveTeamIdFromBoard(
   board: GroupsBoard,
   groupId: Id<"groups">,
@@ -123,6 +157,7 @@ function resolveTeamIdFromBoard(
 export function runClientSeatingAlgorithm(
   args: RunClientSeatingAlgorithmArgs,
 ): RunClientSeatingAlgorithmResult {
+  const activeConstraints = filterConstraintsForBoard(args.constraints, args.board);
   const memberships = membershipsFromBoard(args.board);
   const rosterGenderByStudent = genderByStudentFromBoard(args.board);
   const lockedAssignments = args.lockedAssignments.map((assignment) => ({
@@ -144,7 +179,7 @@ export function runClientSeatingAlgorithm(
     scope: { kind: "class" },
     randomSeed,
     genderParityMode,
-    constraints: args.constraints,
+    constraints: activeConstraints,
     memberships,
     rosterGenderByStudent,
     layoutAggregateRows: args.layoutAggregateRows,
@@ -159,14 +194,25 @@ export function runClientSeatingAlgorithm(
     },
   });
 
+  const relaxedInput = args.relaxations ? applySeatingRelaxations(input, args.relaxations) : input;
+
   const result = finishSeatingAlgorithm({
-    input,
-    lockedAssignments,
+    input: relaxedInput,
+    lockedAssignments: relaxedInput.locked,
     memberships,
     deskById,
   });
 
-  if (result.status !== "ok") return result;
+  if (result.status !== "ok") {
+    const diagnosis = diagnoseSeatingConflicts(relaxedInput);
+    return {
+      status: "invalid",
+      message: result.message,
+      code: result.code,
+      diagnosis,
+      solverStudentIds: relaxedInput.students.map((student) => student.studentUserId),
+    };
+  }
 
   return {
     status: "ok",
@@ -177,5 +223,6 @@ export function runClientSeatingAlgorithm(
     })),
     unseatedStudentIds: result.unseatedStudentIds,
     violationCount: result.violationCount,
+    ...(args.relaxations ? { appliedRelaxations: args.relaxations } : {}),
   };
 }

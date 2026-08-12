@@ -2268,6 +2268,108 @@ const zhs = {
     autoAssignNotImplemented: "自动分配尚不可用。",
     autoAssignInfeasible: "无法满足所有座位规则。",
     autoAssignSearchExhausted: "未找到有效的座位安排。请重试或调整座位规则。",
+    autoAssignFailureTitle: "无法自动分配座位",
+    autoAssignFailureGeneric: "在当前布局和设置下无法满足所有座位规则。",
+    autoAssignFailureMinimalConflict:
+      "这些规则相互冲突。您可以仅为本图表临时放宽所选规则，或编辑已保存的规则。",
+    autoAssignFailureUnknown: "自动分配未能完成。请重试或手动检查布局和座位规则。",
+    autoAssignFailureUnknownSearch:
+      "在安全搜索限制内未找到有效座位安排。请重试或手动检查布局和座位规则。",
+    autoAssignFailureUnknownTitle: "未能确定精确冲突",
+    autoAssignFailureUnknownHint:
+      "求解器无法证明哪些规则发生冲突。这在较大班级中可能发生。请重试或手动检查规则和布局。",
+    autoAssignFailureConflictSetTitle: "冲突规则",
+    autoAssignFailureConflictSetHint: "这是无法同时满足的最小规则集合。可能存在其他冲突集合。",
+    autoAssignFailureRelaxLabel: "仅对本图表临时放宽",
+    autoAssignFailureRetry: "重试",
+    autoAssignFailureGenerateExceptions: "按例外生成",
+    autoAssignFailureEditConstraints: "编辑规则",
+    autoAssignFailureEditLayout: "编辑布局",
+    autoAssignExceptionGenderParity: "奇偶性别配对",
+    autoAssignExceptionLockedSeat: "{{student}} 的固定座位",
+    autoAssignExceptionMissingConstraint: "座位规则（已不可用）",
+    autoAssignRecordExceptionsTitle: "临时例外",
+    autoAssignRecordExceptionsDescription:
+      "本图表在临时忽略以下规则的情况下生成。已保存的班级规则未更改。",
+    autoAssignStructural_unavailableSeat: "手动安排的学生被分配到本布局上不可用的座位。",
+    autoAssignStructural_duplicateManual: "手动安排重复使用同一学生或座位。",
+    autoAssignStructural_capacityExceeded: "必需规则需要的座位数超过组内可用座位。",
+    autoAssignStructural_unavailableStudent: "必需规则引用了本次运行无法就座的学生。",
+    autoAssignStructural_noValidSeat: "应用规则和性别配对后，至少有一名学生在无有效座位。",
+    autoAssignStructural_manualConstraintConflict: "手动安排与必需座位规则冲突。",
+    autoAssignStructural_parityLockedConflict:
+      "A locked seat conflicts with odd/even gender parity for that desk.",
+    autoAssignStructural_constraintParityConflict:
+      "The seating rules and odd/even parity cannot all be satisfied together.",
+    autoAssignReportSummaryTitle: "Summary",
+    autoAssignReportNoNamedStudents: "affected students",
+    autoAssignReportSummary_unavailableSeat:
+      "{{students}} cannot be seated because a locked seat is not on this layout.",
+    autoAssignReportSummary_duplicateManual:
+      "Manual seating has duplicate students or seats ({{students}}).",
+    autoAssignReportSummary_capacityExceeded:
+      "Required rules need more seats than available for {{students}}.",
+    autoAssignReportSummary_unavailableStudent:
+      "{{students}} are referenced by required rules but cannot be seated in this run.",
+    autoAssignReportSummary_noValidSeat:
+      "{{students}} have no valid seat after applying rules and parity.",
+    autoAssignReportSummary_manualConstraintConflict:
+      "Locked seating conflicts with required rules for {{students}}.",
+    autoAssignReportSummary_parityLockedConflict:
+      "Locked seats conflict with gender parity for {{students}}.",
+    autoAssignReportSummary_constraintParityConflict: "Rules and parity conflict for {{students}}.",
+    autoAssignReportWhatTitle: "What happened",
+    autoAssignReportWhyTitle: "Why",
+    autoAssignReportSettingsTitle: "Current settings",
+    autoAssignReportFixTitle: "How to fix it",
+    autoAssignReportStudentUnknown: "Unknown student",
+    autoAssignReportStudentUngrouped: "Not assigned to a group",
+    autoAssignReportStudentNotOnBoard: "Not on the groups board",
+    autoAssignReportStudentStaleRoster: "No longer on the class roster",
+    autoAssignReportStudentInGroup: "In group {{group}}",
+    autoAssignReportStudentGrouped: "On the groups board",
+    autoAssignReportRole_primary: "primary student",
+    autoAssignReportRole_other: "other student",
+    autoAssignReportCapacityGroup:
+      "Group “{{group}}” needs {{required}} required seats but only {{available}} are available ({{students}}).",
+    autoAssignReportUnknownGroup: "Unknown group",
+    autoAssignReportNoValidSeatStudent:
+      "{{student}} in {{group}} has {{candidates}} of {{total}} seats left after rule filtering.",
+    autoAssignReportLockedSeat: "{{student}} locked to desk {{desk}} ({{zone}}).",
+    autoAssignReportNoZone: "no zone",
+    autoAssignReportConflictingConstraints:
+      "{{count}} required rule(s) conflict with locked seats.",
+    autoAssignReportDuplicateStudents: "Duplicate students: {{students}}.",
+    autoAssignReportDuplicateDesks: "{{count}} desk(s) used more than once.",
+    autoAssignReportConstraintParity: "Parity and rules conflict for {{students}}.",
+    autoAssignReportSearchExhaustedWhat:
+      "The solver ran out of search time before proving a cause.",
+    autoAssignReportWhyNoValidSeat:
+      "Seats eliminated by parity: {{parity}}, zone rules: {{zone}}, already occupied: {{occupied}}.",
+    autoAssignReportWhyCapacity:
+      "More students are required by “must” rules than there are open seats in at least one group.",
+    autoAssignReportWhyUnavailableStudents:
+      "必填规则仍引用已不在班级名册中、未分组或不在分组板上的学生。",
+    autoAssignReportWhySearchStudents: "{{count}} movable students in this run",
+    autoAssignReportWhySearchConstraints: "{{count}} seating rules",
+    autoAssignReportWhySearchSlots: "{{count}} desk slots on the layout",
+    autoAssignReportWhyParityLocked:
+      "Locked students must sit on desks matching parity ({{direction}}).",
+    autoAssignReportWhyConstraintParity:
+      "No assignment satisfies all required rules with parity set to {{direction}}.",
+    autoAssignReportWhyGeneric: "The current rules and layout cannot all be satisfied.",
+    autoAssignReportParityMalesOdd: "males on odd desks",
+    autoAssignReportParityMalesEven: "males on even desks",
+    autoAssignReportParityOn: "On ({{direction}})",
+    autoAssignReportParityOff: "Off",
+    autoAssignReportSettingsParity: "Gender parity: {{mode}}",
+    autoAssignReportSettingsCounts:
+      "{{students}} students, {{seats}} seats, {{constraints}} rules, {{locked}} locked.",
+    autoAssignReportSettingsLocked: "{{count}} locked seat(s) in this run.",
+    autoAssignReportFixAssignGroup: "Assign student to a group",
+    autoAssignReportFixEditConstraint: "Edit seating rule",
+    autoAssignReportFixEditLayout: "Edit layout",
+    autoAssignReportFixEditChart: "Edit seating chart",
     chartsDescription: "手动将学生安排到课桌，并记录座位历史。",
     createChart: "新建座位表",
     createChartTitle: "新建座位表",
@@ -2402,6 +2504,7 @@ const zhs = {
     constraintStudentsMustDiffer: "请选择两名不同的学生。",
     constraintZoneRequired: "请选择一个区域。",
     constraintUnknownStudent: "未知学生",
+    constraintRemovedStudent: "已移除的学生",
     constraintRelationNeighbor: "邻座",
     constraintRelationTeammate: "队友",
     constraintSummaryPair: "{{student}} {{polarity}} 是 {{other}} 的{{relation}}",

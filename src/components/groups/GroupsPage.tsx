@@ -62,6 +62,7 @@ import type { Id } from "../../../convex/_generated/dataModel";
 
 type GroupsPageProps = {
   classId: Id<"classes">;
+  focusStudentId?: Id<"users">;
 };
 
 type NamedFormState =
@@ -113,7 +114,7 @@ function parseDropTarget(overId: string | number | undefined): DropTarget | null
   return null;
 }
 
-export function GroupsPage({ classId }: GroupsPageProps) {
+export function GroupsPage({ classId, focusStudentId }: GroupsPageProps) {
   const { t } = useTranslation("classes");
   const { can, isPending: permissionsPending } = useCan();
   const canManage = !permissionsPending && can("groups:manage");
@@ -130,6 +131,16 @@ export function GroupsPage({ classId }: GroupsPageProps) {
   const { data: currentUser } = useCurrentUser();
   const logAccess = useLogClassAccess();
   const [exportPending, setExportPending] = useState(false);
+
+  useEffect(() => {
+    if (!focusStudentId || !data) return;
+    const frame = requestAnimationFrame(() => {
+      document
+        .querySelector(`[data-focus-student="${focusStudentId}"]`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [focusStudentId, data]);
   const viewerUserId = currentUser?._id ?? null;
   const viewerOnBoard = useMemo(
     () => (data && viewerUserId ? findStudentOnBoard(data, viewerUserId) != null : false),
@@ -542,6 +553,7 @@ export function GroupsPage({ classId }: GroupsPageProps) {
                   emptyLabel={t("groupsUngroupedEmpty")}
                   hiddenStudentId={hiddenStudentId}
                   viewerUserId={viewerOnBoard ? viewerUserId : null}
+                  focusStudentId={focusStudentId ?? null}
                   nameFormat={nameFormat}
                 />
               </aside>
@@ -577,6 +589,7 @@ export function GroupsPage({ classId }: GroupsPageProps) {
                       canCopyTeam={data.groups.length > 1}
                       hiddenStudentId={hiddenStudentId}
                       viewerUserId={viewerOnBoard ? viewerUserId : null}
+                      focusStudentId={focusStudentId ?? null}
                       nameFormat={nameFormat}
                       onAddAllUngrouped={
                         canManage && data.ungrouped.length > 0

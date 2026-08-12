@@ -20,6 +20,7 @@ type StudentDropZoneProps = {
   hiddenStudentId?: Id<"users"> | null;
   /** Signed-in user id — their chip is highlighted when present. */
   viewerUserId?: Id<"users"> | null;
+  focusStudentId?: Id<"users"> | null;
   nameFormat?: RosterNameFormat;
 };
 
@@ -34,6 +35,7 @@ export function StudentDropZone({
   disabled = false,
   hiddenStudentId = null,
   viewerUserId = null,
+  focusStudentId = null,
   nameFormat = DEFAULT_ROSTER_NAME_FORMAT,
 }: StudentDropZoneProps) {
   const { setNodeRef, isOver } = useDroppable({
@@ -65,6 +67,7 @@ export function StudentDropZone({
             canDrag={canManage}
             hidden={hiddenStudentId === student.userId}
             isSelf={viewerUserId != null && student.userId === viewerUserId}
+            focused={focusStudentId != null && student.userId === focusStudentId}
             nameFormat={nameFormat}
           />
         ))

@@ -2270,6 +2270,109 @@ const th = {
     autoAssignNotImplemented: "ยังไม่มีการจัดอัตโนมัติ",
     autoAssignInfeasible: "ไม่สามารถปฏิบัติตามกฎการจัดที่นั่งทั้งหมดได้",
     autoAssignSearchExhausted: "ไม่พบการจัดที่นั่งที่ถูกต้อง โปรดลองอีกครั้งหรือปรับกฎการจัดที่นั่ง",
+    autoAssignFailureTitle: "ไม่สามารถจัดที่นั่งอัตโนมัติได้",
+    autoAssignFailureGeneric: "ไม่สามารถปฏิบัติตามกฎการจัดที่นั่งทั้งหมดด้วยเลย์เอาต์และการตั้งค่าปัจจุบัน",
+    autoAssignFailureMinimalConflict:
+      "กฎเหล่านี้ขัดแย้งกัน คุณสามารถผ่อนปรนกฎที่เลือกชั่วคราวสำหรับแผนนี้เท่านั้น หรือแก้ไขกฎที่บันทึกไว้",
+    autoAssignFailureUnknown: "การจัดอัตโนมัติไม่เสร็จสมบูรณ์ โปรดลองอีกครั้งหรือตรวจสอบเลย์เอาต์และกฎด้วยตนเอง",
+    autoAssignFailureUnknownSearch:
+      "ไม่พบการจัดที่นั่งที่ถูกต้องภายในขีดจำกัดการค้นหาที่ปลอดภัย โปรดลองอีกครั้งหรือตรวจสอบเลย์เอาต์และกฎด้วยตนเอง",
+    autoAssignFailureUnknownTitle: "ไม่สามารถระบุความขัดแย้งที่แน่ชัดได้",
+    autoAssignFailureUnknownHint:
+      "ตัวแก้ปัญหาไม่สามารถพิสูจน์ได้ว่ากฎใดขัดแย้งกัน อาจเกิดขึ้นในชั้นเรียนขนาดใหญ่ โปรดลองอีกครั้งหรือตรวจสอบกฎและเลย์เอาต์ด้วยตนเอง",
+    autoAssignFailureConflictSetTitle: "กฎที่ขัดแย้งกัน",
+    autoAssignFailureConflictSetHint: "นี่คือชุดกฎขนาดเล็กที่สุดที่ไม่สามารถปฏิบัติตามได้พร้อมกัน อาจมีชุดที่ขัดแย้งอื่นอยู่",
+    autoAssignFailureRelaxLabel: "ผ่อนปรนชั่วคราวสำหรับแผนนี้",
+    autoAssignFailureRetry: "ลองอีกครั้ง",
+    autoAssignFailureGenerateExceptions: "สร้างพร้อมข้อยกเว้น",
+    autoAssignFailureEditConstraints: "แก้ไขกฎ",
+    autoAssignFailureEditLayout: "แก้ไขเลย์เอาต์",
+    autoAssignExceptionGenderParity: "ความเท่าเทียมเพศคู่/คี่",
+    autoAssignExceptionLockedSeat: "ที่นั่งล็อกสำหรับ {{student}}",
+    autoAssignExceptionMissingConstraint: "กฎการจัดที่นั่ง (ไม่พร้อมใช้งานแล้ว)",
+    autoAssignRecordExceptionsTitle: "ข้อยกเว้นชั่วคราว",
+    autoAssignRecordExceptionsDescription:
+      "แผนนี้ถูกสร้างโดยข้ามกฎด้านล่างชั่วคราว กฎของชั้นเรียนที่บันทึกไว้ไม่ได้เปลี่ยนแปลง",
+    autoAssignStructural_unavailableSeat: "นักเรียนที่จัดด้วยตนเองถูกกำหนดให้กับที่นั่งที่ไม่พร้อมใช้งานในเลย์เอาต์นี้",
+    autoAssignStructural_duplicateManual: "การจัดด้วยตนเองใช้นักเรียนหรือที่นั่งเดียวกันมากกว่าหนึ่งครั้ง",
+    autoAssignStructural_capacityExceeded: "กฎที่จำเป็นต้องการที่นั่งมากกว่าที่มีในกลุ่ม",
+    autoAssignStructural_unavailableStudent: "กฎที่จำเป็นอ้างอิงนักเรียนที่ไม่สามารถจัดที่นั่งในการรันครั้งนี้",
+    autoAssignStructural_noValidSeat:
+      "มีนักเรียนอย่างน้อยหนึ่งคนที่ไม่มีที่นั่งที่ถูกต้องหลังใช้กฎและการตั้งค่าความเท่าเทียม",
+    autoAssignStructural_manualConstraintConflict: "การจัดด้วยตนเองขัดแย้งกับกฎที่จำเป็น",
+    autoAssignStructural_parityLockedConflict:
+      "A locked seat conflicts with odd/even gender parity for that desk.",
+    autoAssignStructural_constraintParityConflict:
+      "The seating rules and odd/even parity cannot all be satisfied together.",
+    autoAssignReportSummaryTitle: "Summary",
+    autoAssignReportNoNamedStudents: "affected students",
+    autoAssignReportSummary_unavailableSeat:
+      "{{students}} cannot be seated because a locked seat is not on this layout.",
+    autoAssignReportSummary_duplicateManual:
+      "Manual seating has duplicate students or seats ({{students}}).",
+    autoAssignReportSummary_capacityExceeded:
+      "Required rules need more seats than available for {{students}}.",
+    autoAssignReportSummary_unavailableStudent:
+      "{{students}} are referenced by required rules but cannot be seated in this run.",
+    autoAssignReportSummary_noValidSeat:
+      "{{students}} have no valid seat after applying rules and parity.",
+    autoAssignReportSummary_manualConstraintConflict:
+      "Locked seating conflicts with required rules for {{students}}.",
+    autoAssignReportSummary_parityLockedConflict:
+      "Locked seats conflict with gender parity for {{students}}.",
+    autoAssignReportSummary_constraintParityConflict: "Rules and parity conflict for {{students}}.",
+    autoAssignReportWhatTitle: "What happened",
+    autoAssignReportWhyTitle: "Why",
+    autoAssignReportSettingsTitle: "Current settings",
+    autoAssignReportFixTitle: "How to fix it",
+    autoAssignReportStudentUnknown: "Unknown student",
+    autoAssignReportStudentUngrouped: "Not assigned to a group",
+    autoAssignReportStudentNotOnBoard: "Not on the groups board",
+    autoAssignReportStudentStaleRoster: "No longer on the class roster",
+    autoAssignReportStudentInGroup: "In group {{group}}",
+    autoAssignReportStudentGrouped: "On the groups board",
+    autoAssignReportRole_primary: "primary student",
+    autoAssignReportRole_other: "other student",
+    autoAssignReportCapacityGroup:
+      "Group “{{group}}” needs {{required}} required seats but only {{available}} are available ({{students}}).",
+    autoAssignReportUnknownGroup: "Unknown group",
+    autoAssignReportNoValidSeatStudent:
+      "{{student}} in {{group}} has {{candidates}} of {{total}} seats left after rule filtering.",
+    autoAssignReportLockedSeat: "{{student}} locked to desk {{desk}} ({{zone}}).",
+    autoAssignReportNoZone: "no zone",
+    autoAssignReportConflictingConstraints:
+      "{{count}} required rule(s) conflict with locked seats.",
+    autoAssignReportDuplicateStudents: "Duplicate students: {{students}}.",
+    autoAssignReportDuplicateDesks: "{{count}} desk(s) used more than once.",
+    autoAssignReportConstraintParity: "Parity and rules conflict for {{students}}.",
+    autoAssignReportSearchExhaustedWhat:
+      "The solver ran out of search time before proving a cause.",
+    autoAssignReportWhyNoValidSeat:
+      "Seats eliminated by parity: {{parity}}, zone rules: {{zone}}, already occupied: {{occupied}}.",
+    autoAssignReportWhyCapacity:
+      "More students are required by “must” rules than there are open seats in at least one group.",
+    autoAssignReportWhyUnavailableStudents:
+      "กฎที่จำเป็นยังอ้างอิงนักเรียนที่ไม่อยู่ในรายชื่อชั้นเรียน ไม่ได้อยู่ในกลุ่ม หรือไม่อยู่บนบอร์ดกลุ่ม",
+    autoAssignReportWhySearchStudents: "{{count}} movable students in this run",
+    autoAssignReportWhySearchConstraints: "{{count}} seating rules",
+    autoAssignReportWhySearchSlots: "{{count}} desk slots on the layout",
+    autoAssignReportWhyParityLocked:
+      "Locked students must sit on desks matching parity ({{direction}}).",
+    autoAssignReportWhyConstraintParity:
+      "No assignment satisfies all required rules with parity set to {{direction}}.",
+    autoAssignReportWhyGeneric: "The current rules and layout cannot all be satisfied.",
+    autoAssignReportParityMalesOdd: "males on odd desks",
+    autoAssignReportParityMalesEven: "males on even desks",
+    autoAssignReportParityOn: "On ({{direction}})",
+    autoAssignReportParityOff: "Off",
+    autoAssignReportSettingsParity: "Gender parity: {{mode}}",
+    autoAssignReportSettingsCounts:
+      "{{students}} students, {{seats}} seats, {{constraints}} rules, {{locked}} locked.",
+    autoAssignReportSettingsLocked: "{{count}} locked seat(s) in this run.",
+    autoAssignReportFixAssignGroup: "Assign student to a group",
+    autoAssignReportFixEditConstraint: "Edit seating rule",
+    autoAssignReportFixEditLayout: "Edit layout",
+    autoAssignReportFixEditChart: "Edit seating chart",
     chartsDescription: "จัดนักเรียนลงโต๊ะด้วยตนเองและบันทึกประวัติที่นั่ง",
     createChart: "ผังใหม่",
     createChartTitle: "ผังที่นั่งใหม่",
@@ -2405,6 +2508,7 @@ const th = {
     constraintStudentsMustDiffer: "เลือกนักเรียนสองคนที่ต่างกัน",
     constraintZoneRequired: "เลือกโซน",
     constraintUnknownStudent: "ไม่ทราบชื่อนักเรียน",
+    constraintRemovedStudent: "นักเรียนที่ถูกลบ",
     constraintRelationNeighbor: "เพื่อนบ้าน",
     constraintRelationTeammate: "เพื่อนร่วมทีม",
     constraintSummaryPair: "{{student}} {{polarity}} เป็น{{relation}}ของ {{other}}",

@@ -1,5 +1,5 @@
 import { ListChecks, Plus } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { AssignersSeatsShell } from "@/components/assigners/AssignersSeatsShell";
@@ -37,9 +37,13 @@ import type { Id } from "../../../convex/_generated/dataModel";
 
 type AssignersSeatsConstraintsPageProps = {
   classId: Id<"classes">;
+  focusConstraintId?: Id<"seatConstraints">;
 };
 
-export function AssignersSeatsConstraintsPage({ classId }: AssignersSeatsConstraintsPageProps) {
+export function AssignersSeatsConstraintsPage({
+  classId,
+  focusConstraintId,
+}: AssignersSeatsConstraintsPageProps) {
   const { t } = useTranslation("assigners");
   const { t: tClasses } = useTranslation("classes");
   const { can } = useCan();
@@ -60,6 +64,12 @@ export function AssignersSeatsConstraintsPage({ classId }: AssignersSeatsConstra
   const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<SeatConstraint | null>(null);
   const [deleting, setDeleting] = useState<SeatConstraint | null>(null);
+
+  useEffect(() => {
+    if (!focusConstraintId || !data) return;
+    const match = data.find((constraint) => constraint._id === focusConstraintId);
+    if (match) setEditing(match);
+  }, [focusConstraintId, data]);
 
   const nameFormat = resolveRosterNameFormat(classDoc ?? {});
   const unnamed = tClasses("unnamedMember");

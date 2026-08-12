@@ -2361,6 +2361,117 @@ const ru = {
     autoAssignInfeasible: "Невозможно выполнить все правила рассадки.",
     autoAssignSearchExhausted:
       "Допустимая рассадка не найдена. Повторите попытку или измените правила.",
+    autoAssignFailureTitle: "Не удалось автоматически расставить места",
+    autoAssignFailureGeneric:
+      "Правила рассадки не могут быть выполнены с текущей схемой и настройками.",
+    autoAssignFailureMinimalConflict:
+      "Эти правила конфликтуют. Можно временно ослабить выбранные правила только для этой схемы или изменить сохранённые правила.",
+    autoAssignFailureUnknown:
+      "Автоматическая расстановка не завершена. Повторите попытку или проверьте схему и правила вручную.",
+    autoAssignFailureUnknownSearch:
+      "В пределах безопасного лимита поиска допустимая рассадка не найдена. Повторите попытку или проверьте схему и правила вручную.",
+    autoAssignFailureUnknownTitle: "Точный конфликт не определён",
+    autoAssignFailureUnknownHint:
+      "Решатель не смог доказать, какие правила конфликтуют. Это возможно в больших классах. Повторите попытку или проверьте правила и схему вручную.",
+    autoAssignFailureConflictSetTitle: "Конфликтующие правила",
+    autoAssignFailureConflictSetHint:
+      "Это минимальный набор правил, которые нельзя выполнить одновременно. Возможны другие конфликтующие наборы.",
+    autoAssignFailureRelaxLabel: "Временно ослабить для этой схемы",
+    autoAssignFailureRetry: "Повторить",
+    autoAssignFailureGenerateExceptions: "Сгенерировать с исключениями",
+    autoAssignFailureEditConstraints: "Изменить правила",
+    autoAssignFailureEditLayout: "Изменить схему",
+    autoAssignExceptionGenderParity: "Чётная/нечётная гендерная паритетность",
+    autoAssignExceptionLockedSeat: "Закреплённое место для {{student}}",
+    autoAssignExceptionMissingConstraint: "Правило рассадки (больше недоступно)",
+    autoAssignRecordExceptionsTitle: "Временные исключения",
+    autoAssignRecordExceptionsDescription:
+      "Эта схема создана с временным игнорированием правил ниже. Сохранённые правила класса не изменены.",
+    autoAssignStructural_unavailableSeat:
+      "Вручную посаженный ученик назначен на место, недоступное в этой схеме.",
+    autoAssignStructural_duplicateManual:
+      "Ручная рассадка использует одного ученика или место более одного раза.",
+    autoAssignStructural_capacityExceeded:
+      "Обязательным правилам нужно больше мест, чем доступно в группе.",
+    autoAssignStructural_unavailableStudent:
+      "Обязательное правило ссылается на ученика, которого нельзя посадить в этом запуске.",
+    autoAssignStructural_noValidSeat:
+      "Как минимум у одного ученика нет допустимого места после применения правил и паритетности.",
+    autoAssignStructural_manualConstraintConflict:
+      "Ручная рассадка конфликтует с обязательным правилом.",
+    autoAssignStructural_parityLockedConflict:
+      "A locked seat conflicts with odd/even gender parity for that desk.",
+    autoAssignStructural_constraintParityConflict:
+      "The seating rules and odd/even parity cannot all be satisfied together.",
+    autoAssignReportSummaryTitle: "Summary",
+    autoAssignReportNoNamedStudents: "affected students",
+    autoAssignReportSummary_unavailableSeat:
+      "{{students}} cannot be seated because a locked seat is not on this layout.",
+    autoAssignReportSummary_duplicateManual:
+      "Manual seating has duplicate students or seats ({{students}}).",
+    autoAssignReportSummary_capacityExceeded:
+      "Required rules need more seats than available for {{students}}.",
+    autoAssignReportSummary_unavailableStudent:
+      "{{students}} are referenced by required rules but cannot be seated in this run.",
+    autoAssignReportSummary_noValidSeat:
+      "{{students}} have no valid seat after applying rules and parity.",
+    autoAssignReportSummary_manualConstraintConflict:
+      "Locked seating conflicts with required rules for {{students}}.",
+    autoAssignReportSummary_parityLockedConflict:
+      "Locked seats conflict with gender parity for {{students}}.",
+    autoAssignReportSummary_constraintParityConflict: "Rules and parity conflict for {{students}}.",
+    autoAssignReportWhatTitle: "What happened",
+    autoAssignReportWhyTitle: "Why",
+    autoAssignReportSettingsTitle: "Current settings",
+    autoAssignReportFixTitle: "How to fix it",
+    autoAssignReportStudentUnknown: "Unknown student",
+    autoAssignReportStudentUngrouped: "Not assigned to a group",
+    autoAssignReportStudentNotOnBoard: "Not on the groups board",
+    autoAssignReportStudentStaleRoster: "No longer on the class roster",
+    autoAssignReportStudentInGroup: "In group {{group}}",
+    autoAssignReportStudentGrouped: "On the groups board",
+    autoAssignReportRole_primary: "primary student",
+    autoAssignReportRole_other: "other student",
+    autoAssignReportCapacityGroup:
+      "Group “{{group}}” needs {{required}} required seats but only {{available}} are available ({{students}}).",
+    autoAssignReportUnknownGroup: "Unknown group",
+    autoAssignReportNoValidSeatStudent:
+      "{{student}} in {{group}} has {{candidates}} of {{total}} seats left after rule filtering.",
+    autoAssignReportLockedSeat: "{{student}} locked to desk {{desk}} ({{zone}}).",
+    autoAssignReportNoZone: "no zone",
+    autoAssignReportConflictingConstraints:
+      "{{count}} required rule(s) conflict with locked seats.",
+    autoAssignReportDuplicateStudents: "Duplicate students: {{students}}.",
+    autoAssignReportDuplicateDesks: "{{count}} desk(s) used more than once.",
+    autoAssignReportConstraintParity: "Parity and rules conflict for {{students}}.",
+    autoAssignReportSearchExhaustedWhat:
+      "The solver ran out of search time before proving a cause.",
+    autoAssignReportWhyNoValidSeat:
+      "Seats eliminated by parity: {{parity}}, zone rules: {{zone}}, already occupied: {{occupied}}.",
+    autoAssignReportWhyCapacity:
+      "More students are required by “must” rules than there are open seats in at least one group.",
+    autoAssignReportWhyUnavailableStudents:
+      "Обязательные правила всё ещё ссылаются на учеников, которых больше нет в списке класса, которые не в группе или отсутствуют на доске групп.",
+    autoAssignReportWhySearchStudents: "{{count}} movable students in this run",
+    autoAssignReportWhySearchConstraints: "{{count}} seating rules",
+    autoAssignReportWhySearchSlots: "{{count}} desk slots on the layout",
+    autoAssignReportWhyParityLocked:
+      "Locked students must sit on desks matching parity ({{direction}}).",
+    autoAssignReportWhyConstraintParity:
+      "No assignment satisfies all required rules with parity set to {{direction}}.",
+    autoAssignReportWhyGeneric: "The current rules and layout cannot all be satisfied.",
+    autoAssignReportParityMalesOdd: "males on odd desks",
+    autoAssignReportParityMalesEven: "males on even desks",
+    autoAssignReportParityOn: "On ({{direction}})",
+    autoAssignReportParityOff: "Off",
+    autoAssignReportSettingsParity: "Gender parity: {{mode}}",
+    autoAssignReportSettingsCounts:
+      "{{students}} students, {{seats}} seats, {{constraints}} rules, {{locked}} locked.",
+    autoAssignReportSettingsLocked: "{{count}} locked seat(s) in this run.",
+    autoAssignReportFixAssignGroup: "Assign student to a group",
+    autoAssignReportFixEditConstraint: "Edit seating rule",
+    autoAssignReportFixEditLayout: "Edit layout",
+    autoAssignReportFixEditChart: "Edit seating chart",
     chartsDescription: "Расставьте учеников по партам вручную и сохраняйте историю рассадки.",
     createChart: "Новая рассадка",
     createChartTitle: "Новая рассадка",
@@ -2501,6 +2612,7 @@ const ru = {
     constraintStudentsMustDiffer: "Выберите двух разных учеников.",
     constraintZoneRequired: "Выберите зону.",
     constraintUnknownStudent: "Неизвестный ученик",
+    constraintRemovedStudent: "Удалённый ученик",
     constraintRelationNeighbor: "соседом",
     constraintRelationTeammate: "товарищем по команде",
     constraintSummaryPair: "{{student}} {{polarity}} быть {{relation}} {{other}}",

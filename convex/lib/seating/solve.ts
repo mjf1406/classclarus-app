@@ -1,11 +1,19 @@
 import type { Id } from "../../_generated/dataModel.js";
 import { slotKey, type ChartAssignment } from "../seatChartGeometry.js";
 import { seatHistoryKey } from "./historyKeys.js";
+import {
+  buildCapacityExceededEvidence,
+  buildNoValidSeatEvidence,
+  buildSearchExhaustedEvidence,
+  buildUnavailableStudentsEvidence,
+  lockedAssignmentEvidence,
+} from "./failureEvidence.js";
 import type {
   SeatingAlgorithmInput,
   SeatingAlgorithmResult,
   SeatingConstraint,
   SeatingDeskSlot,
+  SeatingFailureEvidence,
   SeatingStudent,
 } from "./types.js";
 
@@ -273,7 +281,13 @@ function selectStudents(args: {
   availableSlots: SeatingDeskSlot[];
   lockedIds: ReadonlySet<StudentId>;
   constraints: SeatingConstraint[];
-}): { selected: SeatingStudent[]; unseated: StudentId[] } | { error: string } {
+}):
+  | { selected: SeatingStudent[]; unseated: StudentId[] }
+  | {
+      error: string;
+      evidence: SeatingFailureEvidence;
+      unseatedStudentIds: StudentId[];
+    } {
   const required = new Set<StudentId>();
   for (const constraint of args.constraints) {
     if (constraint.polarity !== "must") continue;
@@ -289,7 +303,18 @@ function selectStudents(args: {
     const capacity = args.availableSlots.filter((slot) => slot.groupId === groupId).length;
     const requiredStudents = groupStudents.filter((student) => required.has(student.studentUserId));
     if (requiredStudents.length > capacity) {
-      return { error: "Required seating constraints exceed the available seats." };
+      const evidence = buildCapacityExceededEvidence({
+        input: args.input,
+        students: args.students,
+        availableSlots: args.availableSlots,
+        lockedIds: args.lockedIds,
+        constraints: args.constraints,
+      });
+      return {
+        error: "Required seating constraints exceed the available seats.",
+        evidence,
+        unseatedStudentIds: requiredStudents.map((student) => student.studentUserId),
+      };
     }
     const optional = groupStudents
       .filter((student) => !required.has(student.studentUserId))
@@ -314,13 +339,21 @@ function selectStudents(args: {
     );
   }
 
+  const missingRequired: StudentId[] = [];
   for (const requiredId of required) {
     if (
       !args.lockedIds.has(requiredId) &&
       !selected.some((student) => student.studentUserId === requiredId)
     ) {
-      return { error: "A required seating constraint references an unavailable student." };
+      missingRequired.push(requiredId);
     }
+  }
+  if (missingRequired.length > 0) {
+    return {
+      error: "A required seating constraint references an unavailable student.",
+      evidence: buildUnavailableStudentsEvidence(missingRequired, args.constraints),
+      unseatedStudentIds: missingRequired,
+    };
   }
   return { selected, unseated };
 }
@@ -502,38 +535,46 @@ export function solveSeating(input: SeatingAlgorithmInput): SeatingAlgorithmResu
   for (const locked of input.locked) {
     const slot = slotByKey.get(slotKey(locked.deskItemId, locked.groupId));
     if (!slot) {
+      const lockEvidence = lockedAssignmentEvidence(locked);
       return {
         status: "infeasible",
         code: "SEATING_INFEASIBLE",
         message: "A manually seated student references an unavailable seat.",
-        unseatedStudentIds: input.students
-          .filter(
-            (student) => !input.locked.some((row) => row.studentUserId === student.studentUserId),
-          )
-          .map((student) => student.studentUserId),
+        unseatedStudentIds: [locked.studentUserId],
+        evidence: {
+          kind: "unavailableSeat",
+          locks: [lockEvidence],
+        },
       };
     }
     if (lockedIds.has(locked.studentUserId) || lockedSlotKeys.has(slotIdentity(slot))) {
+      const duplicateStudentIds = lockedIds.has(locked.studentUserId) ? [locked.studentUserId] : [];
+      const duplicateDeskKeys = lockedSlotKeys.has(slotIdentity(slot)) ? [slotIdentity(slot)] : [];
       return {
         status: "infeasible",
         code: "SEATING_INFEASIBLE",
         message: "Manual seating contains a duplicate student or seat.",
-        unseatedStudentIds: input.students
-          .filter(
-            (student) => !input.locked.some((row) => row.studentUserId === student.studentUserId),
-          )
-          .map((student) => student.studentUserId),
+        unseatedStudentIds: duplicateStudentIds,
+        evidence: {
+          kind: "duplicateManual",
+          duplicateStudentIds,
+          duplicateDeskKeys,
+        },
       };
     }
     const student = studentById.get(locked.studentUserId);
     if (student && !parityAllows(input, student, slot)) {
+      const lockEvidence = lockedAssignmentEvidence(locked, slot.deskNumber, slot.zoneName);
       return {
         status: "infeasible",
         code: "SEATING_INFEASIBLE",
         message: "A manually seated student conflicts with odd/even gender parity.",
-        unseatedStudentIds: input.students
-          .filter((item) => !input.locked.some((row) => row.studentUserId === item.studentUserId))
-          .map((item) => item.studentUserId),
+        unseatedStudentIds: [locked.studentUserId],
+        evidence: {
+          kind: "parityLockedConflict",
+          locks: [lockEvidence],
+          malesOnOddDesks: input.genderParityAssignment.malesOnOddDesks,
+        },
       };
     }
     lockedIds.add(locked.studentUserId);
@@ -559,7 +600,8 @@ export function solveSeating(input: SeatingAlgorithmInput): SeatingAlgorithmResu
       status: "infeasible",
       code: "SEATING_INFEASIBLE",
       message: selection.error,
-      unseatedStudentIds: movableStudents.map((student) => student.studentUserId),
+      unseatedStudentIds: selection.unseatedStudentIds,
+      evidence: selection.evidence,
     };
   }
 
@@ -570,14 +612,19 @@ export function solveSeating(input: SeatingAlgorithmInput): SeatingAlgorithmResu
       unaryDomainAllows(input, student, slot, constraints),
     );
     if (domain.length === 0) {
+      const evidence = buildNoValidSeatEvidence({
+        input,
+        student,
+        availableSlots,
+        constraints,
+        occupiedSlotKeys: occupiedLockedSlots,
+      });
       return {
         status: "infeasible",
         code: "SEATING_INFEASIBLE",
         message: "No valid seat is available for at least one student.",
-        unseatedStudentIds: [
-          student.studentUserId,
-          ...selection.unseated.filter((id) => id !== student.studentUserId),
-        ],
+        unseatedStudentIds: [student.studentUserId],
+        evidence,
       };
     }
     domains.set(student.studentUserId, domain);
@@ -585,11 +632,23 @@ export function solveSeating(input: SeatingAlgorithmInput): SeatingAlgorithmResu
 
   if (selection.selected.length === 0) {
     if (!constraintsSatisfied(constraints, baseAssignments)) {
+      const conflictingConstraintIds = constraints
+        .filter((constraint) => !constraintSatisfied(constraint, baseAssignments))
+        .map((constraint) => constraint.id);
+      const locks = input.locked.map((row) => {
+        const slot = slotByKey.get(slotKey(row.deskItemId, row.groupId));
+        return lockedAssignmentEvidence(row, slot?.deskNumber, slot?.zoneName);
+      });
       return {
         status: "infeasible",
         code: "SEATING_INFEASIBLE",
         message: "The manual seating conflicts with a required seating constraint.",
         unseatedStudentIds: selection.unseated,
+        evidence: {
+          kind: "manualConstraintConflict",
+          locks,
+          conflictingConstraintIds,
+        },
       };
     }
     return {
@@ -652,12 +711,18 @@ export function solveSeating(input: SeatingAlgorithmInput): SeatingAlgorithmResu
           ...selection.selected.map((student) => student.studentUserId),
           ...selection.unseated,
         ],
+        evidence: {
+          kind: "constraintParityConflict",
+          affectedStudentIds: selection.selected.map((student) => student.studentUserId),
+          malesOnOddDesks: input.genderParityAssignment.malesOnOddDesks,
+        },
       };
     }
     return {
       status: "search_exhausted",
       code: "SEATING_SEARCH_EXHAUSTED",
       message: "No valid seating was found within the safe search limit.",
+      evidence: buildSearchExhaustedEvidence(input),
     };
   }
 

@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 
 import { api } from "../../../convex/_generated/api";
 import { SeatChartRecordConfirmCredenza } from "@/components/assigners/SeatChartRecordConfirmCredenza";
+import { SeatAutoAssignFailureCredenza } from "@/components/assigners/SeatAutoAssignFailureCredenza";
 import {
   SeatLayoutPrintCredenza,
   type SeatLayoutPrintSelection,
@@ -15,6 +16,8 @@ import type {
   AutoAssignPendingRecord,
   AutoAssignPrintTarget,
 } from "@/hooks/assigners/useRunAutoAssignSeatingFlow";
+import type { AutoAssignFailureState } from "@/lib/assigners/seating/autoAssignRecovery";
+import type { SeatingRelaxableRule } from "../../../convex/lib/seating/types";
 import { buildSeatChartPrintItems, printSeatChart } from "@/lib/assigners/seatChartPrint";
 import { resolveRosterNameFormat } from "@/lib/roster/roster";
 import type { SeatOrientation } from "@/lib/assigners/seatLayouts";
@@ -30,6 +33,19 @@ type AutoAssignSeatingDialogsProps = {
   printTarget: AutoAssignPrintTarget | null;
   onDismissPrint: () => void;
   currentOrientation?: SeatOrientation;
+  failureOpen: boolean;
+  onFailureOpenChange: (open: boolean) => void;
+  failureState: AutoAssignFailureState | null;
+  selectedFailureRules: Array<SeatingRelaxableRule>;
+  onSelectedFailureRulesChange: (rules: Array<SeatingRelaxableRule>) => void;
+  isAutoAssignRunning: boolean;
+  onRetryUnchanged: () => Promise<AutoAssignPendingRecord | null>;
+  onGenerateWithExceptions: () => Promise<AutoAssignPendingRecord | null>;
+  onDismissFailure: () => void;
+  onAutoAssignSucceeded?: (args: {
+    chartId: Id<"seatCharts">;
+    assignments: import("@/lib/assigners/seatCharts").SeatChartAssignment[];
+  }) => void;
 };
 
 export function AutoAssignSeatingDialogs({
@@ -41,6 +57,16 @@ export function AutoAssignSeatingDialogs({
   printTarget,
   onDismissPrint,
   currentOrientation = "front",
+  failureOpen,
+  onFailureOpenChange,
+  failureState,
+  selectedFailureRules,
+  onSelectedFailureRulesChange,
+  isAutoAssignRunning,
+  onRetryUnchanged,
+  onGenerateWithExceptions,
+  onDismissFailure,
+  onAutoAssignSucceeded,
 }: AutoAssignSeatingDialogsProps) {
   const { t } = useTranslation("assigners");
   const { data: classDoc } = useClass(classId);
@@ -103,12 +129,47 @@ export function AutoAssignSeatingDialogs({
 
   return (
     <>
+      <SeatAutoAssignFailureCredenza
+        classId={classId}
+        open={failureOpen}
+        onOpenChange={onFailureOpenChange}
+        failure={failureState}
+        selectedRules={selectedFailureRules}
+        onSelectedRulesChange={onSelectedFailureRulesChange}
+        isRunning={isAutoAssignRunning}
+        onRetryUnchanged={async () => {
+          const result = await onRetryUnchanged();
+          if (result) {
+            onAutoAssignSucceeded?.({
+              chartId: result.chartId,
+              assignments: result.assignments,
+            });
+          }
+        }}
+        onGenerateWithExceptions={async () => {
+          const result = await onGenerateWithExceptions();
+          if (result) {
+            onAutoAssignSucceeded?.({
+              chartId: result.chartId,
+              assignments: result.assignments,
+            });
+          }
+        }}
+        onDismiss={onDismissFailure}
+        layoutId={
+          failureState?.context.layoutId ??
+          (pendingRecord?.layoutId as Id<"seatLayouts"> | undefined) ??
+          ("" as Id<"seatLayouts">)
+        }
+      />
       <SeatChartRecordConfirmCredenza
+        classId={classId}
         open={recordConfirmOpen}
         onOpenChange={onRecordConfirmOpenChange}
         seatedCount={pendingRecord?.seatedCount ?? 0}
         unseatedCount={pendingRecord?.unseatedCount ?? 0}
         violations={pendingRecord?.violations ?? []}
+        appliedRelaxations={pendingRecord?.appliedRelaxations}
         onConfirm={onConfirmRecord}
       />
       <SeatLayoutPrintCredenza

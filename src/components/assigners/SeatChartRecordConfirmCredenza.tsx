@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { SeatChartViolationsList } from "@/components/assigners/SeatChartViolationsList";
+import { AutoAssignExceptionsList } from "@/components/assigners/AutoAssignExceptionsList";
 import {
   Credenza,
   CredenzaBody,
@@ -15,24 +16,31 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { ProgressButton } from "@/components/ui/progress-button";
 import type { SeatChartViolation } from "@/lib/assigners/seatCharts";
+import { hasAppliedRelaxations } from "@/lib/assigners/seating/autoAssignRecovery";
+import type { SeatingRelaxations } from "../../../convex/lib/seating/types";
+import type { Id } from "../../../convex/_generated/dataModel";
 
 const CLOSE_AFTER_SUCCESS_MS = 500;
 
 type SeatChartRecordConfirmCredenzaProps = {
+  classId: Id<"classes">;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   seatedCount: number;
   unseatedCount: number;
   violations: Array<SeatChartViolation>;
+  appliedRelaxations?: SeatingRelaxations;
   onConfirm: () => Promise<void>;
 };
 
 export function SeatChartRecordConfirmCredenza({
+  classId,
   open,
   onOpenChange,
   seatedCount,
   unseatedCount,
   violations,
+  appliedRelaxations,
   onConfirm,
 }: SeatChartRecordConfirmCredenzaProps) {
   const { t } = useTranslation("assigners");
@@ -63,6 +71,18 @@ export function SeatChartRecordConfirmCredenza({
             {t("chartRecordSummary", { seated: seatedCount, unseated: unseatedCount })}
           </p>
           <p className="text-sm text-muted-foreground">{t("chartNeighborsHelp")}</p>
+          {appliedRelaxations && hasAppliedRelaxations(appliedRelaxations) ? (
+            <Alert>
+              <AlertTitle>{t("autoAssignRecordExceptionsTitle")}</AlertTitle>
+              <AlertDescription>
+                <p className="text-sm">{t("autoAssignRecordExceptionsDescription")}</p>
+                <AutoAssignExceptionsList
+                  classId={classId}
+                  appliedRelaxations={appliedRelaxations}
+                />
+              </AlertDescription>
+            </Alert>
+          ) : null}
           {violations.length > 0 ? (
             <Alert variant="destructive">
               <AlertTitle>{t("chartViolationsTitle")}</AlertTitle>

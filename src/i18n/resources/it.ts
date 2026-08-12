@@ -2387,6 +2387,117 @@ const it = {
     autoAssignNotImplemented: "L'assegnazione automatica non è ancora disponibile.",
     autoAssignInfeasible: "Non è possibile soddisfare tutte le regole dei posti.",
     autoAssignSearchExhausted: "Nessuna disposizione valida trovata. Riprova o modifica le regole.",
+    autoAssignFailureTitle: "Assegnazione automatica non riuscita",
+    autoAssignFailureGeneric:
+      "Le regole di posto non possono essere soddisfatte con il layout e le impostazioni attuali.",
+    autoAssignFailureMinimalConflict:
+      "Queste regole sono in conflitto. Puoi allentare temporaneamente le regole selezionate solo per questa mappa o modificare le regole salvate.",
+    autoAssignFailureUnknown:
+      "L'assegnazione automatica non è stata completata. Riprova o controlla layout e regole manualmente.",
+    autoAssignFailureUnknownSearch:
+      "Nessuna disposizione valida trovata entro il limite di ricerca sicuro. Riprova o controlla layout e regole manualmente.",
+    autoAssignFailureUnknownTitle: "Conflitto esatto non identificato",
+    autoAssignFailureUnknownHint:
+      "Il solver non ha potuto dimostrare quali regole sono in conflitto. Può accadere con classi grandi. Riprova o controlla regole e layout manualmente.",
+    autoAssignFailureConflictSetTitle: "Regole in conflitto",
+    autoAssignFailureConflictSetHint:
+      "Questo è un insieme minimo di regole che non possono essere tutte soddisfatte. Possono esistere altri insiemi in conflitto.",
+    autoAssignFailureRelaxLabel: "Allenta temporaneamente per questa mappa",
+    autoAssignFailureRetry: "Riprova",
+    autoAssignFailureGenerateExceptions: "Genera con eccezioni",
+    autoAssignFailureEditConstraints: "Modifica regole",
+    autoAssignFailureEditLayout: "Modifica layout",
+    autoAssignExceptionGenderParity: "Parità di genere pari/dispari",
+    autoAssignExceptionLockedSeat: "Posto bloccato per {{student}}",
+    autoAssignExceptionMissingConstraint: "Una regola di posto (non più disponibile)",
+    autoAssignRecordExceptionsTitle: "Eccezioni temporanee",
+    autoAssignRecordExceptionsDescription:
+      "Questa mappa è stata generata ignorando temporaneamente le regole seguenti. Le regole salvate della classe non sono state modificate.",
+    autoAssignStructural_unavailableSeat:
+      "Uno studente posizionato manualmente è assegnato a un posto non disponibile in questo layout.",
+    autoAssignStructural_duplicateManual:
+      "Il posizionamento manuale usa lo stesso studente o posto più di una volta.",
+    autoAssignStructural_capacityExceeded:
+      "Le regole richieste richiedono più posti di quelli disponibili in un gruppo.",
+    autoAssignStructural_unavailableStudent:
+      "Una regola richiesta fa riferimento a uno studente che non può essere seduto in questa esecuzione.",
+    autoAssignStructural_noValidSeat:
+      "Almeno uno studente non ha un posto valido dopo l'applicazione delle regole e della parità.",
+    autoAssignStructural_manualConstraintConflict:
+      "Il posizionamento manuale è in conflitto con una regola richiesta.",
+    autoAssignStructural_parityLockedConflict:
+      "A locked seat conflicts with odd/even gender parity for that desk.",
+    autoAssignStructural_constraintParityConflict:
+      "The seating rules and odd/even parity cannot all be satisfied together.",
+    autoAssignReportSummaryTitle: "Summary",
+    autoAssignReportNoNamedStudents: "affected students",
+    autoAssignReportSummary_unavailableSeat:
+      "{{students}} cannot be seated because a locked seat is not on this layout.",
+    autoAssignReportSummary_duplicateManual:
+      "Manual seating has duplicate students or seats ({{students}}).",
+    autoAssignReportSummary_capacityExceeded:
+      "Required rules need more seats than available for {{students}}.",
+    autoAssignReportSummary_unavailableStudent:
+      "{{students}} are referenced by required rules but cannot be seated in this run.",
+    autoAssignReportSummary_noValidSeat:
+      "{{students}} have no valid seat after applying rules and parity.",
+    autoAssignReportSummary_manualConstraintConflict:
+      "Locked seating conflicts with required rules for {{students}}.",
+    autoAssignReportSummary_parityLockedConflict:
+      "Locked seats conflict with gender parity for {{students}}.",
+    autoAssignReportSummary_constraintParityConflict: "Rules and parity conflict for {{students}}.",
+    autoAssignReportWhatTitle: "What happened",
+    autoAssignReportWhyTitle: "Why",
+    autoAssignReportSettingsTitle: "Current settings",
+    autoAssignReportFixTitle: "How to fix it",
+    autoAssignReportStudentUnknown: "Unknown student",
+    autoAssignReportStudentUngrouped: "Not assigned to a group",
+    autoAssignReportStudentNotOnBoard: "Not on the groups board",
+    autoAssignReportStudentStaleRoster: "No longer on the class roster",
+    autoAssignReportStudentInGroup: "In group {{group}}",
+    autoAssignReportStudentGrouped: "On the groups board",
+    autoAssignReportRole_primary: "primary student",
+    autoAssignReportRole_other: "other student",
+    autoAssignReportCapacityGroup:
+      "Group “{{group}}” needs {{required}} required seats but only {{available}} are available ({{students}}).",
+    autoAssignReportUnknownGroup: "Unknown group",
+    autoAssignReportNoValidSeatStudent:
+      "{{student}} in {{group}} has {{candidates}} of {{total}} seats left after rule filtering.",
+    autoAssignReportLockedSeat: "{{student}} locked to desk {{desk}} ({{zone}}).",
+    autoAssignReportNoZone: "no zone",
+    autoAssignReportConflictingConstraints:
+      "{{count}} required rule(s) conflict with locked seats.",
+    autoAssignReportDuplicateStudents: "Duplicate students: {{students}}.",
+    autoAssignReportDuplicateDesks: "{{count}} desk(s) used more than once.",
+    autoAssignReportConstraintParity: "Parity and rules conflict for {{students}}.",
+    autoAssignReportSearchExhaustedWhat:
+      "The solver ran out of search time before proving a cause.",
+    autoAssignReportWhyNoValidSeat:
+      "Seats eliminated by parity: {{parity}}, zone rules: {{zone}}, already occupied: {{occupied}}.",
+    autoAssignReportWhyCapacity:
+      "More students are required by “must” rules than there are open seats in at least one group.",
+    autoAssignReportWhyUnavailableStudents:
+      "Le regole obbligatorie fanno ancora riferimento a studenti che non sono più nel registro di classe, non sono in un gruppo o mancano dalla bacheca dei gruppi.",
+    autoAssignReportWhySearchStudents: "{{count}} movable students in this run",
+    autoAssignReportWhySearchConstraints: "{{count}} seating rules",
+    autoAssignReportWhySearchSlots: "{{count}} desk slots on the layout",
+    autoAssignReportWhyParityLocked:
+      "Locked students must sit on desks matching parity ({{direction}}).",
+    autoAssignReportWhyConstraintParity:
+      "No assignment satisfies all required rules with parity set to {{direction}}.",
+    autoAssignReportWhyGeneric: "The current rules and layout cannot all be satisfied.",
+    autoAssignReportParityMalesOdd: "males on odd desks",
+    autoAssignReportParityMalesEven: "males on even desks",
+    autoAssignReportParityOn: "On ({{direction}})",
+    autoAssignReportParityOff: "Off",
+    autoAssignReportSettingsParity: "Gender parity: {{mode}}",
+    autoAssignReportSettingsCounts:
+      "{{students}} students, {{seats}} seats, {{constraints}} rules, {{locked}} locked.",
+    autoAssignReportSettingsLocked: "{{count}} locked seat(s) in this run.",
+    autoAssignReportFixAssignGroup: "Assign student to a group",
+    autoAssignReportFixEditConstraint: "Edit seating rule",
+    autoAssignReportFixEditLayout: "Edit layout",
+    autoAssignReportFixEditChart: "Edit seating chart",
     chartsDescription:
       "Posiziona gli studenti ai banchi manualmente e registra la cronologia dei posti.",
     createChart: "Nuovo piano",
@@ -2530,6 +2641,7 @@ const it = {
     constraintStudentsMustDiffer: "Scegli due studenti diversi.",
     constraintZoneRequired: "Seleziona una zona.",
     constraintUnknownStudent: "Studente sconosciuto",
+    constraintRemovedStudent: "Studente rimosso",
     constraintRelationNeighbor: "vicino",
     constraintRelationTeammate: "compagno di squadra",
     constraintSummaryPair: "{{student}} {{polarity}} essere {{relation}} di {{other}}",

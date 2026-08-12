@@ -27,6 +27,7 @@ type GroupCardProps = {
   canCopyTeam: boolean;
   hiddenStudentId?: Id<"users"> | null;
   viewerUserId?: Id<"users"> | null;
+  focusStudentId?: Id<"users"> | null;
   nameFormat?: RosterNameFormat;
   /** When set and the group is empty, show a quick-add control in the dropzone. */
   onAddAllUngrouped?: () => void;
@@ -54,6 +55,7 @@ export function GroupCard({
   canCopyTeam,
   hiddenStudentId = null,
   viewerUserId = null,
+  focusStudentId = null,
   nameFormat = DEFAULT_ROSTER_NAME_FORMAT,
   onAddAllUngrouped,
   onEditGroup,
@@ -183,6 +185,7 @@ export function GroupCard({
           disabled={pending}
           hiddenStudentId={hiddenStudentId}
           viewerUserId={viewerUserId}
+          focusStudentId={focusStudentId}
           nameFormat={nameFormat}
         />
       </div>
@@ -261,6 +264,7 @@ export function GroupCard({
                   canDrag={false}
                   hidden={hiddenStudentId === student.userId}
                   isSelf={viewerUserId != null && student.userId === viewerUserId}
+                  focused={focusStudentId != null && student.userId === focusStudentId}
                   nameFormat={nameFormat}
                 />
               ))}

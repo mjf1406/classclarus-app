@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import { useSeatLayouts } from "@/hooks/assigners/useSeatLayouts";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { defaultAutoAssignChartName } from "@/lib/assigners/seatAssignmentScope";
@@ -43,6 +44,7 @@ type SeatAutoAssignSetupCredenzaProps = {
   fixedLayoutId?: Id<"seatLayouts">;
   fixedLayoutName?: string;
   onSubmit: (values: SeatAutoAssignSetupValues) => Promise<void>;
+  isRunning?: boolean;
 };
 
 export function SeatAutoAssignSetupCredenza({
@@ -53,6 +55,7 @@ export function SeatAutoAssignSetupCredenza({
   fixedLayoutId,
   fixedLayoutName,
   onSubmit,
+  isRunning = false,
 }: SeatAutoAssignSetupCredenzaProps) {
   const { t } = useTranslation("assigners");
   const { data: layouts, isPending } = useSeatLayouts(classId);
@@ -127,7 +130,7 @@ export function SeatAutoAssignSetupCredenza({
     <Credenza
       open={open}
       onOpenChange={(next) => {
-        if (!pending) onOpenChange(next);
+        if (!pending && !isRunning) onOpenChange(next);
       }}
     >
       <CredenzaContent>
@@ -193,16 +196,17 @@ export function SeatAutoAssignSetupCredenza({
           <Button
             type="button"
             variant="outline"
-            disabled={pending}
+            disabled={pending || isRunning}
             onClick={() => onOpenChange(false)}
           >
             {t("cancel")}
           </Button>
           <Button
             type="button"
-            disabled={pending || (!fixedLayoutId && !layoutId)}
+            disabled={pending || isRunning || (!fixedLayoutId && !layoutId)}
             onClick={() => void handleSubmit()}
           >
+            {pending || isRunning ? <Spinner data-icon="inline-start" /> : null}
             {t("autoAssignAction")}
           </Button>
         </CredenzaFooter>

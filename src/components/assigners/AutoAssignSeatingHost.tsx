@@ -4,6 +4,7 @@ import {
   type SeatAutoAssignMode,
 } from "@/components/assigners/SeatAutoAssignSetupCredenza";
 import { useRunAutoAssignSeatingFlow } from "@/hooks/assigners/useRunAutoAssignSeatingFlow";
+import { runContextFromSetup } from "@/lib/assigners/seating/autoAssignRecovery";
 import type { SeatChartAssignment } from "@/lib/assigners/seatCharts";
 import type { SeatOrientation } from "@/lib/assigners/seatLayouts";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -59,14 +60,11 @@ export function AutoAssignSeatingHost({
         fixedLayoutId={fixedLayoutId}
         fixedLayoutName={fixedLayoutName}
         onSubmit={async (values) => {
-          const result = await autoAssignFlow.runAutoAssign({
-            classId,
-            layoutId: values.layoutId,
-            layoutName: values.layoutName,
-            chartName: values.chartName,
+          const context = runContextFromSetup(classId, values, {
             targetChartId,
             lockedAssignments,
           });
+          const result = await autoAssignFlow.runAutoAssign(context);
           if (result) {
             onGenerated?.({
               chartId: result.chartId,
@@ -74,6 +72,7 @@ export function AutoAssignSeatingHost({
             });
           }
         }}
+        isRunning={autoAssignFlow.isRunning}
       />
       <AutoAssignSeatingDialogs
         classId={classId}
@@ -84,6 +83,16 @@ export function AutoAssignSeatingHost({
         printTarget={autoAssignFlow.printTarget}
         onDismissPrint={autoAssignFlow.dismissPrint}
         currentOrientation={currentOrientation}
+        failureOpen={autoAssignFlow.failureOpen}
+        onFailureOpenChange={autoAssignFlow.setFailureOpen}
+        failureState={autoAssignFlow.failureState}
+        selectedFailureRules={autoAssignFlow.failureState?.selectedRules ?? []}
+        onSelectedFailureRulesChange={autoAssignFlow.updateFailureSelectedRules}
+        isAutoAssignRunning={autoAssignFlow.isRunning}
+        onRetryUnchanged={autoAssignFlow.retryUnchanged}
+        onGenerateWithExceptions={autoAssignFlow.retryWithSelectedRules}
+        onDismissFailure={autoAssignFlow.dismissFailure}
+        onAutoAssignSucceeded={onGenerated}
       />
     </>
   );

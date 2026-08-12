@@ -876,6 +876,7 @@ export function SeatChartEditorPage({ classId, chartId }: SeatChartEditorPagePro
       </div>
 
       <SeatChartRecordConfirmCredenza
+        classId={classId}
         open={recordOpen}
         onOpenChange={setRecordOpen}
         seatedCount={seatedCount}

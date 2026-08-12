@@ -2332,6 +2332,117 @@ const en = {
     autoAssignNotImplemented: "Automatic seating is not available yet.",
     autoAssignInfeasible: "The seating rules cannot all be satisfied.",
     autoAssignSearchExhausted: "No valid seating was found. Try again or adjust the seating rules.",
+    autoAssignFailureTitle: "Could not auto-assign seating",
+    autoAssignFailureGeneric:
+      "The seating rules could not be satisfied with the current layout and settings.",
+    autoAssignFailureMinimalConflict:
+      "These rules conflict with each other. You can temporarily relax selected rules for this chart only, or edit the saved rules.",
+    autoAssignFailureUnknown:
+      "Auto-assign could not finish. Try again or review the layout and seating rules manually.",
+    autoAssignFailureUnknownSearch:
+      "Auto-assign could not find a valid seating within the safe search limit. Try again or review the layout and seating rules manually.",
+    autoAssignFailureUnknownTitle: "Exact conflict not identified",
+    autoAssignFailureUnknownHint:
+      "The solver could not prove which specific rules conflict. This can happen on larger charts. Retry or review constraints and layout manually.",
+    autoAssignFailureConflictSetTitle: "Conflicting rules",
+    autoAssignFailureConflictSetHint:
+      "This is one smallest set of rules that cannot all be satisfied together. Other conflicting sets may exist.",
+    autoAssignFailureRelaxLabel: "Temporarily relax for this chart",
+    autoAssignFailureRetry: "Try again",
+    autoAssignFailureGenerateExceptions: "Generate with exceptions",
+    autoAssignFailureEditConstraints: "Edit constraints",
+    autoAssignFailureEditLayout: "Edit layout",
+    autoAssignExceptionGenderParity: "Odd / even gender parity",
+    autoAssignExceptionLockedSeat: "Locked seat for {{student}}",
+    autoAssignExceptionMissingConstraint: "A seating rule (no longer available)",
+    autoAssignRecordExceptionsTitle: "Temporary exceptions",
+    autoAssignRecordExceptionsDescription:
+      "This chart was generated while temporarily ignoring the rules below. Saved class constraints were not changed.",
+    autoAssignStructural_unavailableSeat:
+      "A manually seated student is assigned to a seat that is not available on this layout.",
+    autoAssignStructural_duplicateManual:
+      "Manual seating uses the same student or seat more than once.",
+    autoAssignStructural_capacityExceeded:
+      "Required seating rules need more seats than are available in a group.",
+    autoAssignStructural_unavailableStudent:
+      "A required seating rule references a student who cannot be seated in this run.",
+    autoAssignStructural_noValidSeat:
+      "At least one student has no valid seat after applying the seating rules and parity settings.",
+    autoAssignStructural_manualConstraintConflict:
+      "Manual seating conflicts with a required seating rule.",
+    autoAssignStructural_parityLockedConflict:
+      "A locked seat conflicts with odd/even gender parity for that desk.",
+    autoAssignStructural_constraintParityConflict:
+      "The seating rules and odd/even parity cannot all be satisfied together.",
+    autoAssignReportSummaryTitle: "Summary",
+    autoAssignReportNoNamedStudents: "affected students",
+    autoAssignReportSummary_unavailableSeat:
+      "{{students}} cannot be seated because a locked seat is not on this layout.",
+    autoAssignReportSummary_duplicateManual:
+      "Manual seating has duplicate students or seats ({{students}}).",
+    autoAssignReportSummary_capacityExceeded:
+      "Required rules need more seats than available for {{students}}.",
+    autoAssignReportSummary_unavailableStudent:
+      "{{students}} are referenced by required rules but cannot be seated in this run.",
+    autoAssignReportSummary_noValidSeat:
+      "{{students}} have no valid seat after applying rules and parity.",
+    autoAssignReportSummary_manualConstraintConflict:
+      "Locked seating conflicts with required rules for {{students}}.",
+    autoAssignReportSummary_parityLockedConflict:
+      "Locked seats conflict with gender parity for {{students}}.",
+    autoAssignReportSummary_constraintParityConflict: "Rules and parity conflict for {{students}}.",
+    autoAssignReportWhatTitle: "What happened",
+    autoAssignReportWhyTitle: "Why",
+    autoAssignReportSettingsTitle: "Current settings",
+    autoAssignReportFixTitle: "How to fix it",
+    autoAssignReportStudentUnknown: "Unknown student",
+    autoAssignReportStudentUngrouped: "Not assigned to a group",
+    autoAssignReportStudentNotOnBoard: "Not on the groups board",
+    autoAssignReportStudentStaleRoster: "No longer on the class roster",
+    autoAssignReportStudentInGroup: "In group {{group}}",
+    autoAssignReportStudentGrouped: "On the groups board",
+    autoAssignReportRole_primary: "primary student",
+    autoAssignReportRole_other: "other student",
+    autoAssignReportCapacityGroup:
+      "Group “{{group}}” needs {{required}} required seats but only {{available}} are available ({{students}}).",
+    autoAssignReportUnknownGroup: "Unknown group",
+    autoAssignReportNoValidSeatStudent:
+      "{{student}} in {{group}} has {{candidates}} of {{total}} seats left after rule filtering.",
+    autoAssignReportLockedSeat: "{{student}} locked to desk {{desk}} ({{zone}}).",
+    autoAssignReportNoZone: "no zone",
+    autoAssignReportConflictingConstraints:
+      "{{count}} required rule(s) conflict with locked seats.",
+    autoAssignReportDuplicateStudents: "Duplicate students: {{students}}.",
+    autoAssignReportDuplicateDesks: "{{count}} desk(s) used more than once.",
+    autoAssignReportConstraintParity: "Parity and rules conflict for {{students}}.",
+    autoAssignReportSearchExhaustedWhat:
+      "The solver ran out of search time before proving a cause.",
+    autoAssignReportWhyNoValidSeat:
+      "Seats eliminated by parity: {{parity}}, zone rules: {{zone}}, already occupied: {{occupied}}.",
+    autoAssignReportWhyCapacity:
+      "More students are required by “must” rules than there are open seats in at least one group.",
+    autoAssignReportWhyUnavailableStudents:
+      "Required rules still reference students who are no longer on the class roster, are ungrouped, or are missing from the groups board.",
+    autoAssignReportWhySearchStudents: "{{count}} movable students in this run",
+    autoAssignReportWhySearchConstraints: "{{count}} seating rules",
+    autoAssignReportWhySearchSlots: "{{count}} desk slots on the layout",
+    autoAssignReportWhyParityLocked:
+      "Locked students must sit on desks matching parity ({{direction}}).",
+    autoAssignReportWhyConstraintParity:
+      "No assignment satisfies all required rules with parity set to {{direction}}.",
+    autoAssignReportWhyGeneric: "The current rules and layout cannot all be satisfied.",
+    autoAssignReportParityMalesOdd: "males on odd desks",
+    autoAssignReportParityMalesEven: "males on even desks",
+    autoAssignReportParityOn: "On ({{direction}})",
+    autoAssignReportParityOff: "Off",
+    autoAssignReportSettingsParity: "Gender parity: {{mode}}",
+    autoAssignReportSettingsCounts:
+      "{{students}} students, {{seats}} seats, {{constraints}} rules, {{locked}} locked.",
+    autoAssignReportSettingsLocked: "{{count}} locked seat(s) in this run.",
+    autoAssignReportFixAssignGroup: "Assign student to a group",
+    autoAssignReportFixEditConstraint: "Edit seating rule",
+    autoAssignReportFixEditLayout: "Edit layout",
+    autoAssignReportFixEditChart: "Edit seating chart",
     chartsDescription: "Place students on desks manually and record seating history over time.",
     chartAssignRandom: "Assign random seats",
     createChart: "New chart",
@@ -2470,6 +2581,7 @@ const en = {
     constraintStudentsMustDiffer: "Choose two different students.",
     constraintZoneRequired: "Select a zone.",
     constraintUnknownStudent: "Unknown student",
+    constraintRemovedStudent: "Removed student",
     constraintRelationNeighbor: "neighbor",
     constraintRelationTeammate: "teammate",
     constraintSummaryPair: "{{student}} {{polarity}} be {{relation}} of {{other}}",

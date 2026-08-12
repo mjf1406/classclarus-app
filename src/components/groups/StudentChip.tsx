@@ -19,6 +19,8 @@ type StudentChipProps = {
   hidden?: boolean;
   /** Highlight this chip when it represents the signed-in viewer. */
   isSelf?: boolean;
+  /** Visually emphasize this chip (e.g. deep-link focus). */
+  focused?: boolean;
   nameFormat?: RosterNameFormat;
 };
 
@@ -27,6 +29,7 @@ export function StudentChip({
   canDrag,
   hidden = false,
   isSelf = false,
+  focused = false,
   nameFormat = DEFAULT_ROSTER_NAME_FORMAT,
 }: StudentChipProps) {
   const { t } = useTranslation("classes");
@@ -48,9 +51,14 @@ export function StudentChip({
       email={student.email}
       showGrip={canDrag}
       isSelf={isSelf}
+      data-focus-student={student.userId}
       // DragOverlay owns the visual while dragging — keep the source in place and hidden.
       style={invisiblyHeld ? undefined : { transform: CSS.Translate.toString(transform) }}
-      className={cn(canDrag && "cursor-grab active:cursor-grabbing", invisiblyHeld && "opacity-0")}
+      className={cn(
+        canDrag && "cursor-grab active:cursor-grabbing",
+        invisiblyHeld && "opacity-0",
+        focused && "ring-2 ring-primary ring-offset-2",
+      )}
       trailing={
         isSelf ? (
           <Badge variant="default" className="ml-auto shrink-0">
