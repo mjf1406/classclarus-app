@@ -9,6 +9,10 @@ import {
   randomAssignerFormSchemaEn,
   type RandomAssignerFormValues,
 } from "./lib/assigners/randomAssignerSchema.js";
+import {
+  assignerRunAssignmentValidator,
+  projectAssignerRunAssignments,
+} from "./lib/assigners/runAssignmentProjection.js";
 import { authz } from "./authz.js";
 import { classScope } from "./lib/authzModel.js";
 import { recordClassActivity } from "./lib/classActivity.js";
@@ -20,17 +24,6 @@ import {
 } from "./lib/rosterNameFormat.js";
 
 const scopeValidator = v.union(v.literal("class"), v.literal("groups"));
-
-const assignmentValidator = v.object({
-  studentUserId: v.id("users"),
-  studentDisplayName: v.string(),
-  item: v.string(),
-  rosterNumber: v.optional(v.number()),
-  firstName: v.optional(v.string()),
-  lastName: v.optional(v.string()),
-  groupId: v.optional(v.id("groups")),
-  groupName: v.optional(v.string()),
-});
 
 const randomAssignerListItemValidator = v.object({
   _id: v.id("randomAssigners"),
@@ -82,7 +75,7 @@ const randomAssignerRunDetailValidator = v.object({
   scope: scopeValidator,
   replicates: v.boolean(),
   itemsSnapshot: v.array(v.string()),
-  assignments: v.array(assignmentValidator),
+  assignments: v.array(assignerRunAssignmentValidator),
 });
 
 const randomAssignerDisplayRunValidator = v.object({
@@ -96,7 +89,7 @@ const randomAssignerDisplayRunValidator = v.object({
   scope: scopeValidator,
   replicates: v.boolean(),
   itemsSnapshot: v.array(v.string()),
-  assignments: v.array(assignmentValidator),
+  assignments: v.array(assignerRunAssignmentValidator),
   nameFormat: v.object({
     order: v.union(v.literal("firstLast"), v.literal("lastFirst")),
     space: v.boolean(),
@@ -374,6 +367,7 @@ export const getRun = classQuery({
   handler: async (ctx, args) => {
     const assigner = await requireRandomAssigner(ctx, ctx.classDoc._id, args.assignerId);
     const run = await requireRandomAssignerRun(ctx, ctx.classDoc._id, args.assignerId, args.runId);
+    const canReadStudents = await ctx.can("students:read");
     return {
       _id: run._id,
       _creationTime: run._creationTime,
@@ -385,7 +379,7 @@ export const getRun = classQuery({
       scope: run.scope,
       replicates: run.replicates,
       itemsSnapshot: run.itemsSnapshot,
-      assignments: run.assignments,
+      assignments: projectAssignerRunAssignments(run.assignments, canReadStudents),
     };
   },
 });
@@ -403,6 +397,12 @@ export const getRunById = authedQuery({
     if (!assigner || assigner.classId !== run.classId) return null;
     const classDoc = await ctx.db.get("classes", run.classId);
     if (!classDoc) return null;
+    const canReadStudents = await authz.can(
+      ctx,
+      ctx.userId,
+      "students:read",
+      classScope(run.classId),
+    );
     return {
       _id: run._id,
       _creationTime: run._creationTime,
@@ -414,7 +414,7 @@ export const getRunById = authedQuery({
       scope: run.scope,
       replicates: run.replicates,
       itemsSnapshot: run.itemsSnapshot,
-      assignments: run.assignments,
+      assignments: projectAssignerRunAssignments(run.assignments, canReadStudents),
       nameFormat: resolveRosterNameFormat(classDoc),
     };
   },

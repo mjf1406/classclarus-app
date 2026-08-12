@@ -46,7 +46,7 @@ export type RandomAssignerRunListItem = {
   assignmentCount: number;
 };
 
-export type RandomAssignerAssignment = {
+export type StaffRandomAssignerAssignment = {
   studentUserId: Id<"users">;
   studentDisplayName: string;
   item: string;
@@ -56,6 +56,19 @@ export type RandomAssignerAssignment = {
   groupId?: Id<"groups">;
   groupName?: string;
 };
+
+export type ConsumerRandomAssignerAssignment = {
+  studentUserId: Id<"users">;
+  rosterNumber?: number;
+  firstName?: string;
+  lastName?: string;
+  item: string;
+  groupName?: string;
+};
+
+export type RandomAssignerAssignment =
+  | StaffRandomAssignerAssignment
+  | ConsumerRandomAssignerAssignment;
 
 export type RandomAssignerRunDetail = {
   _id: Id<"randomAssignerRuns">;

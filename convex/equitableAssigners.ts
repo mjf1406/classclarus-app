@@ -14,6 +14,10 @@ import {
   equitableAssignerFormSchemaEn,
   type EquitableAssignerFormValues,
 } from "./lib/assigners/equitableAssignerSchema.js";
+import {
+  assignerRunAssignmentValidator,
+  projectAssignerRunAssignments,
+} from "./lib/assigners/runAssignmentProjection.js";
 import { genderBucketFromRoster } from "./lib/seating/gender.js";
 import { authz } from "./authz.js";
 import { classScope } from "./lib/authzModel.js";
@@ -91,17 +95,6 @@ const equitableHistoryItemValidator = v.object({
 const DEFAULT_HISTORY_LIMIT = 20;
 const MAX_HISTORY_LIMIT = 50;
 
-const assignmentValidator = v.object({
-  studentUserId: v.id("users"),
-  studentDisplayName: v.string(),
-  item: v.string(),
-  rosterNumber: v.optional(v.number()),
-  firstName: v.optional(v.string()),
-  lastName: v.optional(v.string()),
-  groupId: v.optional(v.id("groups")),
-  groupName: v.optional(v.string()),
-});
-
 const equitableAssignerListItemValidator = v.object({
   _id: v.id("equitableAssigners"),
   _creationTime: v.number(),
@@ -159,7 +152,7 @@ const equitableAssignerRunDetailValidator = v.object({
   scope: scopeValidator,
   balanceGender: v.boolean(),
   itemsSnapshot: v.array(v.string()),
-  assignments: v.array(assignmentValidator),
+  assignments: v.array(assignerRunAssignmentValidator),
 });
 
 const equitableAssignerDisplayRunValidator = v.object({
@@ -173,7 +166,7 @@ const equitableAssignerDisplayRunValidator = v.object({
   scope: scopeValidator,
   balanceGender: v.boolean(),
   itemsSnapshot: v.array(v.string()),
-  assignments: v.array(assignmentValidator),
+  assignments: v.array(assignerRunAssignmentValidator),
   nameFormat: v.object({
     order: v.union(v.literal("firstLast"), v.literal("lastFirst")),
     space: v.boolean(),
@@ -672,6 +665,7 @@ export const getRun = classQuery({
       args.assignerId,
       args.runId,
     );
+    const canReadStudents = await ctx.can("students:read");
     return {
       _id: run._id,
       _creationTime: run._creationTime,
@@ -683,7 +677,7 @@ export const getRun = classQuery({
       scope: run.scope,
       balanceGender: run.balanceGender,
       itemsSnapshot: run.itemsSnapshot,
-      assignments: run.assignments,
+      assignments: projectAssignerRunAssignments(run.assignments, canReadStudents),
     };
   },
 });
@@ -701,6 +695,12 @@ export const getRunById = authedQuery({
     if (!assigner || assigner.classId !== run.classId) return null;
     const classDoc = await ctx.db.get("classes", run.classId);
     if (!classDoc) return null;
+    const canReadStudents = await authz.can(
+      ctx,
+      ctx.userId,
+      "students:read",
+      classScope(run.classId),
+    );
     return {
       _id: run._id,
       _creationTime: run._creationTime,
@@ -712,7 +712,7 @@ export const getRunById = authedQuery({
       scope: run.scope,
       balanceGender: run.balanceGender,
       itemsSnapshot: run.itemsSnapshot,
-      assignments: run.assignments,
+      assignments: projectAssignerRunAssignments(run.assignments, canReadStudents),
       nameFormat: resolveRosterNameFormat(classDoc),
     };
   },

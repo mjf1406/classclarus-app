@@ -120,12 +120,26 @@ function rosterSortableHeader(label: string, column: Column<StudentRosterEntry, 
   );
 }
 
-function rosterHeaderWithSearch(
-  label: string,
-  column: Column<StudentRosterEntry, unknown>,
-  filter: RosterNameColumnFilter | undefined,
-  tableEditMode: boolean,
-) {
+const RosterNameFiltersContext = createContext<RosterNameColumnFilters | undefined>(undefined);
+
+/**
+ * Reads filter config from context so column defs stay referentially stable while
+ * the controlled search value updates — otherwise TanStack Table remounts the
+ * header input on every keystroke and focus is lost.
+ */
+function RosterNameColumnHeader({
+  columnId,
+  label,
+  column,
+  tableEditMode,
+}: {
+  columnId: "firstName" | "lastName" | "name";
+  label: string;
+  column: Column<StudentRosterEntry, unknown>;
+  tableEditMode: boolean;
+}) {
+  const filters = useContext(RosterNameFiltersContext);
+  const filter = filters?.[columnId];
   const title = tableEditMode ? (
     <span className="text-sm font-medium">{label}</span>
   ) : (
@@ -638,7 +652,14 @@ export function RosterTable({
       columnId: "firstName" | "lastName" | "name",
       label: string,
       column: Column<StudentRosterEntry, unknown>,
-    ) => rosterHeaderWithSearch(label, column, nameColumnFilters?.[columnId], tableEditMode);
+    ) => (
+      <RosterNameColumnHeader
+        columnId={columnId}
+        label={label}
+        column={column}
+        tableEditMode={tableEditMode}
+      />
+    );
 
     const genderSortValue = (student: StudentRosterEntry): string => {
       if (!student.gender) return "";
@@ -798,16 +819,7 @@ export function RosterTable({
         ),
       },
     ];
-  }, [
-    t,
-    extraColumns,
-    showActions,
-    showExpand,
-    renderRowActions,
-    expandRowLabel,
-    tableEditMode,
-    nameColumnFilters,
-  ]);
+  }, [t, extraColumns, showActions, showExpand, renderRowActions, expandRowLabel, tableEditMode]);
 
   const table = useReactTable({
     data,
@@ -1008,9 +1020,11 @@ export function RosterTable({
 
   return (
     <RosterEditContext.Provider value={editContextValue}>
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        {tableNode}
-      </DndContext>
+      <RosterNameFiltersContext.Provider value={nameColumnFilters}>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          {tableNode}
+        </DndContext>
+      </RosterNameFiltersContext.Provider>
     </RosterEditContext.Provider>
   );
 }

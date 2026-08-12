@@ -15,9 +15,14 @@ import { useStudentRoster } from "@/hooks/roster/useStudentRoster";
 import { useStudentRosterFilter } from "@/hooks/students/useStudentRosterFilter";
 import {
   buildAssignerPreviewRows,
+  buildConsumerAssignerPreviewRows,
   filterAssignerPreviewRows,
+  filterConsumerAssignerPreviewRows,
   isAssignerPreviewRosterRow,
+  RESTRICTED_ROSTER_COLUMN_ORDER,
+  RESTRICTED_ROSTER_COLUMN_VISIBILITY,
   type AssignerPreviewAssignment,
+  type StaffAssignerPreviewAssignment,
 } from "@/lib/assigners/assignerRunPreview";
 import { buildMembershipIndex } from "@/lib/groups/groupTeamFilters";
 import {
@@ -36,7 +41,33 @@ type AssignerRunPreviewTableProps = {
   itemColumnLabel: string;
 };
 
-function AssignerRunPreviewTableView({
+function buildAssignedItemColumn(
+  itemColumnLabel: string,
+): ColumnDef<StudentRosterEntry, unknown>[] {
+  return [
+    {
+      id: "assignedItem",
+      accessorFn: (row) => (isAssignerPreviewRosterRow(row) ? row.assignedItem : ""),
+      header: itemColumnLabel,
+      cell: ({ row }) => {
+        if (!isAssignerPreviewRosterRow(row.original)) return null;
+        return (
+          <span>
+            {row.original.assignedItem}
+            {row.original.assignedGroupName ? (
+              <span className="ml-2 text-xs text-muted-foreground">
+                ({row.original.assignedGroupName})
+              </span>
+            ) : null}
+          </span>
+        );
+      },
+      enableSorting: true,
+    },
+  ];
+}
+
+function StaffAssignerRunPreviewTableView({
   classId,
   assignments,
   title,
@@ -127,29 +158,7 @@ function AssignerRunPreviewTableView({
     };
   }, [firstNameQuery, lastNameQuery, nameQuery, t, tClasses]);
 
-  const extraColumns = useMemo((): ColumnDef<StudentRosterEntry, unknown>[] => {
-    return [
-      {
-        id: "assignedItem",
-        accessorFn: (row) => (isAssignerPreviewRosterRow(row) ? row.assignedItem : ""),
-        header: itemColumnLabel,
-        cell: ({ row }) => {
-          if (!isAssignerPreviewRosterRow(row.original)) return null;
-          return (
-            <span>
-              {row.original.assignedItem}
-              {row.original.assignedGroupName ? (
-                <span className="ml-2 text-xs text-muted-foreground">
-                  ({row.original.assignedGroupName})
-                </span>
-              ) : null}
-            </span>
-          );
-        },
-        enableSorting: true,
-      },
-    ];
-  }, [itemColumnLabel]);
+  const extraColumns = useMemo(() => buildAssignedItemColumn(itemColumnLabel), [itemColumnLabel]);
 
   if (boardPending) {
     return <Skeleton className="h-48 w-full rounded-xl" />;
@@ -180,12 +189,72 @@ function AssignerRunPreviewTableView({
   );
 }
 
-function AssignerRunPreviewTableWithRoster(props: AssignerRunPreviewTableProps) {
+function StaffAssignerRunPreviewTableWithRoster(props: AssignerRunPreviewTableProps) {
   const { data: roster, isPending } = useStudentRoster(props.classId);
   if (isPending) {
     return <Skeleton className="h-48 w-full rounded-xl" />;
   }
-  return <AssignerRunPreviewTableView {...props} roster={roster} />;
+  return <StaffAssignerRunPreviewTableView {...props} roster={roster} />;
+}
+
+function ConsumerAssignerRunPreviewTable({
+  assignments,
+  title,
+  itemColumnLabel,
+}: AssignerRunPreviewTableProps) {
+  const { t } = useTranslation("assigners");
+  const { t: tClasses } = useTranslation("classes");
+  const [firstNameQuery, setFirstNameQuery] = useState("");
+  const [lastNameQuery, setLastNameQuery] = useState("");
+
+  const rows = useMemo(() => buildConsumerAssignerPreviewRows(assignments), [assignments]);
+  const filteredRows = useMemo(
+    () =>
+      filterConsumerAssignerPreviewRows(rows, {
+        firstName: firstNameQuery,
+        lastName: lastNameQuery,
+      }),
+    [firstNameQuery, lastNameQuery, rows],
+  );
+
+  const nameColumnFilters = useMemo((): RosterNameColumnFilters => {
+    const placeholder = t("constraintNameSearchPlaceholder");
+    const ariaLabel = t("constraintNameSearchLabel");
+    return {
+      firstName: {
+        value: firstNameQuery,
+        onChange: setFirstNameQuery,
+        placeholder,
+        "aria-label": `${tClasses("rosterColumnFirstName")}. ${ariaLabel}`,
+      },
+      lastName: {
+        value: lastNameQuery,
+        onChange: setLastNameQuery,
+        placeholder,
+        "aria-label": `${tClasses("rosterColumnLastName")}. ${ariaLabel}`,
+      },
+    };
+  }, [firstNameQuery, lastNameQuery, t, tClasses]);
+
+  const extraColumns = useMemo(() => buildAssignedItemColumn(itemColumnLabel), [itemColumnLabel]);
+
+  return (
+    <div className="flex min-w-0 flex-col gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-sm font-medium">{title}</h2>
+      </div>
+      <RosterTable
+        data={filteredRows}
+        columnOrder={[...RESTRICTED_ROSTER_COLUMN_ORDER]}
+        columnVisibility={RESTRICTED_ROSTER_COLUMN_VISIBILITY}
+        extraColumns={extraColumns}
+        nameColumnFilters={nameColumnFilters}
+        getRowId={(row) =>
+          isAssignerPreviewRosterRow(row) ? `${row.userId}:${row.assignmentIndex}` : row.userId
+        }
+      />
+    </div>
+  );
 }
 
 export function AssignerRunPreviewTable(props: AssignerRunPreviewTableProps) {
@@ -194,7 +263,9 @@ export function AssignerRunPreviewTable(props: AssignerRunPreviewTableProps) {
     return <Skeleton className="h-48 w-full rounded-xl" />;
   }
   if (can("students:read")) {
-    return <AssignerRunPreviewTableWithRoster {...props} />;
+    return <StaffAssignerRunPreviewTableWithRoster {...props} />;
   }
-  return <AssignerRunPreviewTableView {...props} roster={undefined} />;
+  return <ConsumerAssignerRunPreviewTable {...props} />;
 }
+
+export type { StaffAssignerPreviewAssignment };

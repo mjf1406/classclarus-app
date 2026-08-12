@@ -45,7 +45,7 @@ export type EquitableAssignerRunListItem = {
   assignmentCount: number;
 };
 
-export type EquitableAssignerAssignment = {
+export type StaffEquitableAssignerAssignment = {
   studentUserId: Id<"users">;
   studentDisplayName: string;
   item: string;
@@ -55,6 +55,19 @@ export type EquitableAssignerAssignment = {
   groupId?: Id<"groups">;
   groupName?: string;
 };
+
+export type ConsumerEquitableAssignerAssignment = {
+  studentUserId: Id<"users">;
+  rosterNumber?: number;
+  firstName?: string;
+  lastName?: string;
+  item: string;
+  groupName?: string;
+};
+
+export type EquitableAssignerAssignment =
+  | StaffEquitableAssignerAssignment
+  | ConsumerEquitableAssignerAssignment;
 
 export type EquitableAssignerRunDetail = {
   _id: Id<"equitableAssignerRuns">;

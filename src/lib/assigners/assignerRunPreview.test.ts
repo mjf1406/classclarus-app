@@ -4,14 +4,17 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import type { StudentRosterEntry } from "@/lib/roster/roster";
 import {
   buildAssignerPreviewRows,
+  buildConsumerAssignerPreviewRows,
   filterAssignerPreviewRows,
+  filterConsumerAssignerPreviewRows,
   isAssignerPreviewRosterRow,
-  type AssignerPreviewAssignment,
+  type StaffAssignerPreviewAssignment,
 } from "./assignerRunPreview";
 
 function assignment(
-  overrides: Partial<AssignerPreviewAssignment> & Pick<AssignerPreviewAssignment, "studentUserId">,
-): AssignerPreviewAssignment {
+  overrides: Partial<StaffAssignerPreviewAssignment> &
+    Pick<StaffAssignerPreviewAssignment, "studentUserId">,
+): StaffAssignerPreviewAssignment {
   return {
     studentDisplayName: "Ada Lovelace",
     item: "Chromebook 1",
@@ -81,6 +84,65 @@ describe("buildAssignerPreviewRows", () => {
   });
 });
 
+describe("buildConsumerAssignerPreviewRows", () => {
+  it("builds allowlisted roster rows without account or contact fields", () => {
+    const rows = buildConsumerAssignerPreviewRows([
+      {
+        studentUserId: "user3" as Id<"users">,
+        rosterNumber: 4,
+        firstName: "Grace",
+        lastName: "Hopper",
+        item: "Tablet",
+        groupName: "Table 2",
+      },
+    ]);
+
+    expect(rows[0]).toEqual({
+      userId: "user3",
+      rosterNumber: 4,
+      firstName: "Grace",
+      lastName: "Hopper",
+      role: "student",
+      assignmentIndex: 0,
+      assignedItem: "Tablet",
+      assignedGroupName: "Table 2",
+    });
+    expect(rows[0]).not.toHaveProperty("email");
+    expect(rows[0]).not.toHaveProperty("name");
+    expect(rows[0]).not.toHaveProperty("gender");
+  });
+
+  it("still renders rows when the payload still includes staff-only fields", () => {
+    const rows = buildConsumerAssignerPreviewRows([
+      {
+        studentUserId: "user4" as Id<"users">,
+        studentDisplayName: "Ada Lovelace",
+        rosterNumber: 1,
+        firstName: "Ada",
+        lastName: "Lovelace",
+        item: "CB-1",
+        groupId: "g1" as Id<"groups">,
+        groupName: "Table 1",
+      },
+    ]);
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toEqual({
+      userId: "user4",
+      rosterNumber: 1,
+      firstName: "Ada",
+      lastName: "Lovelace",
+      role: "student",
+      assignmentIndex: 0,
+      assignedItem: "CB-1",
+      assignedGroupName: "Table 1",
+    });
+    expect(rows[0]).not.toHaveProperty("email");
+    expect(rows[0]).not.toHaveProperty("name");
+    expect(rows[0]).not.toHaveProperty("groupId");
+  });
+});
+
 describe("filterAssignerPreviewRows", () => {
   const rows = buildAssignerPreviewRows(
     [
@@ -123,6 +185,31 @@ describe("filterAssignerPreviewRows", () => {
       name: "ada love",
     });
     expect(filtered.map((row) => row.lastName)).toEqual(["Lovelace"]);
+  });
+});
+
+describe("filterConsumerAssignerPreviewRows", () => {
+  const rows = buildConsumerAssignerPreviewRows([
+    {
+      studentUserId: "a" as Id<"users">,
+      firstName: "Ada",
+      lastName: "Lovelace",
+      item: "CB-1",
+    },
+    {
+      studentUserId: "b" as Id<"users">,
+      firstName: "Grace",
+      lastName: "Hopper",
+      item: "CB-2",
+    },
+  ]);
+
+  it("filters only first and last name for consumer rows", () => {
+    const filtered = filterConsumerAssignerPreviewRows(rows, {
+      firstName: "gra",
+      lastName: "",
+    });
+    expect(filtered.map((row) => row.userId)).toEqual(["b"]);
   });
 });
 

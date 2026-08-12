@@ -141,6 +141,31 @@ describe("buildRandomAssignerPrintMatrix", () => {
     expect(matrix.groupNames).toEqual(["Whole class"]);
     expect(matrix.rows[0]?.cells).toEqual([["#3 - KimAlex"]]);
   });
+
+  it("buckets consumer assignments by group name without group ids", () => {
+    const run = {
+      itemsSnapshot: ["CB-1"],
+      assignments: [
+        {
+          studentUserId: "s1",
+          firstName: "Alex",
+          lastName: "Kim",
+          rosterNumber: 3,
+          item: "CB-1",
+          groupName: "Red",
+        },
+      ],
+    };
+
+    const matrix = buildRandomAssignerPrintMatrix(run, {
+      classColumn: "Whole class",
+      ungroupedColumn: "Ungrouped",
+      nameFormat: { order: "firstLast", space: true },
+    });
+
+    expect(matrix.groupNames).toEqual(["Red"]);
+    expect(matrix.rows[0]?.cells).toEqual([["#3 - Alex Kim"]]);
+  });
 });
 
 describe("buildRandomAssignerPrintHtml", () => {

@@ -9,7 +9,7 @@ export type AssignerPrintRunInput = {
   itemsSnapshot: string[];
   assignments: Array<{
     studentUserId: string;
-    studentDisplayName: string;
+    studentDisplayName?: string;
     item: string;
     rosterNumber?: number;
     firstName?: string;
@@ -53,7 +53,7 @@ export function randomAssignerPrintLogoAlt(): string {
 
 export function formatRandomAssignerPrintStudent(
   assignment: {
-    studentDisplayName: string;
+    studentDisplayName?: string;
     rosterNumber?: number;
     firstName?: string;
     lastName?: string;
@@ -62,19 +62,43 @@ export function formatRandomAssignerPrintStudent(
 ): string {
   const name =
     formatRosterNameParts(assignment.firstName, assignment.lastName, nameFormat) ??
-    assignment.studentDisplayName.trim();
-  if (assignment.rosterNumber === undefined) return name;
-  return `#${assignment.rosterNumber} - ${name}`;
+    assignment.studentDisplayName?.trim() ??
+    "";
+  if (assignment.rosterNumber === undefined) return name || "—";
+  return name ? `#${assignment.rosterNumber} - ${name}` : `#${assignment.rosterNumber}`;
+}
+
+function assignmentSortLabel(assignment: {
+  studentDisplayName?: string;
+  rosterNumber?: number;
+  firstName?: string;
+  lastName?: string;
+}): string {
+  return (
+    formatRosterNameParts(assignment.firstName, assignment.lastName) ??
+    assignment.studentDisplayName?.trim() ??
+    ""
+  );
 }
 
 function comparePrintStudents(
-  a: { studentDisplayName: string; rosterNumber?: number },
-  b: { studentDisplayName: string; rosterNumber?: number },
+  a: {
+    studentDisplayName?: string;
+    rosterNumber?: number;
+    firstName?: string;
+    lastName?: string;
+  },
+  b: {
+    studentDisplayName?: string;
+    rosterNumber?: number;
+    firstName?: string;
+    lastName?: string;
+  },
 ): number {
   const aNumber = a.rosterNumber ?? Number.POSITIVE_INFINITY;
   const bNumber = b.rosterNumber ?? Number.POSITIVE_INFINITY;
   if (aNumber !== bNumber) return aNumber - bNumber;
-  return a.studentDisplayName.localeCompare(b.studentDisplayName);
+  return assignmentSortLabel(a).localeCompare(assignmentSortLabel(b));
 }
 
 /**
@@ -95,6 +119,8 @@ export function buildRandomAssignerPrintMatrix(
   for (const assignment of run.assignments) {
     if (assignment.groupId && assignment.groupName) {
       namedGroups.set(assignment.groupId, assignment.groupName);
+    } else if (assignment.groupName) {
+      namedGroups.set(assignment.groupName, assignment.groupName);
     } else {
       hasUngrouped = true;
     }
@@ -128,7 +154,13 @@ export function buildRandomAssignerPrintMatrix(
 
   const rows = itemOrder.map((item) => {
     const buckets: Array<
-      Array<{ studentDisplayName: string; rosterNumber?: number; label: string }>
+      Array<{
+        studentDisplayName?: string;
+        rosterNumber?: number;
+        firstName?: string;
+        lastName?: string;
+        label: string;
+      }>
     > = groupNames.map(() => []);
 
     for (const assignment of run.assignments) {
@@ -137,12 +169,16 @@ export function buildRandomAssignerPrintMatrix(
         ? "class"
         : assignment.groupId && assignment.groupName
           ? assignment.groupId
-          : "ungrouped";
+          : assignment.groupName
+            ? assignment.groupName
+            : "ungrouped";
       const columnIndex = columnIndexByKey.get(key);
       if (columnIndex === undefined) continue;
       buckets[columnIndex]?.push({
         studentDisplayName: assignment.studentDisplayName,
         rosterNumber: assignment.rosterNumber,
+        firstName: assignment.firstName,
+        lastName: assignment.lastName,
         label: formatRandomAssignerPrintStudent(assignment, options.nameFormat),
       });
     }
