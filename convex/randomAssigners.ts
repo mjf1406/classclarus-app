@@ -287,7 +287,6 @@ export const listForClass = classQuery({
   args: {},
   returns: v.array(randomAssignerListItemValidator),
   handler: async (ctx) => {
-    await ctx.require("assigners:read");
     // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded list
     const rows = await ctx.db
       .query("randomAssigners")
@@ -326,7 +325,6 @@ export const get = classQuery({
   args: { assignerId: v.id("randomAssigners") },
   returns: randomAssignerDetailValidator,
   handler: async (ctx, args) => {
-    await ctx.require("assigners:read");
     const assigner = await requireRandomAssigner(ctx, ctx.classDoc._id, args.assignerId);
     return {
       _id: assigner._id,
@@ -347,7 +345,6 @@ export const listRuns = classQuery({
   args: { assignerId: v.id("randomAssigners") },
   returns: v.array(randomAssignerRunListItemValidator),
   handler: async (ctx, args) => {
-    await ctx.require("assigners:read");
     await requireRandomAssigner(ctx, ctx.classDoc._id, args.assignerId);
     // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded history
     const runs = await ctx.db
@@ -375,7 +372,6 @@ export const getRun = classQuery({
   },
   returns: randomAssignerRunDetailValidator,
   handler: async (ctx, args) => {
-    await ctx.require("assigners:read");
     const assigner = await requireRandomAssigner(ctx, ctx.classDoc._id, args.assignerId);
     const run = await requireRandomAssignerRun(ctx, ctx.classDoc._id, args.assignerId, args.runId);
     return {
@@ -401,7 +397,7 @@ export const getRunById = authedQuery({
   handler: async (ctx, args) => {
     const run = await ctx.db.get("randomAssignerRuns", args.runId);
     if (!run) return null;
-    const canRead = await authz.can(ctx, ctx.userId, "assigners:read", classScope(run.classId));
+    const canRead = await authz.can(ctx, ctx.userId, "class:read", classScope(run.classId));
     if (!canRead) return null;
     const assigner = await ctx.db.get("randomAssigners", run.assignerId);
     if (!assigner || assigner.classId !== run.classId) return null;

@@ -27,6 +27,7 @@ import { deleteExpectationsForClass } from "./lib/expectationsCleanup.js";
 import { deleteGradeScalesForClass } from "./lib/gradeScalesCleanup.js";
 import { deleteGradedSubjectsForClass } from "./lib/gradedSubjectsCleanup.js";
 import { deleteRandomAssignersForClass } from "./lib/randomAssignersCleanup.js";
+import { deleteEquitableAssignersForClass } from "./lib/equitableAssignersCleanup.js";
 import { deleteBehaviorsForClass } from "./lib/behaviorsCleanup.js";
 import { deleteRewardsForClass } from "./lib/rewardsCleanup.js";
 import { deleteWarningEventsForClass } from "./lib/pointsCleanup.js";
@@ -668,6 +669,7 @@ export const remove = classMutation({
     await deleteExpectationsForClass(ctx, classId);
     await deleteGradedSubjectsForClass(ctx, classId);
     await deleteRandomAssignersForClass(ctx, classId);
+    await deleteEquitableAssignersForClass(ctx, classId);
     await deleteGradeScalesForClass(ctx, classId);
     await deleteBehaviorsForClass(ctx, classId);
     await deleteRewardsForClass(ctx, classId);

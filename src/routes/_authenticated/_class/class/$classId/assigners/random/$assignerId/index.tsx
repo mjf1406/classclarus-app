@@ -10,7 +10,7 @@ export const Route = createFileRoute(
   component: function ClassRandomAssignerHistoryRoutePage() {
     const { classId, assignerId } = Route.useParams();
     return (
-      <RequirePermission permission="assigners:read">
+      <RequirePermission permission="class:read">
         <RandomAssignerHistoryPage
           classId={classId as Id<"classes">}
           assignerId={assignerId as Id<"randomAssigners">}

@@ -52,11 +52,8 @@ export const permissions = definePermissions({
    * read is assistant_teacher+.
    */
   raz: { read: true, manage: true },
-  /**
-   * Assigners (seat layouts, etc.) — read is assistant_teacher+;
-   * manage (edit layouts) is teacher+.
-   */
-  assigners: { read: true, manage: true },
+  /** Assigners (seat layouts, random) — manage is teacher+; view uses class:read. */
+  assigners: { manage: true },
   /**
    * Grade scales (student work) — read is assistant_teacher+;
    * manage (CRUD on class-owned scales) is teacher+.
@@ -99,7 +96,6 @@ export const roles = defineRoles(permissions, {
     points: ["read", "manage"],
     expectations: ["read"],
     raz: ["read"],
-    assigners: ["read"],
     gradeScales: ["read"],
   },
   teacher: {
@@ -118,7 +114,7 @@ export const roles = defineRoles(permissions, {
     rewards: ["manage"],
     expectations: ["manage"],
     raz: ["read", "manage"],
-    assigners: ["read", "manage"],
+    assigners: ["manage"],
     gradeScales: ["read", "manage"],
   },
   owner: {

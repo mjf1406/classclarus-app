@@ -151,12 +151,13 @@ function activityMetadata(fields: {
 
 /**
  * List seating constraints for a class (newest first).
+ * Staff-only (assistant_teacher+ via students:read); students/guardians cannot view.
  */
 export const list = classQuery({
   args: {},
   returns: v.array(seatConstraintValidator),
   handler: async (ctx) => {
-    await ctx.require("assigners:read");
+    await ctx.require("students:read");
     const classId = ctx.classDoc._id;
     // eslint-disable-next-line @convex-dev/no-collect-in-query -- class-bounded constraint list
     const docs = await ctx.db

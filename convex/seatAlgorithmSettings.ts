@@ -25,7 +25,8 @@ export const get = classQuery({
     updatedAt: v.optional(v.number()),
   }),
   handler: async (ctx) => {
-    await ctx.require("assigners:read");
+    // Staff-only (assistant_teacher+); students/guardians cannot view settings.
+    await ctx.require("students:read");
     const classId = ctx.classDoc._id;
     const existing = await ctx.db
       .query("seatAlgorithmSettings")
@@ -152,7 +153,7 @@ export const importFromClass = classMutation({
     const canReadSource = await authz.can(
       ctx,
       ctx.userId,
-      "assigners:read",
+      "class:read",
       classScope(args.sourceClassId),
     );
     if (!canReadSource) {

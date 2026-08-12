@@ -399,7 +399,6 @@ export const list = classQuery({
   },
   returns: v.array(chartListItemValidator),
   handler: async (ctx, args) => {
-    await ctx.require("assigners:read");
     const classId = ctx.classDoc._id;
     // eslint-disable-next-line @convex-dev/no-collect-in-query -- class-bounded chart list
     const charts = await ctx.db
@@ -444,7 +443,6 @@ export const get = classQuery({
   },
   returns: chartValidator,
   handler: async (ctx, args) => {
-    await ctx.require("assigners:read");
     const chart = await getOwnedChart(ctx, args.chartId);
     const layout = await ctx.db.get("seatLayouts", chart.layoutId);
     if (!layout || layout.classId !== ctx.classDoc._id) {
@@ -637,7 +635,6 @@ export const previewViolations = classQuery({
   },
   returns: v.array(violationValidator),
   handler: async (ctx, args) => {
-    await ctx.require("assigners:read");
     const chart = await getOwnedChart(ctx, args.chartId);
     const layout = await ctx.db.get("seatLayouts", chart.layoutId);
     if (!layout || layout.classId !== ctx.classDoc._id) {
@@ -806,7 +803,6 @@ export const getRecord = classQuery({
   },
   returns: recordValidator,
   handler: async (ctx, args) => {
-    await ctx.require("assigners:read");
     const record = await ctx.db.get("seatChartRecords", args.recordId);
     if (!record || record.classId !== ctx.classDoc._id) {
       throw new Error("Record not found");
@@ -857,7 +853,6 @@ export const studentHistory = classQuery({
     nextBeforeRecordedAt: v.optional(v.number()),
   }),
   handler: async (ctx, args) => {
-    await ctx.require("assigners:read");
     const chart = await getOwnedChart(ctx, args.chartId);
     const layoutId = chart.layoutId;
 
@@ -999,7 +994,6 @@ export const studentSummary = classQuery({
   },
   returns: studentSummaryValidator,
   handler: async (ctx, args) => {
-    await ctx.require("assigners:read");
     const chart = await getOwnedChart(ctx, args.chartId);
     const layout = await ctx.db.get("seatLayouts", chart.layoutId);
     if (!layout || layout.classId !== ctx.classDoc._id) {

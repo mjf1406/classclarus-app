@@ -12,7 +12,7 @@ export const Route = createFileRoute(
     const typedClassId = classId as Id<"classes">;
 
     return (
-      <RequirePermission permission="assigners:read">
+      <RequirePermission permission="students:read">
         <AssignersSeatsSettingsPage classId={typedClassId} />
       </RequirePermission>
     );

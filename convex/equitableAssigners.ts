@@ -1,0 +1,670 @@
+import { ConvexError, v } from "convex/values";
+
+import { APP_CONFIG } from "./appConfig.js";
+import { components } from "./_generated/api.js";
+import type { Doc, Id } from "./_generated/dataModel.js";
+import type { MutationCtx, QueryCtx } from "./_generated/server.js";
+import { assignEquitable, type EquitableAssignRecipient } from "./lib/assigners/equitableAssign.js";
+import {
+  equitableAssignerFormSchemaEn,
+  type EquitableAssignerFormValues,
+} from "./lib/assigners/equitableAssignerSchema.js";
+import { genderBucketFromRoster } from "./lib/seating/gender.js";
+import { authz } from "./authz.js";
+import { classScope } from "./lib/authzModel.js";
+import { recordClassActivity } from "./lib/classActivity.js";
+import { authedQuery, classMutation, classQuery } from "./lib/customFunctions.js";
+import {
+  formatRosterNameParts,
+  resolveRosterNameFormat,
+  type RosterNameFormat,
+} from "./lib/rosterNameFormat.js";
+
+const scopeValidator = v.union(v.literal("class"), v.literal("groups"));
+
+const assignmentValidator = v.object({
+  studentUserId: v.id("users"),
+  studentDisplayName: v.string(),
+  item: v.string(),
+  rosterNumber: v.optional(v.number()),
+  firstName: v.optional(v.string()),
+  lastName: v.optional(v.string()),
+  groupId: v.optional(v.id("groups")),
+  groupName: v.optional(v.string()),
+});
+
+const equitableAssignerListItemValidator = v.object({
+  _id: v.id("equitableAssigners"),
+  _creationTime: v.number(),
+  name: v.string(),
+  items: v.array(v.string()),
+  defaultBalanceGender: v.boolean(),
+  defaultScope: scopeValidator,
+  createdBy: v.id("users"),
+  createdAt: v.number(),
+  updatedAt: v.number(),
+  runCount: v.number(),
+  latestRunId: v.union(v.id("equitableAssignerRuns"), v.null()),
+  latestRunAt: v.union(v.number(), v.null()),
+});
+
+const equitableAssignerDetailValidator = v.object({
+  _id: v.id("equitableAssigners"),
+  _creationTime: v.number(),
+  classId: v.id("classes"),
+  name: v.string(),
+  items: v.array(v.string()),
+  defaultBalanceGender: v.boolean(),
+  defaultScope: scopeValidator,
+  createdBy: v.id("users"),
+  createdAt: v.number(),
+  updatedAt: v.number(),
+});
+
+const equitableAssignerRunListItemValidator = v.object({
+  _id: v.id("equitableAssignerRuns"),
+  _creationTime: v.number(),
+  assignerId: v.id("equitableAssigners"),
+  ranAt: v.number(),
+  ranBy: v.id("users"),
+  scope: scopeValidator,
+  balanceGender: v.boolean(),
+  assignmentCount: v.number(),
+});
+
+const equitableAssignerRunDetailValidator = v.object({
+  _id: v.id("equitableAssignerRuns"),
+  _creationTime: v.number(),
+  classId: v.id("classes"),
+  assignerId: v.id("equitableAssigners"),
+  assignerName: v.string(),
+  ranAt: v.number(),
+  ranBy: v.id("users"),
+  scope: scopeValidator,
+  balanceGender: v.boolean(),
+  itemsSnapshot: v.array(v.string()),
+  assignments: v.array(assignmentValidator),
+});
+
+const equitableAssignerDisplayRunValidator = v.object({
+  _id: v.id("equitableAssignerRuns"),
+  _creationTime: v.number(),
+  classId: v.id("classes"),
+  assignerId: v.id("equitableAssigners"),
+  assignerName: v.string(),
+  ranAt: v.number(),
+  ranBy: v.id("users"),
+  scope: scopeValidator,
+  balanceGender: v.boolean(),
+  itemsSnapshot: v.array(v.string()),
+  assignments: v.array(assignmentValidator),
+  nameFormat: v.object({
+    order: v.union(v.literal("firstLast"), v.literal("lastFirst")),
+    space: v.boolean(),
+  }),
+});
+
+function parseFormInput(input: {
+  name: string;
+  items: string[];
+  defaultBalanceGender: boolean;
+  defaultScope: "class" | "groups";
+}): EquitableAssignerFormValues {
+  const parsed = equitableAssignerFormSchemaEn.safeParse(input);
+  if (!parsed.success) {
+    throw new ConvexError({
+      code: "INVALID_INPUT",
+      message: parsed.error.issues[0]?.message ?? "Invalid input",
+    });
+  }
+  return parsed.data;
+}
+
+async function requireEquitableAssigner(
+  ctx: QueryCtx | MutationCtx,
+  classId: Id<"classes">,
+  assignerId: Id<"equitableAssigners">,
+): Promise<Doc<"equitableAssigners">> {
+  const assigner = await ctx.db.get("equitableAssigners", assignerId);
+  if (!assigner || assigner.classId !== classId) {
+    throw new ConvexError({
+      code: "NOT_FOUND",
+      message: "Equitable assigner not found",
+    });
+  }
+  return assigner;
+}
+
+async function requireEquitableAssignerRun(
+  ctx: QueryCtx | MutationCtx,
+  classId: Id<"classes">,
+  assignerId: Id<"equitableAssigners">,
+  runId: Id<"equitableAssignerRuns">,
+): Promise<Doc<"equitableAssignerRuns">> {
+  const run = await ctx.db.get("equitableAssignerRuns", runId);
+  if (!run || run.classId !== classId || run.assignerId !== assignerId) {
+    throw new ConvexError({
+      code: "NOT_FOUND",
+      message: "Assignment run not found",
+    });
+  }
+  return run;
+}
+
+function studentDisplayName(
+  user: Doc<"users"> | null,
+  roster: { firstName?: string; lastName?: string } | undefined,
+  format: RosterNameFormat,
+  userId: Id<"users">,
+): string {
+  const rosterName = formatRosterNameParts(roster?.firstName, roster?.lastName, format);
+  if (rosterName) return rosterName;
+  const accountName = user?.name?.trim();
+  if (accountName) return accountName;
+  const email = user?.email?.trim();
+  if (email) return email;
+  return userId;
+}
+
+async function loadRecipientsForRun(
+  ctx: MutationCtx,
+  classId: Id<"classes">,
+  scope: "class" | "groups",
+): Promise<
+  Array<
+    EquitableAssignRecipient & {
+      displayName: string;
+      rosterNumber: number | undefined;
+      firstName: string | undefined;
+      lastName: string | undefined;
+    }
+  >
+> {
+  const classDoc = await ctx.db.get("classes", classId);
+  if (!classDoc) {
+    throw new ConvexError({ code: "NOT_FOUND", message: "Class not found" });
+  }
+  const nameFormat = resolveRosterNameFormat(classDoc);
+
+  const studentEntries = await ctx.runQuery(components.authz.queries.getUsersWithRole, {
+    tenantId: APP_CONFIG.authzTenantId,
+    role: "student",
+    scope: { type: "class", id: classId },
+  });
+  const studentIds = studentEntries.map((entry: { userId: string }) => entry.userId as Id<"users">);
+
+  // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded roster
+  const rosterRows = await ctx.db
+    .query("studentRosters")
+    .withIndex("by_classId", (q) => q.eq("classId", classId))
+    .collect();
+  const rosterByUserId = new Map(
+    rosterRows.map(
+      (row) =>
+        [
+          row.userId,
+          {
+            firstName: row.firstName,
+            lastName: row.lastName,
+            rosterNumber: row.rosterNumber,
+            gender: row.gender,
+          },
+        ] as const,
+    ),
+  );
+
+  // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded memberships
+  const membershipDocs = await ctx.db
+    .query("groupMemberships")
+    .withIndex("by_class", (q) => q.eq("classId", classId))
+    .collect();
+  const membershipByStudent = new Map(
+    membershipDocs.map((row) => [row.studentUserId, row] as const),
+  );
+
+  const groupNameById = new Map<string, string>();
+  // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded groups
+  const groupDocs = await ctx.db
+    .query("groups")
+    .withIndex("by_class", (q) => q.eq("classId", classId))
+    .collect();
+  for (const group of groupDocs) {
+    groupNameById.set(group._id, group.name);
+  }
+
+  const recipients: Array<
+    EquitableAssignRecipient & {
+      displayName: string;
+      rosterNumber: number | undefined;
+      firstName: string | undefined;
+      lastName: string | undefined;
+    }
+  > = [];
+  for (const userId of studentIds) {
+    const user = await ctx.db.get("users", userId);
+    const roster = rosterByUserId.get(userId);
+    const displayName = studentDisplayName(user, roster, nameFormat, userId);
+    const membership = membershipByStudent.get(userId);
+    const genderBucket = genderBucketFromRoster(roster?.gender);
+
+    if (scope === "groups") {
+      if (!membership) continue;
+      recipients.push({
+        studentUserId: userId,
+        displayName,
+        rosterNumber: roster?.rosterNumber,
+        firstName: roster?.firstName,
+        lastName: roster?.lastName,
+        groupId: membership.groupId,
+        groupName: groupNameById.get(membership.groupId),
+        genderBucket,
+      });
+    } else {
+      recipients.push({
+        studentUserId: userId,
+        displayName,
+        rosterNumber: roster?.rosterNumber,
+        firstName: roster?.firstName,
+        lastName: roster?.lastName,
+        groupId: membership?.groupId,
+        groupName: membership ? groupNameById.get(membership.groupId) : undefined,
+        genderBucket,
+      });
+    }
+  }
+
+  return recipients;
+}
+
+async function loadPriorAssignments(
+  ctx: MutationCtx,
+  assignerId: Id<"equitableAssigners">,
+): Promise<Array<{ studentUserId: string; item: string; groupId?: string; groupName?: string }>> {
+  // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded history
+  const runs = await ctx.db
+    .query("equitableAssignerRuns")
+    .withIndex("by_assignerId", (q) => q.eq("assignerId", assignerId))
+    .collect();
+  const prior: Array<{
+    studentUserId: string;
+    item: string;
+    groupId?: string;
+    groupName?: string;
+  }> = [];
+  for (const run of runs) {
+    for (const assignment of run.assignments) {
+      prior.push({
+        studentUserId: assignment.studentUserId,
+        item: assignment.item,
+        groupId: assignment.groupId,
+        groupName: assignment.groupName,
+      });
+    }
+  }
+  return prior;
+}
+
+async function latestRunForAssigner(
+  ctx: QueryCtx | MutationCtx,
+  assignerId: Id<"equitableAssigners">,
+): Promise<Doc<"equitableAssignerRuns"> | null> {
+  const run = await ctx.db
+    .query("equitableAssignerRuns")
+    .withIndex("by_assignerId_ranAt", (q) => q.eq("assignerId", assignerId))
+    .order("desc")
+    .first();
+  return run ?? null;
+}
+
+export const listForClass = classQuery({
+  args: {},
+  returns: v.array(equitableAssignerListItemValidator),
+  handler: async (ctx) => {
+    // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded list
+    const rows = await ctx.db
+      .query("equitableAssigners")
+      .withIndex("by_classId", (q) => q.eq("classId", ctx.classDoc._id))
+      .collect();
+    rows.sort((a, b) => a.name.localeCompare(b.name));
+
+    const result = [];
+    for (const row of rows) {
+      // eslint-disable-next-line @convex-dev/no-collect-in-query -- per-assigner run count, classroom-bounded
+      const runs = await ctx.db
+        .query("equitableAssignerRuns")
+        .withIndex("by_assignerId", (q) => q.eq("assignerId", row._id))
+        .collect();
+      const latest = await latestRunForAssigner(ctx, row._id);
+      result.push({
+        _id: row._id,
+        _creationTime: row._creationTime,
+        name: row.name,
+        items: row.items,
+        defaultBalanceGender: row.defaultBalanceGender,
+        defaultScope: row.defaultScope,
+        createdBy: row.createdBy,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        runCount: runs.length,
+        latestRunId: latest?._id ?? null,
+        latestRunAt: latest?.ranAt ?? null,
+      });
+    }
+    return result;
+  },
+});
+
+export const get = classQuery({
+  args: { assignerId: v.id("equitableAssigners") },
+  returns: equitableAssignerDetailValidator,
+  handler: async (ctx, args) => {
+    const assigner = await requireEquitableAssigner(ctx, ctx.classDoc._id, args.assignerId);
+    return {
+      _id: assigner._id,
+      _creationTime: assigner._creationTime,
+      classId: assigner.classId,
+      name: assigner.name,
+      items: assigner.items,
+      defaultBalanceGender: assigner.defaultBalanceGender,
+      defaultScope: assigner.defaultScope,
+      createdBy: assigner.createdBy,
+      createdAt: assigner.createdAt,
+      updatedAt: assigner.updatedAt,
+    };
+  },
+});
+
+export const listRuns = classQuery({
+  args: { assignerId: v.id("equitableAssigners") },
+  returns: v.array(equitableAssignerRunListItemValidator),
+  handler: async (ctx, args) => {
+    await requireEquitableAssigner(ctx, ctx.classDoc._id, args.assignerId);
+    // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded history
+    const runs = await ctx.db
+      .query("equitableAssignerRuns")
+      .withIndex("by_assignerId_ranAt", (q) => q.eq("assignerId", args.assignerId))
+      .order("desc")
+      .collect();
+    return runs.map((run) => ({
+      _id: run._id,
+      _creationTime: run._creationTime,
+      assignerId: run.assignerId,
+      ranAt: run.ranAt,
+      ranBy: run.ranBy,
+      scope: run.scope,
+      balanceGender: run.balanceGender,
+      assignmentCount: run.assignments.length,
+    }));
+  },
+});
+
+export const getRun = classQuery({
+  args: {
+    assignerId: v.id("equitableAssigners"),
+    runId: v.id("equitableAssignerRuns"),
+  },
+  returns: equitableAssignerRunDetailValidator,
+  handler: async (ctx, args) => {
+    const assigner = await requireEquitableAssigner(ctx, ctx.classDoc._id, args.assignerId);
+    const run = await requireEquitableAssignerRun(
+      ctx,
+      ctx.classDoc._id,
+      args.assignerId,
+      args.runId,
+    );
+    return {
+      _id: run._id,
+      _creationTime: run._creationTime,
+      classId: run.classId,
+      assignerId: run.assignerId,
+      assignerName: assigner.name,
+      ranAt: run.ranAt,
+      ranBy: run.ranBy,
+      scope: run.scope,
+      balanceGender: run.balanceGender,
+      itemsSnapshot: run.itemsSnapshot,
+      assignments: run.assignments,
+    };
+  },
+});
+
+/** Display route lookup by run id without class layout context. */
+export const getRunById = authedQuery({
+  args: { runId: v.id("equitableAssignerRuns") },
+  returns: v.union(equitableAssignerDisplayRunValidator, v.null()),
+  handler: async (ctx, args) => {
+    const run = await ctx.db.get("equitableAssignerRuns", args.runId);
+    if (!run) return null;
+    const canRead = await authz.can(ctx, ctx.userId, "class:read", classScope(run.classId));
+    if (!canRead) return null;
+    const assigner = await ctx.db.get("equitableAssigners", run.assignerId);
+    if (!assigner || assigner.classId !== run.classId) return null;
+    const classDoc = await ctx.db.get("classes", run.classId);
+    if (!classDoc) return null;
+    return {
+      _id: run._id,
+      _creationTime: run._creationTime,
+      classId: run.classId,
+      assignerId: run.assignerId,
+      assignerName: assigner.name,
+      ranAt: run.ranAt,
+      ranBy: run.ranBy,
+      scope: run.scope,
+      balanceGender: run.balanceGender,
+      itemsSnapshot: run.itemsSnapshot,
+      assignments: run.assignments,
+      nameFormat: resolveRosterNameFormat(classDoc),
+    };
+  },
+});
+
+export const create = classMutation({
+  args: {
+    name: v.string(),
+    items: v.array(v.string()),
+    defaultBalanceGender: v.boolean(),
+    defaultScope: scopeValidator,
+  },
+  returns: v.id("equitableAssigners"),
+  handler: async (ctx, args) => {
+    await ctx.require("assigners:manage");
+    const parsed = parseFormInput(args);
+    const now = Date.now();
+    const assignerId = await ctx.db.insert("equitableAssigners", {
+      classId: ctx.classDoc._id,
+      name: parsed.name,
+      items: parsed.items,
+      defaultBalanceGender: parsed.defaultBalanceGender,
+      defaultScope: parsed.defaultScope,
+      createdBy: ctx.userId,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    await recordClassActivity(ctx, {
+      classId: ctx.classDoc._id,
+      actorUserId: ctx.userId,
+      action: "write",
+      resourceType: "equitableAssigner",
+      resourceId: assignerId,
+      summary: `Created equitable assigner "${parsed.name}"`,
+      summaryKey: "activitySummary_createdEquitableAssigner",
+      metadata: { name: parsed.name },
+    });
+
+    return assignerId;
+  },
+});
+
+export const update = classMutation({
+  args: {
+    assignerId: v.id("equitableAssigners"),
+    name: v.string(),
+    items: v.array(v.string()),
+    defaultBalanceGender: v.boolean(),
+    defaultScope: scopeValidator,
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await ctx.require("assigners:manage");
+    const existing = await requireEquitableAssigner(ctx, ctx.classDoc._id, args.assignerId);
+    const parsed = parseFormInput(args);
+    await ctx.db.patch("equitableAssigners", existing._id, {
+      name: parsed.name,
+      items: parsed.items,
+      defaultBalanceGender: parsed.defaultBalanceGender,
+      defaultScope: parsed.defaultScope,
+      updatedAt: Date.now(),
+    });
+
+    await recordClassActivity(ctx, {
+      classId: ctx.classDoc._id,
+      actorUserId: ctx.userId,
+      action: "update",
+      resourceType: "equitableAssigner",
+      resourceId: existing._id,
+      summary: `Updated equitable assigner "${parsed.name}"`,
+      summaryKey: "activitySummary_updatedEquitableAssigner",
+      metadata: { name: parsed.name },
+    });
+
+    return null;
+  },
+});
+
+export const remove = classMutation({
+  args: { assignerId: v.id("equitableAssigners") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await ctx.require("assigners:manage");
+    const existing = await requireEquitableAssigner(ctx, ctx.classDoc._id, args.assignerId);
+    const name = existing.name;
+
+    // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded cleanup
+    const runs = await ctx.db
+      .query("equitableAssignerRuns")
+      .withIndex("by_assignerId", (q) => q.eq("assignerId", existing._id))
+      .collect();
+    for (const run of runs) {
+      await ctx.db.delete("equitableAssignerRuns", run._id);
+    }
+    await ctx.db.delete("equitableAssigners", existing._id);
+
+    await recordClassActivity(ctx, {
+      classId: ctx.classDoc._id,
+      actorUserId: ctx.userId,
+      action: "delete",
+      resourceType: "equitableAssigner",
+      resourceId: args.assignerId,
+      summary: `Deleted equitable assigner "${name}"`,
+      summaryKey: "activitySummary_deletedEquitableAssigner",
+      metadata: { name },
+    });
+
+    return null;
+  },
+});
+
+export const run = classMutation({
+  args: {
+    assignerId: v.id("equitableAssigners"),
+    scope: scopeValidator,
+    balanceGender: v.boolean(),
+  },
+  returns: v.id("equitableAssignerRuns"),
+  handler: async (ctx, args) => {
+    await ctx.require("assigners:manage");
+    const assigner = await requireEquitableAssigner(ctx, ctx.classDoc._id, args.assignerId);
+    if (assigner.items.length === 0) {
+      throw new ConvexError({
+        code: "INVALID_INPUT",
+        message: "Add at least one item before running",
+      });
+    }
+
+    const recipients = await loadRecipientsForRun(ctx, ctx.classDoc._id, args.scope);
+    if (recipients.length === 0) {
+      throw new ConvexError({
+        code: "INVALID_INPUT",
+        message:
+          args.scope === "groups" ? "No grouped students to assign" : "No students to assign",
+      });
+    }
+
+    const priorAssignments = await loadPriorAssignments(ctx, assigner._id);
+
+    const rawAssignments = assignEquitable({
+      items: assigner.items,
+      recipients,
+      scope: args.scope,
+      balanceGender: args.balanceGender,
+      priorAssignments,
+    });
+
+    const assignments = rawAssignments.map((row) => {
+      const recipient = recipients.find((r) => r.studentUserId === row.studentUserId);
+      return {
+        studentUserId: row.studentUserId as Id<"users">,
+        studentDisplayName: recipient?.displayName ?? row.studentUserId,
+        item: row.item,
+        rosterNumber: recipient?.rosterNumber,
+        firstName: recipient?.firstName,
+        lastName: recipient?.lastName,
+        groupId: row.groupId as Id<"groups"> | undefined,
+        groupName: row.groupName,
+      };
+    });
+
+    const now = Date.now();
+    const runId = await ctx.db.insert("equitableAssignerRuns", {
+      classId: ctx.classDoc._id,
+      assignerId: assigner._id,
+      ranAt: now,
+      ranBy: ctx.userId,
+      scope: args.scope,
+      balanceGender: args.balanceGender,
+      itemsSnapshot: [...assigner.items],
+      assignments,
+    });
+
+    await recordClassActivity(ctx, {
+      classId: ctx.classDoc._id,
+      actorUserId: ctx.userId,
+      action: "write",
+      resourceType: "equitableAssigner",
+      resourceId: runId,
+      summary: `Ran equitable assigner "${assigner.name}"`,
+      summaryKey: "activitySummary_ranEquitableAssigner",
+      metadata: { name: assigner.name },
+    });
+
+    return runId;
+  },
+});
+
+export const removeRun = classMutation({
+  args: {
+    assignerId: v.id("equitableAssigners"),
+    runId: v.id("equitableAssignerRuns"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await ctx.require("assigners:manage");
+    const assigner = await requireEquitableAssigner(ctx, ctx.classDoc._id, args.assignerId);
+    await requireEquitableAssignerRun(ctx, ctx.classDoc._id, args.assignerId, args.runId);
+    await ctx.db.delete("equitableAssignerRuns", args.runId);
+
+    await recordClassActivity(ctx, {
+      classId: ctx.classDoc._id,
+      actorUserId: ctx.userId,
+      action: "delete",
+      resourceType: "equitableAssigner",
+      resourceId: args.runId,
+      summary: `Deleted assignment run for "${assigner.name}"`,
+      summaryKey: "activitySummary_deletedEquitableAssignerRun",
+      metadata: { name: assigner.name },
+    });
+
+    return null;
+  },
+});

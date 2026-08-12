@@ -208,7 +208,6 @@ export const list = classQuery({
   args: {},
   returns: v.array(seatLayoutListItemValidator),
   handler: async (ctx) => {
-    await ctx.require("assigners:read");
     const classId = ctx.classDoc._id;
     // eslint-disable-next-line @convex-dev/no-collect-in-query -- class-bounded layout list
     const docs = await ctx.db
@@ -236,7 +235,6 @@ export const listZoneNames = classQuery({
   args: {},
   returns: v.array(v.string()),
   handler: async (ctx) => {
-    await ctx.require("assigners:read");
     const classId = ctx.classDoc._id;
     // eslint-disable-next-line @convex-dev/no-collect-in-query -- class-bounded layout list
     const docs = await ctx.db
@@ -265,7 +263,6 @@ export const get = classQuery({
   },
   returns: v.union(seatLayoutValidator, v.null()),
   handler: async (ctx, args) => {
-    await ctx.require("assigners:read");
     const layout = await ctx.db.get("seatLayouts", args.layoutId);
     if (!layout || layout.classId !== ctx.classDoc._id) {
       return null;
@@ -375,7 +372,7 @@ export const copyFromLayout = classMutation({
     const canReadSource = await authz.can(
       ctx,
       ctx.userId,
-      "assigners:read",
+      "class:read",
       classScope(args.sourceClassId),
     );
     if (!canReadSource) {

@@ -8,7 +8,7 @@ export const Route = createFileRoute("/_authenticated/_class/class/$classId/assi
   component: function ClassRandomAssignersIndexPage() {
     const { classId } = Route.useParams();
     return (
-      <RequirePermission permission="assigners:read">
+      <RequirePermission permission="class:read">
         <RandomAssignersPage classId={classId as Id<"classes">} />
       </RequirePermission>
     );

@@ -47,6 +47,14 @@ describe("grantable class permissions", () => {
     expect(permissionsForRole("student")).toContain("class:read");
     expect(permissionsForRole("guardian")).toContain("class:read");
   });
+
+  test("assigners manage is teacher+; view uses class:read", () => {
+    expect(permissionsForRole("teacher")).toContain("assigners:manage");
+    expect(permissionsForRole("assistant_teacher")).not.toContain("assigners:manage");
+    expect(permissionsForRole("student")).not.toContain("assigners:manage");
+    expect(GRANTABLE_CLASS_PERMISSIONS).toContain("assigners:manage");
+    expect(GRANTABLE_CLASS_PERMISSIONS).not.toContain("assigners:read");
+  });
 });
 
 describe("permission override helpers", () => {

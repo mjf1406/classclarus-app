@@ -36,6 +36,7 @@ import {
 import { openDisplayTab } from "@/lib/display/openDisplayTab";
 import { messageFromError } from "@/lib/errors/convexError";
 import { resolveRosterNameFormat } from "@/lib/roster/roster";
+import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -43,6 +44,8 @@ import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 
 const GRID_CLASS = "grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3";
+const CARD_ITEM_PREVIEW_LIMIT = 10;
+const CARD_ITEM_COLUMN_THRESHOLD = 5;
 
 type RandomAssignersPageProps = {
   classId: Id<"classes">;
@@ -273,6 +276,9 @@ function RandomAssignerCard({
   t: (key: string, options?: Record<string, unknown>) => string;
 }) {
   const hasLatest = assigner.latestRunId !== null;
+  const previewItems = assigner.items.slice(0, CARD_ITEM_PREVIEW_LIMIT);
+  const useColumns = previewItems.length > CARD_ITEM_COLUMN_THRESHOLD;
+  const remainingCount = assigner.items.length - CARD_ITEM_PREVIEW_LIMIT;
 
   const menuItems = useMemo<Array<ActionMenuItem>>(() => {
     const items: Array<ActionMenuItem> = [];
@@ -352,18 +358,30 @@ function RandomAssignerCard({
           </div>
         </CardHeader>
         <CardContent className="border-t pt-0">
-          <ul className="divide-y">
-            {assigner.items.slice(0, 4).map((item) => (
-              <li key={item} className="truncate py-2 text-sm text-muted-foreground">
+          <ul
+            className={cn(
+              useColumns ? "grid grid-cols-2 gap-x-3" : "divide-y",
+              useColumns && "gap-y-0",
+            )}
+          >
+            {previewItems.map((item) => (
+              <li
+                key={item}
+                className={cn(
+                  "truncate text-sm text-muted-foreground",
+                  useColumns ? "py-1.5" : "py-2",
+                )}
+                title={item}
+              >
                 {item}
               </li>
             ))}
-            {assigner.items.length > 4 ? (
-              <li className="py-2 text-sm text-muted-foreground">
-                {t("randomMoreItems", { count: assigner.items.length - 4 })}
-              </li>
-            ) : null}
           </ul>
+          {remainingCount > 0 ? (
+            <p className="mt-1 text-sm text-muted-foreground">
+              {t("randomMoreItems", { count: remainingCount })}
+            </p>
+          ) : null}
         </CardContent>
       </Card>
     </li>

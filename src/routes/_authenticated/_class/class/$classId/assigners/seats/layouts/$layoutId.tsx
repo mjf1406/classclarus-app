@@ -13,7 +13,7 @@ export const Route = createFileRoute(
     const typedLayoutId = layoutId as Id<"seatLayouts">;
 
     return (
-      <RequirePermission permission="assigners:read">
+      <RequirePermission permission="class:read">
         <SeatLayoutEditorPage classId={typedClassId} layoutId={typedLayoutId} />
       </RequirePermission>
     );

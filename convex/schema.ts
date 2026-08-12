@@ -979,6 +979,17 @@ const schema = defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_classId", ["classId"]),
+  /** Fungible-item equitable assigners (fair experience balancing). */
+  equitableAssigners: defineTable({
+    classId: v.id("classes"),
+    name: v.string(),
+    items: v.array(v.string()),
+    defaultBalanceGender: v.boolean(),
+    defaultScope: v.union(v.literal("class"), v.literal("groups")),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_classId", ["classId"]),
   /** Immutable snapshots of random assigner runs. */
   randomAssignerRuns: defineTable({
     classId: v.id("classes"),
@@ -987,6 +998,31 @@ const schema = defineSchema({
     ranBy: v.id("users"),
     scope: v.union(v.literal("class"), v.literal("groups")),
     replicates: v.boolean(),
+    itemsSnapshot: v.array(v.string()),
+    assignments: v.array(
+      v.object({
+        studentUserId: v.id("users"),
+        studentDisplayName: v.string(),
+        item: v.string(),
+        rosterNumber: v.optional(v.number()),
+        firstName: v.optional(v.string()),
+        lastName: v.optional(v.string()),
+        groupId: v.optional(v.id("groups")),
+        groupName: v.optional(v.string()),
+      }),
+    ),
+  })
+    .index("by_classId", ["classId"])
+    .index("by_assignerId", ["assignerId"])
+    .index("by_assignerId_ranAt", ["assignerId", "ranAt"]),
+  /** Immutable snapshots of equitable assigner runs. */
+  equitableAssignerRuns: defineTable({
+    classId: v.id("classes"),
+    assignerId: v.id("equitableAssigners"),
+    ranAt: v.number(),
+    ranBy: v.id("users"),
+    scope: v.union(v.literal("class"), v.literal("groups")),
+    balanceGender: v.boolean(),
     itemsSnapshot: v.array(v.string()),
     assignments: v.array(
       v.object({

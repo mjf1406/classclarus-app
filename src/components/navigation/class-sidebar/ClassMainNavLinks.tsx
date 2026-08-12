@@ -15,6 +15,7 @@ import {
   Megaphone,
   RockingChair,
   Dices,
+  Scale,
   SmilePlus,
   Settings2,
   Shield,
@@ -231,13 +232,19 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
       title: tAssigners("navSeats"),
       icon: RockingChair,
       to: "/class/$classId/assigners/seats",
-      permission: "assigners:read",
+      permission: "class:read",
     },
     {
       title: tAssigners("navRandom"),
       icon: Dices,
       to: "/class/$classId/assigners/random",
-      permission: "assigners:read",
+      permission: "class:read",
+    },
+    {
+      title: tAssigners("navEquitable"),
+      icon: Scale,
+      to: "/class/$classId/assigners/equitable",
+      permission: "class:read",
     },
   ];
 

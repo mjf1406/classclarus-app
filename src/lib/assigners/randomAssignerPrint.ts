@@ -1,8 +1,23 @@
 import { APP_CONFIG } from "@/config/app";
-import type { RandomAssignerRunDetail } from "@/lib/assigners/randomAssigners";
-import { formatRosterNameParts, type RosterNameFormat } from "@/lib/roster/roster";
+import type { RosterNameFormat } from "@/lib/roster/roster";
+import { formatRosterNameParts } from "@/lib/roster/roster";
 
 export const RANDOM_ASSIGNER_PRINT_LOGO_PATH = "/brand/logo/icon-and-text-horizontal.webp";
+
+/** Shared shape for random/equitable assigner print (IDs and flags differ by assigner type). */
+export type AssignerPrintRunInput = {
+  itemsSnapshot: string[];
+  assignments: Array<{
+    studentUserId: string;
+    studentDisplayName: string;
+    item: string;
+    rosterNumber?: number;
+    firstName?: string;
+    lastName?: string;
+    groupId?: string;
+    groupName?: string;
+  }>;
+};
 
 export type RandomAssignerPrintLabels = {
   documentTitle: string;
@@ -67,7 +82,7 @@ function comparePrintStudents(
  * Cells list `#rosterNumber - name` for students who received that item in that group.
  */
 export function buildRandomAssignerPrintMatrix(
-  run: RandomAssignerRunDetail,
+  run: AssignerPrintRunInput,
   options: {
     classColumn: string;
     ungroupedColumn: string;
@@ -144,7 +159,7 @@ export function buildRandomAssignerPrintMatrix(
 }
 
 export function buildRandomAssignerPrintHtml(
-  run: RandomAssignerRunDetail,
+  run: AssignerPrintRunInput,
   labels: RandomAssignerPrintLabels,
   logoUrl: string,
   nameFormat: RosterNameFormat,
@@ -230,7 +245,7 @@ function waitForImages(doc: Document): Promise<void> {
 }
 
 export async function printRandomAssignerRun(
-  run: RandomAssignerRunDetail,
+  run: AssignerPrintRunInput,
   labels: RandomAssignerPrintLabels,
   nameFormat: RosterNameFormat,
 ): Promise<void> {

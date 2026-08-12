@@ -13,7 +13,7 @@ export const Route = createFileRoute(
     const typedChartId = chartId as Id<"seatCharts">;
 
     return (
-      <RequirePermission permission="assigners:read">
+      <RequirePermission permission="class:read">
         <SeatChartEditorPage classId={typedClassId} chartId={typedChartId} />
       </RequirePermission>
     );
