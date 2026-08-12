@@ -267,6 +267,15 @@ const schema = defineSchema({
         height: v.number(),
       }),
     ),
+    /**
+     * Auto-assign gender parity for this layout.
+     * Optional until `seatLayoutGenderParityBackfill` has run; new layouts always set it.
+     */
+    genderParity: v.optional(
+      v.object({
+        mode: v.union(v.literal("off"), v.literal("oddEven")),
+      }),
+    ),
     updatedAt: v.number(),
     createdBy: v.id("users"),
   })
@@ -426,11 +435,14 @@ const schema = defineSchema({
     count: v.number(),
     updatedAt: v.number(),
   })
+    .index("by_layout", ["layoutId"])
     .index("by_layout_student", ["layoutId", "studentUserId"])
     .index("by_layout_student_dimension", ["layoutId", "studentUserId", "dimension"])
     .index("by_layout_student_dimension_key", ["layoutId", "studentUserId", "dimension", "key"]),
   /**
-   * Class-scoped auto-assign algorithm weights and preferences.
+   * @deprecated Legacy class-scoped auto-assign settings.
+   * Kept only so `seatLayoutGenderParityBackfill` can copy gender parity onto layouts.
+   * Remove this table after the backfill has been run on every deployment.
    */
   seatAlgorithmSettings: defineTable({
     classId: v.id("classes"),

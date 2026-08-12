@@ -1,18 +1,9 @@
 import type { Doc, Id } from "../../_generated/dataModel.js";
 import type { ChartAssignment } from "../seatChartGeometry.js";
 
-export type SeatingWeightKey = "seat" | "zone" | "team" | "neighbor" | "gender" | "combination";
-
-export type SeatingWeights = Record<SeatingWeightKey, number>;
+export type SeatingFairnessDimension = "neighbor" | "seat" | "zone" | "team";
 
 export type GenderParityMode = "off" | "oddEven";
-
-export type SeatAlgorithmSettings = {
-  weights: SeatingWeights;
-  genderParity: {
-    mode: GenderParityMode;
-  };
-};
 
 export type SeatingAlgorithmScopeKind = "class" | "group" | "team";
 
@@ -79,8 +70,8 @@ export type SeatingAlgorithmInput = {
   locked: ReadonlyArray<LockedAssignment>;
   constraints: ReadonlyArray<SeatingConstraint>;
   history: LayoutHistoryStats;
-  settings: SeatAlgorithmSettings;
   scope: SeatingAlgorithmScope;
+  genderParityMode: GenderParityMode;
   genderParityAssignment: GenderParityAssignment;
   randomSeed: string;
 };
@@ -90,27 +81,28 @@ export type SeatingAlgorithmSuccess = {
   assignments: ReadonlyArray<ChartAssignment>;
   meta: {
     unseatedStudentIds: Array<Id<"users">>;
-    score?: number;
+    fairnessVector?: Array<number>;
     violationCount: number;
   };
-};
-
-export type SeatingAlgorithmNotImplemented = {
-  status: "not_implemented";
-  message: string;
-  code: "SEATING_ALGORITHM_NOT_IMPLEMENTED";
 };
 
 export type SeatingAlgorithmInfeasible = {
   status: "infeasible";
   message: string;
+  code: "SEATING_INFEASIBLE";
   unseatedStudentIds: Array<Id<"users">>;
+};
+
+export type SeatingAlgorithmSearchExhausted = {
+  status: "search_exhausted";
+  message: string;
+  code: "SEATING_SEARCH_EXHAUSTED";
 };
 
 export type SeatingAlgorithmResult =
   | SeatingAlgorithmSuccess
-  | SeatingAlgorithmNotImplemented
-  | SeatingAlgorithmInfeasible;
+  | SeatingAlgorithmInfeasible
+  | SeatingAlgorithmSearchExhausted;
 
 export type SeatingScopeHint = {
   groupIds?: ReadonlyArray<Id<"groups">>;

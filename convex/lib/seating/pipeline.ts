@@ -8,7 +8,7 @@ import {
 import { assignGenderParity, genderBucketFromRoster } from "./gender.js";
 import { buildLayoutHistoryStats } from "./history.js";
 import { mergeAlgorithmAssignments } from "./mergeAssignments.js";
-import { normalizeSeatAlgorithmSettings } from "./settings.js";
+import { normalizeGenderParityMode } from "./settings.js";
 import {
   groupIdsInScope,
   inferDefaultScopeFromClassShape,
@@ -16,8 +16,9 @@ import {
   movableStudentIds,
   type GroupMembershipRow,
 } from "./scope.js";
-import { SeatingAlgorithmNotImplementedError, solveSeating } from "./solve.js";
+import { solveSeating } from "./solve.js";
 import type {
+  GenderParityMode,
   LockedAssignment,
   SeatingAlgorithmInput,
   SeatingAlgorithmResult,
@@ -32,7 +33,7 @@ import { validateMergedAssignments } from "./validateOutput.js";
 export function buildSeatingDeskSlots(args: {
   layoutItems: Array<SeatLayoutItemSnapshot>;
   groupIds: Array<Id<"groups">>;
-  resolveTeamId: (groupId: Id<"groups">, desk: SeatLayoutItemSnapshot) => Id<"teams"> | undefined;
+  resolveTeamKey: (groupId: Id<"groups">, desk: SeatLayoutItemSnapshot) => string | undefined;
 }): Array<SeatingDeskSlot> {
   const neighborMap = findStrictDeskNeighborIds(args.layoutItems);
   const deskById = deskItemsById(args.layoutItems);
@@ -40,8 +41,7 @@ export function buildSeatingDeskSlots(args: {
 
   for (const groupId of args.groupIds) {
     for (const desk of deskById.values()) {
-      const teamId = args.resolveTeamId(groupId, desk);
-      const teamKey = teamId !== undefined ? `${groupId}:${teamId}` : undefined;
+      const teamKey = args.resolveTeamKey(groupId, desk);
       slots.push({
         deskItemId: desk.id,
         groupId,
@@ -85,7 +85,7 @@ export function prepareSeatingAlgorithmInput(args: {
   scope?: SeatingAlgorithmScope;
   scopeHint?: SeatingScopeHint;
   randomSeed: string;
-  settings: ReturnType<typeof normalizeSeatAlgorithmSettings>;
+  genderParityMode: GenderParityMode;
   constraints: ReadonlyArray<{
     _id: Id<"seatConstraints">;
     type: Doc<"seatConstraints">["type"];
@@ -99,7 +99,7 @@ export function prepareSeatingAlgorithmInput(args: {
   layoutAggregateRows: Array<
     Pick<Doc<"seatLayoutAggregates">, "studentUserId" | "dimension" | "key" | "count">
   >;
-  resolveTeamId: (groupId: Id<"groups">, desk: SeatLayoutItemSnapshot) => Id<"teams"> | undefined;
+  resolveTeamKey: (groupId: Id<"groups">, desk: SeatLayoutItemSnapshot) => string | undefined;
 }): SeatingAlgorithmInput {
   const scope =
     args.scope ??
@@ -116,15 +116,17 @@ export function prepareSeatingAlgorithmInput(args: {
     scope,
     lockedStudentUserIds,
   });
+  const solverStudentIds = [...new Set([...movableIds, ...lockedStudentUserIds])];
   const activeGroupIds = groupIdsInScope({
     memberships: args.memberships,
     scope,
     lockedAssignments: args.lockedAssignments,
   });
 
+  const genderParityMode = normalizeGenderParityMode(args.genderParityMode);
   const genderParityAssignment = assignGenderParity({
     randomSeed: args.randomSeed,
-    mode: args.settings.genderParity.mode,
+    mode: genderParityMode,
   });
 
   return {
@@ -132,11 +134,11 @@ export function prepareSeatingAlgorithmInput(args: {
     slots: buildSeatingDeskSlots({
       layoutItems: args.layoutItems,
       groupIds: activeGroupIds,
-      resolveTeamId: args.resolveTeamId,
+      resolveTeamKey: args.resolveTeamKey,
     }),
     students: buildSeatingStudents({
       memberships: args.memberships,
-      movableIds,
+      movableIds: solverStudentIds,
       rosterGenderByStudent: args.rosterGenderByStudent,
     }),
     locked: args.lockedAssignments.map((assignment) => ({ ...assignment })),
@@ -151,8 +153,8 @@ export function prepareSeatingAlgorithmInput(args: {
       ...(constraint.zoneName !== undefined ? { zoneName: constraint.zoneName } : {}),
     })),
     history: buildLayoutHistoryStats(args.layoutAggregateRows),
-    settings: args.settings,
     scope,
+    genderParityMode,
     genderParityAssignment,
     randomSeed: args.randomSeed,
   };
@@ -164,7 +166,6 @@ export function finishSeatingAlgorithm(args: {
   memberships: ReadonlyArray<GroupMembershipRow>;
   deskById: Map<string, SeatLayoutItemSnapshot>;
 }):
-  | { status: "not_implemented"; message: string; code: "SEATING_ALGORITHM_NOT_IMPLEMENTED" }
   | {
       status: "ok";
       assignments: Array<ChartAssignment>;
@@ -175,30 +176,25 @@ export function finishSeatingAlgorithm(args: {
   const lockedStudentUserIds = new Set(
     args.lockedAssignments.map((assignment) => assignment.studentUserId),
   );
-  const movableStudentIdSet = new Set(args.input.students.map((student) => student.studentUserId));
+  const movableStudentIdSet = new Set(
+    args.input.students
+      .map((student) => student.studentUserId)
+      .filter((studentId) => !lockedStudentUserIds.has(studentId)),
+  );
 
-  let solverResult: SeatingAlgorithmResult;
-  try {
-    solverResult = solveSeating(args.input);
-  } catch (error) {
-    if (error instanceof SeatingAlgorithmNotImplementedError) {
-      return {
-        status: "not_implemented",
-        message: error.message,
-        code: error.code,
-      };
-    }
-    throw error;
-  }
-
-  if (solverResult.status === "not_implemented") {
-    return solverResult;
-  }
+  const solverResult: SeatingAlgorithmResult = solveSeating(args.input);
   if (solverResult.status === "infeasible") {
     return {
       status: "invalid",
       message: solverResult.message,
       code: "SEATING_INFEASIBLE",
+    };
+  }
+  if (solverResult.status === "search_exhausted") {
+    return {
+      status: "invalid",
+      message: solverResult.message,
+      code: solverResult.code,
     };
   }
 

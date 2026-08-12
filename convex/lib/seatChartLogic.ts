@@ -3,6 +3,7 @@ import type { MutationCtx, QueryCtx } from "../_generated/server.js";
 import { classScope } from "./authzModel.js";
 import { getClassRoleForUser } from "./guardianLinks.js";
 import { formatRosterNameParts, resolveRosterNameFormat } from "./rosterNameFormat.js";
+import { seatHistoryKey, teamHistoryKey } from "./seating/historyKeys.js";
 import {
   deskItemsById,
   findStrictDeskNeighborIds,
@@ -166,7 +167,10 @@ export async function resolveTeamLabelForDesk(
   if (assignment.mode === "byName") {
     const teamName = assignment.teamName.trim();
     if (!teamName) return {};
-    return { teamKey: `name:${teamName}`, teamLabel: teamName };
+    return {
+      teamKey: teamHistoryKey(undefined, assignment),
+      teamLabel: teamName,
+    };
   }
 
   const group = await ctx.db.get("groups", assignment.groupId);
@@ -174,7 +178,7 @@ export async function resolveTeamLabelForDesk(
   const groupName = group?.name?.trim() ?? "Group";
   const teamName = team?.name?.trim() ?? "Team";
   return {
-    teamKey: `g:${assignment.groupId}:t:${assignment.teamId}`,
+    teamKey: teamHistoryKey(assignment.groupId, assignment),
     teamLabel: `${groupName} · ${teamName}`,
   };
 }
@@ -318,7 +322,7 @@ export async function syncMembershipTeamsFromSeating(
 }
 
 export function seatAggregateKey(layoutId: Id<"seatLayouts">, deskItemId: string): string {
-  return `${layoutId}:${deskItemId}`;
+  return seatHistoryKey(layoutId, deskItemId);
 }
 
 export function seatAggregateLabel(deskNumber: number | undefined): string {
@@ -389,7 +393,12 @@ export async function buildPlacementSnapshots(
       neighborStudentIds.map((id) => resolveStudentDisplayName(ctx, classDoc, id)),
     );
 
-    const { teamKey, teamLabel } = await resolveTeamLabelForDesk(ctx, desk);
+    const resolvedTeam = await resolveTeamLabelForDesk(ctx, desk);
+    const teamApplies =
+      !desk.teamAssignment ||
+      deskTeamAssignmentAppliesToGroup(desk.teamAssignment, assignment.groupId);
+    const teamKey = teamApplies ? resolvedTeam.teamKey : undefined;
+    const teamLabel = teamApplies ? resolvedTeam.teamLabel : undefined;
     const zoneName = desk.zoneName?.trim() || undefined;
     const studentDisplayName = await resolveStudentDisplayName(
       ctx,
@@ -455,8 +464,8 @@ export function areDeskTeammates(
   const deskB = assignmentByStudent.get(studentB);
   if (!deskA || !deskB || deskA === deskB) return false;
 
-  const keyA = teamKeyByDesk.get(deskA);
-  const keyB = teamKeyByDesk.get(deskB);
+  const keyA = teamKeyByDesk.get(slotKey(deskA, groupA));
+  const keyB = teamKeyByDesk.get(slotKey(deskB, groupB));
   if (!keyA || !keyB) return false;
   return keyA === keyB;
 }
@@ -499,8 +508,13 @@ export async function evaluateConstraintViolations(
   const teamLabelByDesk = new Map<string, string | undefined>();
   for (const desk of deskById.values()) {
     const { teamKey, teamLabel } = await resolveTeamLabelForDesk(ctx, desk);
-    teamKeyByDesk.set(desk.id, teamKey);
     teamLabelByDesk.set(desk.id, teamLabel);
+    for (const membership of memberships.values()) {
+      teamKeyByDesk.set(
+        slotKey(desk.id, membership.groupId),
+        desk.teamAssignment ? teamHistoryKey(membership.groupId, desk.teamAssignment) : teamKey,
+      );
+    }
   }
 
   const violations: Array<ConstraintViolation> = [];

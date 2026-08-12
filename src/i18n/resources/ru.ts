@@ -1115,9 +1115,8 @@ const ru = {
 
     activitySummary_generatedSeatChart: "Авто-расстановка схемы «{{name}}»",
     activitySummary_autoAssignedExistingSeatChart: "Авто-рассадка на схеме «{{name}}»",
-    activitySummary_updatedSeatAlgorithmSettings: "Обновлены настройки авто-расстановки",
-    activitySummary_importedSeatAlgorithmSettings:
-      "Импортированы настройки авто-расстановки из «{{sourceClassName}}»",
+    activitySummary_updatedSeatLayoutGenderParity:
+      "Обновлена гендерная парность схемы «{{name}}» на {{mode}}",
     activitySummary_exportedSeatChartPdf: "Экспорт PDF схемы «{{chartName}}»",
 
     activitySummary_recordedRazAssessment: "Записана оценка RAZ ({{result}}) → уровень {{level}}",
@@ -2331,36 +2330,9 @@ const ru = {
     tabLayouts: "Планы",
     tabConstraints: "Ограничения",
     tabCharts: "Рассадки",
-    tabSettings: "Настройки",
-    settingsDescription:
-      "Настройте веса авто-расстановки: место, зона, команда, соседи, гендерный баланс и комбинации.",
-    settingsTitle: "Веса авто-расстановки",
-    settingsImport: "Импорт настроек",
-    settingsImportTitle: "Импорт настроек авто-расстановки",
-    settingsImportDescription:
-      "Скопируйте веса из другого класса, который вы можете просматривать.",
-    settingsImportSourceLabel: "Исходный класс",
-    settingsImportSourcePlaceholder: "Выберите класс",
-    settingsImportNoSources: "Других классов нет.",
-    settingsImportAction: "Импорт",
-    settingsImportFailed: "Не удалось импортировать настройки.",
-    settingsSaveFailed: "Не удалось сохранить настройки.",
-    settingsWeightSeat: "Разнообразие мест",
-    settingsWeightSeatHint: "Избегать повторения одного номера места.",
-    settingsWeightZone: "Разнообразие зон",
-    settingsWeightZoneHint: "Распределять учеников по именованным зонам.",
-    settingsWeightTeam: "Разнообразие команд",
-    settingsWeightTeamHint: "Чередовать назначения команд за партами.",
-    settingsWeightNeighbor: "Разнообразие соседей",
-    settingsWeightNeighborHint: "Избегать повторения одних и тех же соседей.",
-    settingsWeightGender: "Гендерный баланс",
-    settingsWeightGenderHint:
-      "Случайно назначать мальчиков на нечётные или чётные места за запуск; девочки — на противоположную чётность.",
-    settingsWeightCombination: "Разнообразие комбинаций",
-    settingsWeightCombinationHint: "Избегать повторения одной и той же полной расстановки.",
-    settingsGenderParityLabel: "Режим гендерного баланса",
-    settingsGenderParityOff: "Выкл.",
-    settingsGenderParityOddEven: "Нечётные / чётные места",
+    layoutGenderParityLabel: "Гендерная парность",
+    layoutGenderParityOff: "Выкл.",
+    layoutGenderParityOddEven: "Нечётные / чётные места",
     autoAssign: "Авто-расстановка",
     autoAssignTitle: "Автоматическая расстановка",
     autoAssignDescriptionCreate:
@@ -2370,6 +2342,9 @@ const ru = {
     autoAssignAction: "Авто-расстановка",
     autoAssignFailed: "Не удалось выполнить авто-расстановку.",
     autoAssignNotImplemented: "Авто-расстановка пока недоступна.",
+    autoAssignInfeasible: "Невозможно выполнить все правила рассадки.",
+    autoAssignSearchExhausted:
+      "Допустимая рассадка не найдена. Повторите попытку или измените правила.",
     chartsDescription: "Расставьте учеников по партам вручную и сохраняйте историю рассадки.",
     createChart: "Новая рассадка",
     createChartTitle: "Новая рассадка",

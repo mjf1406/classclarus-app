@@ -1131,9 +1131,8 @@ const de = {
     activitySummary_generatedSeatChart: "Sitzplan „{{name}}“ automatisch zugewiesen",
     activitySummary_autoAssignedExistingSeatChart:
       "Sitze auf Plan „{{name}}“ automatisch zugewiesen",
-    activitySummary_updatedSeatAlgorithmSettings: "Auto-Zuweisungs-Einstellungen aktualisiert",
-    activitySummary_importedSeatAlgorithmSettings:
-      "Auto-Zuweisungs-Einstellungen aus „{{sourceClassName}}“ importiert",
+    activitySummary_updatedSeatLayoutGenderParity:
+      'Geschlechterparität auf Sitzplan "{{name}}" auf {{mode}} aktualisiert',
     activitySummary_exportedSeatChartPdf: "Sitzplan-PDF „{{chartName}}“ exportiert",
 
     activitySummary_recordedRazAssessment: "RAZ-Bewertung erfasst ({{result}}) ? Stufe {{level}}",
@@ -2363,35 +2362,9 @@ const de = {
     tabLayouts: "Pl�ne",
     tabConstraints: "Einschr�nkungen",
     tabCharts: "Sitzpläne",
-    tabSettings: "Einstellungen",
-    settingsDescription:
-      "Steuern Sie, wie Auto-Zuweisung Sitz-, Zonen-, Team-, Nachbar-, Geschlechter- und Kombinationsvielfalt gewichtet.",
-    settingsTitle: "Auto-Zuweisungs-Gewichte",
-    settingsImport: "Einstellungen importieren",
-    settingsImportTitle: "Auto-Zuweisungs-Einstellungen importieren",
-    settingsImportDescription: "Kopieren Sie Gewichtsvorgaben aus einer anderen sichtbaren Klasse.",
-    settingsImportSourceLabel: "Quellklasse",
-    settingsImportSourcePlaceholder: "Klasse auswählen",
-    settingsImportNoSources: "Keine weiteren Klassen verfügbar.",
-    settingsImportAction: "Importieren",
-    settingsImportFailed: "Einstellungen konnten nicht importiert werden.",
-    settingsSaveFailed: "Einstellungen konnten nicht gespeichert werden.",
-    settingsWeightSeat: "Sitzvielfalt",
-    settingsWeightSeatHint: "Wiederholung derselben Sitznummer vermeiden.",
-    settingsWeightZone: "Zonenvielfalt",
-    settingsWeightZoneHint: "Schüler auf benannte Zonen verteilen.",
-    settingsWeightTeam: "Teamvielfalt",
-    settingsWeightTeamHint: "Tisch-Team-Zuweisungen rotieren.",
-    settingsWeightNeighbor: "Nachbarvielfalt",
-    settingsWeightNeighborHint: "Wiederholung derselben Nachbarn vermeiden.",
-    settingsWeightGender: "Geschlechterparität",
-    settingsWeightGenderHint:
-      "Jungen pro Lauf zufällig auf ungerade oder gerade Plätze; Mädchen erhalten die Gegenparität.",
-    settingsWeightCombination: "Kombinationsvielfalt",
-    settingsWeightCombinationHint: "Wiederholung derselben Gesamtsituation vermeiden.",
-    settingsGenderParityLabel: "Geschlechterparitätsmodus",
-    settingsGenderParityOff: "Aus",
-    settingsGenderParityOddEven: "Ungerade / gerade Plätze",
+    layoutGenderParityLabel: "Geschlechterparität",
+    layoutGenderParityOff: "Aus",
+    layoutGenderParityOddEven: "Ungerade / gerade Plätze",
     autoAssign: "Auto-Zuweisung",
     autoAssignTitle: "Sitzplätze automatisch zuweisen",
     autoAssignDescriptionCreate:
@@ -2401,6 +2374,9 @@ const de = {
     autoAssignAction: "Auto-Zuweisung",
     autoAssignFailed: "Automatische Sitzplatz-Zuweisung fehlgeschlagen.",
     autoAssignNotImplemented: "Automatische Zuweisung ist noch nicht verfügbar.",
+    autoAssignInfeasible: "Die Sitzregeln können nicht alle erfüllt werden.",
+    autoAssignSearchExhausted:
+      "Es wurde keine gültige Sitzordnung gefunden. Versuchen Sie es erneut oder passen Sie die Sitzregeln an.",
     chartsDescription:
       "Setzen Sie Schüler manuell an Tische und erfassen Sie die Sitzplatzhistorie.",
     createChart: "Neuer Sitzplan",

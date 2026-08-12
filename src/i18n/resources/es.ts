@@ -1125,9 +1125,8 @@ const es = {
 
     activitySummary_generatedSeatChart: 'Plan de asientos "{{name}}" asignado automáticamente',
     activitySummary_autoAssignedExistingSeatChart: 'Asientos autoasignados en el plan "{{name}}"',
-    activitySummary_updatedSeatAlgorithmSettings: "Actualizó los ajustes de asignación automática",
-    activitySummary_importedSeatAlgorithmSettings:
-      'Importó ajustes de asignación automática desde "{{sourceClassName}}"',
+    activitySummary_updatedSeatLayoutGenderParity:
+      'Actualizó la paridad de género del plano "{{name}}" a {{mode}}',
     activitySummary_exportedSeatChartPdf: 'Exportó PDF del plan "{{chartName}}"',
 
     activitySummary_recordedRazAssessment:
@@ -2354,35 +2353,9 @@ const es = {
     tabLayouts: "Planos",
     tabConstraints: "Restricciones",
     tabCharts: "Planes",
-    tabSettings: "Ajustes",
-    settingsDescription:
-      "Ajusta cómo la asignación automática pondera variedad de asiento, zona, equipo, vecinos, paridad de género y combinaciones.",
-    settingsTitle: "Pesos de asignación automática",
-    settingsImport: "Importar ajustes",
-    settingsImportTitle: "Importar ajustes de asignación automática",
-    settingsImportDescription: "Copia preferencias de peso de otra clase que puedas ver.",
-    settingsImportSourceLabel: "Clase origen",
-    settingsImportSourcePlaceholder: "Seleccionar una clase",
-    settingsImportNoSources: "No hay otras clases disponibles.",
-    settingsImportAction: "Importar",
-    settingsImportFailed: "No se pudieron importar los ajustes.",
-    settingsSaveFailed: "No se pudieron guardar los ajustes.",
-    settingsWeightSeat: "Variedad de asiento",
-    settingsWeightSeatHint: "Evita repetir el mismo número de asiento.",
-    settingsWeightZone: "Variedad de zona",
-    settingsWeightZoneHint: "Reparte estudiantes entre zonas con nombre.",
-    settingsWeightTeam: "Variedad de equipo",
-    settingsWeightTeamHint: "Rota las asignaciones de equipo en los pupitres.",
-    settingsWeightNeighbor: "Variedad de vecinos",
-    settingsWeightNeighborHint: "Evita repetir los mismos vecinos.",
-    settingsWeightGender: "Paridad de género",
-    settingsWeightGenderHint:
-      "Asigna al azar a chicos en asientos impares o pares cada ejecución; chicas toman la paridad opuesta.",
-    settingsWeightCombination: "Variedad de combinación",
-    settingsWeightCombinationHint: "Evita repetir la misma situación de asientos completa.",
-    settingsGenderParityLabel: "Modo de paridad de género",
-    settingsGenderParityOff: "Desactivado",
-    settingsGenderParityOddEven: "Asientos impares / pares",
+    layoutGenderParityLabel: "Paridad de género",
+    layoutGenderParityOff: "Desactivado",
+    layoutGenderParityOddEven: "Asientos impares / pares",
     autoAssign: "Asignar automáticamente",
     autoAssignTitle: "Asignación automática de asientos",
     autoAssignDescriptionCreate:
@@ -2392,6 +2365,9 @@ const es = {
     autoAssignAction: "Asignar automáticamente",
     autoAssignFailed: "No se pudo asignar asientos automáticamente.",
     autoAssignNotImplemented: "La asignación automática aún no está disponible.",
+    autoAssignInfeasible: "No se pueden cumplir todas las reglas de asientos.",
+    autoAssignSearchExhausted:
+      "No se encontró una distribución válida. Inténtalo de nuevo o ajusta las reglas.",
     chartsDescription:
       "Coloca a los alumnos en los pupitres manualmente y registra el historial de asientos.",
     createChart: "Nuevo plan",

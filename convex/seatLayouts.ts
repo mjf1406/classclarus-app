@@ -1,4 +1,5 @@
 import { ConvexError, v } from "convex/values";
+import { paginationOptsValidator } from "convex/server";
 
 import { authz } from "./authz.js";
 import type { Id } from "./_generated/dataModel.js";
@@ -8,6 +9,7 @@ import { classMutation, classQuery } from "./lib/customFunctions.js";
 import { rateLimiter } from "./lib/rateLimiter.js";
 import { activeChartsForLayout } from "./lib/seatChartLogic.js";
 import { copySeatLayoutItems } from "./lib/seatLayoutCopy.js";
+import { resolveLayoutGenderParityMode } from "./lib/seating/settings.js";
 
 const MAX_LAYOUT_NAME_LENGTH = 80;
 const MAX_ITEM_LABEL_LENGTH = 80;
@@ -30,6 +32,12 @@ const teamAssignmentValidator = v.union(
     teamName: v.string(),
   }),
 );
+
+const genderParityModeValidator = v.union(v.literal("off"), v.literal("oddEven"));
+
+const genderParityValidator = v.object({
+  mode: genderParityModeValidator,
+});
 
 const seatLayoutItemValidator = v.object({
   id: v.string(),
@@ -62,8 +70,21 @@ const seatLayoutValidator = v.object({
   canvasHeight: v.number(),
   nextDeskNumber: v.number(),
   items: v.array(seatLayoutItemValidator),
+  genderParity: genderParityValidator,
   updatedAt: v.number(),
   createdBy: v.id("users"),
+});
+
+const algorithmHistoryRowValidator = v.object({
+  studentUserId: v.id("users"),
+  dimension: v.union(
+    v.literal("seat"),
+    v.literal("zone"),
+    v.literal("team"),
+    v.literal("neighbor"),
+  ),
+  key: v.string(),
+  count: v.number(),
 });
 
 function normalizeName(name: string): string {
@@ -276,8 +297,56 @@ export const get = classQuery({
       canvasHeight: layout.canvasHeight,
       nextDeskNumber: layout.nextDeskNumber,
       items: layout.items,
+      genderParity: { mode: resolveLayoutGenderParityMode(layout.genderParity) },
       updatedAt: layout.updatedAt,
       createdBy: layout.createdBy,
+    };
+  },
+});
+
+/** Recorded per-layout fairness history used by client-side auto-assignment. */
+export const getAlgorithmHistory = classQuery({
+  args: {
+    layoutId: v.id("seatLayouts"),
+    paginationOpts: paginationOptsValidator,
+  },
+  returns: v.object({
+    page: v.array(algorithmHistoryRowValidator),
+    isDone: v.boolean(),
+    continueCursor: v.string(),
+  }),
+  handler: async (ctx, args) => {
+    await ctx.require("assigners:manage");
+    const layout = await ctx.db.get("seatLayouts", args.layoutId);
+    if (!layout || layout.classId !== ctx.classDoc._id) {
+      throw new Error("Layout not found");
+    }
+
+    const result = await ctx.db
+      .query("seatLayoutAggregates")
+      .withIndex("by_layout", (q) => q.eq("layoutId", args.layoutId))
+      .paginate(args.paginationOpts);
+    return {
+      isDone: result.isDone,
+      continueCursor: result.continueCursor,
+      page: result.page.flatMap((row) => {
+        if (
+          row.dimension !== "seat" &&
+          row.dimension !== "zone" &&
+          row.dimension !== "team" &&
+          row.dimension !== "neighbor"
+        ) {
+          return [];
+        }
+        return [
+          {
+            studentUserId: row.studentUserId,
+            dimension: row.dimension,
+            key: row.key,
+            count: row.count,
+          },
+        ];
+      }),
     };
   },
 });
@@ -315,6 +384,7 @@ export const create = classMutation({
       canvasHeight: DEFAULT_CANVAS_HEIGHT,
       nextDeskNumber: 1,
       items: [],
+      genderParity: { mode: "off" },
       updatedAt: now,
       createdBy: ctx.userId,
     });
@@ -402,6 +472,7 @@ export const copyFromLayout = classMutation({
       canvasHeight: sourceLayout.canvasHeight,
       nextDeskNumber: sourceLayout.nextDeskNumber,
       items,
+      genderParity: { mode: resolveLayoutGenderParityMode(sourceLayout.genderParity) },
       updatedAt: now,
       createdBy: ctx.userId,
     });
@@ -507,6 +578,47 @@ export const remove = classMutation({
       summary: `Deleted seat layout "${layout.name}"`,
       summaryKey: "activitySummary_deletedSeatLayout",
       metadata: { name: layout.name },
+    });
+
+    return null;
+  },
+});
+
+/**
+ * Update layout-level auto-assign settings (gender parity).
+ * Separate from saveItems so canvas edits stay unlogged / high-frequency.
+ */
+export const updateSettings = classMutation({
+  args: {
+    layoutId: v.id("seatLayouts"),
+    genderParity: genderParityValidator,
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await rateLimiter.limit(ctx, "seatLayoutUpdateSettings", { key: ctx.userId, throws: true });
+    await ctx.require("assigners:manage");
+
+    const layout = await ctx.db.get("seatLayouts", args.layoutId);
+    if (!layout || layout.classId !== ctx.classDoc._id) {
+      throw new Error("Layout not found");
+    }
+
+    const mode = args.genderParity.mode === "off" ? "off" : "oddEven";
+    const now = Date.now();
+    await ctx.db.patch("seatLayouts", args.layoutId, {
+      genderParity: { mode },
+      updatedAt: now,
+    });
+
+    await recordClassActivity(ctx, {
+      classId: ctx.classDoc._id,
+      actorUserId: ctx.userId,
+      action: "update",
+      resourceType: "seatLayout",
+      resourceId: args.layoutId,
+      summary: `Updated gender parity on seat layout "${layout.name}" to ${mode}`,
+      summaryKey: "activitySummary_updatedSeatLayoutGenderParity",
+      metadata: { name: layout.name, mode },
     });
 
     return null;

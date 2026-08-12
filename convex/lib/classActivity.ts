@@ -22,7 +22,6 @@ export const ACTIVITY_RESOURCE_TYPES = [
   "seatLayout",
   "seatConstraint",
   "seatChart",
-  "seatAlgorithmSettings",
   "gradeScale",
   "gradedSubject",
   "randomAssigner",

@@ -1120,9 +1120,8 @@ const nl = {
     activitySummary_generatedSeatChart: 'Plattegrond "{{name}}" automatisch toegewezen',
     activitySummary_autoAssignedExistingSeatChart:
       'Stoelen automatisch toegewezen op plattegrond "{{name}}"',
-    activitySummary_updatedSeatAlgorithmSettings: "Auto-toewijzingsinstellingen bijgewerkt",
-    activitySummary_importedSeatAlgorithmSettings:
-      'Auto-toewijzingsinstellingen geïmporteerd uit "{{sourceClassName}}"',
+    activitySummary_updatedSeatLayoutGenderParity:
+      'Genderpariteit op plattegrond "{{name}}" bijgewerkt naar {{mode}}',
     activitySummary_exportedSeatChartPdf: 'PDF van plattegrond "{{chartName}}" geëxporteerd',
 
     activitySummary_recordedRazAssessment:
@@ -2344,35 +2343,9 @@ const nl = {
     tabLayouts: "Plattegronden",
     tabConstraints: "Beperkingen",
     tabCharts: "Plattegronden",
-    tabSettings: "Instellingen",
-    settingsDescription:
-      "Stel in hoe auto-toewijzing weegt op stoel-, zone-, team-, buur-, gender- en combinatievariatie.",
-    settingsTitle: "Gewichten auto-toewijzing",
-    settingsImport: "Instellingen importeren",
-    settingsImportTitle: "Auto-toewijzingsinstellingen importeren",
-    settingsImportDescription: "Kopieer gewichtsvoorkeuren uit een andere zichtbare klas.",
-    settingsImportSourceLabel: "Bronklas",
-    settingsImportSourcePlaceholder: "Selecteer een klas",
-    settingsImportNoSources: "Geen andere klassen beschikbaar.",
-    settingsImportAction: "Importeren",
-    settingsImportFailed: "Instellingen importeren mislukt.",
-    settingsSaveFailed: "Instellingen opslaan mislukt.",
-    settingsWeightSeat: "Stoelvariatie",
-    settingsWeightSeatHint: "Herhaling van hetzelfde stoelnummer vermijden.",
-    settingsWeightZone: "Zonevariatie",
-    settingsWeightZoneHint: "Leerlingen spreiden over benoemde zones.",
-    settingsWeightTeam: "Teamvariatie",
-    settingsWeightTeamHint: "Tafelteam-toewijzingen roteren.",
-    settingsWeightNeighbor: "Buurvariatie",
-    settingsWeightNeighborHint: "Herhaling van dezelfde buren vermijden.",
-    settingsWeightGender: "Genderpariteit",
-    settingsWeightGenderHint:
-      "Wijs jongens per run willekeurig toe aan oneven of even stoelen; meisjes krijgen de tegengestelde pariteit.",
-    settingsWeightCombination: "Combinatievariatie",
-    settingsWeightCombinationHint: "Herhaling van dezelfde volledige situatie vermijden.",
-    settingsGenderParityLabel: "Genderpariteitsmodus",
-    settingsGenderParityOff: "Uit",
-    settingsGenderParityOddEven: "Oneven / even stoelen",
+    layoutGenderParityLabel: "Genderpariteit",
+    layoutGenderParityOff: "Uit",
+    layoutGenderParityOddEven: "Oneven / even stoelen",
     autoAssign: "Auto-toewijzen",
     autoAssignTitle: "Stoelen automatisch toewijzen",
     autoAssignDescriptionCreate:
@@ -2382,6 +2355,9 @@ const nl = {
     autoAssignAction: "Auto-toewijzen",
     autoAssignFailed: "Automatisch toewijzen mislukt.",
     autoAssignNotImplemented: "Automatisch toewijzen is nog niet beschikbaar.",
+    autoAssignInfeasible: "Niet aan alle zitplaatsregels kan worden voldaan.",
+    autoAssignSearchExhausted:
+      "Geen geldige zitindeling gevonden. Probeer opnieuw of pas de regels aan.",
     chartsDescription: "Plaats leerlingen handmatig op banken en leg de zithistorie vast.",
     createChart: "Nieuwe plattegrond",
     createChartTitle: "Nieuwe zitplattegrond",

@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 
 import { areDeskTeammates, sameGroupNeighborStudentIds } from "../../convex/lib/seatChartLogic.js";
 import type { Id } from "../../convex/_generated/dataModel.js";
+import { slotKey } from "../../convex/lib/seatChartGeometry.js";
 
 const studentA = "studentA" as Id<"users">;
 const studentB = "studentB" as Id<"users">;
@@ -35,8 +36,8 @@ describe("areDeskTeammates", () => {
       [studentB, groupG1],
     ]);
     const teamKeyByDesk = new Map<string, string | undefined>([
-      ["d1", "name:Red"],
-      ["d2", "name:Red"],
+      [slotKey("d1", groupG1), "name:Red"],
+      [slotKey("d2", groupG1), "name:Red"],
     ]);
 
     expect(
@@ -54,8 +55,8 @@ describe("areDeskTeammates", () => {
       [studentB, groupG1],
     ]);
     const teamKeyByDesk = new Map<string, string | undefined>([
-      ["d1", "name:Red"],
-      ["d2", "name:Blue"],
+      [slotKey("d1", groupG1), "name:Red"],
+      [slotKey("d2", groupG1), "name:Blue"],
     ]);
 
     expect(
@@ -72,7 +73,9 @@ describe("areDeskTeammates", () => {
       [studentA, groupG1],
       [studentB, groupG1],
     ]);
-    const teamKeyByDesk = new Map<string, string | undefined>([["d1", "name:Red"]]);
+    const teamKeyByDesk = new Map<string, string | undefined>([
+      [slotKey("d1", groupG1), "name:Red"],
+    ]);
 
     expect(
       areDeskTeammates(studentA, studentB, assignmentByStudent, teamKeyByDesk, groupIdByStudent),

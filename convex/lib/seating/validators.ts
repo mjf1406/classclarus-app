@@ -45,8 +45,8 @@ export const seatingAlgorithmResultValidator = v.union(
     unseatedStudentIds: v.array(v.id("users")),
   }),
   v.object({
-    status: v.literal("not_implemented"),
+    status: v.literal("invalid"),
     message: v.string(),
-    code: v.literal("SEATING_ALGORITHM_NOT_IMPLEMENTED"),
+    code: v.union(v.literal("SEATING_INFEASIBLE"), v.literal("SEATING_SEARCH_EXHAUSTED")),
   }),
 );

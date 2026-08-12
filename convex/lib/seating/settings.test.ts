@@ -1,27 +1,32 @@
 import { describe, expect, test } from "vitest";
 
 import {
-  DEFAULT_SEAT_ALGORITHM_SETTINGS,
-  normalizeSeatAlgorithmSettings,
-  normalizeSeatingWeights,
+  normalizeGenderParityMode,
+  resolveLayoutGenderParityMode,
+  SEATING_FAIRNESS_PRIORITY,
 } from "./settings.js";
 
-describe("normalizeSeatingWeights", () => {
-  test("fills missing keys with defaults", () => {
-    expect(normalizeSeatingWeights({ seat: 10 })).toMatchObject({
-      seat: 10,
-      zone: DEFAULT_SEAT_ALGORITHM_SETTINGS.weights.zone,
-    });
-  });
-
-  test("clamps values to 0-100", () => {
-    expect(normalizeSeatingWeights({ gender: 500, neighbor: -5 }).gender).toBe(100);
-    expect(normalizeSeatingWeights({ gender: 500, neighbor: -5 }).neighbor).toBe(0);
+describe("SEATING_FAIRNESS_PRIORITY", () => {
+  test("uses the immutable lexicographic priority", () => {
+    expect(SEATING_FAIRNESS_PRIORITY).toEqual(["neighbor", "seat", "zone", "team"]);
   });
 });
 
-describe("normalizeSeatAlgorithmSettings", () => {
-  test("returns defaults when undefined", () => {
-    expect(normalizeSeatAlgorithmSettings(undefined)).toEqual(DEFAULT_SEAT_ALGORITHM_SETTINGS);
+describe("normalizeGenderParityMode", () => {
+  test("defaults missing values to oddEven", () => {
+    expect(normalizeGenderParityMode(undefined)).toBe("oddEven");
+    expect(normalizeGenderParityMode("oddEven")).toBe("oddEven");
+    expect(normalizeGenderParityMode("off")).toBe("off");
+  });
+});
+
+describe("resolveLayoutGenderParityMode", () => {
+  test("treats missing layout field as oddEven until backfill", () => {
+    expect(resolveLayoutGenderParityMode(undefined)).toBe("oddEven");
+  });
+
+  test("preserves explicit off and oddEven", () => {
+    expect(resolveLayoutGenderParityMode({ mode: "off" })).toBe("off");
+    expect(resolveLayoutGenderParityMode({ mode: "oddEven" })).toBe("oddEven");
   });
 });

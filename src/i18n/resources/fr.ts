@@ -1140,9 +1140,8 @@ const fr = {
 
     activitySummary_generatedSeatChart: "Plan « {{name}} » assigné automatiquement",
     activitySummary_autoAssignedExistingSeatChart: "Places auto-assignées sur le plan « {{name}} »",
-    activitySummary_updatedSeatAlgorithmSettings: "Paramètres d'assignation auto mis à jour",
-    activitySummary_importedSeatAlgorithmSettings:
-      "Paramètres d'assignation auto importés depuis « {{sourceClassName}} »",
+    activitySummary_updatedSeatLayoutGenderParity:
+      'Parité de genre du plan "{{name}}" mise à jour vers {{mode}}',
     activitySummary_exportedSeatChartPdf: "PDF du plan « {{chartName}} » exporté",
 
     activitySummary_recordedRazAssessment:
@@ -2381,35 +2380,9 @@ const fr = {
     tabLayouts: "Plans",
     tabConstraints: "Contraintes",
     tabCharts: "Plans",
-    tabSettings: "Paramètres",
-    settingsDescription:
-      "Ajustez comment l'assignation auto pondère variété de place, zone, équipe, voisins, parité de genre et combinaisons.",
-    settingsTitle: "Poids d'assignation auto",
-    settingsImport: "Importer les paramètres",
-    settingsImportTitle: "Importer les paramètres d'assignation auto",
-    settingsImportDescription: "Copiez les préférences de poids d'une autre classe visible.",
-    settingsImportSourceLabel: "Classe source",
-    settingsImportSourcePlaceholder: "Sélectionner une classe",
-    settingsImportNoSources: "Aucune autre classe disponible.",
-    settingsImportAction: "Importer",
-    settingsImportFailed: "Impossible d'importer les paramètres.",
-    settingsSaveFailed: "Impossible d'enregistrer les paramètres.",
-    settingsWeightSeat: "Variété de place",
-    settingsWeightSeatHint: "Évite de répéter le même numéro de place.",
-    settingsWeightZone: "Variété de zone",
-    settingsWeightZoneHint: "Répartit les élèves entre les zones nommées.",
-    settingsWeightTeam: "Variété d'équipe",
-    settingsWeightTeamHint: "Fait tourner les assignations d'équipe aux bureaux.",
-    settingsWeightNeighbor: "Variété de voisins",
-    settingsWeightNeighborHint: "Évite de répéter les mêmes voisins.",
-    settingsWeightGender: "Parité de genre",
-    settingsWeightGenderHint:
-      "Assigne aléatoirement garçons aux places impaires ou paires à chaque exécution ; filles prennent la parité opposée.",
-    settingsWeightCombination: "Variété de combinaison",
-    settingsWeightCombinationHint: "Décourage de répéter la même situation complète.",
-    settingsGenderParityLabel: "Mode parité de genre",
-    settingsGenderParityOff: "Désactivé",
-    settingsGenderParityOddEven: "Places impaires / paires",
+    layoutGenderParityLabel: "Parité de genre",
+    layoutGenderParityOff: "Désactivé",
+    layoutGenderParityOddEven: "Places impaires / paires",
     autoAssign: "Assignation auto",
     autoAssignTitle: "Assignation automatique des places",
     autoAssignDescriptionCreate:
@@ -2419,6 +2392,9 @@ const fr = {
     autoAssignAction: "Assignation auto",
     autoAssignFailed: "Impossible d'assigner automatiquement les places.",
     autoAssignNotImplemented: "L'assignation automatique n'est pas encore disponible.",
+    autoAssignInfeasible: "Toutes les règles de placement ne peuvent pas être satisfaites.",
+    autoAssignSearchExhausted:
+      "Aucun placement valide trouvé. Réessayez ou modifiez les règles de placement.",
     chartsDescription:
       "Placez les élèves sur les bureaux manuellement et enregistrez l’historique des places.",
     createChart: "Nouveau plan",

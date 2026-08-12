@@ -1128,9 +1128,8 @@ const it = {
     activitySummary_generatedSeatChart: 'Piano posti "{{name}}" assegnato automaticamente',
     activitySummary_autoAssignedExistingSeatChart:
       'Posti assegnati automaticamente sul piano "{{name}}"',
-    activitySummary_updatedSeatAlgorithmSettings: "Impostazioni assegnazione automatica aggiornate",
-    activitySummary_importedSeatAlgorithmSettings:
-      'Impostazioni assegnazione automatica importate da "{{sourceClassName}}"',
+    activitySummary_updatedSeatLayoutGenderParity:
+      'Aggiornata la parità di genere del piano "{{name}}" a {{mode}}',
     activitySummary_exportedSeatChartPdf: 'PDF del piano "{{chartName}}" esportato',
 
     activitySummary_recordedRazAssessment:
@@ -2358,35 +2357,9 @@ const it = {
     tabLayouts: "Piante",
     tabConstraints: "Vincoli",
     tabCharts: "Piani",
-    tabSettings: "Impostazioni",
-    settingsDescription:
-      "Regola come l'assegnazione automatica pesa varietà posto, zona, squadra, vicini, parità di genere e combinazioni.",
-    settingsTitle: "Pesi assegnazione automatica",
-    settingsImport: "Importa impostazioni",
-    settingsImportTitle: "Importa impostazioni assegnazione automatica",
-    settingsImportDescription: "Copia le preferenze di peso da un'altra classe visibile.",
-    settingsImportSourceLabel: "Classe origine",
-    settingsImportSourcePlaceholder: "Seleziona una classe",
-    settingsImportNoSources: "Nessun'altra classe disponibile.",
-    settingsImportAction: "Importa",
-    settingsImportFailed: "Impossibile importare le impostazioni.",
-    settingsSaveFailed: "Impossibile salvare le impostazioni.",
-    settingsWeightSeat: "Varietà posto",
-    settingsWeightSeatHint: "Evita di ripetere lo stesso numero di posto.",
-    settingsWeightZone: "Varietà zona",
-    settingsWeightZoneHint: "Distribuisce gli studenti tra le zone nominate.",
-    settingsWeightTeam: "Varietà squadra",
-    settingsWeightTeamHint: "Ruota le assegnazioni squadra ai banchi.",
-    settingsWeightNeighbor: "Varietà vicini",
-    settingsWeightNeighborHint: "Evita di ripetere gli stessi vicini.",
-    settingsWeightGender: "Parità di genere",
-    settingsWeightGenderHint:
-      "Assegna casualmente ragazzi a posti dispari o pari a ogni esecuzione; le ragazze prendono la parità opposta.",
-    settingsWeightCombination: "Varietà combinazione",
-    settingsWeightCombinationHint: "Scoraggia di ripetere la stessa situazione completa.",
-    settingsGenderParityLabel: "Modalità parità di genere",
-    settingsGenderParityOff: "Disattivato",
-    settingsGenderParityOddEven: "Posti dispari / pari",
+    layoutGenderParityLabel: "Parità di genere",
+    layoutGenderParityOff: "Disattivata",
+    layoutGenderParityOddEven: "Posti dispari / pari",
     autoAssign: "Assegna automaticamente",
     autoAssignTitle: "Assegnazione automatica posti",
     autoAssignDescriptionCreate:
@@ -2396,6 +2369,8 @@ const it = {
     autoAssignAction: "Assegna automaticamente",
     autoAssignFailed: "Impossibile assegnare automaticamente i posti.",
     autoAssignNotImplemented: "L'assegnazione automatica non è ancora disponibile.",
+    autoAssignInfeasible: "Non è possibile soddisfare tutte le regole dei posti.",
+    autoAssignSearchExhausted: "Nessuna disposizione valida trovata. Riprova o modifica le regole.",
     chartsDescription:
       "Posiziona gli studenti ai banchi manualmente e registra la cronologia dei posti.",
     createChart: "Nuovo piano",

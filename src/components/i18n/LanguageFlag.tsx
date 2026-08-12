@@ -11,7 +11,6 @@ import {
   PT,
   RU,
   TH,
-  TW,
   UA,
   US,
 } from "country-flag-icons/react/3x2";
@@ -29,7 +28,6 @@ const FLAG_COMPONENTS = {
   PT,
   RU,
   TH,
-  TW,
   UA,
   US,
 } as const;

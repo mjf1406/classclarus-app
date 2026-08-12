@@ -5,7 +5,7 @@ export const LANGUAGE_OPTIONS = [
   { value: "ko", label: "한국어", countryCode: "KR", htmlLang: "ko" },
   { value: "th", label: "ไทย", countryCode: "TH", htmlLang: "th" },
   { value: "zhs", label: "简体中文", countryCode: "CN", htmlLang: "zh-Hans" },
-  { value: "zht", label: "繁體中文", countryCode: "TW", htmlLang: "zh-Hant" },
+  { value: "zht", label: "繁體中文", countryCode: "CN", htmlLang: "zh-Hant" },
   { value: "es", label: "Español", countryCode: "ES", htmlLang: "es" },
   { value: "fr", label: "Français", countryCode: "FR", htmlLang: "fr" },
   { value: "it", label: "Italiano", countryCode: "IT", htmlLang: "it" },

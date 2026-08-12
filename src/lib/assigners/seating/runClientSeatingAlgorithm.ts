@@ -1,13 +1,16 @@
 import type { Id } from "../../../../convex/_generated/dataModel";
 import type { GroupMembershipRow } from "../../../../convex/lib/seating/scope";
-import type { SeatLayoutItemSnapshot } from "../../../../convex/lib/seatChartGeometry";
-import { deskItemsById } from "../../../../convex/lib/seatChartGeometry";
+import {
+  deskItemsById,
+  type SeatLayoutItemSnapshot,
+} from "../../../../convex/lib/seatChartGeometry";
 import {
   finishSeatingAlgorithm,
   prepareSeatingAlgorithmInput,
 } from "../../../../convex/lib/seating/pipeline";
-import { normalizeSeatAlgorithmSettings } from "../../../../convex/lib/seating/settings";
-import type { SeatAlgorithmSettings } from "../../../../convex/lib/seating/types";
+import type { GenderParityMode } from "../../../../convex/lib/seating/types";
+import { teamHistoryKey } from "../../../../convex/lib/seating/historyKeys";
+import type { Doc } from "../../../../convex/_generated/dataModel";
 import type { GroupsBoard } from "@/lib/groups/groups";
 import type { SeatChartAssignment } from "@/lib/assigners/seatCharts";
 
@@ -23,14 +26,17 @@ export type ClientSeatConstraint = {
 export type ClientSeatingLayout = {
   _id: Id<"seatLayouts">;
   items: Array<SeatLayoutItemSnapshot>;
+  genderParity?: { mode: GenderParityMode };
 };
 
 export type RunClientSeatingAlgorithmArgs = {
   layout: ClientSeatingLayout;
   board: GroupsBoard;
-  settings: SeatAlgorithmSettings | null | undefined;
   constraints: ReadonlyArray<ClientSeatConstraint>;
   lockedAssignments: ReadonlyArray<SeatChartAssignment>;
+  layoutAggregateRows: Array<
+    Pick<Doc<"seatLayoutAggregates">, "studentUserId" | "dimension" | "key" | "count">
+  >;
   randomSeed?: string;
 };
 
@@ -41,7 +47,6 @@ export type RunClientSeatingAlgorithmResult =
       unseatedStudentIds: Array<Id<"users">>;
       violationCount: number;
     }
-  | { status: "not_implemented"; message: string; code: "SEATING_ALGORITHM_NOT_IMPLEMENTED" }
   | { status: "invalid"; message: string; code: string };
 
 function membershipsFromBoard(board: GroupsBoard): Array<GroupMembershipRow> {
@@ -112,9 +117,8 @@ function resolveTeamIdFromBoard(
 }
 
 /**
- * Run the seating solver on the client using board / layout / settings / constraints
- * already loaded via hooks. History aggregates are empty until a client query exists.
- * Implement the solver in `convex/lib/seating/solve.ts`.
+ * Run the seating solver on the client using board / layout / constraints
+ * already loaded via TanStack Query hooks.
  */
 export function runClientSeatingAlgorithm(
   args: RunClientSeatingAlgorithmArgs,
@@ -131,18 +135,28 @@ export function runClientSeatingAlgorithm(
     args.randomSeed?.trim() ||
     `${args.layout._id}:${Date.now()}:${Math.random().toString(36).slice(2)}`;
 
+  const genderParityMode = args.layout.genderParity?.mode === "off" ? "off" : "oddEven";
+
   const input = prepareSeatingAlgorithmInput({
     layoutId: args.layout._id,
     layoutItems: args.layout.items,
     lockedAssignments,
     scope: { kind: "class" },
     randomSeed,
-    settings: normalizeSeatAlgorithmSettings(args.settings ?? undefined),
+    genderParityMode,
     constraints: args.constraints,
     memberships,
     rosterGenderByStudent,
-    layoutAggregateRows: [],
-    resolveTeamId: (groupId, desk) => resolveTeamIdFromBoard(args.board, groupId, desk),
+    layoutAggregateRows: args.layoutAggregateRows,
+    resolveTeamKey: (groupId, desk) => {
+      if (
+        !resolveTeamIdFromBoard(args.board, groupId, desk) &&
+        desk.teamAssignment?.mode === "single"
+      ) {
+        return undefined;
+      }
+      return teamHistoryKey(groupId, desk.teamAssignment);
+    },
   });
 
   const result = finishSeatingAlgorithm({

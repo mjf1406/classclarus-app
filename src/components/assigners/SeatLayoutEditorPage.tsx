@@ -14,12 +14,21 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/error-state";
 import { HelpTip } from "@/components/ui/help-tip";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast-manager";
 import { APP_CONFIG } from "@/config/app";
 import { useLogClassAccess } from "@/hooks/activity/useLogClassAccess";
 import { useSaveSeatLayoutItems } from "@/hooks/assigners/useSaveSeatLayoutItems";
 import { useSeatLayout } from "@/hooks/assigners/useSeatLayout";
+import { useUpdateSeatLayoutSettings } from "@/hooks/assigners/useUpdateSeatLayoutSettings";
 import { useClass } from "@/hooks/classes/useClass";
 import { useGroupsBoard } from "@/hooks/groups/useGroupsBoard";
 import { useCan } from "@/hooks/permissions/useCan";
@@ -172,6 +181,7 @@ export function SeatLayoutEditorPage({ classId, layoutId }: SeatLayoutEditorPage
   const { data: classDoc } = useClass(classId);
   const { data: board } = useGroupsBoard(classId);
   const saveItems = useSaveSeatLayoutItems();
+  const updateSettings = useUpdateSeatLayoutSettings();
   const logAccess = useLogClassAccess();
 
   const [items, setItems] = useState<Array<SeatLayoutItem>>([]);
@@ -925,14 +935,47 @@ export function SeatLayoutEditorPage({ classId, layoutId }: SeatLayoutEditorPage
 
   return (
     <div className="flex min-h-[calc(100svh-5rem)] w-full flex-col gap-3 px-4 py-6 sm:px-8">
-      <div className="flex min-w-0 flex-col gap-1">
-        <div className="flex min-w-0 items-center gap-1.5">
-          <h1 className="truncate text-2xl font-semibold tracking-tight">{layout.name}</h1>
-          {canManage ? (
-            <HelpTip title={t("multiSelectHint")} description={t("deleteKeyHint")} />
-          ) : null}
+      <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex min-w-0 flex-col gap-1">
+          <div className="flex min-w-0 items-center gap-1.5">
+            <h1 className="truncate text-2xl font-semibold tracking-tight">{layout.name}</h1>
+            {canManage ? (
+              <HelpTip title={t("multiSelectHint")} description={t("deleteKeyHint")} />
+            ) : null}
+          </div>
+          {canManage ? <p className="text-sm text-muted-foreground">{saveLabel}</p> : null}
         </div>
-        {canManage ? <p className="text-sm text-muted-foreground">{saveLabel}</p> : null}
+        {canManage ? (
+          <div className="flex shrink-0 flex-col gap-1.5 sm:items-end">
+            <Label htmlFor="layout-gender-parity" className="text-sm">
+              {t("layoutGenderParityLabel")}
+            </Label>
+            <Select
+              value={layout.genderParity.mode}
+              disabled={updateSettings.isPending}
+              onValueChange={(value) => {
+                if (value !== "off" && value !== "oddEven") return;
+                void updateSettings.mutateAsync({
+                  classId,
+                  layoutId,
+                  genderParity: { mode: value },
+                });
+              }}
+            >
+              <SelectTrigger id="layout-gender-parity" className="w-[11.5rem]">
+                <SelectValue>
+                  {layout.genderParity.mode === "oddEven"
+                    ? t("layoutGenderParityOddEven")
+                    : t("layoutGenderParityOff")}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="off">{t("layoutGenderParityOff")}</SelectItem>
+                <SelectItem value="oddEven">{t("layoutGenderParityOddEven")}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        ) : null}
       </div>
 
       <div className="relative min-h-0 min-w-0 flex-1">

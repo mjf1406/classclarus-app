@@ -1,15 +1,13 @@
 import { useCallback, useState } from "react";
-import { useConvex } from "convex/react";
 import { useTranslation } from "react-i18next";
 
-import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { toast } from "@/components/ui/toast-manager";
 import { useCreateSeatChart } from "@/hooks/assigners/useCreateSeatChart";
 import { useSaveSeatChartDraft } from "@/hooks/assigners/useSaveSeatChartDraft";
-import { useSeatAlgorithmSettings } from "@/hooks/assigners/useSeatAlgorithmSettings";
 import { useSeatChartRecordFlow } from "@/hooks/assigners/useSeatChartRecordFlow";
 import { useSeatConstraints } from "@/hooks/assigners/useSeatConstraints";
+import { useSeatAlgorithmData } from "@/hooks/assigners/useSeatAlgorithmData";
 import { useGroupsBoard } from "@/hooks/groups/useGroupsBoard";
 import { runClientSeatingAlgorithm } from "@/lib/assigners/seating/runClientSeatingAlgorithm";
 import type { SeatChartAssignment, SeatChartViolation } from "@/lib/assigners/seatCharts";
@@ -19,6 +17,7 @@ import type { SeatLayoutItemSnapshot } from "../../../convex/lib/seatChartGeomet
 export type AutoAssignPendingRecord = {
   classId: Id<"classes">;
   chartId: Id<"seatCharts">;
+  layoutId: Id<"seatLayouts">;
   assignments: Array<SeatChartAssignment>;
   violations: Array<SeatChartViolation>;
   seatedCount: number;
@@ -43,13 +42,12 @@ type RunAutoAssignArgs = {
 
 export function useRunAutoAssignSeatingFlow(classId: Id<"classes">) {
   const { t } = useTranslation("assigners");
-  const convex = useConvex();
   const { data: board } = useGroupsBoard(classId);
-  const { data: settings } = useSeatAlgorithmSettings(classId);
   const { data: constraints } = useSeatConstraints(classId);
   const createChart = useCreateSeatChart();
   const saveDraft = useSaveSeatChartDraft();
   const { previewViolations, record } = useSeatChartRecordFlow();
+  const { load: loadAlgorithmData, invalidateHistory } = useSeatAlgorithmData();
 
   const [recordConfirmOpen, setRecordConfirmOpen] = useState(false);
   const [pendingRecord, setPendingRecord] = useState<AutoAssignPendingRecord | null>(null);
@@ -63,10 +61,11 @@ export function useRunAutoAssignSeatingFlow(classId: Id<"classes">) {
         chartId: pending.chartId,
         assignments: pending.assignments,
       });
+      await invalidateHistory(pending.classId, pending.layoutId);
       setPrintTarget({ chartId: pending.chartId, recordId });
       return recordId;
     },
-    [record],
+    [record, invalidateHistory],
   );
 
   const runAutoAssign = useCallback(
@@ -78,10 +77,10 @@ export function useRunAutoAssignSeatingFlow(classId: Id<"classes">) {
 
       setIsRunning(true);
       try {
-        const layout = await convex.query(api.seatLayouts.get, {
-          classId: args.classId,
-          layoutId: args.layoutId,
-        });
+        const { layout, layoutAggregateRows } = await loadAlgorithmData(
+          args.classId,
+          args.layoutId,
+        );
         if (!layout) {
           toast.add({ type: "error", title: t("autoAssignFailed") });
           return null;
@@ -93,26 +92,25 @@ export function useRunAutoAssignSeatingFlow(classId: Id<"classes">) {
           layout: {
             _id: layout._id,
             items: layout.items as Array<SeatLayoutItemSnapshot>,
+            genderParity: layout.genderParity,
           },
           board,
-          settings,
           constraints: constraints ?? [],
           lockedAssignments,
+          layoutAggregateRows,
         });
 
-        if (algorithmResult.status === "not_implemented") {
-          toast.add({
-            type: "error",
-            title: t("autoAssignNotImplemented"),
-            description: algorithmResult.message,
-          });
-          return null;
-        }
         if (algorithmResult.status === "invalid") {
+          const description =
+            algorithmResult.code === "SEATING_INFEASIBLE"
+              ? t("autoAssignInfeasible")
+              : algorithmResult.code === "SEATING_SEARCH_EXHAUSTED"
+                ? t("autoAssignSearchExhausted")
+                : t("autoAssignFailed");
           toast.add({
             type: "error",
             title: t("autoAssignFailed"),
-            description: algorithmResult.message,
+            description,
           });
           return null;
         }
@@ -150,6 +148,7 @@ export function useRunAutoAssignSeatingFlow(classId: Id<"classes">) {
         const pending: AutoAssignPendingRecord = {
           classId: args.classId,
           chartId,
+          layoutId: args.layoutId,
           assignments,
           violations,
           seatedCount,
@@ -171,8 +170,7 @@ export function useRunAutoAssignSeatingFlow(classId: Id<"classes">) {
     [
       board,
       constraints,
-      settings,
-      convex,
+      loadAlgorithmData,
       createChart,
       saveDraft,
       previewViolations,
