@@ -48,19 +48,13 @@ import {
   type PointsBadgeWindowUnit,
 } from "@/lib/points/pointsBadgeWindow";
 import { pointsPublicDisplayUrl } from "@/lib/points/pointsPublicUrls";
+import { formatLocalizedDateTime } from "@/i18n/formatDate";
 import { resolveRosterNameFormat, type RosterNameFormat } from "@/lib/roster/roster";
 import type { Id } from "../../../convex/_generated/dataModel";
 
 type ClassSettingsPageProps = {
   classId: Id<"classes">;
 };
-
-function formatTimestamp(value: number, language: string): string {
-  return new Intl.DateTimeFormat(language, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
-}
 
 function SettingsSkeleton() {
   return <Skeleton className="h-48 w-full max-w-2xl rounded-2xl" />;
@@ -119,7 +113,7 @@ function PointsPublicDisplayShare({
 }
 
 export function ClassSettingsPage({ classId }: ClassSettingsPageProps) {
-  const { t, i18n } = useTranslation("classes");
+  const { t } = useTranslation("classes");
   const { can, isPending: permissionsPending } = useCan();
   const canUpdateClass = !permissionsPending && can("class:update");
   const { data: classDoc, isPending, isError, refetch, isAuthLoading } = useClass(classId);
@@ -247,12 +241,12 @@ export function ClassSettingsPage({ classId }: ClassSettingsPageProps) {
               <div className="flex flex-col gap-0.5 text-xs text-muted-foreground">
                 <span>
                   {t("createdAt", {
-                    date: formatTimestamp(classDoc._creationTime, i18n.language),
+                    date: formatLocalizedDateTime(classDoc._creationTime),
                   })}
                 </span>
                 <span>
                   {t("updatedAt", {
-                    date: formatTimestamp(classDoc.updatedAt, i18n.language),
+                    date: formatLocalizedDateTime(classDoc.updatedAt),
                   })}
                 </span>
               </div>

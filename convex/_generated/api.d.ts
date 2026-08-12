@@ -49,6 +49,7 @@ import type * as lib_assigners_equitableAssignerSchema from "../lib/assigners/eq
 import type * as lib_assigners_equitableManualSlots from "../lib/assigners/equitableManualSlots.js";
 import type * as lib_assigners_randomAssign from "../lib/assigners/randomAssign.js";
 import type * as lib_assigners_randomAssignerSchema from "../lib/assigners/randomAssignerSchema.js";
+import type * as lib_assigners_runAssignmentProjection from "../lib/assigners/runAssignmentProjection.js";
 import type * as lib_assignmentScoresCleanup from "../lib/assignmentScoresCleanup.js";
 import type * as lib_assignmentsCleanup from "../lib/assignmentsCleanup.js";
 import type * as lib_attendanceCleanup from "../lib/attendanceCleanup.js";
@@ -187,6 +188,7 @@ declare const fullApi: ApiFromModules<{
   "lib/assigners/equitableManualSlots": typeof lib_assigners_equitableManualSlots;
   "lib/assigners/randomAssign": typeof lib_assigners_randomAssign;
   "lib/assigners/randomAssignerSchema": typeof lib_assigners_randomAssignerSchema;
+  "lib/assigners/runAssignmentProjection": typeof lib_assigners_runAssignmentProjection;
   "lib/assignmentScoresCleanup": typeof lib_assignmentScoresCleanup;
   "lib/assignmentsCleanup": typeof lib_assignmentsCleanup;
   "lib/attendanceCleanup": typeof lib_attendanceCleanup;

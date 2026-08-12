@@ -7,6 +7,7 @@ import { ClassRoleBadge } from "@/components/badges/ClassRoleBadges";
 import { ClassIconDisplay } from "@/components/classes/ClassIconDisplay";
 import { ActionMenu, type ActionMenuItem } from "@/components/ui/action-menu";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatLocalizedDateTime } from "@/i18n/formatDate";
 import type { ClassPublic } from "@/lib/classes/classes";
 import type { ClassViewMode } from "@/lib/classes/classSort";
 import { cn } from "@/lib/utils";
@@ -19,13 +20,6 @@ type ClassCardProps = {
   onDelete: (classDoc: ClassPublic) => void;
 };
 
-function formatTimestamp(value: number, language: string): string {
-  return new Intl.DateTimeFormat(language, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
-}
-
 export function ClassCard({
   classDoc,
   viewMode,
@@ -33,7 +27,7 @@ export function ClassCard({
   onArchiveToggle,
   onDelete,
 }: ClassCardProps) {
-  const { t, i18n } = useTranslation("classes");
+  const { t } = useTranslation("classes");
   const isArchived = classDoc.archivedAt !== undefined;
   const description = classDoc.description?.trim() || t("noDescription");
 
@@ -124,12 +118,12 @@ export function ClassCard({
         <div className="flex flex-col gap-0.5 text-xs text-muted-foreground">
           <span>
             {t("createdAt", {
-              date: formatTimestamp(classDoc._creationTime, i18n.language),
+              date: formatLocalizedDateTime(classDoc._creationTime),
             })}
           </span>
           <span>
             {t("updatedAt", {
-              date: formatTimestamp(classDoc.updatedAt, i18n.language),
+              date: formatLocalizedDateTime(classDoc.updatedAt),
             })}
           </span>
         </div>
