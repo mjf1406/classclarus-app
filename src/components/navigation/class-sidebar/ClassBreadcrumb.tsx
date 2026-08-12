@@ -11,6 +11,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useEquitableAssigner } from "@/hooks/assigners/equitable/useEquitableAssigners";
 import { useSeatLayout } from "@/hooks/assigners/useSeatLayout";
 import { useSeatChart } from "@/hooks/assigners/useSeatChart";
 import { useAssignment } from "@/hooks/assignments/useAssignment";
@@ -45,6 +46,10 @@ type BreadcrumbTarget =
   | { kind: "assignersSeats" }
   | { kind: "assignersRandom" }
   | { kind: "assignersEquitable" }
+  | { kind: "assignersEquitableNew" }
+  | { kind: "equitableAssignerDetail"; assignerId: Id<"equitableAssigners"> }
+  | { kind: "equitableAssignerEdit"; assignerId: Id<"equitableAssigners"> }
+  | { kind: "equitableAssignerManual"; assignerId: Id<"equitableAssigners"> }
   | { kind: "studentWorkGradeScales" }
   | { kind: "studentWorkGradedSubjects" }
   | { kind: "seatLayoutDetail"; layoutId: Id<"seatLayouts"> }
@@ -158,12 +163,33 @@ function breadcrumbTarget(pathname: string, classId: string): BreadcrumbTarget {
   ) {
     return { kind: "assignersRandom" };
   }
-  if (
-    pathname === `${base}/assigners/equitable` ||
-    pathname === `${base}/assigners/equitable/` ||
-    pathname.startsWith(`${base}/assigners/equitable/`)
-  ) {
+  if (pathname === `${base}/assigners/equitable` || pathname === `${base}/assigners/equitable/`) {
     return { kind: "assignersEquitable" };
+  }
+  if (pathname.startsWith(`${base}/assigners/equitable/`)) {
+    const rest = pathname.slice(`${base}/assigners/equitable/`.length);
+    if (rest === "new" || rest.startsWith("new/")) {
+      return { kind: "assignersEquitableNew" };
+    }
+    const [assignerId, action] = rest.split("/");
+    if (assignerId) {
+      if (action === "edit") {
+        return {
+          kind: "equitableAssignerEdit",
+          assignerId: assignerId as Id<"equitableAssigners">,
+        };
+      }
+      if (action === "manual") {
+        return {
+          kind: "equitableAssignerManual",
+          assignerId: assignerId as Id<"equitableAssigners">,
+        };
+      }
+      return {
+        kind: "equitableAssignerDetail",
+        assignerId: assignerId as Id<"equitableAssigners">,
+      };
+    }
   }
   if (
     pathname === `${base}/assigners/seats` ||
@@ -406,6 +432,116 @@ function AssignmentNewBreadcrumbItems({
   );
 }
 
+function EquitableAssignerBreadcrumbItems({
+  classId,
+  assignerId,
+  equitableLabel,
+  mode,
+}: {
+  classId: Id<"classes">;
+  assignerId: Id<"equitableAssigners">;
+  equitableLabel: string;
+  mode: "detail" | "edit" | "manual";
+}) {
+  const { t: tAssigners } = useTranslation("assigners");
+  const { data: assigner, isPending } = useEquitableAssigner(classId, assignerId);
+
+  const assignerLabel =
+    isPending && !assigner ? null : (assigner?.name ?? tAssigners("equitableNotFoundTitle"));
+  const actionLabel =
+    mode === "edit"
+      ? tAssigners("equitableEdit")
+      : mode === "manual"
+        ? tAssigners("equitableManualAction")
+        : null;
+
+  return (
+    <>
+      <BreadcrumbItem className="min-w-0">
+        <BreadcrumbLink
+          render={<Link to="/class/$classId/assigners/equitable" params={{ classId }} />}
+          className="block truncate"
+          title={equitableLabel}
+        >
+          {equitableLabel}
+        </BreadcrumbLink>
+      </BreadcrumbItem>
+      <BreadcrumbSeparator className="shrink-0" />
+      {actionLabel ? (
+        <>
+          <BreadcrumbItem className="min-w-0">
+            {assignerLabel === null ? (
+              <BreadcrumbPage className="block truncate">
+                <Skeleton className="inline-block h-4 w-24" />
+              </BreadcrumbPage>
+            ) : (
+              <BreadcrumbLink
+                render={
+                  <Link
+                    to="/class/$classId/assigners/equitable/$assignerId"
+                    params={{ classId, assignerId }}
+                  />
+                }
+                className="block truncate"
+                title={assignerLabel}
+              >
+                {assignerLabel}
+              </BreadcrumbLink>
+            )}
+          </BreadcrumbItem>
+          <BreadcrumbSeparator className="shrink-0" />
+          <BreadcrumbItem className="min-w-0">
+            <BreadcrumbPage className="block truncate" title={actionLabel}>
+              {actionLabel}
+            </BreadcrumbPage>
+          </BreadcrumbItem>
+        </>
+      ) : (
+        <BreadcrumbItem className="min-w-0">
+          <BreadcrumbPage className="block truncate" title={assignerLabel ?? undefined}>
+            {assignerLabel === null ? (
+              <Skeleton className="inline-block h-4 w-24" />
+            ) : (
+              assignerLabel
+            )}
+          </BreadcrumbPage>
+        </BreadcrumbItem>
+      )}
+    </>
+  );
+}
+
+function EquitableAssignerNewBreadcrumbItems({
+  classId,
+  equitableLabel,
+}: {
+  classId: Id<"classes">;
+  equitableLabel: string;
+}) {
+  const { t: tAssigners } = useTranslation("assigners");
+  const pageLabel = tAssigners("equitableCreate");
+
+  return (
+    <>
+      <BreadcrumbItem className="min-w-0">
+        <BreadcrumbLink
+          render={<Link to="/class/$classId/assigners/equitable" params={{ classId }} />}
+          className="block truncate"
+          title={equitableLabel}
+        >
+          {equitableLabel}
+        </BreadcrumbLink>
+      </BreadcrumbItem>
+      <BreadcrumbSeparator className="shrink-0" />
+      <BreadcrumbItem className="min-w-0">
+        <BreadcrumbPage className="block truncate" title={pageLabel}>
+          {pageLabel}
+        </BreadcrumbPage>
+      </BreadcrumbItem>
+    </>
+  );
+}
+
 function AssignmentDetailBreadcrumbItems({
   classId,
   assignmentId,
@@ -534,7 +670,11 @@ export function ClassBreadcrumb({ classDoc }: ClassBreadcrumbProps) {
                         ? tAssigners("navSeats")
                         : target.kind === "assignersRandom"
                           ? tAssigners("navRandom")
-                          : target.kind === "assignersEquitable"
+                          : target.kind === "assignersEquitable" ||
+                              target.kind === "assignersEquitableNew" ||
+                              target.kind === "equitableAssignerDetail" ||
+                              target.kind === "equitableAssignerEdit" ||
+                              target.kind === "equitableAssignerManual"
                             ? tAssigners("navEquitable")
                             : target.kind === "studentWorkGradeScales"
                               ? tStudentWork("navGradeScales")
@@ -607,6 +747,23 @@ export function ClassBreadcrumb({ classDoc }: ClassBreadcrumbProps) {
             classId={classDoc._id}
             layoutId={target.layoutId}
             seatsLabel={pageLabel}
+          />
+        ) : target.kind === "assignersEquitableNew" ? (
+          <EquitableAssignerNewBreadcrumbItems classId={classDoc._id} equitableLabel={pageLabel} />
+        ) : target.kind === "equitableAssignerDetail" ||
+          target.kind === "equitableAssignerEdit" ||
+          target.kind === "equitableAssignerManual" ? (
+          <EquitableAssignerBreadcrumbItems
+            classId={classDoc._id}
+            assignerId={target.assignerId}
+            equitableLabel={pageLabel}
+            mode={
+              target.kind === "equitableAssignerEdit"
+                ? "edit"
+                : target.kind === "equitableAssignerManual"
+                  ? "manual"
+                  : "detail"
+            }
           />
         ) : (
           <BreadcrumbItem className="min-w-0">

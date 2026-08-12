@@ -1206,6 +1206,9 @@ const fr = {
       "Exécution d'assignation supprimée pour « {{name}} »",
     activitySummary_exportedEquitableAssignerPdf:
       "PDF de l'assignateur équitable pour « {{name}} » exporté",
+    activitySummary_createdEquitableManualRun:
+      "Attribution équitable manuelle créée pour « {{name}} »",
+    activitySummary_viewedEquitableManualEditor: "Assignateur équitable manuel « {{name}} » ouvert",
     activitySummary_duplicatedGradeScale: "Barème de notation dupliqué sous « {{name}} »",
     activitySummary_hiddenGradeScaleDefault: "Barème de notation par défaut « {{nameKey}} » masqué",
     activitySummary_shownGradeScaleDefault:
@@ -2288,6 +2291,7 @@ const fr = {
     equitableRunFailed: "Impossible d'exécuter l'attribution",
     equitableRunDeleteFailed: "Impossible de supprimer l'exécution",
     equitableEmptyTitle: "Aucun répartiteur équitable pour l'instant",
+    equitableNotFoundTitle: "Répartiteur introuvable",
     equitableEmptyDescription:
       "Créez-en un pour distribuer équitablement des rôles, des tâches ou d'autres éléments rotatifs.",
     equitableCardMeta: "{{itemCount}} éléments · {{runCount}} exécutions · {{scope}}",
@@ -2323,6 +2327,37 @@ const fr = {
     equitableDisplayNotFound: "Affichage introuvable",
     equitableDisplayNotFoundDescription:
       "Cette exécution est manquante ou vous n'y avez pas accès.",
+    equitableManualAction: "Attribuer manuellement",
+    equitableManualTitle: "Manuel — {{name}}",
+    equitableManualDescription:
+      "Glissez les élèves dans les emplacements d'éléments. Enregistrez lorsque chaque emplacement est rempli.",
+    equitableManualSaveRun: "Enregistrer l'exécution",
+    equitableManualSaveFailed: "Impossible d'enregistrer l'attribution manuelle",
+    equitableManualReset: "Tout effacer",
+    equitableManualFillRemaining: "Attribuer équitablement",
+    equitableManualFillRemainingHint: "Disponible lorsque l'algorithme équitable sera implémenté.",
+    equitableManualAssignRandom: "Attribuer au hasard",
+    equitableManualRosterTitle: "Élèves",
+    equitableManualAssignedBadge: "Attribué",
+    equitableManualGenderBoy: "Garçon",
+    equitableManualGenderGirl: "Fille",
+    equitableManualSlotEmpty: "Déposez un élève ici",
+    equitableManualPermissionDenied: "Attribution manuelle indisponible",
+    equitableManualPermissionDeniedDescription:
+      "Vous avez besoin de l'autorisation de gérer les répartiteurs dans cette classe.",
+    equitableManualLoadFailed: "Impossible de charger l'éditeur manuel",
+    equitableManualLoadFailedDescription: "Réessayez dans un instant.",
+    equitableManualOptionsChangeTitle: "Modifier les options d'exécution ?",
+    equitableManualOptionsChangeDescription:
+      "Modifier la portée ou l'équilibrage du genre effacera votre brouillon actuel.",
+    equitableManualOptionsChangeConfirm: "Effacer et modifier",
+    equitableInspectorLoadFailed: "Impossible de charger l'expérience de l'élève",
+    equitableInspectorTotalRecorded: "{{count}} attributions antérieures",
+    equitableInspectorUnassigned: "Pas encore placé dans un emplacement.",
+    equitableInspectorCurrentTitle: "Placement actuel",
+    equitableInspectorBreakdownTitle: "Expérience par élément",
+    equitableInspectorHistoryTitle: "Historique du même élément",
+    equitableInspectorHistoryEmpty: "Aucune exécution antérieure avec ce placement.",
     seatsTitle: "Plans de places",
     seatsDescription: "Créez des plans de classe pour les places et la visualisation.",
     tabLayouts: "Plans",

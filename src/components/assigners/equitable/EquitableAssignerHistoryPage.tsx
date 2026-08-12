@@ -1,10 +1,9 @@
 import { Link } from "@tanstack/react-router";
-import { convexQuery } from "@convex-dev/react-query";
-import { ArrowLeft, Monitor, Pencil, Play, Trash2 } from "lucide-react";
+import { ArrowLeft, Hand, Monitor, Pencil, Play, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useQueryClient } from "@tanstack/react-query";
 
+import { AssignerRunPreviewTable } from "@/components/assigners/AssignerRunPreviewTable";
 import { DeleteNamedCredenza } from "@/components/groups/DeleteNamedCredenza";
 import { DataTableSortableHeader } from "@/components/feedback/DataTableSortableHeader";
 import { ActionMenu, type ActionMenuItem } from "@/components/ui/action-menu";
@@ -43,6 +42,7 @@ import { useRemoveEquitableAssignerRun } from "@/hooks/assigners/equitable/useRe
 import { useRunEquitableAssigner } from "@/hooks/assigners/equitable/useRunEquitableAssigner";
 import {
   useEquitableAssigner,
+  useEquitableAssignerRun,
   useEquitableAssignerRuns,
 } from "@/hooks/assigners/equitable/useEquitableAssigners";
 import { useCan } from "@/hooks/permissions/useCan";
@@ -59,17 +59,18 @@ import {
 } from "@/lib/assigners/equitableAssigners";
 import { openDisplayTab } from "@/lib/display/openDisplayTab";
 import { messageFromError } from "@/lib/errors/convexError";
-import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 
 type EquitableAssignerHistoryPageProps = {
   classId: Id<"classes">;
   assignerId: Id<"equitableAssigners">;
+  initialPreviewRunId?: Id<"equitableAssignerRuns">;
 };
 
 export function EquitableAssignerHistoryPage({
   classId,
   assignerId,
+  initialPreviewRunId,
 }: EquitableAssignerHistoryPageProps) {
   const { t } = useTranslation("assigners");
   const { can } = useCan();
@@ -93,7 +94,9 @@ export function EquitableAssignerHistoryPage({
   const [runDialogOpen, setRunDialogOpen] = useState(false);
   const [runError, setRunError] = useState<string | null>(null);
   const [deletingRun, setDeletingRun] = useState<EquitableAssignerRunListItem | null>(null);
-  const [previewRunId, setPreviewRunId] = useState<Id<"equitableAssignerRuns"> | null>(null);
+  const [previewRunId, setPreviewRunId] = useState<Id<"equitableAssignerRuns"> | null>(
+    initialPreviewRunId ?? null,
+  );
   const [sortKey, setSortKey] = useState<EquitableAssignerRunSortKey>("ranAt");
   const [sortDirection, setSortDirection] = useState<EquitableAssignerRunSortDirection>("desc");
 
@@ -212,6 +215,20 @@ export function EquitableAssignerHistoryPage({
         </div>
         {canManage ? (
           <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              nativeButton={false}
+              render={
+                <Link
+                  to="/class/$classId/assigners/equitable/$assignerId/manual"
+                  params={{ classId, assignerId }}
+                />
+              }
+            >
+              <Hand className="size-4" />
+              {t("equitableManualAction")}
+            </Button>
             <Button
               type="button"
               variant="outline"
@@ -417,62 +434,23 @@ function EquitableAssignerPreview({
   runId: Id<"equitableAssignerRuns">;
 }) {
   const { t } = useTranslation("assigners");
-  const queryClient = useQueryClient();
-  const [assignments, setAssignments] = useState<Array<{
-    studentDisplayName: string;
-    item: string;
-    groupName?: string;
-  }> | null>(null);
+  const { data: run, isPending, isError } = useEquitableAssignerRun(classId, assignerId, runId);
 
-  useEffect(() => {
-    let cancelled = false;
-    void queryClient
-      .fetchQuery(convexQuery(api.equitableAssigners.getRun, { classId, assignerId, runId }))
-      .then((run) => {
-        if (cancelled) return;
-        setAssignments(
-          [...run.assignments].sort((a, b) =>
-            a.studentDisplayName.localeCompare(b.studentDisplayName),
-          ),
-        );
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [assignerId, classId, queryClient, runId]);
-
-  if (!assignments) {
+  if (isPending) {
     return <Skeleton className="h-48 w-full rounded-xl" />;
   }
 
+  if (isError || !run) {
+    return <p className="text-sm text-muted-foreground">{t("equitableLoadFailed")}</p>;
+  }
+
   return (
-    <div className="rounded-xl border">
-      <div className="border-b px-4 py-3">
-        <h2 className="text-sm font-medium">{t("equitablePreviewTitle")}</h2>
-      </div>
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t("equitablePrintStudentColumn")}</TableHead>
-              <TableHead>{t("equitablePrintItemColumn")}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {assignments.map((row, index) => (
-              <TableRow key={`${row.studentDisplayName}-${row.item}-${index}`}>
-                <TableCell>
-                  {row.studentDisplayName}
-                  {row.groupName ? (
-                    <span className="ml-2 text-xs text-muted-foreground">({row.groupName})</span>
-                  ) : null}
-                </TableCell>
-                <TableCell>{row.item}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    </div>
+    <AssignerRunPreviewTable
+      key={runId}
+      classId={classId}
+      assignments={run.assignments}
+      title={t("equitablePreviewTitle")}
+      itemColumnLabel={t("equitablePrintItemColumn")}
+    />
   );
 }

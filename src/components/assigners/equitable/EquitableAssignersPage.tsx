@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { convexQuery } from "@convex-dev/react-query";
-import { FileDown, Monitor, Pencil, Play, Plus, Scale, Trash2 } from "lucide-react";
+import { FileDown, Hand, Monitor, Pencil, Play, Plus, Scale, Trash2 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
@@ -228,6 +228,12 @@ export function EquitableAssignersPage({ classId }: EquitableAssignersPageProps)
               onDisplayLatest={() => handleDisplayLatest(assigner)}
               onPrintLatest={() => handlePrintLatest(assigner)}
               onRunAndPrint={() => handleRunAndPrint(assigner)}
+              onManual={() => {
+                void navigate({
+                  to: "/class/$classId/assigners/equitable/$assignerId/manual",
+                  params: { classId, assignerId: assigner._id },
+                });
+              }}
               t={t}
             />
           ))}
@@ -261,6 +267,7 @@ function EquitableAssignerCard({
   onDisplayLatest,
   onPrintLatest,
   onRunAndPrint,
+  onManual,
   t,
 }: {
   assigner: EquitableAssignerListItem;
@@ -271,6 +278,7 @@ function EquitableAssignerCard({
   onDisplayLatest: () => void;
   onPrintLatest: () => void | Promise<void>;
   onRunAndPrint: () => void | Promise<void>;
+  onManual: () => void;
   t: (key: string, options?: Record<string, unknown>) => string;
 }) {
   const hasLatest = assigner.latestRunId !== null;
@@ -281,6 +289,13 @@ function EquitableAssignerCard({
   const menuItems = useMemo<Array<ActionMenuItem>>(() => {
     const items: Array<ActionMenuItem> = [];
     if (canManage) {
+      items.push({
+        id: "manual",
+        label: t("equitableManualAction"),
+        icon: <Hand />,
+        permission: "assigners:manage",
+        onSelect: onManual,
+      });
       items.push({
         id: "run-and-print",
         label: t("equitableRunAndPrint"),
@@ -327,7 +342,17 @@ function EquitableAssignerCard({
       );
     }
     return items;
-  }, [canManage, hasLatest, onDelete, onDisplayLatest, onEdit, onPrintLatest, onRunAndPrint, t]);
+  }, [
+    canManage,
+    hasLatest,
+    onDelete,
+    onDisplayLatest,
+    onEdit,
+    onManual,
+    onPrintLatest,
+    onRunAndPrint,
+    t,
+  ]);
 
   return (
     <li>

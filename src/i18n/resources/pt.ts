@@ -1136,6 +1136,9 @@ const pt = {
     activitySummary_deletedEquitableAssignerRun: 'Execução de atribuição eliminada para "{{name}}"',
     activitySummary_exportedEquitableAssignerPdf:
       'PDF do atribuidor equitativo para "{{name}}" exportado',
+    activitySummary_createdEquitableManualRun:
+      'Atribuição equitativa manual criada para "{{name}}"',
+    activitySummary_viewedEquitableManualEditor: 'Atribuidor equitativo manual "{{name}}" aberto',
 
     activitySummary_recordedRazAssessment: "Avalia??o RAZ registada ({{result}}) ? n?vel {{level}}",
     activitySummary_setRazManualStatus: "Estado RAZ definido como {{status}}",
@@ -2250,6 +2253,7 @@ const pt = {
     equitableRunFailed: "Não foi possível executar a atribuição",
     equitableRunDeleteFailed: "Não foi possível excluir a execução",
     equitableEmptyTitle: "Ainda não há atribuidores equitativos",
+    equitableNotFoundTitle: "Atribuidor não encontrado",
     equitableEmptyDescription:
       "Crie um para distribuir de forma justa funções, tarefas ou outros itens rotativos.",
     equitableCardMeta: "{{itemCount}} itens · {{runCount}} execuções · {{scope}}",
@@ -2284,6 +2288,37 @@ const pt = {
     equitableDisplayNotFound: "Exibição não encontrada",
     equitableDisplayNotFoundDescription:
       "Esta execução de atribuição está ausente ou você não tem acesso.",
+    equitableManualAction: "Atribuir manualmente",
+    equitableManualTitle: "Manual — {{name}}",
+    equitableManualDescription:
+      "Arraste alunos para os slots de itens. Salve quando todos os slots estiverem preenchidos.",
+    equitableManualSaveRun: "Salvar execução",
+    equitableManualSaveFailed: "Não foi possível salvar a atribuição manual",
+    equitableManualReset: "Limpar tudo",
+    equitableManualFillRemaining: "Atribuir equitativamente",
+    equitableManualFillRemainingHint: "Disponível quando o algoritmo equitativo for implementado.",
+    equitableManualAssignRandom: "Atribuir aleatoriamente",
+    equitableManualRosterTitle: "Alunos",
+    equitableManualAssignedBadge: "Atribuído",
+    equitableManualGenderBoy: "Menino",
+    equitableManualGenderGirl: "Menina",
+    equitableManualSlotEmpty: "Solte um aluno aqui",
+    equitableManualPermissionDenied: "Atribuição manual indisponível",
+    equitableManualPermissionDeniedDescription:
+      "Você precisa de permissão para gerenciar atribuidores nesta turma.",
+    equitableManualLoadFailed: "Não foi possível carregar o editor manual",
+    equitableManualLoadFailedDescription: "Tente novamente em instantes.",
+    equitableManualOptionsChangeTitle: "Alterar opções de execução?",
+    equitableManualOptionsChangeDescription:
+      "Alterar o escopo ou o equilíbrio de gênero limpará seu rascunho atual.",
+    equitableManualOptionsChangeConfirm: "Limpar e alterar",
+    equitableInspectorLoadFailed: "Não foi possível carregar a experiência do aluno",
+    equitableInspectorTotalRecorded: "{{count}} atribuições anteriores",
+    equitableInspectorUnassigned: "Ainda não colocado em um slot.",
+    equitableInspectorCurrentTitle: "Colocação atual",
+    equitableInspectorBreakdownTitle: "Experiência por item",
+    equitableInspectorHistoryTitle: "Histórico do mesmo item",
+    equitableInspectorHistoryEmpty: "Nenhuma execução anterior com esta colocação.",
     seatsTitle: "Plantas de assentos",
     seatsDescription: "Crie plantas da sala para assentos e visualiza??o.",
     tabLayouts: "Plantas",

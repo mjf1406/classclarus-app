@@ -1183,6 +1183,9 @@ const nl = {
     activitySummary_deletedEquitableAssignerRun: 'Toewijzingsrun verwijderd voor "{{name}}"',
     activitySummary_exportedEquitableAssignerPdf:
       'PDF van eerlijke toewijzer voor "{{name}}" geëxporteerd',
+    activitySummary_createdEquitableManualRun:
+      'Handmatige eerlijke toewijzing voor "{{name}}" gemaakt',
+    activitySummary_viewedEquitableManualEditor: 'Handmatige eerlijke toewijzer "{{name}}" geopend',
     activitySummary_updatedGradedSubject: 'Beoordeeld vak "{{name}}" bijgewerkt',
     activitySummary_createdGradedSubject: 'Beoordeeld vak "{{name}}" gemaakt',
     activitySummary_duplicatedGradeScale: 'Cijferschaal gedupliceerd als "{{name}}"',
@@ -2252,6 +2255,7 @@ const nl = {
     equitableRunFailed: "Kon toewijzing niet uitvoeren",
     equitableRunDeleteFailed: "Kon uitvoering niet verwijderen",
     equitableEmptyTitle: "Nog geen eerlijke toewijzers",
+    equitableNotFoundTitle: "Toewijzer niet gevonden",
     equitableEmptyDescription:
       "Maak er een om rollen, taken of andere roterende items eerlijk te verdelen.",
     equitableCardMeta: "{{itemCount}} items · {{runCount}} uitvoeringen · {{scope}}",
@@ -2287,6 +2291,38 @@ const nl = {
     equitableDisplayNotFound: "Weergave niet gevonden",
     equitableDisplayNotFoundDescription:
       "Deze toewijzingsuitvoering ontbreekt of je hebt geen toegang.",
+    equitableManualAction: "Handmatig toewijzen",
+    equitableManualTitle: "Handmatig — {{name}}",
+    equitableManualDescription:
+      "Sleep leerlingen naar itemvakken. Sla op wanneer elk vak is ingevuld.",
+    equitableManualSaveRun: "Uitvoering opslaan",
+    equitableManualSaveFailed: "Handmatige toewijzing kon niet worden opgeslagen",
+    equitableManualReset: "Alles wissen",
+    equitableManualFillRemaining: "Eerlijk toewijzen",
+    equitableManualFillRemainingHint:
+      "Beschikbaar wanneer het eerlijke algoritme is geïmplementeerd.",
+    equitableManualAssignRandom: "Willekeurig toewijzen",
+    equitableManualRosterTitle: "Leerlingen",
+    equitableManualAssignedBadge: "Toegewezen",
+    equitableManualGenderBoy: "Jongen",
+    equitableManualGenderGirl: "Meisje",
+    equitableManualSlotEmpty: "Sleep een leerling hierheen",
+    equitableManualPermissionDenied: "Handmatige toewijzing niet beschikbaar",
+    equitableManualPermissionDeniedDescription:
+      "Je hebt toestemming nodig om toewijzers in deze klas te beheren.",
+    equitableManualLoadFailed: "Handmatige editor kon niet worden geladen",
+    equitableManualLoadFailedDescription: "Probeer het over een moment opnieuw.",
+    equitableManualOptionsChangeTitle: "Uitvoeringsopties wijzigen?",
+    equitableManualOptionsChangeDescription:
+      "Het wijzigen van bereik of genderbalans wist je huidige concept.",
+    equitableManualOptionsChangeConfirm: "Wissen en wijzigen",
+    equitableInspectorLoadFailed: "Leerlingervaring kon niet worden geladen",
+    equitableInspectorTotalRecorded: "{{count}} eerdere toewijzingen",
+    equitableInspectorUnassigned: "Nog niet in een vak geplaatst.",
+    equitableInspectorCurrentTitle: "Huidige plaatsing",
+    equitableInspectorBreakdownTitle: "Ervaring per item",
+    equitableInspectorHistoryTitle: "Geschiedenis van hetzelfde item",
+    equitableInspectorHistoryEmpty: "Geen eerdere uitvoeringen met deze plaatsing.",
     seatsTitle: "Plattegronden",
     seatsDescription: "Maak klasplattegronden voor zitplaatsen en visualisatie.",
     tabLayouts: "Plattegronden",

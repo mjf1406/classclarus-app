@@ -6,6 +6,11 @@ import type { Doc, Id } from "./_generated/dataModel.js";
 import type { MutationCtx, QueryCtx } from "./_generated/server.js";
 import { assignEquitable, type EquitableAssignRecipient } from "./lib/assigners/equitableAssign.js";
 import {
+  buildEquitableManualSlots,
+  validateEquitableManualAssignments,
+  type EquitableManualSlotAssignmentInput,
+} from "./lib/assigners/equitableManualSlots.js";
+import {
   equitableAssignerFormSchemaEn,
   type EquitableAssignerFormValues,
 } from "./lib/assigners/equitableAssignerSchema.js";
@@ -21,6 +26,70 @@ import {
 } from "./lib/rosterNameFormat.js";
 
 const scopeValidator = v.union(v.literal("class"), v.literal("groups"));
+const genderBucketValidator = v.union(
+  v.literal("m"),
+  v.literal("f"),
+  v.literal("other"),
+  v.literal("unknown"),
+);
+
+const manualSlotValidator = v.object({
+  id: v.string(),
+  item: v.string(),
+  scope: scopeValidator,
+  groupId: v.optional(v.id("groups")),
+  groupName: v.optional(v.string()),
+  genderRequired: v.optional(v.union(v.literal("m"), v.literal("f"))),
+});
+
+const manualStudentValidator = v.object({
+  userId: v.id("users"),
+  displayName: v.string(),
+  rosterNumber: v.optional(v.number()),
+  firstName: v.optional(v.string()),
+  lastName: v.optional(v.string()),
+  image: v.optional(v.string()),
+  email: v.optional(v.string()),
+  genderBucket: genderBucketValidator,
+  groupId: v.optional(v.id("groups")),
+  groupName: v.optional(v.string()),
+});
+
+const manualGroupValidator = v.object({
+  groupId: v.id("groups"),
+  groupName: v.string(),
+});
+
+const manualSlotAssignmentInputValidator = v.object({
+  slotId: v.string(),
+  studentUserId: v.id("users"),
+});
+
+const equitableStudentStatValidator = v.object({
+  label: v.string(),
+  count: v.number(),
+  percent: v.number(),
+});
+
+const equitableStudentSummaryValidator = v.object({
+  studentUserId: v.id("users"),
+  totalRecorded: v.number(),
+  draftItem: v.optional(v.string()),
+  draftGroupName: v.optional(v.string()),
+  currentItem: v.optional(equitableStudentStatValidator),
+  currentGroup: v.optional(equitableStudentStatValidator),
+  itemBreakdown: v.array(equitableStudentStatValidator),
+});
+
+const equitableHistoryItemValidator = v.object({
+  runId: v.id("equitableAssignerRuns"),
+  ranAt: v.number(),
+  item: v.string(),
+  groupName: v.optional(v.string()),
+});
+
+const DEFAULT_HISTORY_LIMIT = 20;
+const MAX_HISTORY_LIMIT = 50;
 
 const assignmentValidator = v.object({
   studentUserId: v.id("users"),
@@ -59,6 +128,13 @@ const equitableAssignerDetailValidator = v.object({
   createdBy: v.id("users"),
   createdAt: v.number(),
   updatedAt: v.number(),
+});
+
+const manualSetupValidator = v.object({
+  assigner: equitableAssignerDetailValidator,
+  students: v.array(manualStudentValidator),
+  groups: v.array(manualGroupValidator),
+  slots: v.array(manualSlotValidator),
 });
 
 const equitableAssignerRunListItemValidator = v.object({
@@ -302,6 +378,190 @@ async function loadPriorAssignments(
     }
   }
   return prior;
+}
+
+function percent(count: number, total: number): number {
+  if (total <= 0) return 0;
+  return Math.round((count / total) * 100);
+}
+
+async function loadGroupsForClass(
+  ctx: QueryCtx | MutationCtx,
+  classId: Id<"classes">,
+): Promise<Array<{ groupId: Id<"groups">; groupName: string }>> {
+  // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded groups
+  const groupDocs = await ctx.db
+    .query("groups")
+    .withIndex("by_class", (q) => q.eq("classId", classId))
+    .collect();
+  return groupDocs
+    .map((group) => ({ groupId: group._id, groupName: group.name }))
+    .sort((a, b) => a.groupName.localeCompare(b.groupName));
+}
+
+type ManualStudentRow = {
+  userId: Id<"users">;
+  displayName: string;
+  rosterNumber?: number;
+  firstName?: string;
+  lastName?: string;
+  image?: string;
+  email?: string;
+  genderBucket: "m" | "f" | "other" | "unknown";
+  groupId?: Id<"groups">;
+  groupName?: string;
+};
+
+async function loadManualStudents(
+  ctx: QueryCtx | MutationCtx,
+  classId: Id<"classes">,
+  scope: "class" | "groups",
+): Promise<ManualStudentRow[]> {
+  const classDoc = await ctx.db.get("classes", classId);
+  if (!classDoc) {
+    throw new ConvexError({ code: "NOT_FOUND", message: "Class not found" });
+  }
+  const nameFormat = resolveRosterNameFormat(classDoc);
+
+  const studentEntries = await ctx.runQuery(components.authz.queries.getUsersWithRole, {
+    tenantId: APP_CONFIG.authzTenantId,
+    role: "student",
+    scope: { type: "class", id: classId },
+  });
+  const studentIds = studentEntries.map((entry: { userId: string }) => entry.userId as Id<"users">);
+
+  // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded roster
+  const rosterRows = await ctx.db
+    .query("studentRosters")
+    .withIndex("by_classId", (q) => q.eq("classId", classId))
+    .collect();
+  const rosterByUserId = new Map(rosterRows.map((row) => [row.userId, row] as const));
+
+  // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded memberships
+  const membershipDocs = await ctx.db
+    .query("groupMemberships")
+    .withIndex("by_class", (q) => q.eq("classId", classId))
+    .collect();
+  const membershipByStudent = new Map(
+    membershipDocs.map((row) => [row.studentUserId, row] as const),
+  );
+
+  const groupNameById = new Map<string, string>();
+  for (const group of await loadGroupsForClass(ctx, classId)) {
+    groupNameById.set(group.groupId, group.groupName);
+  }
+
+  const students: ManualStudentRow[] = [];
+  for (const userId of studentIds) {
+    const user = await ctx.db.get("users", userId);
+    const roster = rosterByUserId.get(userId);
+    const membership = membershipByStudent.get(userId);
+    const genderBucket = genderBucketFromRoster(roster?.gender);
+
+    if (scope === "groups" && !membership) continue;
+
+    students.push({
+      userId,
+      displayName: studentDisplayName(user, roster, nameFormat, userId),
+      rosterNumber: roster?.rosterNumber,
+      firstName: roster?.firstName,
+      lastName: roster?.lastName,
+      image: user?.image,
+      email: user?.email,
+      genderBucket,
+      groupId: membership?.groupId,
+      groupName: membership ? groupNameById.get(membership.groupId) : undefined,
+    });
+  }
+
+  students.sort((a, b) => {
+    const aNum = a.rosterNumber ?? Number.MAX_SAFE_INTEGER;
+    const bNum = b.rosterNumber ?? Number.MAX_SAFE_INTEGER;
+    if (aNum !== bNum) return aNum - bNum;
+    return a.displayName.localeCompare(b.displayName);
+  });
+
+  return students;
+}
+
+async function loadStudentPriorAssignments(
+  ctx: QueryCtx | MutationCtx,
+  assignerId: Id<"equitableAssigners">,
+  studentUserId: Id<"users">,
+): Promise<
+  Array<{
+    item: string;
+    groupId?: Id<"groups">;
+    groupName?: string;
+    ranAt: number;
+    runId: Id<"equitableAssignerRuns">;
+  }>
+> {
+  // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded history
+  const runs = await ctx.db
+    .query("equitableAssignerRuns")
+    .withIndex("by_assignerId_ranAt", (q) => q.eq("assignerId", assignerId))
+    .order("desc")
+    .collect();
+
+  const prior: Array<{
+    item: string;
+    groupId?: Id<"groups">;
+    groupName?: string;
+    ranAt: number;
+    runId: Id<"equitableAssignerRuns">;
+  }> = [];
+
+  for (const run of runs) {
+    for (const assignment of run.assignments) {
+      if (assignment.studentUserId !== studentUserId) continue;
+      prior.push({
+        item: assignment.item,
+        groupId: assignment.groupId,
+        groupName: assignment.groupName,
+        ranAt: run.ranAt,
+        runId: run._id,
+      });
+    }
+  }
+
+  return prior;
+}
+
+function buildAssignmentsFromManualInput(args: {
+  slots: ReturnType<typeof buildEquitableManualSlots>;
+  assignments: EquitableManualSlotAssignmentInput[];
+  students: ManualStudentRow[];
+}): Array<{
+  studentUserId: Id<"users">;
+  studentDisplayName: string;
+  item: string;
+  rosterNumber?: number;
+  firstName?: string;
+  lastName?: string;
+  groupId?: Id<"groups">;
+  groupName?: string;
+}> {
+  const slotById = new Map(args.slots.map((slot) => [slot.id, slot]));
+  const studentById = new Map(args.students.map((student) => [student.userId, student]));
+
+  return args.assignments.map((assignment) => {
+    const slot = slotById.get(assignment.slotId);
+    const student = studentById.get(assignment.studentUserId);
+    if (!slot || !student) {
+      throw new ConvexError({ code: "INVALID_INPUT", message: "Invalid manual assignment" });
+    }
+    return {
+      studentUserId: assignment.studentUserId,
+      studentDisplayName: student.displayName,
+      item: slot.item,
+      rosterNumber: student.rosterNumber,
+      firstName: student.firstName,
+      lastName: student.lastName,
+      groupId: slot.groupId,
+      groupName: slot.groupName,
+    };
+  });
 }
 
 async function latestRunForAssigner(
@@ -666,5 +926,258 @@ export const removeRun = classMutation({
     });
 
     return null;
+  },
+});
+
+export const manualSetup = classQuery({
+  args: {
+    assignerId: v.id("equitableAssigners"),
+    scope: scopeValidator,
+    balanceGender: v.boolean(),
+  },
+  returns: manualSetupValidator,
+  handler: async (ctx, args) => {
+    await ctx.require("assigners:manage");
+    const assigner = await requireEquitableAssigner(ctx, ctx.classDoc._id, args.assignerId);
+    const groups = await loadGroupsForClass(ctx, ctx.classDoc._id);
+    const students = await loadManualStudents(ctx, ctx.classDoc._id, args.scope);
+    const slots = buildEquitableManualSlots({
+      items: assigner.items,
+      scope: args.scope,
+      balanceGender: args.balanceGender,
+      groups,
+    });
+
+    return {
+      assigner: {
+        _id: assigner._id,
+        _creationTime: assigner._creationTime,
+        classId: assigner.classId,
+        name: assigner.name,
+        items: assigner.items,
+        defaultBalanceGender: assigner.defaultBalanceGender,
+        defaultScope: assigner.defaultScope,
+        createdBy: assigner.createdBy,
+        createdAt: assigner.createdAt,
+        updatedAt: assigner.updatedAt,
+      },
+      students,
+      groups,
+      slots,
+    };
+  },
+});
+
+export const createManualRun = classMutation({
+  args: {
+    assignerId: v.id("equitableAssigners"),
+    scope: scopeValidator,
+    balanceGender: v.boolean(),
+    assignments: v.array(manualSlotAssignmentInputValidator),
+  },
+  returns: v.id("equitableAssignerRuns"),
+  handler: async (ctx, args) => {
+    await ctx.require("assigners:manage");
+    const assigner = await requireEquitableAssigner(ctx, ctx.classDoc._id, args.assignerId);
+    if (assigner.items.length === 0) {
+      throw new ConvexError({
+        code: "INVALID_INPUT",
+        message: "Add at least one item before saving",
+      });
+    }
+
+    const groups = await loadGroupsForClass(ctx, ctx.classDoc._id);
+    const students = await loadManualStudents(ctx, ctx.classDoc._id, args.scope);
+    if (students.length === 0) {
+      throw new ConvexError({
+        code: "INVALID_INPUT",
+        message:
+          args.scope === "groups" ? "No grouped students to assign" : "No students to assign",
+      });
+    }
+
+    const slots = buildEquitableManualSlots({
+      items: assigner.items,
+      scope: args.scope,
+      balanceGender: args.balanceGender,
+      groups,
+    });
+
+    const validation = validateEquitableManualAssignments({
+      slots,
+      assignments: args.assignments,
+      recipients: students.map((student) => ({
+        studentUserId: student.userId,
+        genderBucket: student.genderBucket,
+        groupId: student.groupId,
+      })),
+      scope: args.scope,
+      balanceGender: args.balanceGender,
+    });
+
+    if (!validation.ok) {
+      const messages: Record<typeof validation.code, string> = {
+        INVALID_SLOT: "One or more slots are invalid",
+        DUPLICATE_STUDENT: "Each student can only be assigned once",
+        MISSING_SLOT: "Fill every required slot before saving",
+        INELIGIBLE_STUDENT: "One or more students are not eligible",
+        GENDER_MISMATCH: "A student does not match the slot gender requirement",
+        GROUP_MISMATCH: "A student does not belong to the slot group",
+      };
+      throw new ConvexError({
+        code: "INVALID_INPUT",
+        message: messages[validation.code],
+      });
+    }
+
+    const assignments = buildAssignmentsFromManualInput({
+      slots,
+      assignments: args.assignments,
+      students,
+    });
+
+    const now = Date.now();
+    const runId = await ctx.db.insert("equitableAssignerRuns", {
+      classId: ctx.classDoc._id,
+      assignerId: assigner._id,
+      ranAt: now,
+      ranBy: ctx.userId,
+      scope: args.scope,
+      balanceGender: args.balanceGender,
+      itemsSnapshot: [...assigner.items],
+      assignments,
+    });
+
+    await recordClassActivity(ctx, {
+      classId: ctx.classDoc._id,
+      actorUserId: ctx.userId,
+      action: "write",
+      resourceType: "equitableAssigner",
+      resourceId: runId,
+      summary: `Created manual equitable assignment for "${assigner.name}"`,
+      summaryKey: "activitySummary_createdEquitableManualRun",
+      metadata: { name: assigner.name },
+    });
+
+    return runId;
+  },
+});
+
+export const studentSummary = classQuery({
+  args: {
+    assignerId: v.id("equitableAssigners"),
+    studentUserId: v.id("users"),
+    draftSlotId: v.optional(v.string()),
+    scope: scopeValidator,
+    balanceGender: v.boolean(),
+  },
+  returns: equitableStudentSummaryValidator,
+  handler: async (ctx, args) => {
+    await ctx.require("assigners:manage");
+    const assigner = await requireEquitableAssigner(ctx, ctx.classDoc._id, args.assignerId);
+    const groups = await loadGroupsForClass(ctx, ctx.classDoc._id);
+    const slots = buildEquitableManualSlots({
+      items: assigner.items,
+      scope: args.scope,
+      balanceGender: args.balanceGender,
+      groups,
+    });
+    const slotById = new Map(slots.map((slot) => [slot.id, slot]));
+
+    const prior = await loadStudentPriorAssignments(ctx, assigner._id, args.studentUserId);
+    const totalRecorded = prior.length;
+
+    const itemCounts = new Map<string, number>();
+    for (const row of prior) {
+      itemCounts.set(row.item, (itemCounts.get(row.item) ?? 0) + 1);
+    }
+
+    const itemBreakdown = assigner.items.map((item) => ({
+      label: item,
+      count: itemCounts.get(item) ?? 0,
+      percent: percent(itemCounts.get(item) ?? 0, totalRecorded),
+    }));
+
+    let draftItem: string | undefined;
+    let draftGroupName: string | undefined;
+    let currentItem: { label: string; count: number; percent: number } | undefined;
+    let currentGroup: { label: string; count: number; percent: number } | undefined;
+
+    if (args.draftSlotId) {
+      const draftSlot = slotById.get(args.draftSlotId);
+      if (draftSlot) {
+        draftItem = draftSlot.item;
+        draftGroupName = draftSlot.groupName;
+        const itemCount = prior.filter((row) => row.item === draftSlot.item).length;
+        currentItem = {
+          label: draftSlot.item,
+          count: itemCount,
+          percent: percent(itemCount, totalRecorded),
+        };
+        if (draftSlot.groupName) {
+          const groupCount = prior.filter((row) => row.groupName === draftSlot.groupName).length;
+          currentGroup = {
+            label: draftSlot.groupName,
+            count: groupCount,
+            percent: percent(groupCount, totalRecorded),
+          };
+        }
+      }
+    }
+
+    return {
+      studentUserId: args.studentUserId,
+      totalRecorded,
+      ...(draftItem !== undefined ? { draftItem } : {}),
+      ...(draftGroupName !== undefined ? { draftGroupName } : {}),
+      ...(currentItem !== undefined ? { currentItem } : {}),
+      ...(currentGroup !== undefined ? { currentGroup } : {}),
+      itemBreakdown,
+    };
+  },
+});
+
+export const studentHistory = classQuery({
+  args: {
+    assignerId: v.id("equitableAssigners"),
+    studentUserId: v.id("users"),
+    item: v.string(),
+    groupName: v.optional(v.string()),
+    beforeRanAt: v.optional(v.number()),
+    limit: v.optional(v.number()),
+  },
+  returns: v.object({
+    items: v.array(equitableHistoryItemValidator),
+    nextBeforeRanAt: v.optional(v.number()),
+  }),
+  handler: async (ctx, args) => {
+    await ctx.require("assigners:manage");
+    await requireEquitableAssigner(ctx, ctx.classDoc._id, args.assignerId);
+
+    const limit = Math.min(
+      Math.max(1, Math.floor(args.limit ?? DEFAULT_HISTORY_LIMIT)),
+      MAX_HISTORY_LIMIT,
+    );
+
+    const prior = await loadStudentPriorAssignments(ctx, args.assignerId, args.studentUserId);
+    const filtered = prior.filter((row) => {
+      if (row.item !== args.item) return false;
+      if (args.groupName !== undefined && row.groupName !== args.groupName) return false;
+      if (args.beforeRanAt !== undefined && row.ranAt >= args.beforeRanAt) return false;
+      return true;
+    });
+
+    const items = filtered.slice(0, limit).map((row) => ({
+      runId: row.runId,
+      ranAt: row.ranAt,
+      item: row.item,
+      ...(row.groupName !== undefined ? { groupName: row.groupName } : {}),
+    }));
+
+    const last = filtered.at(limit - 1);
+    return {
+      items,
+      ...(filtered.length > limit && last ? { nextBeforeRanAt: last.ranAt } : {}),
+    };
   },
 });

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 
+import { AssignerRunPreviewTable } from "@/components/assigners/AssignerRunPreviewTable";
 import { DeleteNamedCredenza } from "@/components/groups/DeleteNamedCredenza";
 import { DataTableSortableHeader } from "@/components/feedback/DataTableSortableHeader";
 import { ActionMenu, type ActionMenuItem } from "@/components/ui/action-menu";
@@ -45,6 +46,7 @@ import { useRemoveRandomAssignerRun } from "@/hooks/assigners/random/useRemoveRa
 import { useRunRandomAssigner } from "@/hooks/assigners/random/useRunRandomAssigner";
 import {
   useRandomAssigner,
+  useRandomAssignerRun,
   useRandomAssignerRuns,
 } from "@/hooks/assigners/random/useRandomAssigners";
 import { useClass } from "@/hooks/classes/useClass";
@@ -473,62 +475,23 @@ function RandomAssignerPreview({
   runId: Id<"randomAssignerRuns">;
 }) {
   const { t } = useTranslation("assigners");
-  const queryClient = useQueryClient();
-  const [assignments, setAssignments] = useState<Array<{
-    studentDisplayName: string;
-    item: string;
-    groupName?: string;
-  }> | null>(null);
+  const { data: run, isPending, isError } = useRandomAssignerRun(classId, assignerId, runId);
 
-  useEffect(() => {
-    let cancelled = false;
-    void queryClient
-      .fetchQuery(convexQuery(api.randomAssigners.getRun, { classId, assignerId, runId }))
-      .then((run) => {
-        if (cancelled) return;
-        setAssignments(
-          [...run.assignments].sort((a, b) =>
-            a.studentDisplayName.localeCompare(b.studentDisplayName),
-          ),
-        );
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [assignerId, classId, queryClient, runId]);
-
-  if (!assignments) {
+  if (isPending) {
     return <Skeleton className="h-48 w-full rounded-xl" />;
   }
 
+  if (isError || !run) {
+    return <p className="text-sm text-muted-foreground">{t("randomLoadFailed")}</p>;
+  }
+
   return (
-    <div className="rounded-xl border">
-      <div className="border-b px-4 py-3">
-        <h2 className="text-sm font-medium">{t("randomPreviewTitle")}</h2>
-      </div>
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t("randomPrintStudentColumn")}</TableHead>
-              <TableHead>{t("randomPrintItemColumn")}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {assignments.map((row, index) => (
-              <TableRow key={`${row.studentDisplayName}-${row.item}-${index}`}>
-                <TableCell>
-                  {row.studentDisplayName}
-                  {row.groupName ? (
-                    <span className="ml-2 text-xs text-muted-foreground">({row.groupName})</span>
-                  ) : null}
-                </TableCell>
-                <TableCell>{row.item}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    </div>
+    <AssignerRunPreviewTable
+      key={runId}
+      classId={classId}
+      assignments={run.assignments}
+      title={t("randomPreviewTitle")}
+      itemColumnLabel={t("randomPrintItemColumn")}
+    />
   );
 }
