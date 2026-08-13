@@ -1,5 +1,6 @@
 "use client";
 
+import "./fontawesome-setup";
 import * as React from "react";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";

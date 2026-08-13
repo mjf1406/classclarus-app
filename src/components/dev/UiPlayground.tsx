@@ -1,3 +1,4 @@
+import "@/components/icons/fontawesome-setup";
 import { useEffect, useRef, useState } from "react";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
