@@ -1,6 +1,7 @@
 import type { FunctionReturnType } from "convex/server";
 
 import { api } from "../../../convex/_generated/api";
+import { toIntlLocale } from "@/lib/languages";
 
 /** Class document from get / mutations (no membership role). */
 export type ClassDoc = NonNullable<FunctionReturnType<typeof api.classes.get>>;
@@ -20,7 +21,7 @@ export function isPendingClass(classDoc: Pick<ClassPublic, "_pending" | "_id">):
 }
 
 export function sortClasses(classes: Array<ClassPublic>, language: string): Array<ClassPublic> {
-  const collator = new Intl.Collator(language, { sensitivity: "base" });
+  const collator = new Intl.Collator(toIntlLocale(language), { sensitivity: "base" });
   return [...classes].sort((a, b) => collator.compare(a.name, b.name));
 }
 

@@ -1,3 +1,5 @@
+import { toIntlLocale } from "@/lib/languages";
+
 export function formatBillingDate(value: string | null | undefined, locale: string): string | null {
   if (!value) {
     return null;
@@ -6,7 +8,7 @@ export function formatBillingDate(value: string | null | undefined, locale: stri
   if (Number.isNaN(date.getTime())) {
     return null;
   }
-  return new Intl.DateTimeFormat(locale, {
+  return new Intl.DateTimeFormat(toIntlLocale(locale), {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -23,7 +25,7 @@ export function formatBillingMoney(
   }
   const code = (currency ?? "USD").toUpperCase();
   try {
-    return new Intl.NumberFormat(locale, {
+    return new Intl.NumberFormat(toIntlLocale(locale), {
       style: "currency",
       currency: code,
     }).format(amountCents / 100);

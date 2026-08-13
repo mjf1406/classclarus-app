@@ -30,7 +30,7 @@ import { useAttendanceSummaryForAudience } from "@/hooks/attendance/useAttendanc
 import { useAuthedQuery } from "@/hooks/useAuthedQuery";
 import type { AttendanceDraftStatus, AttendanceStatusSummary } from "@/lib/attendance/attendance";
 import { localDateKey } from "@/lib/attendance/dateKey";
-import { getLanguageOption, isAppLanguage } from "@/lib/languages";
+import { toIntlLocale } from "@/lib/languages";
 import { ONE_HOUR } from "@/lib/queryCache";
 import {
   getRosterDisplayName,
@@ -98,7 +98,7 @@ function statusLabelKey(
 }
 
 function formatDateKey(dateKey: string, language: string): string {
-  const locale = isAppLanguage(language) ? getLanguageOption(language).htmlLang : language;
+  const locale = toIntlLocale(language);
   const date = new Date(`${dateKey}T12:00:00`);
   if (Number.isNaN(date.getTime())) return dateKey;
   return new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(date);

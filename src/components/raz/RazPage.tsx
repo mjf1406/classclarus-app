@@ -62,7 +62,7 @@ import { useEnsureStudentRosters } from "@/hooks/roster/useEnsureStudentRosters"
 import { useRosterConsumerColumnVisibility } from "@/hooks/roster/useRosterConsumerColumnVisibility";
 import { useStudentRoster } from "@/hooks/roster/useStudentRoster";
 import { useAuthedQuery } from "@/hooks/useAuthedQuery";
-import { getLanguageOption, isAppLanguage } from "@/lib/languages";
+import { toIntlLocale } from "@/lib/languages";
 import { ONE_HOUR } from "@/lib/queryCache";
 import {
   getRazAssessmentSchedule,
@@ -139,7 +139,7 @@ function primaryStatusSortOrder(statuses: readonly RazDisplayStatus[] | undefine
 }
 
 function formatMediumDate(timestampMs: number, language: string): string {
-  const locale = isAppLanguage(language) ? getLanguageOption(language).htmlLang : language;
+  const locale = toIntlLocale(language);
   return new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(new Date(timestampMs));
 }
 

@@ -34,7 +34,7 @@ import { useSeatPersonalStatsForAudience } from "@/hooks/assigners/useSeatPerson
 import { useSeatPersonalStudentsForAudience } from "@/hooks/assigners/useSeatPersonalStudentsForAudience";
 import { useAuthedQuery } from "@/hooks/useAuthedQuery";
 import { formatLocalizedSeatChartHistoryDate } from "@/i18n/formatDate";
-import { getLanguageOption, isAppLanguage } from "@/lib/languages";
+import { toIntlLocale } from "@/lib/languages";
 import { ONE_HOUR } from "@/lib/queryCache";
 import {
   getRosterDisplayName,
@@ -56,7 +56,7 @@ type PersonalSeatHistoryItem = NonNullable<
 >["history"][number];
 
 function formatMediumDateTime(timestampMs: number, language: string): string {
-  const locale = isAppLanguage(language) ? getLanguageOption(language).htmlLang : language;
+  const locale = toIntlLocale(language);
   return new Intl.DateTimeFormat(locale, {
     dateStyle: "medium",
     timeStyle: "short",

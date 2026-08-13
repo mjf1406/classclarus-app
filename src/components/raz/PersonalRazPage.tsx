@@ -26,7 +26,7 @@ import {
 import { useRazAssessmentHistoryForAudience } from "@/hooks/raz/useRazAssessmentHistoryForAudience";
 import { useRazForAudience } from "@/hooks/raz/useRazForAudience";
 import { useAuthedQuery } from "@/hooks/useAuthedQuery";
-import { getLanguageOption, isAppLanguage } from "@/lib/languages";
+import { toIntlLocale } from "@/lib/languages";
 import { ONE_HOUR } from "@/lib/queryCache";
 import {
   getRazAssessmentSchedule,
@@ -71,12 +71,12 @@ type PersonalRazAssessment = NonNullable<
 >[number];
 
 function formatMediumDate(timestampMs: number, language: string): string {
-  const locale = isAppLanguage(language) ? getLanguageOption(language).htmlLang : language;
+  const locale = toIntlLocale(language);
   return new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(new Date(timestampMs));
 }
 
 function formatMediumDateTime(timestampMs: number, language: string): string {
-  const locale = isAppLanguage(language) ? getLanguageOption(language).htmlLang : language;
+  const locale = toIntlLocale(language);
   return new Intl.DateTimeFormat(locale, {
     dateStyle: "medium",
     timeStyle: "short",

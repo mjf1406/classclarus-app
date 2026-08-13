@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getLanguageOption, isAppLanguage } from "@/lib/languages";
+import { toIntlLocale } from "@/lib/languages";
 import type { RazAssessmentEntry } from "@/lib/raz/levels";
 
 const RESULT_I18N_KEY = {
@@ -18,7 +18,7 @@ const RESULT_I18N_KEY = {
 } as const;
 
 function formatMediumDateTime(timestampMs: number, language: string): string {
-  const locale = isAppLanguage(language) ? getLanguageOption(language).htmlLang : language;
+  const locale = toIntlLocale(language);
   return new Intl.DateTimeFormat(locale, {
     dateStyle: "medium",
     timeStyle: "short",
