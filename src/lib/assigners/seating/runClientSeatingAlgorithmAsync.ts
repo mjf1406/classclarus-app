@@ -20,7 +20,7 @@ export function runClientSeatingAlgorithmAsync(
   }
 
   return new Promise((resolve) => {
-    const worker = new Worker(new URL("../../workers/seatingSolve.worker.ts", import.meta.url), {
+    const worker = new Worker(new URL("../../../workers/seatingSolve.worker.ts", import.meta.url), {
       type: "module",
     });
     const requestId = 1;
