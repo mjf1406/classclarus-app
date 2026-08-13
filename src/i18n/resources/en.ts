@@ -2327,8 +2327,7 @@ const en = {
     seatsStatsLoadFailedDescription: "Try again in a moment.",
     seatsStatsStudentsEmptyTitle: "No students",
     seatsStatsStudentsEmptyDescription: "You are not enrolled as a student in this class.",
-    seatsDataDescription:
-      "{{dimension}} counts per student for layout “{{layoutName}}” ({{count}} columns).",
+    seatsDataDescription: "{{dimension}} counts per student for layout “{{layoutName}}”.",
     seatsDataDescriptionFallback: "Recorded seating counts per student for a layout.",
     seatsDataEmptyStudents: "No students in this class yet.",
     seatsDataEmptyValues: "No recorded seating history for this dimension yet.",
@@ -2339,6 +2338,10 @@ const en = {
     seatsDataDimensionZone: "Zones",
     seatsDataDimensionTeam: "Teams",
     seatsDataDimensionNeighbor: "Neighbors",
+    seatsDataItemColumn: "Item",
+    seatsDataQuantityColumn: "Quantity",
+    seatsDataCardEmpty: "No recorded history for this dimension yet.",
+    seatsDataConstraintsTitle: "Constraints ({{count}})",
     seatsDataLoadFailed: "Could not load seating data.",
     seatsDataLoadFailedDescription: "Try again in a moment.",
     layoutGenderParityLabel: "Gender parity",
@@ -2367,6 +2370,11 @@ const en = {
     autoAssignFailureUnknownTitle: "Exact conflict not identified",
     autoAssignFailureUnknownHint:
       "The solver could not prove which specific rules conflict. This can happen on larger charts. Retry or review constraints and layout manually.",
+    autoAssignOutputViolation:
+      "Auto-assign produced an invalid seating chart. This is an internal error, not a conflict in your seating rules. Try again, or seat students manually.",
+    autoAssignOutputViolationTitle: "Generated chart was rejected",
+    autoAssignOutputViolationHint:
+      "The seating chart failed a safety check after generation. Your saved rules were not the problem. Retry auto-assign, or place students by hand.",
     autoAssignFailureConflictSetTitle: "Conflicting rules",
     autoAssignFailureConflictSetHint:
       "This is one smallest set of rules that cannot all be satisfied together. Other conflicting sets may exist.",
@@ -2397,6 +2405,8 @@ const en = {
       "A locked seat conflicts with odd/even gender parity for that desk.",
     autoAssignStructural_constraintParityConflict:
       "The seating rules and odd/even parity cannot all be satisfied together.",
+    autoAssignStructural_parityCapacityExceeded:
+      "There are more students of one gender than odd or even numbered desks under the current parity setting.",
     autoAssignReportSummaryTitle: "Summary",
     autoAssignReportNoNamedStudents: "affected students",
     autoAssignReportSummary_unavailableSeat:
@@ -2414,6 +2424,8 @@ const en = {
     autoAssignReportSummary_parityLockedConflict:
       "Locked seats conflict with gender parity for {{students}}.",
     autoAssignReportSummary_constraintParityConflict: "Rules and parity conflict for {{students}}.",
+    autoAssignReportSummary_parityCapacityExceeded:
+      "Odd/even gender parity does not have enough matching desks for {{students}}.",
     autoAssignReportWhatTitle: "What happened",
     autoAssignReportWhyTitle: "Why",
     autoAssignReportSettingsTitle: "Current settings",
@@ -2428,6 +2440,8 @@ const en = {
     autoAssignReportRole_other: "other student",
     autoAssignReportCapacityGroup:
       "Group “{{group}}” needs {{required}} required seats but only {{available}} are available ({{students}}).",
+    autoAssignReportParityCapacityGroup:
+      "Group “{{group}}” has {{maleCount}} male and {{femaleCount}} female students, but only {{maleSeats}} male-parity and {{femaleSeats}} female-parity desks.",
     autoAssignReportUnknownGroup: "Unknown group",
     autoAssignReportNoValidSeatStudent:
       "{{student}} in {{group}} has {{candidates}} of {{total}} seats left after rule filtering.",
@@ -2453,6 +2467,8 @@ const en = {
       "Locked students must sit on desks matching parity ({{direction}}).",
     autoAssignReportWhyConstraintParity:
       "No assignment satisfies all required rules with parity set to {{direction}}.",
+    autoAssignReportWhyParityCapacity:
+      "Odd/even parity reserves numbered desks by gender. Extra students of one gender cannot be seated unless parity is turned off or the layout changes.",
     autoAssignReportWhyGeneric: "The current rules and layout cannot all be satisfied.",
     autoAssignReportParityMalesOdd: "males on odd desks",
     autoAssignReportParityMalesEven: "males on even desks",
@@ -2692,6 +2708,13 @@ const en = {
     printPerPageOption: "{{count}} per page",
     printExportAction: "Export",
     printSelectNone: "Select at least one perspective.",
+    printOptionsTitleChart: "Print seating",
+    printOptionsDescriptionChart:
+      "Choose a layout, a table, or both. Perspective options apply to the layout.",
+    printOutputLabel: "What to print",
+    printOutputLayout: "Layout",
+    printOutputTable: "Table",
+    printSelectNoneOutput: "Select a layout, a table, or both.",
     addTeacherDesk: "Teacher’s desk",
     addBoard: "Board",
     addDesk: "Student desk",

@@ -87,6 +87,10 @@ export function defaultSelectedRules(
   return [];
 }
 
+export function isSeatingOutputViolation(code: string): boolean {
+  return code === "SEATING_OUTPUT_VIOLATION";
+}
+
 export function pruneSelectedRulesForConstraints(
   rules: ReadonlyArray<SeatingRelaxableRule>,
   constraints: ReadonlyArray<{ _id: Id<"seatConstraints"> }>,

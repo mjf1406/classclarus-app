@@ -2265,7 +2265,7 @@ const zht = {
     seatsStatsLoadFailedDescription: "請稍後再試。",
     seatsStatsStudentsEmptyTitle: "沒有學生",
     seatsStatsStudentsEmptyDescription: "您未作為學生加入此班級。",
-    seatsDataDescription: "配置「{{layoutName}}」依學生的{{dimension}}次數（{{count}}欄）。",
+    seatsDataDescription: "配置「{{layoutName}}」依學生的{{dimension}}次數。",
     seatsDataDescriptionFallback: "依學生顯示某配置的已記錄座位次數。",
     seatsDataEmptyStudents: "此班級尚無學生。",
     seatsDataEmptyValues: "此維度尚無已記錄的座位歷史。",
@@ -2276,6 +2276,10 @@ const zht = {
     seatsDataDimensionZone: "區域",
     seatsDataDimensionTeam: "小組",
     seatsDataDimensionNeighbor: "鄰座",
+    seatsDataItemColumn: "項目",
+    seatsDataQuantityColumn: "次數",
+    seatsDataCardEmpty: "此維度尚無已記錄的歷史。",
+    seatsDataConstraintsTitle: "約束（{{count}}）",
     seatsDataLoadFailed: "無法載入座位資料。",
     seatsDataLoadFailedDescription: "請稍後再試。",
     layoutGenderParityLabel: "性別平衡",
@@ -2301,6 +2305,11 @@ const zht = {
     autoAssignFailureUnknownTitle: "未能確定精確衝突",
     autoAssignFailureUnknownHint:
       "求解器無法證明哪些規則發生衝突。這在較大班级中可能發生。請重試或手動檢查規則與版面。",
+    autoAssignOutputViolation:
+      "自動排座產生了無效座位表。這是內部錯誤，不是規則衝突。請重試或手動排座。",
+    autoAssignOutputViolationTitle: "產生的座位表被拒絕",
+    autoAssignOutputViolationHint:
+      "產生後的安全檢查未通過。已儲存的規則不是原因。請重試自動排座，或手動安排。",
     autoAssignFailureConflictSetTitle: "衝突規則",
     autoAssignFailureConflictSetHint: "這是無法同時滿足的最小規則集合。可能存在其他衝突集合。",
     autoAssignFailureRelaxLabel: "僅為本圖表暫時放寬",
@@ -2324,6 +2333,8 @@ const zht = {
       "A locked seat conflicts with odd/even gender parity for that desk.",
     autoAssignStructural_constraintParityConflict:
       "The seating rules and odd/even parity cannot all be satisfied together.",
+    autoAssignStructural_parityCapacityExceeded:
+      "在目前奇偶性別配對下，某一性別的學生多於奇數或偶數編號課桌。",
     autoAssignReportSummaryTitle: "Summary",
     autoAssignReportNoNamedStudents: "affected students",
     autoAssignReportSummary_unavailableSeat:
@@ -2341,6 +2352,8 @@ const zht = {
     autoAssignReportSummary_parityLockedConflict:
       "Locked seats conflict with gender parity for {{students}}.",
     autoAssignReportSummary_constraintParityConflict: "Rules and parity conflict for {{students}}.",
+    autoAssignReportSummary_parityCapacityExceeded:
+      "奇偶性別配對沒有足夠相符的課桌給 {{students}}。",
     autoAssignReportWhatTitle: "What happened",
     autoAssignReportWhyTitle: "Why",
     autoAssignReportSettingsTitle: "Current settings",
@@ -2355,6 +2368,8 @@ const zht = {
     autoAssignReportRole_other: "other student",
     autoAssignReportCapacityGroup:
       "Group “{{group}}” needs {{required}} required seats but only {{available}} are available ({{students}}).",
+    autoAssignReportParityCapacityGroup:
+      "小組「{{group}}」有 {{maleCount}} 名男生和 {{femaleCount}} 名女生，但只有 {{maleSeats}} 個男生配對座位和 {{femaleSeats}} 個女生配對座位。",
     autoAssignReportUnknownGroup: "Unknown group",
     autoAssignReportNoValidSeatStudent:
       "{{student}} in {{group}} has {{candidates}} of {{total}} seats left after rule filtering.",
@@ -2380,6 +2395,8 @@ const zht = {
       "Locked students must sit on desks matching parity ({{direction}}).",
     autoAssignReportWhyConstraintParity:
       "No assignment satisfies all required rules with parity set to {{direction}}.",
+    autoAssignReportWhyParityCapacity:
+      "奇偶配對依性別預留有編號的課桌。某一性別人數過多時，需關閉配對或更改版面才能入座。",
     autoAssignReportWhyGeneric: "The current rules and layout cannot all be satisfied.",
     autoAssignReportParityMalesOdd: "males on odd desks",
     autoAssignReportParityMalesEven: "males on even desks",
@@ -2611,6 +2628,12 @@ const zht = {
     printPerPageOption: "每頁 {{count}} 個",
     printExportAction: "匯出",
     printSelectNone: "請至少選擇一個視角。",
+    printOptionsTitleChart: "列印座位",
+    printOptionsDescriptionChart: "可選擇版面、表格或兩者。視角選項適用於版面。",
+    printOutputLabel: "列印內容",
+    printOutputLayout: "版面",
+    printOutputTable: "表格",
+    printSelectNoneOutput: "請選擇版面、表格或兩者。",
     addTeacherDesk: "講台",
     addBoard: "黑板",
     addDesk: "學生課桌",

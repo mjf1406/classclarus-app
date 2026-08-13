@@ -2387,8 +2387,7 @@ const de = {
     seatsStatsLoadFailedDescription: "Versuchen Sie es in einem Moment erneut.",
     seatsStatsStudentsEmptyTitle: "Keine Schüler",
     seatsStatsStudentsEmptyDescription: "Sie sind in dieser Klasse nicht als Schüler eingetragen.",
-    seatsDataDescription:
-      "{{dimension}}-Zählungen pro Schüler für Plan „{{layoutName}}“ ({{count}} Spalten).",
+    seatsDataDescription: "{{dimension}}-Zählungen pro Schüler für Plan „{{layoutName}}“.",
     seatsDataDescriptionFallback: "Aufgezeichnete Sitzplatz-Zählungen pro Schüler für einen Plan.",
     seatsDataEmptyStudents: "Noch keine Schüler in dieser Klasse.",
     seatsDataEmptyValues: "Noch kein aufgezeichneter Sitzplatz-Verlauf für diese Dimension.",
@@ -2399,6 +2398,10 @@ const de = {
     seatsDataDimensionZone: "Zonen",
     seatsDataDimensionTeam: "Teams",
     seatsDataDimensionNeighbor: "Nachbarn",
+    seatsDataItemColumn: "Element",
+    seatsDataQuantityColumn: "Anzahl",
+    seatsDataCardEmpty: "Noch kein aufgezeichneter Verlauf für diese Dimension.",
+    seatsDataConstraintsTitle: "Einschränkungen ({{count}})",
     seatsDataLoadFailed: "Sitzplatzdaten konnten nicht geladen werden.",
     seatsDataLoadFailedDescription: "Versuchen Sie es in einem Moment erneut.",
     layoutGenderParityLabel: "Geschlechterparität",
@@ -2428,6 +2431,11 @@ const de = {
     autoAssignFailureUnknownTitle: "Genauer Konflikt nicht ermittelt",
     autoAssignFailureUnknownHint:
       "Der Solver konnte nicht beweisen, welche Regeln genau kollidieren. Das kann bei größeren Klassen passieren. Erneut versuchen oder Regeln und Layout manuell prüfen.",
+    autoAssignOutputViolation:
+      "Die automatische Sitzplatzvergabe hat einen ungültigen Plan erzeugt. Das ist ein interner Fehler, kein Konflikt in Ihren Regeln. Bitte erneut versuchen oder manuell setzen.",
+    autoAssignOutputViolationTitle: "Erzeugter Plan wurde abgelehnt",
+    autoAssignOutputViolationHint:
+      "Der Sitzplan hat nach der Erzeugung eine Sicherheitsprüfung nicht bestanden. Ihre gespeicherten Regeln waren nicht das Problem. Auto-Zuweisung erneut versuchen oder Schüler manuell setzen.",
     autoAssignFailureConflictSetTitle: "Widersprüchliche Regeln",
     autoAssignFailureConflictSetHint:
       "Dies ist eine kleinste Menge von Regeln, die nicht gleichzeitig erfüllt werden können. Andere widersprüchliche Mengen sind möglich.",
@@ -2458,6 +2466,8 @@ const de = {
       "A locked seat conflicts with odd/even gender parity for that desk.",
     autoAssignStructural_constraintParityConflict:
       "The seating rules and odd/even parity cannot all be satisfied together.",
+    autoAssignStructural_parityCapacityExceeded:
+      "Es gibt mehr Schüler eines Geschlechts als ungerade oder gerade nummerierte Tische bei der aktuellen Parität.",
     autoAssignReportSummaryTitle: "Summary",
     autoAssignReportNoNamedStudents: "affected students",
     autoAssignReportSummary_unavailableSeat:
@@ -2475,6 +2485,8 @@ const de = {
     autoAssignReportSummary_parityLockedConflict:
       "Locked seats conflict with gender parity for {{students}}.",
     autoAssignReportSummary_constraintParityConflict: "Rules and parity conflict for {{students}}.",
+    autoAssignReportSummary_parityCapacityExceeded:
+      "Die Gerade/Ungerade-Geschlechterparität hat nicht genug passende Tische für {{students}}.",
     autoAssignReportWhatTitle: "What happened",
     autoAssignReportWhyTitle: "Why",
     autoAssignReportSettingsTitle: "Current settings",
@@ -2489,6 +2501,8 @@ const de = {
     autoAssignReportRole_other: "other student",
     autoAssignReportCapacityGroup:
       "Group “{{group}}” needs {{required}} required seats but only {{available}} are available ({{students}}).",
+    autoAssignReportParityCapacityGroup:
+      "Gruppe „{{group}}“ hat {{maleCount}} männliche und {{femaleCount}} weibliche Schüler, aber nur {{maleSeats}} männliche und {{femaleSeats}} weibliche Paritätsplätze.",
     autoAssignReportUnknownGroup: "Unknown group",
     autoAssignReportNoValidSeatStudent:
       "{{student}} in {{group}} has {{candidates}} of {{total}} seats left after rule filtering.",
@@ -2514,6 +2528,8 @@ const de = {
       "Locked students must sit on desks matching parity ({{direction}}).",
     autoAssignReportWhyConstraintParity:
       "No assignment satisfies all required rules with parity set to {{direction}}.",
+    autoAssignReportWhyParityCapacity:
+      "Gerade/ungerade Parität reserviert nummerierte Tische nach Geschlecht. Zusätzliche Schüler eines Geschlechts können nicht gesetzt werden, wenn Parität nicht ausgeschaltet oder das Layout geändert wird.",
     autoAssignReportWhyGeneric: "The current rules and layout cannot all be satisfied.",
     autoAssignReportParityMalesOdd: "males on odd desks",
     autoAssignReportParityMalesEven: "males on even desks",
@@ -2759,7 +2775,14 @@ const de = {
     printPerPageLabel: "Perspektiven pro Seite",
     printPerPageOption: "{{count}} pro Seite",
     printExportAction: "Exportieren",
-    printSelectNone: "W�hle mindestens eine Perspektive.",
+    printSelectNone: "Wähle mindestens eine Perspektive.",
+    printOptionsTitleChart: "Sitzplan drucken",
+    printOptionsDescriptionChart:
+      "Wähle Layout, Tabelle oder beides. Perspektiven gelten für das Layout.",
+    printOutputLabel: "Was drucken",
+    printOutputLayout: "Layout",
+    printOutputTable: "Tabelle",
+    printSelectNoneOutput: "Wähle ein Layout, eine Tabelle oder beides.",
     addTeacherDesk: "Lehrerpult",
     addBoard: "Tafel",
     addDesk: "Sch?lertisch",

@@ -1,6 +1,14 @@
 import type { Id } from "../../_generated/dataModel.js";
 import type { ChartAssignment, SeatLayoutItemSnapshot } from "./seatChartGeometry.js";
 import { slotKey } from "./seatChartGeometry.js";
+import { constraintSatisfied, parityAllows } from "./predicates.js";
+import type {
+  GenderParityAssignment,
+  GenderParityMode,
+  SeatingConstraint,
+  SeatingDeskSlot,
+  SeatingStudent,
+} from "./types.js";
 
 export type ValidateAssignmentsError = {
   code: string;
@@ -58,6 +66,54 @@ export function validateMergedAssignments(args: {
     }
     if (locked.deskItemId !== current.deskItemId || locked.groupId !== current.groupId) {
       return { code: "SEATING_LOCKED_MOVED", message: "Locked student moved" };
+    }
+  }
+
+  return null;
+}
+
+/** Reuses solver predicates to reject charts that violate hard rules after search/merge. */
+export function validateHardConstraints(args: {
+  assignments: ReadonlyArray<ChartAssignment>;
+  slots: ReadonlyArray<SeatingDeskSlot>;
+  students: ReadonlyArray<SeatingStudent>;
+  constraints: ReadonlyArray<SeatingConstraint>;
+  genderParityMode: GenderParityMode;
+  genderParityAssignment: GenderParityAssignment;
+}): ValidateAssignmentsError | null {
+  const slotByKey = new Map(
+    args.slots.map((slot) => [slotKey(slot.deskItemId, slot.groupId), slot]),
+  );
+  const studentById = new Map(args.students.map((student) => [student.studentUserId, student]));
+  const assignmentByStudent = new Map<Id<"users">, SeatingDeskSlot>();
+
+  for (const assignment of args.assignments) {
+    const slot = slotByKey.get(slotKey(assignment.deskItemId, assignment.groupId));
+    if (!slot) {
+      return {
+        code: "SEATING_OUTPUT_VIOLATION",
+        message: "The generated seating chart is internally inconsistent.",
+      };
+    }
+    assignmentByStudent.set(assignment.studentUserId, slot);
+    const student = studentById.get(assignment.studentUserId);
+    if (
+      student &&
+      !parityAllows(args.genderParityMode, args.genderParityAssignment, student, slot)
+    ) {
+      return {
+        code: "SEATING_OUTPUT_VIOLATION",
+        message: "The generated seating chart is internally inconsistent.",
+      };
+    }
+  }
+
+  for (const constraint of args.constraints) {
+    if (!constraintSatisfied(constraint, assignmentByStudent)) {
+      return {
+        code: "SEATING_OUTPUT_VIOLATION",
+        message: "The generated seating chart is internally inconsistent.",
+      };
     }
   }
 

@@ -4,10 +4,12 @@ import { seatHistoryKey } from "./historyKeys.js";
 import {
   buildCapacityExceededEvidence,
   buildNoValidSeatEvidence,
+  buildParityCapacityExceededEvidence,
   buildSearchExhaustedEvidence,
   buildUnavailableStudentsEvidence,
   lockedAssignmentEvidence,
 } from "./failureEvidence.js";
+import { constraintSatisfied, parityAllows } from "./predicates.js";
 import type {
   SeatingAlgorithmInput,
   SeatingAlgorithmResult,
@@ -20,10 +22,19 @@ import type {
 type StudentId = Id<"users">;
 type AssignmentMap = Map<StudentId, SeatingDeskSlot>;
 
+type FairnessState = {
+  seat: Map<StudentId, number>;
+  zone: Map<StudentId, number | null>;
+  team: Map<StudentId, number | null>;
+  neighbor: Map<string, number>;
+  degree: Map<StudentId, number>;
+};
+
 type Candidate = {
   assignmentByStudent: AssignmentMap;
   fairnessVector: number[];
   tieKey: number;
+  fairnessState: FairnessState;
 };
 
 const EXACT_STUDENT_LIMIT = 7;
@@ -73,56 +84,6 @@ function sortedSlots(slots: ReadonlyArray<SeatingDeskSlot>): SeatingDeskSlot[] {
   );
 }
 
-function parityAllows(
-  input: SeatingAlgorithmInput,
-  student: Pick<SeatingStudent, "genderBucket">,
-  slot: SeatingDeskSlot,
-): boolean {
-  if (input.genderParityMode === "off") return true;
-  if (student.genderBucket !== "m" && student.genderBucket !== "f") return true;
-  if (slot.deskNumber === undefined) return false;
-  const odd = slot.deskNumber % 2 === 1;
-  return student.genderBucket === "m"
-    ? odd === input.genderParityAssignment.malesOnOddDesks
-    : odd !== input.genderParityAssignment.malesOnOddDesks;
-}
-
-function areNeighbors(left: SeatingDeskSlot, right: SeatingDeskSlot): boolean {
-  return (
-    left.deskItemId !== right.deskItemId &&
-    (left.neighborDeskIds.includes(right.deskItemId) ||
-      right.neighborDeskIds.includes(left.deskItemId))
-  );
-}
-
-function areTeammates(left: SeatingDeskSlot, right: SeatingDeskSlot): boolean {
-  return (
-    left.groupId === right.groupId &&
-    left.deskItemId !== right.deskItemId &&
-    left.teamKey !== undefined &&
-    left.teamKey === right.teamKey
-  );
-}
-
-function constraintSatisfied(
-  constraint: SeatingConstraint,
-  assignmentByStudent: AssignmentMap,
-): boolean {
-  const slot = assignmentByStudent.get(constraint.studentUserId);
-  if (constraint.type === "zone") {
-    if (!slot) return constraint.polarity === "mustNot";
-    const matches = (slot.zoneName ?? "") === (constraint.zoneName?.trim() ?? "");
-    return constraint.polarity === "must" ? matches : !matches;
-  }
-
-  const otherId = constraint.otherStudentUserId;
-  const otherSlot = otherId ? assignmentByStudent.get(otherId) : undefined;
-  if (!slot || !otherSlot) return constraint.polarity === "mustNot";
-  const matches =
-    constraint.type === "neighbor" ? areNeighbors(slot, otherSlot) : areTeammates(slot, otherSlot);
-  return constraint.polarity === "must" ? matches : !matches;
-}
-
 function relevantConstraints(input: SeatingAlgorithmInput): SeatingConstraint[] {
   return [...input.constraints].sort((left, right) =>
     String(left.id).localeCompare(String(right.id)),
@@ -168,9 +129,37 @@ function metric(values: readonly number[], missingCount: number): number[] {
   ];
 }
 
+function occupantFrom(assignmentByStudent: AssignmentMap): Map<string, StudentId> {
+  const occupant = new Map<string, StudentId>();
+  for (const [studentId, slot] of assignmentByStudent) {
+    occupant.set(slotIdentity(slot), studentId);
+  }
+  return occupant;
+}
+
+/** Bidirectional desk adjacency matching `areNeighbors`. */
+function neighborDeskIndex(slots: ReadonlyArray<SeatingDeskSlot>): Map<string, string[]> {
+  const sets = new Map<string, Set<string>>();
+  const add = (from: string, to: string) => {
+    if (from === to) return;
+    const current = sets.get(from) ?? new Set<string>();
+    current.add(to);
+    sets.set(from, current);
+  };
+  for (const slot of slots) {
+    for (const neighborId of slot.neighborDeskIds) {
+      add(slot.deskItemId, neighborId);
+      add(neighborId, slot.deskItemId);
+    }
+  }
+  return new Map([...sets.entries()].map(([deskItemId, ids]) => [deskItemId, [...ids]]));
+}
+
 function fairnessVector(
   input: SeatingAlgorithmInput,
   assignmentByStudent: AssignmentMap,
+  occupant = occupantFrom(assignmentByStudent),
+  deskNeighbors = neighborDeskIndex(input.slots),
 ): number[] {
   const neighborCounts: number[] = [];
   const seatCounts: number[] = [];
@@ -195,15 +184,14 @@ function fairnessVector(
     }
 
     let neighborCount = 0;
-    for (const [otherId, otherSlot] of assignmentByStudent) {
-      if (
-        otherId !== studentId &&
-        otherSlot.groupId === slot.groupId &&
-        areNeighbors(slot, otherSlot)
-      ) {
-        neighborCount += 1;
-        neighborCounts.push(history?.neighbor.get(otherId) ?? 0);
-      }
+    const neighborDesks = deskNeighbors.get(slot.deskItemId) ?? slot.neighborDeskIds;
+    for (const neighborDeskId of neighborDesks) {
+      const otherId = occupant.get(slotKey(neighborDeskId, slot.groupId));
+      if (!otherId || otherId === studentId) continue;
+      const otherSlot = assignmentByStudent.get(otherId);
+      if (!otherSlot || otherSlot.groupId !== slot.groupId) continue;
+      neighborCount += 1;
+      neighborCounts.push(history?.neighbor.get(otherId) ?? 0);
     }
     if (neighborCount === 0) studentsWithoutNeighbor += 1;
   }
@@ -214,6 +202,168 @@ function fairnessVector(
     ...metric(zoneCounts, studentsWithoutZone),
     ...metric(teamCounts, studentsWithoutTeam),
   ];
+}
+
+function directedNeighborKey(from: StudentId, to: StudentId): string {
+  return `${from}\0${to}`;
+}
+
+function visitNeighbors(
+  studentId: StudentId,
+  slot: SeatingDeskSlot,
+  assignmentByStudent: AssignmentMap,
+  occupant: Map<string, StudentId>,
+  deskNeighbors: Map<string, string[]>,
+  visit: (otherId: StudentId) => void,
+): void {
+  const neighborDesks = deskNeighbors.get(slot.deskItemId) ?? slot.neighborDeskIds;
+  for (const neighborDeskId of neighborDesks) {
+    const otherId = occupant.get(slotKey(neighborDeskId, slot.groupId));
+    if (!otherId || otherId === studentId) continue;
+    const otherSlot = assignmentByStudent.get(otherId);
+    if (!otherSlot || otherSlot.groupId !== slot.groupId) continue;
+    visit(otherId);
+  }
+}
+
+function historySeatCount(
+  input: SeatingAlgorithmInput,
+  studentId: StudentId,
+  slot: SeatingDeskSlot,
+): number {
+  return (
+    input.history.byStudent
+      .get(studentId)
+      ?.seat.get(seatHistoryKey(input.layoutId, slot.deskItemId)) ?? 0
+  );
+}
+
+function setSeatZoneTeam(
+  state: FairnessState,
+  input: SeatingAlgorithmInput,
+  studentId: StudentId,
+  slot: SeatingDeskSlot,
+): void {
+  const history = input.history.byStudent.get(studentId);
+  state.seat.set(studentId, historySeatCount(input, studentId, slot));
+  state.zone.set(studentId, slot.zoneName ? (history?.zone.get(slot.zoneName) ?? 0) : null);
+  state.team.set(studentId, slot.teamKey ? (history?.team.get(slot.teamKey) ?? 0) : null);
+}
+
+function stripIncidentNeighbors(
+  state: FairnessState,
+  studentId: StudentId,
+  slot: SeatingDeskSlot,
+  assignmentByStudent: AssignmentMap,
+  occupant: Map<string, StudentId>,
+  deskNeighbors: Map<string, string[]>,
+): void {
+  visitNeighbors(studentId, slot, assignmentByStudent, occupant, deskNeighbors, (otherId) => {
+    if (state.neighbor.delete(directedNeighborKey(studentId, otherId))) {
+      state.degree.set(studentId, (state.degree.get(studentId) ?? 1) - 1);
+    }
+    if (state.neighbor.delete(directedNeighborKey(otherId, studentId))) {
+      state.degree.set(otherId, (state.degree.get(otherId) ?? 1) - 1);
+    }
+  });
+}
+
+function addIncidentNeighbors(
+  state: FairnessState,
+  input: SeatingAlgorithmInput,
+  studentId: StudentId,
+  slot: SeatingDeskSlot,
+  assignmentByStudent: AssignmentMap,
+  occupant: Map<string, StudentId>,
+  deskNeighbors: Map<string, string[]>,
+): void {
+  const history = input.history.byStudent.get(studentId);
+  visitNeighbors(studentId, slot, assignmentByStudent, occupant, deskNeighbors, (otherId) => {
+    const forward = directedNeighborKey(studentId, otherId);
+    if (!state.neighbor.has(forward)) {
+      state.neighbor.set(forward, history?.neighbor.get(otherId) ?? 0);
+      state.degree.set(studentId, (state.degree.get(studentId) ?? 0) + 1);
+    }
+    const backward = directedNeighborKey(otherId, studentId);
+    if (!state.neighbor.has(backward)) {
+      state.neighbor.set(
+        backward,
+        input.history.byStudent.get(otherId)?.neighbor.get(studentId) ?? 0,
+      );
+      state.degree.set(otherId, (state.degree.get(otherId) ?? 0) + 1);
+    }
+  });
+}
+
+function cloneFairnessState(state: FairnessState): FairnessState {
+  return {
+    seat: new Map(state.seat),
+    zone: new Map(state.zone),
+    team: new Map(state.team),
+    neighbor: new Map(state.neighbor),
+    degree: new Map(state.degree),
+  };
+}
+
+function vectorFromFairnessState(state: FairnessState, assigned: AssignmentMap): number[] {
+  const zoneCounts: number[] = [];
+  const teamCounts: number[] = [];
+  let studentsWithoutZone = 0;
+  let studentsWithoutTeam = 0;
+  let studentsWithoutNeighbor = 0;
+  for (const studentId of assigned.keys()) {
+    const zone = state.zone.get(studentId);
+    if (zone === null || zone === undefined) studentsWithoutZone += 1;
+    else zoneCounts.push(zone);
+    const team = state.team.get(studentId);
+    if (team === null || team === undefined) studentsWithoutTeam += 1;
+    else teamCounts.push(team);
+    if ((state.degree.get(studentId) ?? 0) <= 0) studentsWithoutNeighbor += 1;
+  }
+  return [
+    ...metric([...state.neighbor.values()], studentsWithoutNeighbor),
+    ...metric([...state.seat.values()], 0),
+    ...metric(zoneCounts, studentsWithoutZone),
+    ...metric(teamCounts, studentsWithoutTeam),
+  ];
+}
+
+function fairnessStateFrom(
+  input: SeatingAlgorithmInput,
+  assignmentByStudent: AssignmentMap,
+  occupant: Map<string, StudentId>,
+  deskNeighbors: Map<string, string[]>,
+): FairnessState {
+  const state: FairnessState = {
+    seat: new Map(),
+    zone: new Map(),
+    team: new Map(),
+    neighbor: new Map(),
+    degree: new Map(),
+  };
+  for (const [studentId, slot] of assignmentByStudent) {
+    setSeatZoneTeam(state, input, studentId, slot);
+    state.degree.set(studentId, 0);
+  }
+  for (const [studentId, slot] of assignmentByStudent) {
+    addIncidentNeighbors(
+      state,
+      input,
+      studentId,
+      slot,
+      assignmentByStudent,
+      occupant,
+      deskNeighbors,
+    );
+  }
+  return state;
+}
+
+function assignmentSignature(assignmentByStudent: AssignmentMap): string {
+  return [...assignmentByStudent]
+    .sort(([left], [right]) => String(left).localeCompare(String(right)))
+    .map(([studentId, slot]) => `${studentId}:${slotIdentity(slot)}`)
+    .join("|");
 }
 
 /** Exposes the solver's ordered objective for diagnostics and differential tests. */
@@ -233,15 +383,15 @@ export function evaluateSeatingFairness(
 function candidateFrom(
   input: SeatingAlgorithmInput,
   assignmentByStudent: AssignmentMap,
+  occupant = occupantFrom(assignmentByStudent),
+  deskNeighbors = neighborDeskIndex(input.slots),
 ): Candidate {
-  const signature = [...assignmentByStudent]
-    .sort(([left], [right]) => String(left).localeCompare(String(right)))
-    .map(([studentId, slot]) => `${studentId}:${slotIdentity(slot)}`)
-    .join("|");
+  const fairnessState = fairnessStateFrom(input, assignmentByStudent, occupant, deskNeighbors);
   return {
     assignmentByStudent: new Map(assignmentByStudent),
-    fairnessVector: fairnessVector(input, assignmentByStudent),
-    tieKey: hashString(`${input.randomSeed}:${signature}`),
+    fairnessVector: vectorFromFairnessState(fairnessState, assignmentByStudent),
+    tieKey: hashString(`${input.randomSeed}:${assignmentSignature(assignmentByStudent)}`),
+    fairnessState,
   };
 }
 
@@ -257,7 +407,12 @@ function unaryDomainAllows(
   slot: SeatingDeskSlot,
   constraints: ReadonlyArray<SeatingConstraint>,
 ): boolean {
-  if (slot.groupId !== student.groupId || !parityAllows(input, student, slot)) return false;
+  if (
+    slot.groupId !== student.groupId ||
+    !parityAllows(input.genderParityMode, input.genderParityAssignment, student, slot)
+  ) {
+    return false;
+  }
   return constraints.every((constraint) => {
     if (constraint.studentUserId !== student.studentUserId || constraint.type !== "zone") {
       return true;
@@ -366,6 +521,7 @@ function searchAssignments(args: {
   constraints: SeatingConstraint[];
   exact: boolean;
   random: () => number;
+  deskNeighbors: Map<string, string[]>;
 }): { best?: Candidate; exhausted: boolean } {
   const assignmentByStudent = new Map(args.baseAssignments);
   const occupied = new Set([...args.baseAssignments.values()].map(slotIdentity));
@@ -382,7 +538,12 @@ function searchAssignments(args: {
     }
     if (remaining.length === 0) {
       if (!constraintsSatisfied(args.constraints, assignmentByStudent)) return false;
-      const candidate = candidateFrom(args.input, assignmentByStudent);
+      const candidate = candidateFrom(
+        args.input,
+        assignmentByStudent,
+        occupantFrom(assignmentByStudent),
+        args.deskNeighbors,
+      );
       if (betterCandidate(candidate, best)) best = candidate;
       return !args.exact;
     }
@@ -462,6 +623,14 @@ function improveCandidate(args: {
     }
   }
 
+  const deskNeighbors = neighborDeskIndex(args.input.slots);
+  const domainSlotKeys = new Map<StudentId, Set<string>>();
+  for (const [studentId, domain] of args.domains) {
+    domainSlotKeys.set(studentId, new Set(domain.map(slotIdentity)));
+  }
+  let bestOccupant = occupantFrom(best.assignmentByStudent);
+  let bestState = cloneFairnessState(best.fairnessState);
+
   const randomizedOperations = operations
     .map((operation) => ({ operation, tie: args.random() }))
     .sort((left, right) => left.tie - right.tie)
@@ -470,37 +639,103 @@ function improveCandidate(args: {
   for (let index = 0; index < trialLimit; index += 1) {
     const operation = randomizedOperations[index]!;
     const trial = new Map(best.assignmentByStudent);
+    const occupant = new Map(bestOccupant);
+    const previousLeft = operation.kind === "swap" ? trial.get(operation.left) : undefined;
+    const previousRight = operation.kind === "swap" ? trial.get(operation.right) : undefined;
+    const previousMoved = operation.kind === "move" ? trial.get(operation.studentId) : undefined;
     if (operation.kind === "swap") {
-      const leftSlot = trial.get(operation.left);
-      const rightSlot = trial.get(operation.right);
+      const leftSlot = previousLeft;
+      const rightSlot = previousRight;
       if (!leftSlot || !rightSlot) continue;
       if (
-        !(args.domains.get(operation.left) ?? []).some(
-          (slot) => slotIdentity(slot) === slotIdentity(rightSlot),
-        ) ||
-        !(args.domains.get(operation.right) ?? []).some(
-          (slot) => slotIdentity(slot) === slotIdentity(leftSlot),
-        )
+        !domainSlotKeys.get(operation.left)?.has(slotIdentity(rightSlot)) ||
+        !domainSlotKeys.get(operation.right)?.has(slotIdentity(leftSlot))
       ) {
         continue;
       }
       trial.set(operation.left, rightSlot);
       trial.set(operation.right, leftSlot);
+      occupant.set(slotIdentity(rightSlot), operation.left);
+      occupant.set(slotIdentity(leftSlot), operation.right);
     } else {
-      if (
-        [...trial].some(
-          ([studentId, slot]) =>
-            studentId !== operation.studentId &&
-            slotIdentity(slot) === slotIdentity(operation.slot),
-        )
-      ) {
-        continue;
-      }
+      if (!previousMoved) continue;
+      if (occupant.has(slotIdentity(operation.slot))) continue;
       trial.set(operation.studentId, operation.slot);
+      occupant.delete(slotIdentity(previousMoved));
+      occupant.set(slotIdentity(operation.slot), operation.studentId);
     }
     if (!constraintsSatisfied(args.constraints, trial)) continue;
-    const candidate = candidateFrom(args.input, trial);
-    if (betterCandidate(candidate, best)) best = candidate;
+
+    const nextState = cloneFairnessState(bestState);
+    if (operation.kind === "swap" && previousLeft && previousRight) {
+      stripIncidentNeighbors(
+        nextState,
+        operation.left,
+        previousLeft,
+        best.assignmentByStudent,
+        bestOccupant,
+        deskNeighbors,
+      );
+      stripIncidentNeighbors(
+        nextState,
+        operation.right,
+        previousRight,
+        best.assignmentByStudent,
+        bestOccupant,
+        deskNeighbors,
+      );
+      setSeatZoneTeam(nextState, args.input, operation.left, previousRight);
+      setSeatZoneTeam(nextState, args.input, operation.right, previousLeft);
+      addIncidentNeighbors(
+        nextState,
+        args.input,
+        operation.left,
+        previousRight,
+        trial,
+        occupant,
+        deskNeighbors,
+      );
+      addIncidentNeighbors(
+        nextState,
+        args.input,
+        operation.right,
+        previousLeft,
+        trial,
+        occupant,
+        deskNeighbors,
+      );
+    } else if (operation.kind === "move" && previousMoved) {
+      stripIncidentNeighbors(
+        nextState,
+        operation.studentId,
+        previousMoved,
+        best.assignmentByStudent,
+        bestOccupant,
+        deskNeighbors,
+      );
+      setSeatZoneTeam(nextState, args.input, operation.studentId, operation.slot);
+      addIncidentNeighbors(
+        nextState,
+        args.input,
+        operation.studentId,
+        operation.slot,
+        trial,
+        occupant,
+        deskNeighbors,
+      );
+    }
+
+    const candidate: Candidate = {
+      assignmentByStudent: trial,
+      fairnessState: nextState,
+      fairnessVector: vectorFromFairnessState(nextState, trial),
+      tieKey: hashString(`${args.input.randomSeed}:${assignmentSignature(trial)}`),
+    };
+    if (betterCandidate(candidate, best)) {
+      best = candidate;
+      bestOccupant = occupant;
+      bestState = nextState;
+    }
   }
   return best;
 }
@@ -563,7 +798,10 @@ export function solveSeating(input: SeatingAlgorithmInput): SeatingAlgorithmResu
       };
     }
     const student = studentById.get(locked.studentUserId);
-    if (student && !parityAllows(input, student, slot)) {
+    if (
+      student &&
+      !parityAllows(input.genderParityMode, input.genderParityAssignment, student, slot)
+    ) {
       const lockEvidence = lockedAssignmentEvidence(locked, slot.deskNumber, slot.zoneName);
       return {
         status: "infeasible",
@@ -603,6 +841,26 @@ export function solveSeating(input: SeatingAlgorithmInput): SeatingAlgorithmResu
       unseatedStudentIds: selection.unseatedStudentIds,
       evidence: selection.evidence,
     };
+  }
+
+  if (input.genderParityMode === "oddEven") {
+    const parityCapacity = buildParityCapacityExceededEvidence({
+      students: selection.selected,
+      availableSlots,
+      malesOnOddDesks: input.genderParityAssignment.malesOnOddDesks,
+    });
+    if (parityCapacity) {
+      return {
+        status: "infeasible",
+        code: "SEATING_INFEASIBLE",
+        message: "Odd/even gender parity does not have enough matching desks.",
+        unseatedStudentIds: [
+          ...parityCapacity.groups.flatMap((group) => group.affectedStudentIds),
+          ...selection.unseated,
+        ],
+        evidence: parityCapacity,
+      };
+    }
   }
 
   const selectedIds = new Set(selection.selected.map((student) => student.studentUserId));
@@ -665,6 +923,7 @@ export function solveSeating(input: SeatingAlgorithmInput): SeatingAlgorithmResu
   const exact =
     selection.selected.length <= EXACT_STUDENT_LIMIT &&
     Math.max(...[...domains.values()].map((domain) => domain.length)) <= 8;
+  const deskNeighbors = neighborDeskIndex(input.slots);
   const random = seededRandom(input.randomSeed);
   const restarts = exact
     ? 1
@@ -684,6 +943,7 @@ export function solveSeating(input: SeatingAlgorithmInput): SeatingAlgorithmResu
       constraints,
       exact,
       random,
+      deskNeighbors,
     });
     exactExhausted &&= result.exhausted;
     if (!result.best) continue;

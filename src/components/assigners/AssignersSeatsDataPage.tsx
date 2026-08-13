@@ -1,13 +1,10 @@
-import type { ColumnDef } from "@tanstack/react-table";
 import { SearchIcon, XIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { AssignersSeatsShell } from "@/components/assigners/AssignersSeatsShell";
-import { DataTableSortableHeader } from "@/components/feedback/DataTableSortableHeader";
+import { SeatDataStudentCard } from "@/components/assigners/SeatDataStudentCard";
 import { GroupTeamFilterButtons } from "@/components/groups/GroupTeamFilterButtons";
-import { RosterColumnVisibilityMenu } from "@/components/roster/RosterColumnVisibilityMenu";
-import { RosterTable } from "@/components/roster/RosterTable";
 import { ErrorState } from "@/components/ui/error-state";
 import { Field, FieldLabel } from "@/components/ui/field";
 import {
@@ -32,20 +29,26 @@ import {
   type SeatLayoutMatrixDimension,
 } from "@/hooks/assigners/useSeatLayoutRosterMatrix";
 import { useSeatLayouts } from "@/hooks/assigners/useSeatLayouts";
+import { useSeatLayout } from "@/hooks/assigners/useSeatLayout";
+import { useSeatConstraints } from "@/hooks/assigners/useSeatConstraints";
+import { useClass } from "@/hooks/classes/useClass";
 import { useGroupTeamFilterState } from "@/hooks/groups/useGroupTeamFilterState";
 import { useGroupsBoard } from "@/hooks/groups/useGroupsBoard";
-import { useClassUserSettings } from "@/hooks/roster/useClassUserSettings";
-import { useRosterConsumerColumnVisibility } from "@/hooks/roster/useRosterConsumerColumnVisibility";
 import { useStudentRosterFilter } from "@/hooks/students/useStudentRosterFilter";
+import {
+  buildSeatDeskMetadataMap,
+  buildSeatHistoryRows,
+} from "@/lib/assigners/seating/seatHistoryRows";
+import type { SeatConstraint } from "@/lib/assigners/seatConstraints";
 import { buildMembershipIndex } from "@/lib/groups/groupTeamFilters";
 import {
-  normalizeColumnOrder,
-  normalizeColumnVisibility,
+  getRosterDisplayName,
+  resolveRosterNameFormat,
   type StudentRosterEntry,
 } from "@/lib/roster/roster";
 import type { Id } from "../../../convex/_generated/dataModel";
 
-const SEATS_DATA_ROSTER_SURFACE = "seats-data";
+const SEATS_DATA_GRID_CLASS = "grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4";
 
 const DIMENSION_OPTIONS: SeatLayoutMatrixDimension[] = ["seat", "zone", "team", "neighbor"];
 
@@ -60,6 +63,8 @@ export function AssignersSeatsDataPage({ classId }: AssignersSeatsDataPageProps)
   const [dimension, setDimension] = useState<SeatLayoutMatrixDimension>("seat");
   const [layoutId, setLayoutId] = useState<Id<"seatLayouts"> | undefined>(undefined);
 
+  const { data: classDoc } = useClass(classId);
+  const nameFormat = resolveRosterNameFormat(classDoc ?? {});
   const { data: layouts, isPending: layoutsPending } = useSeatLayouts(classId);
   const sortedLayouts = useMemo(
     () =>
@@ -84,7 +89,8 @@ export function AssignersSeatsDataPage({ classId }: AssignersSeatsDataPageProps)
     isError,
     refetch,
   } = useSeatLayoutRosterMatrix(classId, layoutId, dimension);
-  const { data: userSettings } = useClassUserSettings(classId);
+  const { data: layoutDetail } = useSeatLayout(classId, layoutId);
+  const { data: constraints } = useSeatConstraints(classId);
   const { data: board, isPending: boardPending } = useGroupsBoard(classId);
   const groupTeamFilterState = useGroupTeamFilterState(classId);
 
@@ -150,39 +156,29 @@ export function AssignersSeatsDataPage({ classId }: AssignersSeatsDataPageProps)
     filterState,
   });
 
-  const extraColumns = useMemo((): ColumnDef<StudentRosterEntry, unknown>[] => {
-    return (matrix?.values ?? []).map((value) => ({
-      id: `seat-layout-${dimension}-${value.key}`,
-      accessorFn: (student) => countsByStudentId.get(student.userId)?.get(value.key) ?? 0,
-      header: ({ column }) => (
-        <DataTableSortableHeader
-          label={value.label}
-          sorted={column.getIsSorted()}
-          onSort={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          truncate
-        />
-      ),
-      enableSorting: true,
-      cell: ({ row }) => {
-        const count = countsByStudentId.get(row.original.userId)?.get(value.key) ?? 0;
-        return <span className="tabular-nums">{count}</span>;
-      },
-    }));
-  }, [countsByStudentId, dimension, matrix?.values]);
+  const seatMetadataByKey = useMemo(() => {
+    if (dimension !== "seat" || !layoutId || !layoutDetail) return undefined;
+    return buildSeatDeskMetadataMap(layoutId, layoutDetail.items, board?.groups ?? []);
+  }, [board?.groups, dimension, layoutDetail, layoutId]);
 
-  const columnOrder = useMemo(
-    () => normalizeColumnOrder(userSettings?.studentsColumnOrder),
-    [userSettings?.studentsColumnOrder],
-  );
-  const baseColumnVisibility = useMemo(
-    () => normalizeColumnVisibility(userSettings?.studentsColumnVisibility),
-    [userSettings?.studentsColumnVisibility],
-  );
-  const { columnVisibility, setColumnVisibility } = useRosterConsumerColumnVisibility(
-    classId,
-    SEATS_DATA_ROSTER_SURFACE,
-    baseColumnVisibility,
-  );
+  const constraintsByStudentId = useMemo(() => {
+    const map = new Map<Id<"users">, SeatConstraint[]>();
+    for (const constraint of constraints ?? []) {
+      const existing = map.get(constraint.studentUserId) ?? [];
+      existing.push(constraint);
+      map.set(constraint.studentUserId, existing);
+    }
+    return map;
+  }, [constraints]);
+
+  const studentNameById = useMemo(() => {
+    const map = new Map<Id<"users">, string>();
+    const unnamed = tClasses("unnamedMember");
+    for (const student of roster) {
+      map.set(student.userId, getRosterDisplayName(student, unnamed, nameFormat));
+    }
+    return map;
+  }, [nameFormat, roster, tClasses]);
 
   const dimensionLabel = (value: SeatLayoutMatrixDimension) => {
     switch (value) {
@@ -201,7 +197,6 @@ export function AssignersSeatsDataPage({ classId }: AssignersSeatsDataPageProps)
     selectedLayout && matrix
       ? t("seatsDataDescription", {
           layoutName: selectedLayout.name,
-          count: matrix.values.length,
           dimension: dimensionLabel(dimension),
         })
       : t("seatsDataDescriptionFallback");
@@ -287,13 +282,11 @@ export function AssignersSeatsDataPage({ classId }: AssignersSeatsDataPageProps)
           <Skeleton className="h-64 w-full rounded-xl" />
         ) : roster.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t("seatsDataEmptyStudents")}</p>
-        ) : matrix.values.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t("seatsDataEmptyValues")}</p>
         ) : (
           <div className="flex min-w-0 flex-col gap-3">
             <GroupTeamFilterButtons classId={classId} />
 
-            <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <InputGroup className="max-w-md">
                 <InputGroupAddon>
                   <SearchIcon aria-hidden="true" />
@@ -319,22 +312,28 @@ export function AssignersSeatsDataPage({ classId }: AssignersSeatsDataPageProps)
                   </InputGroupAddon>
                 ) : null}
               </InputGroup>
-              <RosterColumnVisibilityMenu
-                columnOrder={columnOrder}
-                columnVisibility={columnVisibility}
-                onColumnVisibilityChange={setColumnVisibility}
-              />
             </div>
 
             {filteredRoster.length === 0 ? (
               <p className="text-sm text-muted-foreground">{tClasses("membersSearchNoResults")}</p>
             ) : (
-              <RosterTable
-                data={filteredRoster}
-                columnOrder={columnOrder}
-                columnVisibility={columnVisibility}
-                extraColumns={extraColumns}
-              />
+              <ul className={SEATS_DATA_GRID_CLASS}>
+                {filteredRoster.map((student) => (
+                  <li key={student.userId}>
+                    <SeatDataStudentCard
+                      student={student}
+                      rows={buildSeatHistoryRows(
+                        matrix.values,
+                        countsByStudentId.get(student.userId),
+                        seatMetadataByKey,
+                      )}
+                      constraints={constraintsByStudentId.get(student.userId) ?? []}
+                      studentNameById={studentNameById}
+                      nameFormat={nameFormat}
+                    />
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
         )}

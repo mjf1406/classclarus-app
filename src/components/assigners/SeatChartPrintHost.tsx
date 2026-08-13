@@ -1,10 +1,11 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
 import {
   SeatLayoutPrintCredenza,
+  type SeatChartPrintOutput,
   type SeatLayoutPrintSelection,
 } from "@/components/assigners/SeatLayoutPrintCredenza";
 import { toast } from "@/components/ui/toast-manager";
@@ -24,7 +25,15 @@ import { resolveRosterNameFormat } from "@/lib/roster/roster";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 
-export type SeatChartPrintMode = "layout" | "table";
+export type SeatChartPrintMode = "layout" | "table" | "choose";
+
+const CHART_PRINT_OUTPUTS: Array<SeatChartPrintOutput> = ["layout", "table"];
+
+function initialOutputsForMode(mode: SeatChartPrintMode): Array<SeatChartPrintOutput> {
+  if (mode === "table") return ["table"];
+  if (mode === "choose") return ["layout", "table"];
+  return ["layout"];
+}
 
 function chartAssignments(assignments: SeatChart["assignments"]) {
   return assignments.map((assignment) => ({
@@ -62,7 +71,7 @@ export function SeatChartPrintHost({
   const { data: roster } = useStudentRoster(classId);
   const logAccess = useLogClassAccess();
   const logAccessMutate = logAccess.mutateAsync;
-  const tablePrintStartedRef = useRef(false);
+  const initialOutputs = useMemo(() => initialOutputsForMode(mode), [mode]);
 
   const fetchChart = useCallback(async () => {
     if (!chartId) {
@@ -172,43 +181,26 @@ export function SeatChartPrintHost({
     }
   }, [board, chartId, classDoc, classId, fetchChart, logAccessMutate, roster, t, tClasses]);
 
-  const handleTablePrintRef = useRef(handleTablePrint);
-  handleTablePrintRef.current = handleTablePrint;
-  const onOpenChangeRef = useRef(onOpenChange);
-  onOpenChangeRef.current = onOpenChange;
-
-  useEffect(() => {
-    if (!open || mode !== "table" || !chartId || !board || !classDoc) {
-      tablePrintStartedRef.current = false;
-      return;
-    }
-    if (tablePrintStartedRef.current) return;
-    tablePrintStartedRef.current = true;
-
-    let cancelled = false;
-    void handleTablePrintRef
-      .current()
-      .catch(() => undefined)
-      .finally(() => {
-        tablePrintStartedRef.current = false;
-        if (!cancelled) onOpenChangeRef.current(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [board, chartId, classDoc, mode, open]);
-
-  if (mode !== "layout") {
-    return null;
-  }
+  const handleConfirm = useCallback(
+    async (selection: SeatLayoutPrintSelection) => {
+      if (selection.outputs.includes("layout")) {
+        await handleLayoutPrint(selection);
+      }
+      if (selection.outputs.includes("table")) {
+        await handleTablePrint();
+      }
+    },
+    [handleLayoutPrint, handleTablePrint],
+  );
 
   return (
     <SeatLayoutPrintCredenza
       open={open}
       onOpenChange={onOpenChange}
       currentOrientation={currentOrientation}
-      onConfirm={handleLayoutPrint}
+      availableOutputs={CHART_PRINT_OUTPUTS}
+      initialOutputs={initialOutputs}
+      onConfirm={handleConfirm}
     />
   );
 }

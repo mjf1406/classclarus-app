@@ -2354,8 +2354,7 @@ const ru = {
     seatsStatsLoadFailedDescription: "Попробуйте снова через мгновение.",
     seatsStatsStudentsEmptyTitle: "Нет учеников",
     seatsStatsStudentsEmptyDescription: "Вы не зачислены как ученик в этом классе.",
-    seatsDataDescription:
-      "Счётчики {{dimension}} по ученикам для схемы «{{layoutName}}» ({{count}} столбцов).",
+    seatsDataDescription: "Счётчики {{dimension}} по ученикам для схемы «{{layoutName}}».",
     seatsDataDescriptionFallback: "Записанные счётчики мест по ученикам для схемы.",
     seatsDataEmptyStudents: "В этом классе пока нет учеников.",
     seatsDataEmptyValues: "Для этого измерения пока нет записанной истории мест.",
@@ -2366,6 +2365,10 @@ const ru = {
     seatsDataDimensionZone: "Зоны",
     seatsDataDimensionTeam: "Команды",
     seatsDataDimensionNeighbor: "Соседи",
+    seatsDataItemColumn: "Элемент",
+    seatsDataQuantityColumn: "Количество",
+    seatsDataCardEmpty: "Для этого измерения пока нет записанной истории.",
+    seatsDataConstraintsTitle: "Ограничения ({{count}})",
     seatsDataLoadFailed: "Не удалось загрузить данные о местах.",
     seatsDataLoadFailedDescription: "Повторите попытку через некоторое время.",
     layoutGenderParityLabel: "Гендерная парность",
@@ -2395,6 +2398,11 @@ const ru = {
     autoAssignFailureUnknownTitle: "Точный конфликт не определён",
     autoAssignFailureUnknownHint:
       "Решатель не смог доказать, какие правила конфликтуют. Это возможно в больших классах. Повторите попытку или проверьте правила и схему вручную.",
+    autoAssignOutputViolation:
+      "Авторассадка создала недопустимую схему. Это внутренняя ошибка, а не конфликт правил. Повторите попытку или рассадите вручную.",
+    autoAssignOutputViolationTitle: "Сгенерированная схема отклонена",
+    autoAssignOutputViolationHint:
+      "Схема не прошла проверку после генерации. Сохранённые правила ни при чём. Повторите авторассадку или рассадите вручную.",
     autoAssignFailureConflictSetTitle: "Конфликтующие правила",
     autoAssignFailureConflictSetHint:
       "Это минимальный набор правил, которые нельзя выполнить одновременно. Возможны другие конфликтующие наборы.",
@@ -2425,6 +2433,8 @@ const ru = {
       "A locked seat conflicts with odd/even gender parity for that desk.",
     autoAssignStructural_constraintParityConflict:
       "The seating rules and odd/even parity cannot all be satisfied together.",
+    autoAssignStructural_parityCapacityExceeded:
+      "Учеников одного пола больше, чем нечётных или чётных парт при текущей чётности.",
     autoAssignReportSummaryTitle: "Summary",
     autoAssignReportNoNamedStudents: "affected students",
     autoAssignReportSummary_unavailableSeat:
@@ -2442,6 +2452,8 @@ const ru = {
     autoAssignReportSummary_parityLockedConflict:
       "Locked seats conflict with gender parity for {{students}}.",
     autoAssignReportSummary_constraintParityConflict: "Rules and parity conflict for {{students}}.",
+    autoAssignReportSummary_parityCapacityExceeded:
+      "Чётность по полу не даёт достаточно подходящих парт для {{students}}.",
     autoAssignReportWhatTitle: "What happened",
     autoAssignReportWhyTitle: "Why",
     autoAssignReportSettingsTitle: "Current settings",
@@ -2456,6 +2468,8 @@ const ru = {
     autoAssignReportRole_other: "other student",
     autoAssignReportCapacityGroup:
       "Group “{{group}}” needs {{required}} required seats but only {{available}} are available ({{students}}).",
+    autoAssignReportParityCapacityGroup:
+      "В группе «{{group}}» {{maleCount}} мальчиков и {{femaleCount}} девочек, но только {{maleSeats}} мужских и {{femaleSeats}} женских мест по чётности.",
     autoAssignReportUnknownGroup: "Unknown group",
     autoAssignReportNoValidSeatStudent:
       "{{student}} in {{group}} has {{candidates}} of {{total}} seats left after rule filtering.",
@@ -2481,6 +2495,8 @@ const ru = {
       "Locked students must sit on desks matching parity ({{direction}}).",
     autoAssignReportWhyConstraintParity:
       "No assignment satisfies all required rules with parity set to {{direction}}.",
+    autoAssignReportWhyParityCapacity:
+      "Чётность резервирует нумерованные парты по полу. Лишних учеников одного пола нельзя посадить, пока чётность не выключена или расстановка не изменена.",
     autoAssignReportWhyGeneric: "The current rules and layout cannot all be satisfied.",
     autoAssignReportParityMalesOdd: "males on odd desks",
     autoAssignReportParityMalesEven: "males on even desks",
@@ -2723,6 +2739,13 @@ const ru = {
     printPerPageOption: "{{count}} на странице",
     printExportAction: "Экспорт",
     printSelectNone: "Выберите хотя бы один ракурс.",
+    printOptionsTitleChart: "Печать рассадки",
+    printOptionsDescriptionChart:
+      "Выберите схему, таблицу или оба варианта. Ракурсы относятся к схеме.",
+    printOutputLabel: "Что печатать",
+    printOutputLayout: "Схема",
+    printOutputTable: "Таблица",
+    printSelectNoneOutput: "Выберите схему, таблицу или оба варианта.",
     addTeacherDesk: "Стол учителя",
     addBoard: "Доска",
     addDesk: "Парта ученика",

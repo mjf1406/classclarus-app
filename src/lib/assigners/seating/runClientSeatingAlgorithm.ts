@@ -10,6 +10,7 @@ import {
 } from "../../../../convex/lib/seating/pipeline";
 import {
   applySeatingRelaxations,
+  buildRunContext,
   diagnoseSeatingConflicts,
 } from "../../../../convex/lib/seating/diagnose";
 import type {
@@ -204,6 +205,19 @@ export function runClientSeatingAlgorithm(
   });
 
   if (result.status !== "ok") {
+    if (result.code === "SEATING_OUTPUT_VIOLATION") {
+      return {
+        status: "invalid",
+        message: result.message,
+        code: result.code,
+        diagnosis: {
+          status: "unknown",
+          code: "SEATING_OUTPUT_VIOLATION",
+          runContext: buildRunContext(relaxedInput),
+        },
+        solverStudentIds: relaxedInput.students.map((student) => student.studentUserId),
+      };
+    }
     const diagnosis = diagnoseSeatingConflicts(relaxedInput);
     return {
       status: "invalid",

@@ -2267,7 +2267,7 @@ const th = {
     seatsStatsLoadFailedDescription: "ลองอีกครั้งในอีกสักครู่",
     seatsStatsStudentsEmptyTitle: "ไม่มีนักเรียน",
     seatsStatsStudentsEmptyDescription: "คุณไม่ได้ลงทะเบียนเป็นนักเรียนในชั้นเรียนนี้",
-    seatsDataDescription: "จำนวน{{dimension}}ต่อนักเรียนสำหรับผัง «{{layoutName}}» ({{count}} คอลัมน์)",
+    seatsDataDescription: "จำนวน{{dimension}}ต่อนักเรียนสำหรับผัง «{{layoutName}}»",
     seatsDataDescriptionFallback: "แสดงจำนวนที่นั่งที่บันทึกไว้ต่อนักเรียนสำหรับผัง",
     seatsDataEmptyStudents: "ยังไม่มีนักเรียนในชั้นเรียนนี้",
     seatsDataEmptyValues: "ยังไม่มีประวัติที่นั่งที่บันทึกไว้สำหรับมิตินี้",
@@ -2278,6 +2278,10 @@ const th = {
     seatsDataDimensionZone: "โซน",
     seatsDataDimensionTeam: "ทีม",
     seatsDataDimensionNeighbor: "เพื่อนข้างๆ",
+    seatsDataItemColumn: "รายการ",
+    seatsDataQuantityColumn: "จำนวน",
+    seatsDataCardEmpty: "ยังไม่มีประวัติที่บันทึกไว้สำหรับมิตินี้",
+    seatsDataConstraintsTitle: "ข้อจำกัด ({{count}})",
     seatsDataLoadFailed: "โหลดข้อมูลที่นั่งไม่ได้",
     seatsDataLoadFailedDescription: "ลองอีกครั้งในอีกสักครู่",
     layoutGenderParityLabel: "ความสมดุลเพศ",
@@ -2302,6 +2306,11 @@ const th = {
     autoAssignFailureUnknownTitle: "ไม่สามารถระบุความขัดแย้งที่แน่ชัดได้",
     autoAssignFailureUnknownHint:
       "ตัวแก้ปัญหาไม่สามารถพิสูจน์ได้ว่ากฎใดขัดแย้งกัน อาจเกิดขึ้นในชั้นเรียนขนาดใหญ่ โปรดลองอีกครั้งหรือตรวจสอบกฎและเลย์เอาต์ด้วยตนเอง",
+    autoAssignOutputViolation:
+      "การจัดที่นั่งอัตโนมัติสร้างผังที่ไม่ถูกต้อง นี่เป็นข้อผิดพลาดภายใน ไม่ใช่กฎขัดกัน ลองอีกครั้งหรือจัดด้วยตนเอง",
+    autoAssignOutputViolationTitle: "ผังที่สร้างถูกปฏิเสธ",
+    autoAssignOutputViolationHint:
+      "ผังไม่ผ่านการตรวจสอบความปลอดภัยหลังสร้าง กฎที่บันทึกไว้ไม่ใช่สาเหตุ ลองอีกครั้งหรือจัดด้วยตนเอง",
     autoAssignFailureConflictSetTitle: "กฎที่ขัดแย้งกัน",
     autoAssignFailureConflictSetHint: "นี่คือชุดกฎขนาดเล็กที่สุดที่ไม่สามารถปฏิบัติตามได้พร้อมกัน อาจมีชุดที่ขัดแย้งอื่นอยู่",
     autoAssignFailureRelaxLabel: "ผ่อนปรนชั่วคราวสำหรับแผนนี้",
@@ -2326,6 +2335,8 @@ const th = {
       "A locked seat conflicts with odd/even gender parity for that desk.",
     autoAssignStructural_constraintParityConflict:
       "The seating rules and odd/even parity cannot all be satisfied together.",
+    autoAssignStructural_parityCapacityExceeded:
+      "มีนักเรียนเพศหนึ่งมากกว่าโต๊ะเลขคี่หรือเลขคู่ตามการจับคู่เพศปัจจุบัน",
     autoAssignReportSummaryTitle: "Summary",
     autoAssignReportNoNamedStudents: "affected students",
     autoAssignReportSummary_unavailableSeat:
@@ -2343,6 +2354,7 @@ const th = {
     autoAssignReportSummary_parityLockedConflict:
       "Locked seats conflict with gender parity for {{students}}.",
     autoAssignReportSummary_constraintParityConflict: "Rules and parity conflict for {{students}}.",
+    autoAssignReportSummary_parityCapacityExceeded: "การจับคู่เพศคี่/คู่มีโต๊ะไม่พอสำหรับ {{students}}",
     autoAssignReportWhatTitle: "What happened",
     autoAssignReportWhyTitle: "Why",
     autoAssignReportSettingsTitle: "Current settings",
@@ -2357,6 +2369,8 @@ const th = {
     autoAssignReportRole_other: "other student",
     autoAssignReportCapacityGroup:
       "Group “{{group}}” needs {{required}} required seats but only {{available}} are available ({{students}}).",
+    autoAssignReportParityCapacityGroup:
+      "กลุ่ม “{{group}}” มีนักเรียนชาย {{maleCount}} และหญิง {{femaleCount}} คน แต่มีที่นั่งชาย {{maleSeats}} และหญิง {{femaleSeats}} ที่",
     autoAssignReportUnknownGroup: "Unknown group",
     autoAssignReportNoValidSeatStudent:
       "{{student}} in {{group}} has {{candidates}} of {{total}} seats left after rule filtering.",
@@ -2382,6 +2396,8 @@ const th = {
       "Locked students must sit on desks matching parity ({{direction}}).",
     autoAssignReportWhyConstraintParity:
       "No assignment satisfies all required rules with parity set to {{direction}}.",
+    autoAssignReportWhyParityCapacity:
+      "การจับคู่คี่/คู่สงวนโต๊ะที่มีหมายเลขตามเพศ หากเพศหนึ่งมีมากกว่า ต้องปิดการจับคู่หรือเปลี่ยนเลย์เอาต์",
     autoAssignReportWhyGeneric: "The current rules and layout cannot all be satisfied.",
     autoAssignReportParityMalesOdd: "males on odd desks",
     autoAssignReportParityMalesEven: "males on even desks",
@@ -2612,6 +2628,12 @@ const th = {
     printPerPageOption: "{{count}} ต่อหน้า",
     printExportAction: "ส่งออก",
     printSelectNone: "เลือกอย่างน้อยหนึ่งมุมมอง",
+    printOptionsTitleChart: "พิมพ์ที่นั่ง",
+    printOptionsDescriptionChart: "เลือกผัง ตาราง หรือทั้งสอง ตัวเลือกมุมมองใช้กับผัง",
+    printOutputLabel: "สิ่งที่จะพิมพ์",
+    printOutputLayout: "ผัง",
+    printOutputTable: "ตาราง",
+    printSelectNoneOutput: "เลือกผัง ตาราง หรือทั้งสองอย่าง",
     addTeacherDesk: "โต๊ะครู",
     addBoard: "กระดาน",
     addDesk: "โต๊ะนักเรียน",

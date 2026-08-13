@@ -1,39 +1,20 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import type { ChartAssignment } from "./seatChartGeometry.js";
-import { expectStructuralInvariants, testInput } from "./seatingTestHelpers.js";
+import type { Id } from "../../_generated/dataModel.js";
+import {
+  assignmentPermutations,
+  compareFairnessVector,
+  expectValidSolverChart,
+  recordAssignmentsInHistory,
+  testInput,
+  testSlots,
+  testStudent,
+} from "./seatingTestHelpers.js";
 import { evaluateSeatingFairness, solveSeating } from "./solve.js";
+import type { SeatingConstraint, SeatingStudent } from "./types.js";
 
-function compareVector(left: readonly number[], right: readonly number[]): number {
-  for (let index = 0; index < Math.max(left.length, right.length); index += 1) {
-    const difference = (left[index] ?? 0) - (right[index] ?? 0);
-    if (difference !== 0) return difference;
-  }
-  return 0;
-}
-
-function assignmentPermutations(
-  input: ReturnType<typeof testInput>,
-  studentIndex = 0,
-  used = new Set<string>(),
-  rows: ChartAssignment[] = [],
-): ChartAssignment[][] {
-  if (studentIndex === input.students.length) return [[...rows]];
-  const student = input.students[studentIndex]!;
-  const results: ChartAssignment[][] = [];
-  for (const slot of input.slots) {
-    if (used.has(slot.deskItemId)) continue;
-    used.add(slot.deskItemId);
-    rows.push({
-      studentUserId: student.studentUserId,
-      groupId: student.groupId,
-      deskItemId: slot.deskItemId,
-    });
-    results.push(...assignmentPermutations(input, studentIndex + 1, used, rows));
-    rows.pop();
-    used.delete(slot.deskItemId);
-  }
-  return results;
+function constraint(index: number, values: Omit<SeatingConstraint, "id">): SeatingConstraint {
+  return { id: `constraint-${index}` as Id<"seatConstraints">, ...values };
 }
 
 describe("seating solver properties", () => {
@@ -45,7 +26,7 @@ describe("seating solver properties", () => {
           const result = solveSeating(input);
           expect(result.status, `${studentCount}/${slotCount}/${seed}`).toBe("ok");
           if (result.status !== "ok") continue;
-          expectStructuralInvariants(input, result.assignments);
+          expectValidSolverChart(input, result.assignments);
           expect(result.assignments).toHaveLength(Math.min(studentCount, slotCount));
           expect(result.meta.unseatedStudentIds).toHaveLength(
             Math.max(0, studentCount - slotCount),
@@ -68,7 +49,7 @@ describe("seating solver properties", () => {
         if (result.status !== "ok") continue;
         const oracle = assignmentPermutations(input)
           .map((assignments) => evaluateSeatingFairness(input, assignments))
-          .sort(compareVector)[0]!;
+          .sort(compareFairnessVector)[0]!;
         expect(result.meta.fairnessVector).toEqual(oracle);
       }
     }
@@ -97,5 +78,108 @@ describe("seating solver properties", () => {
     }
     expect(vectors.size).toBe(1);
     expect(charts.size).toBeGreaterThan(1);
+  });
+
+  it("matches a constrained brute-force oracle up to the exact-search limit", () => {
+    const students: SeatingStudent[] = [0, 1, 2, 3, 4].map((index) => testStudent(index));
+    const constraints = [
+      constraint(0, {
+        type: "neighbor",
+        polarity: "must",
+        studentUserId: students[0]!.studentUserId,
+        otherStudentUserId: students[1]!.studentUserId,
+      }),
+      constraint(1, {
+        type: "zone",
+        polarity: "mustNot",
+        studentUserId: students[2]!.studentUserId,
+        zoneName: "A",
+      }),
+    ];
+    for (const seed of ["c-alpha", "c-beta"]) {
+      const input = testInput({
+        studentCount: 5,
+        slotCount: 5,
+        seed,
+        students,
+        constraints,
+      });
+      const result = solveSeating(input);
+      expect(result.status).toBe("ok");
+      if (result.status !== "ok") continue;
+      expectValidSolverChart(input, result.assignments);
+      const valid = assignmentPermutations(input).filter((assignments) => {
+        try {
+          expectValidSolverChart(input, assignments);
+          return true;
+        } catch {
+          return false;
+        }
+      });
+      expect(valid.length).toBeGreaterThan(0);
+      const oracle = valid
+        .map((assignments) => evaluateSeatingFairness(input, assignments))
+        .sort(compareFairnessVector)[0]!;
+      expect(result.meta.fairnessVector).toEqual(oracle);
+    }
+  });
+
+  it("returns infeasible when exact search proves no legal chart", () => {
+    const students = [testStudent(0), testStudent(1)];
+    const input = testInput({
+      studentCount: 2,
+      slotCount: 2,
+      students,
+      slots: testSlots(2),
+      constraints: [
+        constraint(0, {
+          type: "neighbor",
+          polarity: "must",
+          studentUserId: students[0]!.studentUserId,
+          otherStudentUserId: students[1]!.studentUserId,
+        }),
+        constraint(1, {
+          type: "neighbor",
+          polarity: "mustNot",
+          studentUserId: students[0]!.studentUserId,
+          otherStudentUserId: students[1]!.studentUserId,
+        }),
+      ],
+    });
+    const result = solveSeating(input);
+    expect(result.status).toBe("infeasible");
+    const valid = assignmentPermutations(input).filter((assignments) => {
+      try {
+        expectValidSolverChart(input, assignments);
+        return true;
+      } catch {
+        return false;
+      }
+    });
+    expect(valid).toHaveLength(0);
+  });
+
+  it("keeps incremental local-search fairness identical to a full recompute", () => {
+    const first = testInput({
+      studentCount: 12,
+      slotCount: 12,
+      topology: "line",
+      seed: "delta-history",
+    });
+    const firstResult = solveSeating(first);
+    expect(firstResult.status).toBe("ok");
+    if (firstResult.status !== "ok") return;
+    const input = {
+      ...first,
+      history: recordAssignmentsInHistory(first, firstResult.assignments),
+      randomSeed: "delta-improve",
+    };
+    const result = solveSeating(input);
+    expect(result.status).toBe("ok");
+    if (result.status !== "ok") return;
+    expect(result.assignments.length).toBe(12);
+    expect(result.meta.fairnessVector).toEqual(
+      evaluateSeatingFairness(input, [...input.locked, ...result.assignments]),
+    );
   });
 });

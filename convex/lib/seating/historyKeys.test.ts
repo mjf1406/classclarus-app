@@ -23,5 +23,18 @@ describe("seating history keys", () => {
         teamName: " Blue ",
       }),
     ).toBe("name:Blue");
+    expect(
+      teamHistoryKey(groupId, {
+        mode: "single",
+        groupId: "other" as Id<"groups">,
+        teamId: "team" as Id<"teams">,
+      }),
+    ).toBeUndefined();
+    expect(
+      teamHistoryKey(groupId, {
+        mode: "byName",
+        teamName: "   ",
+      }),
+    ).toBeUndefined();
   });
 });

@@ -1,8 +1,9 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Cpu, LayoutGrid, Pencil, Plus, RockingChair, Table2, Trash2 } from "lucide-react";
+import { LayoutGrid, Pencil, Plus, RockingChair, Table2, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { AutoAssignProgressButton } from "@/components/assigners/AutoAssignProgressButton";
 import { AutoAssignSeatingHost } from "@/components/assigners/AutoAssignSeatingHost";
 import { AssignersSeatsShell } from "@/components/assigners/AssignersSeatsShell";
 import {
@@ -30,6 +31,7 @@ import { useCopySeatLayout } from "@/hooks/assigners/useCopySeatLayout";
 import { useCreateSeatLayout } from "@/hooks/assigners/useCreateSeatLayout";
 import { useRemoveSeatLayout } from "@/hooks/assigners/useRemoveSeatLayout";
 import { useRenameSeatLayout } from "@/hooks/assigners/useRenameSeatLayout";
+import { useRunAutoAssignSeatingFlow } from "@/hooks/assigners/useRunAutoAssignSeatingFlow";
 import { useSeatCharts } from "@/hooks/assigners/useSeatCharts";
 import { useSeatLayouts } from "@/hooks/assigners/useSeatLayouts";
 import { useCan } from "@/hooks/permissions/useCan";
@@ -75,12 +77,14 @@ export function AssignersSeatsPage({ classId }: AssignersSeatsPageProps) {
   const copyLayout = useCopySeatLayout();
   const renameLayout = useRenameSeatLayout();
   const removeLayout = useRemoveSeatLayout();
+  const autoAssignFlow = useRunAutoAssignSeatingFlow(classId);
   const [createOpen, setCreateOpen] = useState(false);
   const [renaming, setRenaming] = useState<SeatLayoutListItem | null>(null);
   const [deleting, setDeleting] = useState<SeatLayoutListItem | null>(null);
   const [sortKey, setSortKey] = useState<SeatLayoutSortKey>("updated");
   const [sortDirection, setSortDirection] = useState<SeatLayoutSortDirection>("desc");
   const [autoAssignLayout, setAutoAssignLayout] = useState<SeatLayoutListItem | null>(null);
+  const [autoAssignOpen, setAutoAssignOpen] = useState(false);
   const [printRequest, setPrintRequest] = useState<{
     chartId: Id<"seatCharts">;
     mode: SeatChartPrintMode;
@@ -175,14 +179,6 @@ export function AssignersSeatsPage({ classId }: AssignersSeatsPageProps) {
           {sorted.map((layout) => {
             const latestChart = charts ? latestChartForLayout(charts, layout._id) : null;
             const menuItems: Array<ActionMenuItem> = [
-              {
-                id: "auto-assign",
-                label: t("autoAssign"),
-                icon: <Cpu />,
-                permission: "assigners:manage",
-                group: "manage",
-                onSelect: () => setAutoAssignLayout(layout),
-              },
               ...(latestChart
                 ? [
                     {
@@ -238,7 +234,23 @@ export function AssignersSeatsPage({ classId }: AssignersSeatsPageProps) {
                         {t("deskCount", { count: layout.deskCount })}
                       </CardDescription>
                     </div>
-                    <div className="shrink-0 pointer-events-auto">
+                    <div className="flex shrink-0 items-center gap-1 pointer-events-auto">
+                      {canManage ? (
+                        <AutoAssignProgressButton
+                          size="sm"
+                          progress={
+                            autoAssignLayout?._id === layout._id ? autoAssignFlow.progress : 0
+                          }
+                          pending={autoAssignFlow.isRunning && autoAssignLayout?._id === layout._id}
+                          disabled={
+                            autoAssignFlow.isRunning && autoAssignLayout?._id !== layout._id
+                          }
+                          onClick={() => {
+                            setAutoAssignLayout(layout);
+                            setAutoAssignOpen(true);
+                          }}
+                        />
+                      ) : null}
                       <ActionMenu items={menuItems} label={t("layoutActions")} />
                     </div>
                   </CardHeader>
@@ -320,10 +332,9 @@ export function AssignersSeatsPage({ classId }: AssignersSeatsPageProps) {
           />
           <AutoAssignSeatingHost
             classId={classId}
-            open={autoAssignLayout !== null}
-            onOpenChange={(open) => {
-              if (!open) setAutoAssignLayout(null);
-            }}
+            flow={autoAssignFlow}
+            open={autoAssignOpen}
+            onOpenChange={setAutoAssignOpen}
             fixedLayoutId={autoAssignLayout?._id}
             fixedLayoutName={autoAssignLayout?.name}
           />

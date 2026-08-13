@@ -200,6 +200,22 @@ describe("diagnoseSeatingConflicts", () => {
     expect(relaxed.constraints).toHaveLength(0);
     expect(solveSeating(relaxed).status).toBe("ok");
   });
+
+  test("reports parity capacity as a structural cause", () => {
+    const students = [student(1, "m"), student(2, "m"), student(3, "m")];
+    const diagnosis = diagnoseSeatingConflicts(
+      input({
+        students,
+        slots: slots(3),
+        parity: "oddEven",
+        malesOnOddDesks: true,
+      }),
+    );
+    expect(diagnosis.status).toBe("structural");
+    if (diagnosis.status !== "structural") return;
+    expect(diagnosis.cause).toBe("parityCapacityExceeded");
+    expect(diagnosis.evidence.kind).toBe("parityCapacityExceeded");
+  });
 });
 
 describe("assignGenderParity", () => {

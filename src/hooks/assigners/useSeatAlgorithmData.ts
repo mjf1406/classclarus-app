@@ -5,19 +5,7 @@ import { useCallback, useRef } from "react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { FIVE_MINUTES } from "@/lib/queryCache";
-
-type AlgorithmHistoryRow = {
-  studentUserId: Id<"users">;
-  dimension: "seat" | "zone" | "team" | "neighbor";
-  key: string;
-  count: number;
-};
-
-type AlgorithmHistoryPage = {
-  page: AlgorithmHistoryRow[];
-  isDone: boolean;
-  continueCursor: string;
-};
+import { collectAlgorithmHistoryPages } from "@/lib/assigners/seating/algorithmHistoryPages";
 
 function algorithmHistoryQuery(
   classId: Id<"classes">,
@@ -49,27 +37,21 @@ export function useSeatAlgorithmData() {
         ...convexQuery(api.seatLayouts.get, { classId, layoutId }),
         gcTime: FIVE_MINUTES,
       });
-      const layoutAggregateRows: AlgorithmHistoryRow[] = [];
       const pageKeys: QueryKey[] = [];
-      let cursor: string | null = null;
-      let isDone = false;
-      while (!isDone) {
+      const collected = await collectAlgorithmHistoryPages(async (cursor) => {
         const query: ReturnType<typeof algorithmHistoryQuery> = algorithmHistoryQuery(
           classId,
           layoutId,
           cursor,
         );
         pageKeys.push(query.queryKey);
-        const result: AlgorithmHistoryPage = await queryClient.fetchQuery({
+        return await queryClient.fetchQuery({
           ...query,
           gcTime: FIVE_MINUTES,
         });
-        layoutAggregateRows.push(...result.page);
-        cursor = result.continueCursor;
-        isDone = result.isDone;
-      }
+      });
       historyPageKeys.current.set(`${classId}:${layoutId}`, pageKeys);
-      return { layout, layoutAggregateRows };
+      return { layout, layoutAggregateRows: collected.rows };
     },
     [queryClient],
   );

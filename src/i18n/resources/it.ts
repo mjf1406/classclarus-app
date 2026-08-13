@@ -2382,8 +2382,7 @@ const it = {
     seatsStatsLoadFailedDescription: "Riprova tra un momento.",
     seatsStatsStudentsEmptyTitle: "Nessuno studente",
     seatsStatsStudentsEmptyDescription: "Non sei iscritto come studente in questa classe.",
-    seatsDataDescription:
-      "Conteggi {{dimension}} per studente per il piano «{{layoutName}}» ({{count}} colonne).",
+    seatsDataDescription: "Conteggi {{dimension}} per studente per il piano «{{layoutName}}».",
     seatsDataDescriptionFallback: "Conteggi dei posti registrati per studente per un piano.",
     seatsDataEmptyStudents: "Non ci sono ancora studenti in questa classe.",
     seatsDataEmptyValues: "Nessuna cronologia dei posti registrata per questa dimensione.",
@@ -2394,6 +2393,10 @@ const it = {
     seatsDataDimensionZone: "Zone",
     seatsDataDimensionTeam: "Squadre",
     seatsDataDimensionNeighbor: "Vicini",
+    seatsDataItemColumn: "Elemento",
+    seatsDataQuantityColumn: "Quantità",
+    seatsDataCardEmpty: "Nessuna cronologia registrata per questa dimensione.",
+    seatsDataConstraintsTitle: "Vincoli ({{count}})",
     seatsDataLoadFailed: "Impossibile caricare i dati dei posti.",
     seatsDataLoadFailedDescription: "Riprova tra un momento.",
     layoutGenderParityLabel: "Parità di genere",
@@ -2422,6 +2425,11 @@ const it = {
     autoAssignFailureUnknownTitle: "Conflitto esatto non identificato",
     autoAssignFailureUnknownHint:
       "Il solver non ha potuto dimostrare quali regole sono in conflitto. Può accadere con classi grandi. Riprova o controlla regole e layout manualmente.",
+    autoAssignOutputViolation:
+      "L’assegnazione automatica ha prodotto una mappa non valida. È un errore interno, non un conflitto di regole. Riprova o assegna i posti a mano.",
+    autoAssignOutputViolationTitle: "La mappa generata è stata rifiutata",
+    autoAssignOutputViolationHint:
+      "La mappa non ha superato un controllo di sicurezza dopo la generazione. Le regole salvate non erano il problema. Riprova o assegna a mano.",
     autoAssignFailureConflictSetTitle: "Regole in conflitto",
     autoAssignFailureConflictSetHint:
       "Questo è un insieme minimo di regole che non possono essere tutte soddisfatte. Possono esistere altri insiemi in conflitto.",
@@ -2452,6 +2460,8 @@ const it = {
       "A locked seat conflicts with odd/even gender parity for that desk.",
     autoAssignStructural_constraintParityConflict:
       "The seating rules and odd/even parity cannot all be satisfied together.",
+    autoAssignStructural_parityCapacityExceeded:
+      "Ci sono più studenti di un genere che banchi dispari o pari con la parità attuale.",
     autoAssignReportSummaryTitle: "Summary",
     autoAssignReportNoNamedStudents: "affected students",
     autoAssignReportSummary_unavailableSeat:
@@ -2469,6 +2479,8 @@ const it = {
     autoAssignReportSummary_parityLockedConflict:
       "Locked seats conflict with gender parity for {{students}}.",
     autoAssignReportSummary_constraintParityConflict: "Rules and parity conflict for {{students}}.",
+    autoAssignReportSummary_parityCapacityExceeded:
+      "La parità dispari/pari non ha abbastanza banchi per {{students}}.",
     autoAssignReportWhatTitle: "What happened",
     autoAssignReportWhyTitle: "Why",
     autoAssignReportSettingsTitle: "Current settings",
@@ -2483,6 +2495,8 @@ const it = {
     autoAssignReportRole_other: "other student",
     autoAssignReportCapacityGroup:
       "Group “{{group}}” needs {{required}} required seats but only {{available}} are available ({{students}}).",
+    autoAssignReportParityCapacityGroup:
+      "Il gruppo “{{group}}” ha {{maleCount}} maschi e {{femaleCount}} femmine, ma solo {{maleSeats}} posti maschili e {{femaleSeats}} posti femminili.",
     autoAssignReportUnknownGroup: "Unknown group",
     autoAssignReportNoValidSeatStudent:
       "{{student}} in {{group}} has {{candidates}} of {{total}} seats left after rule filtering.",
@@ -2508,6 +2522,8 @@ const it = {
       "Locked students must sit on desks matching parity ({{direction}}).",
     autoAssignReportWhyConstraintParity:
       "No assignment satisfies all required rules with parity set to {{direction}}.",
+    autoAssignReportWhyParityCapacity:
+      "La parità dispari/pari riserva i banchi numerati per genere. Gli studenti in eccesso di un genere non possono sedersi se non si disattiva la parità o si cambia la disposizione.",
     autoAssignReportWhyGeneric: "The current rules and layout cannot all be satisfied.",
     autoAssignReportParityMalesOdd: "males on odd desks",
     autoAssignReportParityMalesEven: "males on even desks",
@@ -2752,6 +2768,13 @@ const it = {
     printPerPageOption: "{{count}} per pagina",
     printExportAction: "Esporta",
     printSelectNone: "Seleziona almeno una prospettiva.",
+    printOptionsTitleChart: "Stampa posti",
+    printOptionsDescriptionChart:
+      "Scegli una mappa, una tabella o entrambe. Le prospettive valgono per la mappa.",
+    printOutputLabel: "Cosa stampare",
+    printOutputLayout: "Mappa",
+    printOutputTable: "Tabella",
+    printSelectNoneOutput: "Seleziona una mappa, una tabella o entrambe.",
     addTeacherDesk: "Cattedra",
     addBoard: "Lavagna",
     addDesk: "Banco studente",

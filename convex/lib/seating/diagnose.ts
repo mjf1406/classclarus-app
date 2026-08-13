@@ -74,6 +74,8 @@ function structuralCauseFromEvidence(
       return "manualConstraintConflict";
     case "constraintParityConflict":
       return "constraintParityConflict";
+    case "parityCapacityExceeded":
+      return "parityCapacityExceeded";
     case "searchExhausted":
       return undefined;
     default:
@@ -102,6 +104,7 @@ const PRIMARY_STRUCTURAL_EVIDENCE = new Set<SeatingFailureEvidence["kind"]>([
   "noValidSeat",
   "unavailableSeat",
   "duplicateManual",
+  "parityCapacityExceeded",
 ]);
 
 function preferStructuralDiagnosis(

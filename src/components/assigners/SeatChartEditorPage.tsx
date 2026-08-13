@@ -1,8 +1,9 @@
 import { useBlocker } from "@tanstack/react-router";
-import { ClipboardCheck, Cpu, Redo2, Save, ShuffleIcon, TriangleAlert, Undo2 } from "lucide-react";
+import { ClipboardCheck, Redo2, Save, ShuffleIcon, TriangleAlert, Undo2 } from "lucide-react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { AutoAssignProgressButton } from "@/components/assigners/AutoAssignProgressButton";
 import { AutoAssignSeatingHost } from "@/components/assigners/AutoAssignSeatingHost";
 import { GroupTeamFilterButtons } from "@/components/groups/GroupTeamFilterButtons";
 import { GroupImageIcon } from "@/components/groups/GroupImageIcon";
@@ -25,6 +26,7 @@ import { useClass } from "@/hooks/classes/useClass";
 import { useCan } from "@/hooks/permissions/useCan";
 import { useGroupsBoard } from "@/hooks/groups/useGroupsBoard";
 import { useRecordSeatChart } from "@/hooks/assigners/useRecordSeatChart";
+import { useRunAutoAssignSeatingFlow } from "@/hooks/assigners/useRunAutoAssignSeatingFlow";
 import { useSaveSeatChartDraft } from "@/hooks/assigners/useSaveSeatChartDraft";
 import { useSeatChart } from "@/hooks/assigners/useSeatChart";
 import { useStudentRoster } from "@/hooks/roster/useStudentRoster";
@@ -93,6 +95,7 @@ export function SeatChartEditorPage({ classId, chartId }: SeatChartEditorPagePro
   const filterState = useGroupTeamFilterState(classId);
   const saveDraft = useSaveSeatChartDraft();
   const recordSeating = useRecordSeatChart();
+  const autoAssignFlow = useRunAutoAssignSeatingFlow(classId);
 
   const [assignments, setAssignments] = useState<Array<SeatChartAssignment>>([]);
   const [dirty, setDirty] = useState(false);
@@ -474,18 +477,17 @@ export function SeatChartEditorPage({ classId, chartId }: SeatChartEditorPagePro
             </Button>
           ) : null}
           {canManage && !archived ? (
-            <Button
-              type="button"
+            <AutoAssignProgressButton
               size="sm"
-              variant="outline"
               aria-label={t("autoAssign")}
+              progress={autoAssignFlow.progress}
+              pending={autoAssignFlow.isRunning}
               disabled={!chart || chart.layout.items.every((item) => item.kind !== "desk")}
               onClick={() => setAutoAssignOpen(true)}
-              className="max-lg:size-8 max-lg:gap-0 max-lg:px-0 max-lg:has-data-[icon=inline-start]:pl-0"
+              className="max-lg:size-8 max-lg:gap-0 max-lg:px-0 max-lg:has-data-[icon=inline-start]:pl-0 max-lg:[&_[data-slot=progress-label]]:hidden"
             >
-              <Cpu data-icon="inline-start" />
               <span className="hidden lg:inline">{t("autoAssign")}</span>
-            </Button>
+            </AutoAssignProgressButton>
           ) : null}
           {canManage && !archived ? (
             <>
@@ -908,6 +910,7 @@ export function SeatChartEditorPage({ classId, chartId }: SeatChartEditorPagePro
       {chart ? (
         <AutoAssignSeatingHost
           classId={classId}
+          flow={autoAssignFlow}
           open={autoAssignOpen}
           onOpenChange={setAutoAssignOpen}
           mode="update"

@@ -3,6 +3,7 @@ import { describe, expect, test } from "vitest";
 import type { Id } from "../../_generated/dataModel.js";
 import { assignGenderParity, genderBucketFromRoster } from "./gender.js";
 import { seatHistoryKey } from "./historyKeys.js";
+import { expectValidSolverChart } from "./seatingTestHelpers.js";
 import { solveSeating } from "./solve.js";
 import type {
   LayoutHistoryStats,
@@ -122,11 +123,19 @@ describe("assignGenderParity", () => {
   });
 });
 
+function solveExpectingOk(seatingInput: SeatingAlgorithmInput) {
+  const result = solveSeating(seatingInput);
+  expect(result.status).toBe("ok");
+  if (result.status !== "ok") {
+    throw new Error(`expected ok, got ${result.status}`);
+  }
+  expectValidSolverChart(seatingInput, result.assignments);
+  return result;
+}
+
 describe("solveSeating", () => {
   test("fills every available seat without duplicates", () => {
-    const result = solveSeating(input());
-    expect(result.status).toBe("ok");
-    if (result.status !== "ok") return;
+    const result = solveExpectingOk(input());
     expect(result.assignments).toHaveLength(3);
     expect(new Set(result.assignments.map((row) => row.studentUserId)).size).toBe(3);
     expect(new Set(result.assignments.map((row) => row.deskItemId)).size).toBe(3);
@@ -148,20 +157,17 @@ describe("solveSeating", () => {
 
   test("preserves a manual seat and fills only remaining students", () => {
     const students = [student(1), student(2), student(3)];
-    const result = solveSeating(
-      input({
-        students,
-        locked: [
-          {
-            studentUserId: students[0]!.studentUserId,
-            groupId,
-            deskItemId: "desk-2",
-          },
-        ],
-      }),
-    );
-    expect(result.status).toBe("ok");
-    if (result.status !== "ok") return;
+    const seatingInput = input({
+      students,
+      locked: [
+        {
+          studentUserId: students[0]!.studentUserId,
+          groupId,
+          deskItemId: "desk-2",
+        },
+      ],
+    });
+    const result = solveExpectingOk(seatingInput);
     expect(result.assignments).toHaveLength(2);
     expect(result.assignments.some((row) => row.studentUserId === students[0]!.studentUserId)).toBe(
       false,
@@ -171,20 +177,17 @@ describe("solveSeating", () => {
 
   test("chooses unseen seats from recorded history", () => {
     const onlyStudent = student(1);
-    const result = solveSeating(
-      input({
-        students: [onlyStudent],
-        slots: slots(2),
-        history: history([
-          {
-            student: onlyStudent,
-            seat: { [seatHistoryKey(layoutId, "desk-1")]: 5 },
-          },
-        ]),
-      }),
-    );
-    expect(result.status).toBe("ok");
-    if (result.status !== "ok") return;
+    const seatingInput = input({
+      students: [onlyStudent],
+      slots: slots(2),
+      history: history([
+        {
+          student: onlyStudent,
+          seat: { [seatHistoryKey(layoutId, "desk-1")]: 5 },
+        },
+      ]),
+    });
+    const result = solveExpectingOk(seatingInput);
     expect(result.assignments[0]?.deskItemId).toBe("desk-2");
   });
 
@@ -196,23 +199,20 @@ describe("solveSeating", () => {
       ...layoutSlots[1]!,
       neighborDeskIds: ["desk-1"],
     };
-    const result = solveSeating(
-      input({
-        students,
-        slots: layoutSlots,
-        history: history(
-          students.map((item) => ({
-            student: item,
-            seat: {
-              [seatHistoryKey(layoutId, "desk-1")]: 10,
-              [seatHistoryKey(layoutId, "desk-2")]: 10,
-            },
-          })),
-        ),
-      }),
-    );
-    expect(result.status).toBe("ok");
-    if (result.status !== "ok") return;
+    const seatingInput = input({
+      students,
+      slots: layoutSlots,
+      history: history(
+        students.map((item) => ({
+          student: item,
+          seat: {
+            [seatHistoryKey(layoutId, "desk-1")]: 10,
+            [seatHistoryKey(layoutId, "desk-2")]: 10,
+          },
+        })),
+      ),
+    });
+    const result = solveExpectingOk(seatingInput);
     expect(new Set(result.assignments.map((row) => row.deskItemId))).toEqual(
       new Set(["desk-1", "desk-2"]),
     );
@@ -399,5 +399,237 @@ describe("solveSeating", () => {
     if (result.status !== "ok") return;
     expect(result.assignments[0]?.studentUserId).toBe(students[1]!.studentUserId);
     expect(result.meta.unseatedStudentIds).toEqual([students[0]!.studentUserId]);
+  });
+
+  test("returns infeasible when males exceed odd desks under parity", () => {
+    const students = [student(1, "m"), student(2, "m"), student(3, "m")];
+    const result = solveSeating(
+      input({
+        students,
+        slots: slots(3),
+        parity: "oddEven",
+        malesOnOddDesks: true,
+      }),
+    );
+    expect(result.status).toBe("infeasible");
+    if (result.status === "infeasible") {
+      expect(result.evidence.kind).toBe("parityCapacityExceeded");
+    }
+  });
+
+  test("maps every roster gender into a solver bucket", () => {
+    expect(genderBucketFromRoster("male")).toBe("m");
+    expect(genderBucketFromRoster("transMale")).toBe("m");
+    expect(genderBucketFromRoster("female")).toBe("f");
+    expect(genderBucketFromRoster("transFemale")).toBe("f");
+    expect(genderBucketFromRoster("nonBinary")).toBe("other");
+    expect(genderBucketFromRoster("selfDescribe")).toBe("other");
+    expect(genderBucketFromRoster("preferNotToSay")).toBe("other");
+    expect(genderBucketFromRoster(undefined)).toBe("unknown");
+  });
+
+  test("enforces mustNot zone and teammate constraints by student identity", () => {
+    const students = [student(1), student(2)];
+    const layoutSlots = slots(4);
+    const result = solveSeating(
+      input({
+        students,
+        slots: layoutSlots,
+        constraints: [
+          constraint(1, {
+            type: "zone",
+            polarity: "mustNot",
+            studentUserId: students[0]!.studentUserId,
+            zoneName: "Front",
+          }),
+          constraint(2, {
+            type: "teammate",
+            polarity: "mustNot",
+            studentUserId: students[0]!.studentUserId,
+            otherStudentUserId: students[1]!.studentUserId,
+          }),
+        ],
+      }),
+    );
+    expect(result.status).toBe("ok");
+    if (result.status !== "ok") return;
+    const slotByDesk = new Map(layoutSlots.map((slot) => [slot.deskItemId, slot]));
+    const deskByStudent = new Map(
+      result.assignments.map((row) => [row.studentUserId, row.deskItemId]),
+    );
+    expect(slotByDesk.get(deskByStudent.get(students[0]!.studentUserId)!)?.zoneName).toBe("Back");
+    const teamA = slotByDesk.get(deskByStudent.get(students[0]!.studentUserId)!)?.teamKey;
+    const teamB = slotByDesk.get(deskByStudent.get(students[1]!.studentUserId)!)?.teamKey;
+    expect(teamA).not.toBe(teamB);
+  });
+
+  test("places neighbors on independently adjacent desks", () => {
+    const students = [student(1), student(2), student(3)];
+    const layoutSlots = slots(3);
+    const result = solveSeating(
+      input({
+        students,
+        slots: layoutSlots,
+        constraints: [
+          constraint(1, {
+            type: "neighbor",
+            polarity: "must",
+            studentUserId: students[0]!.studentUserId,
+            otherStudentUserId: students[1]!.studentUserId,
+          }),
+        ],
+      }),
+    );
+    expect(result.status).toBe("ok");
+    if (result.status !== "ok") return;
+    const deskByStudent = new Map(
+      result.assignments.map((row) => [row.studentUserId, row.deskItemId]),
+    );
+    const slotByDesk = new Map(layoutSlots.map((slot) => [slot.deskItemId, slot]));
+    const left = slotByDesk.get(deskByStudent.get(students[0]!.studentUserId)!)!;
+    const right = slotByDesk.get(deskByStudent.get(students[1]!.studentUserId)!)!;
+    expect(
+      left.neighborDeskIds.includes(right.deskItemId) ||
+        right.neighborDeskIds.includes(left.deskItemId),
+    ).toBe(true);
+  });
+
+  test("reverses odd-even parity when malesOnOddDesks is false", () => {
+    const students = [student(1, "m"), student(2, "f")];
+    const result = solveSeating(
+      input({
+        students,
+        slots: slots(2),
+        parity: "oddEven",
+        malesOnOddDesks: false,
+      }),
+    );
+    expect(result.status).toBe("ok");
+    if (result.status !== "ok") return;
+    const deskByStudent = new Map(
+      result.assignments.map((row) => [row.studentUserId, Number(row.deskItemId.split("-")[1])]),
+    );
+    expect(deskByStudent.get(students[0]!.studentUserId)! % 2).toBe(0);
+    expect(deskByStudent.get(students[1]!.studentUserId)! % 2).toBe(1);
+  });
+
+  test("treats other gender as exempt from odd-even parity", () => {
+    const students = [student(1, "other"), student(2, "m")];
+    const result = solveSeating(
+      input({
+        students,
+        slots: slots(2),
+        parity: "oddEven",
+        malesOnOddDesks: true,
+      }),
+    );
+    expect(result.status).toBe("ok");
+    if (result.status !== "ok") return;
+    const deskByStudent = new Map(
+      result.assignments.map((row) => [row.studentUserId, Number(row.deskItemId.split("-")[1])]),
+    );
+    expect(deskByStudent.get(students[1]!.studentUserId)! % 2).toBe(1);
+  });
+
+  test("is infeasible when a male is locked to an unnumbered desk under parity", () => {
+    const male = student(1, "m");
+    const layoutSlots = slots(2).map((slot, index) =>
+      index === 0 ? { ...slot, deskNumber: undefined } : slot,
+    );
+    const result = solveSeating(
+      input({
+        students: [male],
+        slots: layoutSlots,
+        parity: "oddEven",
+        malesOnOddDesks: true,
+        locked: [
+          {
+            studentUserId: male.studentUserId,
+            groupId,
+            deskItemId: "desk-1",
+          },
+        ],
+      }),
+    );
+    expect(result.status).toBe("infeasible");
+  });
+
+  test("uses exact infeasible rather than search_exhausted at seven students", () => {
+    const students = Array.from({ length: 7 }, (_, index) => student(index));
+    const layoutSlots = slots(7).map((slot, index) => ({
+      ...slot,
+      zoneName: index < 3 ? "Limited" : "Other",
+    }));
+    const constraints = students.map((item, index) =>
+      constraint(index, {
+        type: "zone",
+        polarity: "must",
+        studentUserId: item.studentUserId,
+        zoneName: "Limited",
+      }),
+    );
+    const result = solveSeating(input({ students, slots: layoutSlots, constraints }));
+    expect(result.status).toBe("infeasible");
+  });
+
+  test("independent checker holds for remaining success fixtures", () => {
+    const students = [student(1), student(2), student(3)];
+    const fixtures = [
+      input({
+        students,
+        constraints: [
+          constraint(1, {
+            type: "neighbor",
+            polarity: "must",
+            studentUserId: students[0]!.studentUserId,
+            otherStudentUserId: students[1]!.studentUserId,
+          }),
+          constraint(2, {
+            type: "neighbor",
+            polarity: "mustNot",
+            studentUserId: students[0]!.studentUserId,
+            otherStudentUserId: students[2]!.studentUserId,
+          }),
+        ],
+      }),
+      input({
+        students: [student(1, "m"), student(2, "f"), student(3, "unknown")],
+        parity: "oddEven",
+        malesOnOddDesks: true,
+      }),
+      input({
+        students: [student(1), student(2)],
+        slots: slots(4),
+        constraints: [
+          constraint(1, {
+            type: "zone",
+            polarity: "mustNot",
+            studentUserId: students[0]!.studentUserId,
+            zoneName: "Front",
+          }),
+          constraint(2, {
+            type: "teammate",
+            polarity: "mustNot",
+            studentUserId: students[0]!.studentUserId,
+            otherStudentUserId: students[1]!.studentUserId,
+          }),
+        ],
+      }),
+      input({
+        students: [student(1, "m"), student(2, "f")],
+        slots: slots(2),
+        parity: "oddEven",
+        malesOnOddDesks: false,
+      }),
+      input({
+        students: [student(1, "other"), student(2, "m")],
+        slots: slots(2),
+        parity: "oddEven",
+        malesOnOddDesks: true,
+      }),
+    ];
+    for (const fixture of fixtures) {
+      solveExpectingOk(fixture);
+    }
   });
 });

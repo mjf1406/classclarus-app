@@ -2300,7 +2300,7 @@ const ko = {
     seatsStatsLoadFailedDescription: "잠시 후 다시 시도하세요.",
     seatsStatsStudentsEmptyTitle: "학생 없음",
     seatsStatsStudentsEmptyDescription: "이 수업에 학생으로 등록되어 있지 않습니다.",
-    seatsDataDescription: "레이아웃 «{{layoutName}}»의 학생별 {{dimension}} 횟수({{count}}열).",
+    seatsDataDescription: "레이아웃 «{{layoutName}}»의 학생별 {{dimension}} 횟수.",
     seatsDataDescriptionFallback: "레이아웃별 기록된 좌석 횟수를 학생별로 표시합니다.",
     seatsDataEmptyStudents: "이 수업에 아직 학생이 없습니다.",
     seatsDataEmptyValues: "이 차원에 대한 기록된 좌석 기록이 아직 없습니다.",
@@ -2311,6 +2311,10 @@ const ko = {
     seatsDataDimensionZone: "구역",
     seatsDataDimensionTeam: "팀",
     seatsDataDimensionNeighbor: "이웃",
+    seatsDataItemColumn: "항목",
+    seatsDataQuantityColumn: "횟수",
+    seatsDataCardEmpty: "이 차원에 대한 기록된 이력이 아직 없습니다.",
+    seatsDataConstraintsTitle: "제약 ({{count}})",
     seatsDataLoadFailed: "좌석 데이터를 불러올 수 없습니다.",
     seatsDataLoadFailedDescription: "잠시 후 다시 시도하세요.",
     layoutGenderParityLabel: "성별 균형",
@@ -2339,6 +2343,11 @@ const ko = {
     autoAssignFailureUnknownTitle: "정확한 충돌을 확인하지 못함",
     autoAssignFailureUnknownHint:
       "솔버가 어떤 규칙이 충돌하는지 증명하지 못했습니다. 큰 학급에서 발생할 수 있습니다. 다시 시도하거나 규칙과 레이아웃을 수동으로 검토하세요.",
+    autoAssignOutputViolation:
+      "자동 배치가 잘못된 좌석표를 만들었습니다. 규칙 충돌이 아니라 내부 오류입니다. 다시 시도하거나 수동으로 배치하세요.",
+    autoAssignOutputViolationTitle: "생성된 좌석표가 거부되었습니다",
+    autoAssignOutputViolationHint:
+      "생성 후 안전 검사를 통과하지 못했습니다. 저장된 규칙이 원인이 아닙니다. 다시 시도하거나 수동으로 배치하세요.",
     autoAssignFailureConflictSetTitle: "충돌하는 규칙",
     autoAssignFailureConflictSetHint:
       "동시에 충족할 수 없는 최소 규칙 집합입니다. 다른 충돌 집합이 있을 수 있습니다.",
@@ -2367,6 +2376,8 @@ const ko = {
       "A locked seat conflicts with odd/even gender parity for that desk.",
     autoAssignStructural_constraintParityConflict:
       "The seating rules and odd/even parity cannot all be satisfied together.",
+    autoAssignStructural_parityCapacityExceeded:
+      "현재 패리티 설정에서 한 성별 학생 수가 홀수 또는 짝수 번호 책상보다 많습니다.",
     autoAssignReportSummaryTitle: "Summary",
     autoAssignReportNoNamedStudents: "affected students",
     autoAssignReportSummary_unavailableSeat:
@@ -2384,6 +2395,8 @@ const ko = {
     autoAssignReportSummary_parityLockedConflict:
       "Locked seats conflict with gender parity for {{students}}.",
     autoAssignReportSummary_constraintParityConflict: "Rules and parity conflict for {{students}}.",
+    autoAssignReportSummary_parityCapacityExceeded:
+      "홀수/짝수 성별 패리티에 {{students}}에게 맞는 자리가 부족합니다.",
     autoAssignReportWhatTitle: "What happened",
     autoAssignReportWhyTitle: "Why",
     autoAssignReportSettingsTitle: "Current settings",
@@ -2398,6 +2411,8 @@ const ko = {
     autoAssignReportRole_other: "other student",
     autoAssignReportCapacityGroup:
       "Group “{{group}}” needs {{required}} required seats but only {{available}} are available ({{students}}).",
+    autoAssignReportParityCapacityGroup:
+      "그룹 “{{group}}”에는 남학생 {{maleCount}}명, 여학생 {{femaleCount}}명이 있지만 남성 패리티 자리는 {{maleSeats}}개, 여성 패리티 자리는 {{femaleSeats}}개입니다.",
     autoAssignReportUnknownGroup: "Unknown group",
     autoAssignReportNoValidSeatStudent:
       "{{student}} in {{group}} has {{candidates}} of {{total}} seats left after rule filtering.",
@@ -2423,6 +2438,8 @@ const ko = {
       "Locked students must sit on desks matching parity ({{direction}}).",
     autoAssignReportWhyConstraintParity:
       "No assignment satisfies all required rules with parity set to {{direction}}.",
+    autoAssignReportWhyParityCapacity:
+      "홀수/짝수 패리티는 번호가 있는 자리를 성별로 예약합니다. 한 성별이 더 많으면 패리티를 끄거나 배치를 바꿔야 합니다.",
     autoAssignReportWhyGeneric: "The current rules and layout cannot all be satisfied.",
     autoAssignReportParityMalesOdd: "males on odd desks",
     autoAssignReportParityMalesEven: "males on even desks",
@@ -2662,6 +2679,13 @@ const ko = {
     printPerPageOption: "페이지당 {{count}}개",
     printExportAction: "내보내기",
     printSelectNone: "시점을 하나 이상 선택하세요.",
+    printOptionsTitleChart: "좌석 인쇄",
+    printOptionsDescriptionChart:
+      "레이아웃, 표, 또는 둘 다 선택할 수 있습니다. 시점 옵션은 레이아웃에 적용됩니다.",
+    printOutputLabel: "인쇄 항목",
+    printOutputLayout: "레이아웃",
+    printOutputTable: "표",
+    printSelectNoneOutput: "레이아웃, 표, 또는 둘 다를 선택하세요.",
     addTeacherDesk: "교탁",
     addBoard: "칠판",
     addDesk: "학생 책상",

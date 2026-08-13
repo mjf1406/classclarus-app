@@ -1,8 +1,9 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Cpu, LayoutGrid, Pencil, Plus, Table2, Trash2 } from "lucide-react";
+import { LayoutGrid, Pencil, Plus, Table2, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { AutoAssignProgressButton } from "@/components/assigners/AutoAssignProgressButton";
 import { AutoAssignSeatingHost } from "@/components/assigners/AutoAssignSeatingHost";
 import { AssignersSeatsShell } from "@/components/assigners/AssignersSeatsShell";
 import { SeatChartCreateCredenza } from "@/components/assigners/SeatChartCreateCredenza";
@@ -30,6 +31,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useCreateSeatChart } from "@/hooks/assigners/useCreateSeatChart";
 import { useRemoveSeatChart } from "@/hooks/assigners/useRemoveSeatChart";
 import { useRenameSeatChart } from "@/hooks/assigners/useRenameSeatChart";
+import { useRunAutoAssignSeatingFlow } from "@/hooks/assigners/useRunAutoAssignSeatingFlow";
 import { useSeatCharts } from "@/hooks/assigners/useSeatCharts";
 import { useCan } from "@/hooks/permissions/useCan";
 import { formatLocalizedDateTime } from "@/i18n/formatDate";
@@ -56,6 +58,7 @@ export function AssignersSeatsChartsPage({ classId }: AssignersSeatsChartsPagePr
   const createChart = useCreateSeatChart();
   const renameChart = useRenameSeatChart();
   const removeChart = useRemoveSeatChart();
+  const autoAssignFlow = useRunAutoAssignSeatingFlow(classId);
   const [createOpen, setCreateOpen] = useState(false);
   const [renaming, setRenaming] = useState<SeatChartListItem | null>(null);
   const [deleting, setDeleting] = useState<SeatChartListItem | null>(null);
@@ -80,10 +83,11 @@ export function AssignersSeatsChartsPage({ classId }: AssignersSeatsChartsPagePr
       action={
         canManage ? (
           <div className="flex items-center gap-2">
-            <Button type="button" variant="outline" onClick={() => setAutoAssignOpen(true)}>
-              <Cpu className="size-4" />
-              {t("autoAssign")}
-            </Button>
+            <AutoAssignProgressButton
+              progress={autoAssignFlow.progress}
+              pending={autoAssignFlow.isRunning}
+              onClick={() => setAutoAssignOpen(true)}
+            />
             <Button type="button" onClick={() => setCreateOpen(true)}>
               <Plus className="size-4" />
               {t("createChart")}
@@ -280,6 +284,7 @@ export function AssignersSeatsChartsPage({ classId }: AssignersSeatsChartsPagePr
           />
           <AutoAssignSeatingHost
             classId={classId}
+            flow={autoAssignFlow}
             open={autoAssignOpen}
             onOpenChange={setAutoAssignOpen}
           />

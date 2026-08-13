@@ -132,7 +132,8 @@ export type SeatingStructuralCause =
   | "noValidSeat"
   | "manualConstraintConflict"
   | "parityLockedConflict"
-  | "constraintParityConflict";
+  | "constraintParityConflict"
+  | "parityCapacityExceeded";
 
 export type UnavailableStudentRole = "primary" | "other";
 
@@ -212,6 +213,18 @@ export type SeatingFailureEvidence =
       malesOnOddDesks: boolean;
     }
   | {
+      kind: "parityCapacityExceeded";
+      groups: Array<{
+        groupId: Id<"groups">;
+        maleCount: number;
+        femaleCount: number;
+        maleSeatCount: number;
+        femaleSeatCount: number;
+        affectedStudentIds: Array<Id<"users">>;
+      }>;
+      malesOnOddDesks: boolean;
+    }
+  | {
       kind: "searchExhausted";
       movableStudentCount: number;
       constraintCount: number;
@@ -243,7 +256,7 @@ export type SeatingConflictDiagnosis =
   | { status: "satisfiable" }
   | {
       status: "unknown";
-      code: "SEATING_SEARCH_EXHAUSTED" | "SEATING_INFEASIBLE";
+      code: "SEATING_SEARCH_EXHAUSTED" | "SEATING_INFEASIBLE" | "SEATING_OUTPUT_VIOLATION";
       evidence?: SeatingFailureEvidence;
       runContext: SeatingFailureRunContext;
     }

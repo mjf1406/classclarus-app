@@ -2368,8 +2368,7 @@ const nl = {
     seatsStatsLoadFailedDescription: "Probeer het over een moment opnieuw.",
     seatsStatsStudentsEmptyTitle: "Geen leerlingen",
     seatsStatsStudentsEmptyDescription: "Je bent niet ingeschreven als leerling in deze klas.",
-    seatsDataDescription:
-      "{{dimension}}-tellingen per leerling voor plattegrond «{{layoutName}}» ({{count}} kolommen).",
+    seatsDataDescription: "{{dimension}}-tellingen per leerling voor plattegrond «{{layoutName}}».",
     seatsDataDescriptionFallback:
       "Geregistreerde zitplaats-tellingen per leerling voor een plattegrond.",
     seatsDataEmptyStudents: "Nog geen leerlingen in deze klas.",
@@ -2381,6 +2380,10 @@ const nl = {
     seatsDataDimensionZone: "Zones",
     seatsDataDimensionTeam: "Teams",
     seatsDataDimensionNeighbor: "Buren",
+    seatsDataItemColumn: "Item",
+    seatsDataQuantityColumn: "Aantal",
+    seatsDataCardEmpty: "Nog geen geregistreerde geschiedenis voor deze dimensie.",
+    seatsDataConstraintsTitle: "Beperkingen ({{count}})",
     seatsDataLoadFailed: "Kon zitplaatsgegevens niet laden.",
     seatsDataLoadFailedDescription: "Probeer het zo meteen opnieuw.",
     layoutGenderParityLabel: "Genderpariteit",
@@ -2410,6 +2413,11 @@ const nl = {
     autoAssignFailureUnknownTitle: "Exact conflict niet vastgesteld",
     autoAssignFailureUnknownHint:
       "De solver kon niet bewijzen welke regels conflicteren. Dit kan bij grote klassen gebeuren. Probeer opnieuw of controleer regels en indeling handmatig.",
+    autoAssignOutputViolation:
+      "Automatisch toewijzen leverde een ongeldig schema op. Dit is een interne fout, geen regelconflict. Probeer opnieuw of plaats handmatig.",
+    autoAssignOutputViolationTitle: "Gegenereerd schema is afgewezen",
+    autoAssignOutputViolationHint:
+      "Het schema faalde een veiligheidscontrole na generatie. Uw opgeslagen regels waren niet het probleem. Probeer opnieuw of plaats met de hand.",
     autoAssignFailureConflictSetTitle: "Conflicterende regels",
     autoAssignFailureConflictSetHint:
       "Dit is een kleinste set regels die niet allemaal tegelijk kunnen worden voldaan. Andere conflicterende sets zijn mogelijk.",
@@ -2440,6 +2448,8 @@ const nl = {
       "A locked seat conflicts with odd/even gender parity for that desk.",
     autoAssignStructural_constraintParityConflict:
       "The seating rules and odd/even parity cannot all be satisfied together.",
+    autoAssignStructural_parityCapacityExceeded:
+      "Er zijn meer leerlingen van één geslacht dan oneven of even genummerde tafels bij de huidige pariteit.",
     autoAssignReportSummaryTitle: "Summary",
     autoAssignReportNoNamedStudents: "affected students",
     autoAssignReportSummary_unavailableSeat:
@@ -2457,6 +2467,8 @@ const nl = {
     autoAssignReportSummary_parityLockedConflict:
       "Locked seats conflict with gender parity for {{students}}.",
     autoAssignReportSummary_constraintParityConflict: "Rules and parity conflict for {{students}}.",
+    autoAssignReportSummary_parityCapacityExceeded:
+      "Oneven/even-geslachtspariteit heeft niet genoeg passende tafels voor {{students}}.",
     autoAssignReportWhatTitle: "What happened",
     autoAssignReportWhyTitle: "Why",
     autoAssignReportSettingsTitle: "Current settings",
@@ -2471,6 +2483,8 @@ const nl = {
     autoAssignReportRole_other: "other student",
     autoAssignReportCapacityGroup:
       "Group “{{group}}” needs {{required}} required seats but only {{available}} are available ({{students}}).",
+    autoAssignReportParityCapacityGroup:
+      "Groep “{{group}}” heeft {{maleCount}} jongens en {{femaleCount}} meisjes, maar slechts {{maleSeats}} mannelijke en {{femaleSeats}} vrouwelijke pariteitsplaatsen.",
     autoAssignReportUnknownGroup: "Unknown group",
     autoAssignReportNoValidSeatStudent:
       "{{student}} in {{group}} has {{candidates}} of {{total}} seats left after rule filtering.",
@@ -2496,6 +2510,8 @@ const nl = {
       "Locked students must sit on desks matching parity ({{direction}}).",
     autoAssignReportWhyConstraintParity:
       "No assignment satisfies all required rules with parity set to {{direction}}.",
+    autoAssignReportWhyParityCapacity:
+      "Oneven/even-pariteit reserveert genummerde tafels per geslacht. Extra leerlingen van één geslacht kunnen niet worden geplaatst tenzij pariteit uit staat of de indeling verandert.",
     autoAssignReportWhyGeneric: "The current rules and layout cannot all be satisfied.",
     autoAssignReportParityMalesOdd: "males on odd desks",
     autoAssignReportParityMalesEven: "males on even desks",
@@ -2739,6 +2755,13 @@ const nl = {
     printPerPageOption: "{{count}} per pagina",
     printExportAction: "Exporteren",
     printSelectNone: "Selecteer minstens één perspectief.",
+    printOptionsTitleChart: "Zitplaatsen afdrukken",
+    printOptionsDescriptionChart:
+      "Kies een indeling, een tabel of beide. Perspectieven gelden voor de indeling.",
+    printOutputLabel: "Wat afdrukken",
+    printOutputLayout: "Indeling",
+    printOutputTable: "Tabel",
+    printSelectNoneOutput: "Selecteer een indeling, een tabel of beide.",
     addTeacherDesk: "Docentenbureau",
     addBoard: "Bord",
     addDesk: "Leerlingbank",

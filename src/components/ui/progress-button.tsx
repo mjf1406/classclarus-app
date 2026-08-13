@@ -40,6 +40,9 @@ function ProgressButton({
 }: ProgressButtonProps) {
   const [succeeded, setSucceeded] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onSuccessRef = useRef(onSuccess);
+  onSuccessRef.current = onSuccess;
+  const wasPendingRef = useRef(false);
   const iconOnly = size === "icon" || size === "icon-sm";
 
   useEffect(() => {
@@ -55,7 +58,7 @@ function ProgressButton({
       clearTimeout(timeoutRef.current);
     }
     setSucceeded(true);
-    onSuccess?.();
+    onSuccessRef.current?.();
     timeoutRef.current = setTimeout(() => {
       setSucceeded(false);
       timeoutRef.current = null;
@@ -102,6 +105,25 @@ function ProgressButton({
   const clamped = clampProgress(progress);
   const displayPercent = Math.round(clamped);
   const showProgress = pending && !succeeded;
+
+  useEffect(() => {
+    if (pendingProp === undefined) {
+      wasPendingRef.current = false;
+      return;
+    }
+    if (wasPendingRef.current && !pending && clamped >= 100 && !succeeded) {
+      if (timeoutRef.current !== null) {
+        clearTimeout(timeoutRef.current);
+      }
+      setSucceeded(true);
+      onSuccessRef.current?.();
+      timeoutRef.current = setTimeout(() => {
+        setSucceeded(false);
+        timeoutRef.current = null;
+      }, SUCCESS_DURATION_MS);
+    }
+    wasPendingRef.current = pending;
+  }, [pending, pendingProp, clamped, succeeded]);
 
   return (
     <Button

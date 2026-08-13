@@ -27,7 +27,7 @@ import type {
   SeatingScopeHint,
   SeatingStudent,
 } from "./types.js";
-import { validateMergedAssignments } from "./validateOutput.js";
+import { validateHardConstraints, validateMergedAssignments } from "./validateOutput.js";
 
 /** Sync slot builder — pass a team resolver (board data on client, DB on server). */
 export function buildSeatingDeskSlots(args: {
@@ -219,6 +219,22 @@ export function finishSeatingAlgorithm(args: {
       status: "invalid",
       message: validationError.message,
       code: validationError.code,
+    };
+  }
+
+  const hardConstraintError = validateHardConstraints({
+    assignments: merged,
+    slots: args.input.slots,
+    students: args.input.students,
+    constraints: args.input.constraints,
+    genderParityMode: args.input.genderParityMode,
+    genderParityAssignment: args.input.genderParityAssignment,
+  });
+  if (hardConstraintError) {
+    return {
+      status: "invalid",
+      message: hardConstraintError.message,
+      code: hardConstraintError.code,
     };
   }
 

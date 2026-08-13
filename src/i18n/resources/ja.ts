@@ -2330,8 +2330,7 @@ const ja = {
     seatsStatsLoadFailedDescription: "しばらくしてから再度お試しください。",
     seatsStatsStudentsEmptyTitle: "生徒がありません",
     seatsStatsStudentsEmptyDescription: "このクラスの生徒として登録されていません。",
-    seatsDataDescription:
-      "レイアウト「{{layoutName}}」の{{dimension}}ごとの生徒別回数（{{count}}列）。",
+    seatsDataDescription: "レイアウト「{{layoutName}}」の{{dimension}}ごとの生徒別回数。",
     seatsDataDescriptionFallback: "レイアウトごとの記録済み座席回数を生徒別に表示します。",
     seatsDataEmptyStudents: "このクラスにはまだ生徒がいません。",
     seatsDataEmptyValues: "この次元の記録済み座席履歴はまだありません。",
@@ -2342,6 +2341,10 @@ const ja = {
     seatsDataDimensionZone: "ゾーン",
     seatsDataDimensionTeam: "チーム",
     seatsDataDimensionNeighbor: "隣",
+    seatsDataItemColumn: "項目",
+    seatsDataQuantityColumn: "回数",
+    seatsDataCardEmpty: "この次元の記録済み履歴はまだありません。",
+    seatsDataConstraintsTitle: "制約（{{count}}）",
     seatsDataLoadFailed: "座席データを読み込めませんでした。",
     seatsDataLoadFailedDescription: "しばらくしてからもう一度お試しください。",
     layoutGenderParityLabel: "性別パリティ",
@@ -2370,6 +2373,11 @@ const ja = {
     autoAssignFailureUnknownTitle: "正確な矛盾を特定できませんでした",
     autoAssignFailureUnknownHint:
       "ソルバーはどのルールが矛盾しているかを証明できませんでした。大きなクラスで起こることがあります。再試行するか、ルールとレイアウトを手動で確認してください。",
+    autoAssignOutputViolation:
+      "自動配置が無効な座席表を生成しました。座席ルールの矛盾ではなく内部エラーです。再試行するか、手動で配置してください。",
+    autoAssignOutputViolationTitle: "生成された座席表が却下されました",
+    autoAssignOutputViolationHint:
+      "生成後の安全チェックに失敗しました。保存済みのルールが原因ではありません。再試行するか、手動で配置してください。",
     autoAssignFailureConflictSetTitle: "矛盾するルール",
     autoAssignFailureConflictSetHint:
       "同時に満たせない最小のルール集合です。他の矛盾集合が存在する場合があります。",
@@ -2398,6 +2406,8 @@ const ja = {
       "A locked seat conflicts with odd/even gender parity for that desk.",
     autoAssignStructural_constraintParityConflict:
       "The seating rules and odd/even parity cannot all be satisfied together.",
+    autoAssignStructural_parityCapacityExceeded:
+      "現在のパリティ設定では、一方の性別の生徒数が奇数または偶数番号の机を超えています。",
     autoAssignReportSummaryTitle: "Summary",
     autoAssignReportNoNamedStudents: "affected students",
     autoAssignReportSummary_unavailableSeat:
@@ -2415,6 +2425,8 @@ const ja = {
     autoAssignReportSummary_parityLockedConflict:
       "Locked seats conflict with gender parity for {{students}}.",
     autoAssignReportSummary_constraintParityConflict: "Rules and parity conflict for {{students}}.",
+    autoAssignReportSummary_parityCapacityExceeded:
+      "奇数/偶数の性別パリティでは {{students}} に合う机が足りません。",
     autoAssignReportWhatTitle: "What happened",
     autoAssignReportWhyTitle: "Why",
     autoAssignReportSettingsTitle: "Current settings",
@@ -2429,6 +2441,8 @@ const ja = {
     autoAssignReportRole_other: "other student",
     autoAssignReportCapacityGroup:
       "Group “{{group}}” needs {{required}} required seats but only {{available}} are available ({{students}}).",
+    autoAssignReportParityCapacityGroup:
+      "グループ「{{group}}」は男子 {{maleCount}} 人・女子 {{femaleCount}} 人ですが、男子パリティ席は {{maleSeats}}、女子パリティ席は {{femaleSeats}} です。",
     autoAssignReportUnknownGroup: "Unknown group",
     autoAssignReportNoValidSeatStudent:
       "{{student}} in {{group}} has {{candidates}} of {{total}} seats left after rule filtering.",
@@ -2454,6 +2468,8 @@ const ja = {
       "Locked students must sit on desks matching parity ({{direction}}).",
     autoAssignReportWhyConstraintParity:
       "No assignment satisfies all required rules with parity set to {{direction}}.",
+    autoAssignReportWhyParityCapacity:
+      "奇数/偶数パリティは番号付きの机を性別で予約します。一方の性別が多い場合は、パリティをオフにするかレイアウトを変えないと座れません。",
     autoAssignReportWhyGeneric: "The current rules and layout cannot all be satisfied.",
     autoAssignReportParityMalesOdd: "males on odd desks",
     autoAssignReportParityMalesEven: "males on even desks",
@@ -2692,6 +2708,13 @@ const ja = {
     printPerPageOption: "{{count}}つ／ページ",
     printExportAction: "書き出す",
     printSelectNone: "少なくとも1つの視点を選んでください。",
+    printOptionsTitleChart: "座席を印刷",
+    printOptionsDescriptionChart:
+      "レイアウト、表、または両方を選べます。視点の設定はレイアウトに適用されます。",
+    printOutputLabel: "印刷するもの",
+    printOutputLayout: "レイアウト",
+    printOutputTable: "表",
+    printSelectNoneOutput: "レイアウト、表、または両方を選んでください。",
     addTeacherDesk: "教卓",
     addBoard: "黒板",
     addDesk: "生徒用机",

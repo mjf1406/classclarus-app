@@ -174,6 +174,48 @@ export function buildNoValidSeatEvidence(args: {
   };
 }
 
+export function buildParityCapacityExceededEvidence(args: {
+  students: ReadonlyArray<SeatingStudent>;
+  availableSlots: ReadonlyArray<SeatingDeskSlot>;
+  malesOnOddDesks: boolean;
+}): Extract<SeatingFailureEvidence, { kind: "parityCapacityExceeded" }> | null {
+  const groups = new Set(args.students.map((student) => student.groupId));
+  const result: Extract<SeatingFailureEvidence, { kind: "parityCapacityExceeded" }> = {
+    kind: "parityCapacityExceeded",
+    groups: [],
+    malesOnOddDesks: args.malesOnOddDesks,
+  };
+
+  for (const groupId of groups) {
+    const groupStudents = args.students.filter((student) => student.groupId === groupId);
+    const groupSlots = args.availableSlots.filter((slot) => slot.groupId === groupId);
+    const maleCount = groupStudents.filter((student) => student.genderBucket === "m").length;
+    const femaleCount = groupStudents.filter((student) => student.genderBucket === "f").length;
+    const oddSeats = groupSlots.filter(
+      (slot) => slot.deskNumber !== undefined && slot.deskNumber % 2 === 1,
+    ).length;
+    const evenSeats = groupSlots.filter(
+      (slot) => slot.deskNumber !== undefined && slot.deskNumber % 2 === 0,
+    ).length;
+    const maleSeatCount = args.malesOnOddDesks ? oddSeats : evenSeats;
+    const femaleSeatCount = args.malesOnOddDesks ? evenSeats : oddSeats;
+    if (maleCount <= maleSeatCount && femaleCount <= femaleSeatCount) continue;
+
+    result.groups.push({
+      groupId,
+      maleCount,
+      femaleCount,
+      maleSeatCount,
+      femaleSeatCount,
+      affectedStudentIds: groupStudents
+        .filter((student) => student.genderBucket === "m" || student.genderBucket === "f")
+        .map((student) => student.studentUserId),
+    });
+  }
+
+  return result.groups.length > 0 ? result : null;
+}
+
 export function lockedAssignmentEvidence(
   locked: LockedAssignment,
   deskNumber?: number,
@@ -237,6 +279,8 @@ export function affectedStudentIdsFromEvidence(
       return evidence.duplicateStudentIds;
     case "constraintParityConflict":
       return evidence.affectedStudentIds;
+    case "parityCapacityExceeded":
+      return evidence.groups.flatMap((group) => group.affectedStudentIds);
     case "searchExhausted":
       return [];
     default:

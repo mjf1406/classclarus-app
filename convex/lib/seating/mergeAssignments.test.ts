@@ -58,4 +58,35 @@ describe("mergeAlgorithmAssignments", () => {
     expect(merged.find((a) => a.studentUserId === student1)?.deskItemId).toBe("d1");
     expect(merged.find((a) => a.studentUserId === student3)?.deskItemId).toBe("d2");
   });
+
+  test("ignores proposed assignments for students not in the movable set", () => {
+    const merged = mergeAlgorithmAssignments({
+      locked: [],
+      proposed: [{ deskItemId: "d1", groupId: groupA, studentUserId: student1 }],
+      movableStudentIds: new Set([student2]),
+    });
+    expect(merged).toEqual([]);
+  });
+
+  test("drops a proposed slot that is already locked", () => {
+    const merged = mergeAlgorithmAssignments({
+      locked: [{ deskItemId: "d1", groupId: groupA, studentUserId: student1 }],
+      proposed: [{ deskItemId: "d1", groupId: groupA, studentUserId: student2 }],
+      movableStudentIds: new Set([student2]),
+    });
+    expect(merged).toEqual([{ deskItemId: "d1", groupId: groupA, studentUserId: student1 }]);
+  });
+
+  test("drops duplicate proposed slots and students", () => {
+    const merged = mergeAlgorithmAssignments({
+      locked: [],
+      proposed: [
+        { deskItemId: "d1", groupId: groupA, studentUserId: student1 },
+        { deskItemId: "d1", groupId: groupA, studentUserId: student2 },
+        { deskItemId: "d2", groupId: groupA, studentUserId: student1 },
+      ],
+      movableStudentIds: new Set([student1, student2]),
+    });
+    expect(merged).toEqual([{ deskItemId: "d1", groupId: groupA, studentUserId: student1 }]);
+  });
 });

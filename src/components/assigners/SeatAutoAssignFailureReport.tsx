@@ -75,6 +75,7 @@ function structuralSummaryKey(cause: SeatingStructuralCause): string {
     manualConstraintConflict: "autoAssignReportSummary_manualConstraintConflict",
     parityLockedConflict: "autoAssignReportSummary_parityLockedConflict",
     constraintParityConflict: "autoAssignReportSummary_constraintParityConflict",
+    parityCapacityExceeded: "autoAssignReportSummary_parityCapacityExceeded",
   };
   return keys[cause];
 }
@@ -151,6 +152,22 @@ function WhatHappenedSection({
                 required: group.requiredCount,
                 available: group.availableSeats,
                 students: studentList(group.requiredStudentIds, studentName),
+              })}
+            </li>
+          ))}
+        </ul>
+      );
+    case "parityCapacityExceeded":
+      return (
+        <ul className="list-disc pl-5 flex flex-col gap-2">
+          {evidence.groups.map((group) => (
+            <li key={group.groupId}>
+              {t("autoAssignReportParityCapacityGroup", {
+                group: groupNameById.get(group.groupId) ?? t("autoAssignReportUnknownGroup"),
+                maleCount: group.maleCount,
+                femaleCount: group.femaleCount,
+                maleSeats: group.maleSeatCount,
+                femaleSeats: group.femaleSeatCount,
               })}
             </li>
           ))}
@@ -252,6 +269,8 @@ function WhySection({
       );
     case "capacityExceeded":
       return <p>{t("autoAssignReportWhyCapacity")}</p>;
+    case "parityCapacityExceeded":
+      return <p>{t("autoAssignReportWhyParityCapacity")}</p>;
     case "unavailableStudents":
       return <p>{t("autoAssignReportWhyUnavailableStudents")}</p>;
     case "searchExhausted":
@@ -334,6 +353,14 @@ function FixActions({
   if (evidence?.kind === "capacityExceeded" || evidence?.kind === "noValidSeat") {
     actions.push({
       key: "layout",
+      label: t("autoAssignReportFixEditLayout"),
+      to: "/class/$classId/assigners/seats/layouts/$layoutId",
+    });
+  }
+
+  if (evidence?.kind === "parityCapacityExceeded") {
+    actions.push({
+      key: "layout-parity",
       label: t("autoAssignReportFixEditLayout"),
       to: "/class/$classId/assigners/seats/layouts/$layoutId",
     });
@@ -430,6 +457,15 @@ export function SeatAutoAssignFailureReport({
   }, [board]);
 
   if (diagnosis.status === "satisfiable") return null;
+
+  if (failure.code === "SEATING_OUTPUT_VIOLATION") {
+    return (
+      <Alert>
+        <AlertTitle>{t("autoAssignOutputViolationTitle")}</AlertTitle>
+        <AlertDescription>{t("autoAssignOutputViolationHint")}</AlertDescription>
+      </Alert>
+    );
+  }
 
   const runContext = diagnosis.runContext;
   const evidence =

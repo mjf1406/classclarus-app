@@ -36,6 +36,7 @@ import type { SeatingStructuralCause } from "../../../convex/lib/seating/types";
 import type { Id } from "../../../convex/_generated/dataModel";
 
 function failureDescriptionKey(failure: AutoAssignFailureState | null): string {
+  if (failure?.code === "SEATING_OUTPUT_VIOLATION") return "autoAssignOutputViolation";
   const diagnosis = failure?.diagnosis;
   if (!diagnosis) return "autoAssignFailureGeneric";
   if (diagnosis.status === "unknown") {
@@ -53,6 +54,7 @@ function failureDescriptionKey(failure: AutoAssignFailureState | null): string {
       manualConstraintConflict: "autoAssignStructural_manualConstraintConflict",
       parityLockedConflict: "autoAssignStructural_parityLockedConflict",
       constraintParityConflict: "autoAssignStructural_constraintParityConflict",
+      parityCapacityExceeded: "autoAssignStructural_parityCapacityExceeded",
     };
     return keys[diagnosis.cause];
   }

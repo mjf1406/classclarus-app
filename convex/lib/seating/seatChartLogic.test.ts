@@ -1,6 +1,11 @@
 import { describe, expect, test } from "vitest";
 
-import { areDeskTeammates, sameGroupNeighborStudentIds } from "./seatChartLogic.js";
+import {
+  areDeskTeammates,
+  buildCombinationKey,
+  formatUnresolvedDeskTeamError,
+  sameGroupNeighborStudentIds,
+} from "./seatChartLogic.js";
 import type { Id } from "../../_generated/dataModel.js";
 import { slotKey } from "./seatChartGeometry.js";
 
@@ -80,5 +85,38 @@ describe("areDeskTeammates", () => {
     expect(
       areDeskTeammates(studentA, studentB, assignmentByStudent, teamKeyByDesk, groupIdByStudent),
     ).toBe(false);
+  });
+});
+
+describe("buildCombinationKey", () => {
+  test("canonicalizes neighbors independently of input order", () => {
+    const layoutId = "layout" as Id<"seatLayouts">;
+    const a = buildCombinationKey({
+      layoutId,
+      deskItemId: "d1",
+      zoneName: "Front",
+      teamKey: "name:Blue",
+      neighborStudentIds: [studentA, studentB],
+    });
+    const b = buildCombinationKey({
+      layoutId,
+      deskItemId: "d1",
+      zoneName: "Front",
+      teamKey: "name:Blue",
+      neighborStudentIds: [studentB, studentA],
+    });
+    expect(a).toBe(b);
+  });
+});
+
+describe("formatUnresolvedDeskTeamError", () => {
+  test("lists unique team labels", () => {
+    expect(
+      formatUnresolvedDeskTeamError([
+        { deskItemId: "d1", teamLabel: "Wolves", groupId: groupG1 },
+        { deskItemId: "d2", teamLabel: "Wolves", groupId: groupG1 },
+        { deskItemId: "d3", teamLabel: "Tigers", groupId: groupG1 },
+      ]),
+    ).toBe("Desk team names do not match any team: Tigers, Wolves");
   });
 });

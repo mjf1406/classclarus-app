@@ -102,7 +102,7 @@ export function AutoAssignSeatingDialogs({
       <SeatChartPrintHost
         classId={classId}
         chartId={printTarget?.chartId ?? null}
-        mode="layout"
+        mode="choose"
         open={printTarget !== null}
         onOpenChange={(nextOpen) => {
           if (!nextOpen) onDismissPrint();

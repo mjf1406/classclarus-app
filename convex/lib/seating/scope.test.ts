@@ -3,6 +3,7 @@ import { describe, expect, test } from "vitest";
 import type { Id } from "../../_generated/dataModel.js";
 import {
   groupIdsInScope,
+  inferDefaultScopeFromClassShape,
   inferSeatingScope,
   movableStudentIds,
   studentInSeatingScope,
@@ -85,5 +86,23 @@ describe("studentInSeatingScope", () => {
         { kind: "team", teamIds: [team1] },
       ),
     ).toBe(false);
+  });
+});
+
+describe("inferDefaultScopeFromClassShape", () => {
+  test("returns class scope for both single-group and multi-group memberships", () => {
+    expect(
+      inferDefaultScopeFromClassShape({
+        memberships: [{ studentUserId: s1, groupId: groupA }],
+      }),
+    ).toEqual({ kind: "class" });
+    expect(
+      inferDefaultScopeFromClassShape({
+        memberships: [
+          { studentUserId: s1, groupId: groupA },
+          { studentUserId: s2, groupId: groupB },
+        ],
+      }),
+    ).toEqual({ kind: "class" });
   });
 });

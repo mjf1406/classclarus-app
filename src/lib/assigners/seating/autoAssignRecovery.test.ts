@@ -1,7 +1,10 @@
 import { describe, expect, test } from "vite-plus/test";
 
 import type { Id } from "../../../../convex/_generated/dataModel";
-import { pruneSelectedRulesForConstraints } from "@/lib/assigners/seating/autoAssignRecovery";
+import {
+  pruneSelectedRulesForConstraints,
+  isSeatingOutputViolation,
+} from "@/lib/assigners/seating/autoAssignRecovery";
 import type { SeatingRelaxableRule } from "../../../../convex/lib/seating/types";
 
 describe("pruneSelectedRulesForConstraints", () => {
@@ -19,5 +22,12 @@ describe("pruneSelectedRulesForConstraints", () => {
       { kind: "constraint", constraintId: liveConstraintId },
       { kind: "genderParity" },
     ]);
+  });
+});
+
+describe("isSeatingOutputViolation", () => {
+  test("distinguishes solver output bugs from infeasible rules", () => {
+    expect(isSeatingOutputViolation("SEATING_OUTPUT_VIOLATION")).toBe(true);
+    expect(isSeatingOutputViolation("SEATING_INFEASIBLE")).toBe(false);
   });
 });

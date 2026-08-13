@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 
+import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { toast } from "@/components/ui/toast-manager";
 import { useCreateSeatChart } from "@/hooks/assigners/useCreateSeatChart";
@@ -18,9 +21,10 @@ import {
   type AutoAssignRunContext,
 } from "@/lib/assigners/seating/autoAssignRecovery";
 import { studentContextsForEvidence } from "@/lib/assigners/seating/failureStudentContext";
-import { runClientSeatingAlgorithm } from "@/lib/assigners/seating/runClientSeatingAlgorithm";
+import { runClientSeatingAlgorithmAsync } from "@/lib/assigners/seating/runClientSeatingAlgorithmAsync";
 import type { SeatChartAssignment, SeatChartViolation } from "@/lib/assigners/seatCharts";
 import { groupedStudentCount } from "@/lib/assigners/seatAssignmentScope";
+import { FIVE_MINUTES } from "@/lib/queryCache";
 import type { SeatingRelaxations } from "../../../convex/lib/seating/types";
 import type { SeatLayoutItemSnapshot } from "../../../convex/lib/seatChartGeometry";
 
@@ -43,6 +47,7 @@ export type AutoAssignPrintTarget = {
 
 export function useRunAutoAssignSeatingFlow(classId: Id<"classes">) {
   const { t } = useTranslation("assigners");
+  const queryClient = useQueryClient();
   const { data: board } = useGroupsBoard(classId);
   const { data: roster } = useStudentRoster(classId);
   const { data: constraints } = useSeatConstraints(classId);
@@ -56,6 +61,7 @@ export function useRunAutoAssignSeatingFlow(classId: Id<"classes">) {
   const [pendingRecord, setPendingRecord] = useState<AutoAssignPendingRecord | null>(null);
   const [printTarget, setPrintTarget] = useState<AutoAssignPrintTarget | null>(null);
   const [isRunning, setIsRunning] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [failureState, setFailureState] = useState<AutoAssignFailureState | null>(null);
   const [failureOpen, setFailureOpen] = useState(false);
 
@@ -69,6 +75,16 @@ export function useRunAutoAssignSeatingFlow(classId: Id<"classes">) {
     });
   }, [constraints]);
 
+  const prefetchChartForPrint = useCallback(
+    async (chartClassId: Id<"classes">, chartId: Id<"seatCharts">) => {
+      await queryClient.fetchQuery({
+        ...convexQuery(api.seatCharts.get, { classId: chartClassId, chartId }),
+        gcTime: FIVE_MINUTES,
+      });
+    },
+    [queryClient],
+  );
+
   const finalizeRecord = useCallback(
     async (pending: AutoAssignPendingRecord) => {
       const recordId = await record({
@@ -77,10 +93,11 @@ export function useRunAutoAssignSeatingFlow(classId: Id<"classes">) {
         assignments: pending.assignments,
       });
       await invalidateHistory(pending.classId, pending.layoutId);
+      await prefetchChartForPrint(pending.classId, pending.chartId);
       setPrintTarget({ chartId: pending.chartId, recordId });
       return recordId;
     },
-    [record, invalidateHistory],
+    [record, invalidateHistory, prefetchChartForPrint],
   );
 
   const executeAutoAssign = useCallback(
@@ -89,22 +106,27 @@ export function useRunAutoAssignSeatingFlow(classId: Id<"classes">) {
       relaxations?: SeatingRelaxations,
     ): Promise<AutoAssignPendingRecord | null> => {
       if (!board) {
+        setProgress(0);
         toast.add({ type: "error", title: t("autoAssignFailed") });
         return null;
       }
 
+      setProgress(10);
       const { layout, layoutAggregateRows } = await loadAlgorithmData(
         context.classId,
         context.layoutId,
       );
       if (!layout) {
+        setProgress(0);
         toast.add({ type: "error", title: t("autoAssignFailed") });
         return null;
       }
 
+      setProgress(20);
       const activeConstraints = await loadSeatConstraints(context.classId);
 
-      const algorithmResult = runClientSeatingAlgorithm({
+      setProgress(30);
+      const algorithmResult = await runClientSeatingAlgorithmAsync({
         layout: {
           _id: layout._id,
           items: layout.items as Array<SeatLayoutItemSnapshot>,
@@ -133,6 +155,7 @@ export function useRunAutoAssignSeatingFlow(classId: Id<"classes">) {
           rosterUserIds,
           solverStudentIds,
         );
+        setProgress(0);
         setFailureState({
           context,
           diagnosis,
@@ -146,6 +169,7 @@ export function useRunAutoAssignSeatingFlow(classId: Id<"classes">) {
 
       setFailureState(null);
       setFailureOpen(false);
+      setProgress(55);
 
       const assignments = algorithmResult.assignments;
       let chartId = context.targetChartId;
@@ -169,6 +193,7 @@ export function useRunAutoAssignSeatingFlow(classId: Id<"classes">) {
         });
       }
 
+      setProgress(70);
       const seatedCount = assignments.length;
       const unseatedCount = Math.max(0, groupedStudentCount(board) - seatedCount);
       const violations = await previewViolations({
@@ -176,6 +201,7 @@ export function useRunAutoAssignSeatingFlow(classId: Id<"classes">) {
         chartId,
         assignments,
       });
+      setProgress(80);
 
       const pending: AutoAssignPendingRecord = {
         classId: context.classId,
@@ -191,12 +217,15 @@ export function useRunAutoAssignSeatingFlow(classId: Id<"classes">) {
       };
 
       if (violations.length > 0) {
+        setProgress(0);
         setPendingRecord(pending);
         setRecordConfirmOpen(true);
         return pending;
       }
 
+      setProgress(90);
       await finalizeRecord(pending);
+      setProgress(100);
       return pending;
     },
     [
@@ -212,38 +241,39 @@ export function useRunAutoAssignSeatingFlow(classId: Id<"classes">) {
     ],
   );
 
-  const runAutoAssign = useCallback(
-    async (context: AutoAssignRunContext) => {
+  const runWithProgress = useCallback(
+    async (run: () => Promise<AutoAssignPendingRecord | null>) => {
       setIsRunning(true);
+      setProgress(5);
       try {
-        return await executeAutoAssign(context);
+        return await run();
+      } catch (error) {
+        setProgress(0);
+        throw error;
       } finally {
         setIsRunning(false);
       }
     },
-    [executeAutoAssign],
+    [],
+  );
+
+  const runAutoAssign = useCallback(
+    async (context: AutoAssignRunContext) => {
+      return await runWithProgress(() => executeAutoAssign(context));
+    },
+    [executeAutoAssign, runWithProgress],
   );
 
   const retryWithSelectedRules = useCallback(async () => {
     if (!failureState) return null;
     const relaxations = relaxationsFromSelectedRules(failureState.selectedRules);
-    setIsRunning(true);
-    try {
-      return await executeAutoAssign(failureState.context, relaxations);
-    } finally {
-      setIsRunning(false);
-    }
-  }, [failureState, executeAutoAssign]);
+    return await runWithProgress(() => executeAutoAssign(failureState.context, relaxations));
+  }, [failureState, executeAutoAssign, runWithProgress]);
 
   const retryUnchanged = useCallback(async () => {
     if (!failureState) return null;
-    setIsRunning(true);
-    try {
-      return await executeAutoAssign(failureState.context);
-    } finally {
-      setIsRunning(false);
-    }
-  }, [failureState, executeAutoAssign]);
+    return await runWithProgress(() => executeAutoAssign(failureState.context));
+  }, [failureState, executeAutoAssign, runWithProgress]);
 
   const updateFailureSelectedRules = useCallback(
     (rules: AutoAssignFailureState["selectedRules"]) => {
@@ -275,6 +305,7 @@ export function useRunAutoAssignSeatingFlow(classId: Id<"classes">) {
     updateFailureSelectedRules,
     dismissFailure,
     confirmPendingRecord,
+    progress,
     isRunning: isRunning || createChart.isPending || saveDraft.isPending,
     recordConfirmOpen,
     setRecordConfirmOpen,
@@ -286,3 +317,5 @@ export function useRunAutoAssignSeatingFlow(classId: Id<"classes">) {
     setFailureOpen,
   };
 }
+
+export type AutoAssignSeatingFlow = ReturnType<typeof useRunAutoAssignSeatingFlow>;

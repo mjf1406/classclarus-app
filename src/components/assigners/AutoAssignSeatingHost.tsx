@@ -3,7 +3,7 @@ import {
   SeatAutoAssignSetupCredenza,
   type SeatAutoAssignMode,
 } from "@/components/assigners/SeatAutoAssignSetupCredenza";
-import { useRunAutoAssignSeatingFlow } from "@/hooks/assigners/useRunAutoAssignSeatingFlow";
+import type { AutoAssignSeatingFlow } from "@/hooks/assigners/useRunAutoAssignSeatingFlow";
 import { runContextFromSetup } from "@/lib/assigners/seating/autoAssignRecovery";
 import type { SeatChartAssignment } from "@/lib/assigners/seatCharts";
 import type { SeatOrientation } from "@/lib/assigners/seatLayouts";
@@ -11,6 +11,7 @@ import type { Id } from "../../../convex/_generated/dataModel";
 
 type AutoAssignSeatingHostProps = {
   classId: Id<"classes">;
+  flow: AutoAssignSeatingFlow;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   mode?: SeatAutoAssignMode;
@@ -37,6 +38,7 @@ type AutoAssignSeatingHostProps = {
  */
 export function AutoAssignSeatingHost({
   classId,
+  flow,
   open,
   onOpenChange,
   mode = "create",
@@ -47,7 +49,6 @@ export function AutoAssignSeatingHost({
   onGenerated,
   currentOrientation,
 }: AutoAssignSeatingHostProps) {
-  const autoAssignFlow = useRunAutoAssignSeatingFlow(classId);
   const resolvedMode: SeatAutoAssignMode = targetChartId ? "update" : mode;
 
   return (
@@ -64,7 +65,7 @@ export function AutoAssignSeatingHost({
             targetChartId,
             lockedAssignments,
           });
-          const result = await autoAssignFlow.runAutoAssign(context);
+          const result = await flow.runAutoAssign(context);
           if (result) {
             onGenerated?.({
               chartId: result.chartId,
@@ -72,26 +73,26 @@ export function AutoAssignSeatingHost({
             });
           }
         }}
-        isRunning={autoAssignFlow.isRunning}
+        isRunning={flow.isRunning}
       />
       <AutoAssignSeatingDialogs
         classId={classId}
-        recordConfirmOpen={autoAssignFlow.recordConfirmOpen}
-        onRecordConfirmOpenChange={autoAssignFlow.setRecordConfirmOpen}
-        pendingRecord={autoAssignFlow.pendingRecord}
-        onConfirmRecord={autoAssignFlow.confirmPendingRecord}
-        printTarget={autoAssignFlow.printTarget}
-        onDismissPrint={autoAssignFlow.dismissPrint}
+        recordConfirmOpen={flow.recordConfirmOpen}
+        onRecordConfirmOpenChange={flow.setRecordConfirmOpen}
+        pendingRecord={flow.pendingRecord}
+        onConfirmRecord={flow.confirmPendingRecord}
+        printTarget={flow.printTarget}
+        onDismissPrint={flow.dismissPrint}
         currentOrientation={currentOrientation}
-        failureOpen={autoAssignFlow.failureOpen}
-        onFailureOpenChange={autoAssignFlow.setFailureOpen}
-        failureState={autoAssignFlow.failureState}
-        selectedFailureRules={autoAssignFlow.failureState?.selectedRules ?? []}
-        onSelectedFailureRulesChange={autoAssignFlow.updateFailureSelectedRules}
-        isAutoAssignRunning={autoAssignFlow.isRunning}
-        onRetryUnchanged={autoAssignFlow.retryUnchanged}
-        onGenerateWithExceptions={autoAssignFlow.retryWithSelectedRules}
-        onDismissFailure={autoAssignFlow.dismissFailure}
+        failureOpen={flow.failureOpen}
+        onFailureOpenChange={flow.setFailureOpen}
+        failureState={flow.failureState}
+        selectedFailureRules={flow.failureState?.selectedRules ?? []}
+        onSelectedFailureRulesChange={flow.updateFailureSelectedRules}
+        isAutoAssignRunning={flow.isRunning}
+        onRetryUnchanged={flow.retryUnchanged}
+        onGenerateWithExceptions={flow.retryWithSelectedRules}
+        onDismissFailure={flow.dismissFailure}
         onAutoAssignSucceeded={onGenerated}
       />
     </>

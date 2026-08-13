@@ -2350,8 +2350,7 @@ const uk = {
     seatsStatsLoadFailedDescription: "Спробуйте ще раз через мить.",
     seatsStatsStudentsEmptyTitle: "Немає учнів",
     seatsStatsStudentsEmptyDescription: "Ви не зачислені як учень у цьому класі.",
-    seatsDataDescription:
-      "Лічильники {{dimension}} на учня для схеми «{{layoutName}}» ({{count}} стовпців).",
+    seatsDataDescription: "Лічильники {{dimension}} на учня для схеми «{{layoutName}}».",
     seatsDataDescriptionFallback: "Записані лічильники місць на учня для схеми.",
     seatsDataEmptyStudents: "У цьому класі ще немає учнів.",
     seatsDataEmptyValues: "Для цього виміру ще немає записаної історії місць.",
@@ -2362,6 +2361,10 @@ const uk = {
     seatsDataDimensionZone: "Зони",
     seatsDataDimensionTeam: "Команди",
     seatsDataDimensionNeighbor: "Сусіди",
+    seatsDataItemColumn: "Елемент",
+    seatsDataQuantityColumn: "Кількість",
+    seatsDataCardEmpty: "Для цього виміру ще немає записаної історії.",
+    seatsDataConstraintsTitle: "Обмеження ({{count}})",
     seatsDataLoadFailed: "Не вдалося завантажити дані про місця.",
     seatsDataLoadFailedDescription: "Спробуйте ще раз за мить.",
     layoutGenderParityLabel: "Гендерна парність",
@@ -2391,6 +2394,11 @@ const uk = {
     autoAssignFailureUnknownTitle: "Точний конфлікт не визначено",
     autoAssignFailureUnknownHint:
       "Розв'язувач не зміг довести, які правила конфліктують. Це можливо у великих класах. Спробуйте ще раз або перевірте правила та схему вручну.",
+    autoAssignOutputViolation:
+      "Авторозсадка створила неприпустиму схему. Це внутрішня помилка, а не конфлікт правил. Спробуйте ще раз або розсадіть вручну.",
+    autoAssignOutputViolationTitle: "Згенеровану схему відхилено",
+    autoAssignOutputViolationHint:
+      "Схема не пройшла перевірку після генерації. Збережені правила ні при чому. Повторіть авторозсадку або розсадіть вручну.",
     autoAssignFailureConflictSetTitle: "Конфліктуючі правила",
     autoAssignFailureConflictSetHint:
       "Це мінімальний набір правил, які не можна виконати одночасно. Можливі інші конфліктуючі набори.",
@@ -2421,6 +2429,8 @@ const uk = {
       "A locked seat conflicts with odd/even gender parity for that desk.",
     autoAssignStructural_constraintParityConflict:
       "The seating rules and odd/even parity cannot all be satisfied together.",
+    autoAssignStructural_parityCapacityExceeded:
+      "Учнів однієї статі більше, ніж непарних або парних парт за поточною парністю.",
     autoAssignReportSummaryTitle: "Summary",
     autoAssignReportNoNamedStudents: "affected students",
     autoAssignReportSummary_unavailableSeat:
@@ -2438,6 +2448,8 @@ const uk = {
     autoAssignReportSummary_parityLockedConflict:
       "Locked seats conflict with gender parity for {{students}}.",
     autoAssignReportSummary_constraintParityConflict: "Rules and parity conflict for {{students}}.",
+    autoAssignReportSummary_parityCapacityExceeded:
+      "Парність за статтю не дає достатньо відповідних парт для {{students}}.",
     autoAssignReportWhatTitle: "What happened",
     autoAssignReportWhyTitle: "Why",
     autoAssignReportSettingsTitle: "Current settings",
@@ -2452,6 +2464,8 @@ const uk = {
     autoAssignReportRole_other: "other student",
     autoAssignReportCapacityGroup:
       "Group “{{group}}” needs {{required}} required seats but only {{available}} are available ({{students}}).",
+    autoAssignReportParityCapacityGroup:
+      "У групі «{{group}}» {{maleCount}} хлопців і {{femaleCount}} дівчат, але лише {{maleSeats}} чоловічих і {{femaleSeats}} жіночих місць за парністю.",
     autoAssignReportUnknownGroup: "Unknown group",
     autoAssignReportNoValidSeatStudent:
       "{{student}} in {{group}} has {{candidates}} of {{total}} seats left after rule filtering.",
@@ -2477,6 +2491,8 @@ const uk = {
       "Locked students must sit on desks matching parity ({{direction}}).",
     autoAssignReportWhyConstraintParity:
       "No assignment satisfies all required rules with parity set to {{direction}}.",
+    autoAssignReportWhyParityCapacity:
+      "Парність резервує пронумеровані парти за статтю. Зайвих учнів однієї статі не посадити, поки парність не вимкнено або розстановку не змінено.",
     autoAssignReportWhyGeneric: "The current rules and layout cannot all be satisfied.",
     autoAssignReportParityMalesOdd: "males on odd desks",
     autoAssignReportParityMalesEven: "males on even desks",
@@ -2716,6 +2732,13 @@ const uk = {
     printPerPageOption: "{{count}} на сторінці",
     printExportAction: "Експорт",
     printSelectNone: "Виберіть принаймні одну перспективу.",
+    printOptionsTitleChart: "Друк розсадки",
+    printOptionsDescriptionChart:
+      "Оберіть схему, таблицю або обидва варіанти. Ракурси стосуються схеми.",
+    printOutputLabel: "Що друкувати",
+    printOutputLayout: "Схема",
+    printOutputTable: "Таблиця",
+    printSelectNoneOutput: "Оберіть схему, таблицю або обидва варіанти.",
     addTeacherDesk: "Стіл учителя",
     addBoard: "Дошка",
     addDesk: "Парта учня",

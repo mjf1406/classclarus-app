@@ -10,6 +10,8 @@ export function seatLayoutQueryKey(classId: Id<"classes">, layoutId: Id<"seatLay
 }
 
 /** gcTime: 5 minutes — reactive via Convex; moderate cache after unmount. */
-export function useSeatLayout(classId: Id<"classes">, layoutId: Id<"seatLayouts">) {
-  return useAuthedQuery(api.seatLayouts.get, { classId, layoutId }, { gcTime: FIVE_MINUTES });
+export function useSeatLayout(classId: Id<"classes">, layoutId: Id<"seatLayouts"> | undefined) {
+  return useAuthedQuery(api.seatLayouts.get, layoutId ? { classId, layoutId } : "skip", {
+    gcTime: FIVE_MINUTES,
+  });
 }
