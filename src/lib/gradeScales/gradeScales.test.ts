@@ -7,12 +7,24 @@ import {
 import { SYSTEM_GRADE_SCALE_SEEDS } from "../../../convex/lib/gradeScales/defaults.js";
 
 describe("normalizeGradeScaleLevels", () => {
+  test("seeds only letter grades and standard levels", () => {
+    expect(SYSTEM_GRADE_SCALE_SEEDS.map((entry) => entry.systemKey)).toEqual([
+      "standard",
+      "letterGrades",
+    ]);
+  });
+
   test("accepts standard scale bands", () => {
     const seed = SYSTEM_GRADE_SCALE_SEEDS.find((entry) => entry.systemKey === "standard");
     expect(seed).toBeDefined();
     const levels = normalizeGradeScaleLevels(seed!.levels);
-    expect(levels[0]?.minPercent).toBe(90);
-    expect(levels[levels.length - 1]?.minPercent).toBe(0);
+    expect(levels).toEqual([
+      { key: "5", label: "5", minPercent: 90, maxPercent: 100 },
+      { key: "4", label: "4", minPercent: 80, maxPercent: 89 },
+      { key: "3", label: "3", minPercent: 70, maxPercent: 79 },
+      { key: "2", label: "2", minPercent: 60, maxPercent: 69 },
+      { key: "1", label: "1", minPercent: 0, maxPercent: 59 },
+    ]);
   });
 
   test("rejects gaps between bands", () => {
@@ -42,6 +54,8 @@ describe("resolveGradeLabel", () => {
     expect(resolveGradeLabel(standard, 89)).toBe("4");
     expect(resolveGradeLabel(standard, 89.99)).toBe("4");
     expect(resolveGradeLabel(standard, 90)).toBe("5");
+    expect(resolveGradeLabel(standard, 60)).toBe("2");
+    expect(resolveGradeLabel(standard, 59)).toBe("1");
   });
 
   test("maps letter grades A through F", () => {

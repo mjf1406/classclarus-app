@@ -24,6 +24,7 @@ describe("joinCodeFormSchema", () => {
   test("maps TTL options and rejects out-of-range uses", () => {
     expect(ttlMsForOption("15m")).toBe(15 * 60 * 1000);
     expect(ttlMsForOption("1d")).toBe(24 * 60 * 60 * 1000);
+    expect(ttlMsForOption("3d")).toBe(3 * 24 * 60 * 60 * 1000);
 
     const valid = createJoinCodeFormSchema.parse({
       role: "student",
@@ -33,6 +34,15 @@ describe("joinCodeFormSchema", () => {
       usesCustom: "",
     });
     expect(valid).toEqual({ role: "student", ttlMs: 60 * 60 * 1000, maxUses: 5 });
+
+    const threeDay = createJoinCodeFormSchema.parse({
+      role: "student",
+      ttlOption: "3d",
+      usesMode: "preset",
+      usesPreset: "1",
+      usesCustom: "",
+    });
+    expect(threeDay.ttlMs).toBe(3 * 24 * 60 * 60 * 1000);
 
     const custom = createJoinCodeFormSchema.parse({
       role: "guardian",

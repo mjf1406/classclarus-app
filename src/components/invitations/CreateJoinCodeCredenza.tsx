@@ -15,7 +15,7 @@ import {
   CredenzaTitle,
 } from "@/components/ui/credenza";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import {
   Select,
   SelectContent,
@@ -28,6 +28,8 @@ import {
   createJoinCodeFormSchema,
   JOIN_CODE_TTL_OPTIONS,
   JOIN_CODE_USE_PRESETS,
+  MAX_JOIN_CODE_USES,
+  MIN_JOIN_CODE_USES,
   type CreateJoinCodeFormValues,
   type JoinCodeTtlOption,
 } from "@/lib/invitations/joinCodeFormSchema";
@@ -71,6 +73,10 @@ function ttlLabelKey(option: JoinCodeTtlOption): string {
       return "inviteTtl12h";
     case "1d":
       return "inviteTtl1d";
+    case "2d":
+      return "inviteTtl2d";
+    case "3d":
+      return "inviteTtl3d";
   }
 }
 
@@ -261,6 +267,10 @@ export function CreateJoinCodeCredenza({
                           const error = mode === "custom" ? customError : presetError;
                           const usesLabel =
                             mode === "custom" ? t("inviteUsesCustom") : usesPresetField.state.value;
+                          const parsedCustomUses = Number(usesCustomField.state.value);
+                          const customUsesValue = Number.isFinite(parsedCustomUses)
+                            ? parsedCustomUses
+                            : null;
                           return (
                             <Field data-invalid={error ? true : undefined}>
                               <FieldLabel htmlFor="invite-uses">
@@ -273,6 +283,9 @@ export function CreateJoinCodeCredenza({
                                   if (next == null) return;
                                   if (next === "custom") {
                                     usesModeField.handleChange("custom");
+                                    if (usesCustomField.state.value.trim() === "") {
+                                      usesCustomField.handleChange(usesPresetField.state.value);
+                                    }
                                     focusUsesCustomAfterCloseRef.current = true;
                                     return;
                                   }
@@ -305,20 +318,17 @@ export function CreateJoinCodeCredenza({
                               </Select>
                               {mode === "custom" ? (
                                 <>
-                                  <Input
+                                  <NumberInput
                                     ref={usesCustomInputRef}
                                     id="invite-uses-custom"
-                                    type="number"
-                                    inputMode="numeric"
-                                    min={1}
-                                    max={100}
-                                    value={usesCustomField.state.value}
+                                    min={MIN_JOIN_CODE_USES}
+                                    max={MAX_JOIN_CODE_USES}
+                                    value={customUsesValue}
                                     onBlur={usesCustomField.handleBlur}
-                                    onChange={(event) =>
-                                      usesCustomField.handleChange(event.target.value)
+                                    onValueChange={(next) =>
+                                      usesCustomField.handleChange(String(next))
                                     }
                                     aria-invalid={customError ? true : undefined}
-                                    placeholder={t("inviteUsesCustomPlaceholder")}
                                     className="mt-2"
                                   />
                                   <FieldDescription>{t("inviteUsesCustomHint")}</FieldDescription>

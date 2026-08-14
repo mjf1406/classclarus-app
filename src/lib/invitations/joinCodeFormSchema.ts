@@ -10,7 +10,7 @@ import type { ClassPermission } from "@/lib/permissions/classPermissions";
 export const JOIN_CODE_LENGTH = 6;
 export const MIN_JOIN_CODE_USES = 1;
 export const MAX_JOIN_CODE_USES = 100;
-export const MAX_JOIN_CODE_TTL_MS = 24 * 60 * 60 * 1000;
+export const MAX_JOIN_CODE_TTL_MS = 3 * 24 * 60 * 60 * 1000;
 
 export const JOIN_CODE_TTL_OPTIONS = [
   { value: "15m", ttlMs: 15 * 60 * 1000 },
@@ -18,6 +18,8 @@ export const JOIN_CODE_TTL_OPTIONS = [
   { value: "6h", ttlMs: 6 * 60 * 60 * 1000 },
   { value: "12h", ttlMs: 12 * 60 * 60 * 1000 },
   { value: "1d", ttlMs: 24 * 60 * 60 * 1000 },
+  { value: "2d", ttlMs: 2 * 24 * 60 * 60 * 1000 },
+  { value: "3d", ttlMs: 3 * 24 * 60 * 60 * 1000 },
 ] as const;
 
 export type JoinCodeTtlOption = (typeof JOIN_CODE_TTL_OPTIONS)[number]["value"];
@@ -62,6 +64,8 @@ export const createJoinCodeFormSchema = z
       "6h",
       "12h",
       "1d",
+      "2d",
+      "3d",
     ] as const satisfies ReadonlyArray<JoinCodeTtlOption>),
     usesMode: z.enum(["preset", "custom"]),
     usesPreset: z.string(),

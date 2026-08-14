@@ -10,35 +10,13 @@ export type SystemGradeScaleSeed = {
   levels: GradeScaleLevel[];
 };
 
+/** Keys still listed and seeded for every class. Legacy keys remain valid on existing docs. */
 export const GRADE_SCALE_SYSTEM_KEYS: readonly GradeScaleSystemKey[] = [
-  "highRange",
-  "perfectScore",
   "standard",
   "letterGrades",
 ] as const;
 
 export const SYSTEM_GRADE_SCALE_SEEDS: readonly SystemGradeScaleSeed[] = [
-  {
-    systemKey: "highRange",
-    nameKey: "defaultScale_highRange",
-    levels: [
-      { key: "5", label: "5", minPercent: 95, maxPercent: 100 },
-      { key: "4", label: "4", minPercent: 80, maxPercent: 94 },
-      { key: "3", label: "3", minPercent: 70, maxPercent: 79 },
-      { key: "2", label: "2", minPercent: 0, maxPercent: 69 },
-    ],
-  },
-  {
-    systemKey: "perfectScore",
-    nameKey: "defaultScale_perfectScore",
-    levels: [
-      { key: "5", label: "5", minPercent: 100, maxPercent: 100 },
-      { key: "4", label: "4", minPercent: 80, maxPercent: 99 },
-      { key: "3", label: "3", minPercent: 70, maxPercent: 79 },
-      { key: "2", label: "2", minPercent: 60, maxPercent: 69 },
-      { key: "1", label: "1", minPercent: 0, maxPercent: 59 },
-    ],
-  },
   {
     systemKey: "standard",
     nameKey: "defaultScale_standard",
@@ -46,7 +24,8 @@ export const SYSTEM_GRADE_SCALE_SEEDS: readonly SystemGradeScaleSeed[] = [
       { key: "5", label: "5", minPercent: 90, maxPercent: 100 },
       { key: "4", label: "4", minPercent: 80, maxPercent: 89 },
       { key: "3", label: "3", minPercent: 70, maxPercent: 79 },
-      { key: "2", label: "2", minPercent: 0, maxPercent: 69 },
+      { key: "2", label: "2", minPercent: 60, maxPercent: 69 },
+      { key: "1", label: "1", minPercent: 0, maxPercent: 59 },
     ],
   },
   {

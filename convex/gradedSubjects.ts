@@ -63,7 +63,7 @@ async function loadHiddenSystemKeys(
   ctx: QueryCtx | MutationCtx,
   classId: Id<"classes">,
 ): Promise<Set<GradeScaleSystemKey>> {
-  // eslint-disable-next-line @convex-dev/no-collect-in-query -- bounded to 4 system keys per class
+  // eslint-disable-next-line @convex-dev/no-collect-in-query -- bounded to 2 system keys per class
   const rows = await ctx.db
     .query("gradeScaleHiddenDefaults")
     .withIndex("by_classId", (q) => q.eq("classId", classId))

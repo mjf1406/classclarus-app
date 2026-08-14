@@ -9,6 +9,7 @@ import { authedMutation, classMutation, classQuery } from "./lib/customFunctions
 import {
   GRADE_SCALE_SYSTEM_KEYS,
   SYSTEM_GRADE_SCALE_SEEDS,
+  type GradeScaleLevel,
   type GradeScaleSystemKey,
 } from "./lib/gradeScales/defaults.js";
 import {
@@ -56,6 +57,23 @@ function isSystemScale(doc: Doc<"gradeScales">): boolean {
   return doc.systemKey !== undefined && doc.classId === undefined;
 }
 
+function gradeScaleLevelsMatch(
+  existing: GradeScaleLevel[],
+  seeded: readonly GradeScaleLevel[],
+): boolean {
+  if (existing.length !== seeded.length) return false;
+  return existing.every((level, index) => {
+    const seed = seeded[index];
+    return (
+      seed !== undefined &&
+      level.key === seed.key &&
+      level.label === seed.label &&
+      level.minPercent === seed.minPercent &&
+      level.maxPercent === seed.maxPercent
+    );
+  });
+}
+
 function toListItem(doc: Doc<"gradeScales">, isHidden: boolean) {
   return {
     _id: doc._id,
@@ -76,7 +94,7 @@ async function loadHiddenSystemKeys(
   ctx: QueryCtx | MutationCtx,
   classId: Id<"classes">,
 ): Promise<Set<GradeScaleSystemKey>> {
-  // eslint-disable-next-line @convex-dev/no-collect-in-query -- bounded to 3 system keys per class
+  // eslint-disable-next-line @convex-dev/no-collect-in-query -- bounded to 2 system keys per class
   const rows = await ctx.db
     .query("gradeScaleHiddenDefaults")
     .withIndex("by_classId", (q) => q.eq("classId", classId))
@@ -143,7 +161,19 @@ export const ensureSystemDefaultsInternal = internalMutation({
         .query("gradeScales")
         .withIndex("by_systemKey", (q) => q.eq("systemKey", seed.systemKey))
         .unique();
-      if (existing) continue;
+      if (existing) {
+        if (
+          !gradeScaleLevelsMatch(existing.levels, seed.levels) ||
+          existing.nameKey !== seed.nameKey
+        ) {
+          await ctx.db.patch("gradeScales", existing._id, {
+            nameKey: seed.nameKey,
+            levels: seed.levels,
+            updatedAt: now,
+          });
+        }
+        continue;
+      }
       await ctx.db.insert("gradeScales", {
         systemKey: seed.systemKey,
         nameKey: seed.nameKey,

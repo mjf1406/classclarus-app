@@ -19,7 +19,7 @@ import { internal } from "./_generated/api.js";
 import { ConvexError, v } from "convex/values";
 
 const CODE_LENGTH = 6;
-const MAX_TTL_MS = 24 * 60 * 60 * 1000;
+const MAX_TTL_MS = 3 * 24 * 60 * 60 * 1000;
 const MIN_USES = 1;
 const MAX_USES = 100;
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -64,7 +64,7 @@ function normalizeMaxUses(maxUses: number): number {
 
 function normalizeTtlMs(ttlMs: number): number {
   if (!Number.isFinite(ttlMs) || ttlMs <= 0 || ttlMs > MAX_TTL_MS) {
-    throw new Error("Expiry must be between 1 second and 24 hours");
+    throw new Error("Expiry must be between 1 second and 3 days");
   }
   return ttlMs;
 }
