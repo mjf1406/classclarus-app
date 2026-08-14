@@ -21,6 +21,12 @@ export const STORAGE_KEYS = {
   pointsCatalogView: appStorageKey("points-catalog-view"),
 } as const;
 
+/** Shared language preference across classclarus.com subdomains (localStorage is origin-scoped). */
+export const LANGUAGE_PREFERENCE = {
+  parentDomain: ".classclarus.com",
+  maxAgeSeconds: 60 * 60 * 24 * 365,
+} as const;
+
 /** localStorage: per-class expectations grid/table view. */
 export function expectationsViewModeStorageKey(classId: string): string {
   return appStorageKey(`expectations-view-mode:${classId}`);
