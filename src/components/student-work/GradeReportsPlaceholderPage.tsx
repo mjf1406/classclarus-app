@@ -17,7 +17,7 @@ export function GradeReportsPlaceholderPage({ classId }: GradeReportsPlaceholder
       tab="reports"
       description={t("reportsPlaceholderDescription")}
     >
-      <Empty className="border border-dashed">
+      <Empty card>
         <EmptyHeader>
           <EmptyTitle>{t("reportsPlaceholderTitle")}</EmptyTitle>
           <EmptyDescription>{t("reportsPlaceholderDescription")}</EmptyDescription>

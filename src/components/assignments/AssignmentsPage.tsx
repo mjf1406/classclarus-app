@@ -112,7 +112,7 @@ export function AssignmentsPage({ classId }: AssignmentsPageProps) {
       ) : null}
 
       {!isPending && !isError && data && data.length === 0 ? (
-        <Empty className="border border-dashed">
+        <Empty card>
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <ClipboardList />
@@ -141,7 +141,7 @@ export function AssignmentsPage({ classId }: AssignmentsPageProps) {
       ) : null}
 
       {!isPending && !isError && data && data.length > 0 && filteredSorted.length === 0 ? (
-        <Empty className="border border-dashed">
+        <Empty card>
           <EmptyHeader>
             <EmptyTitle>{t("searchEmptyTitle")}</EmptyTitle>
             <EmptyDescription>{t("searchEmptyDescription")}</EmptyDescription>

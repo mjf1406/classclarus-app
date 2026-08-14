@@ -348,7 +348,7 @@ function StaffPointsPage({ classId }: PointsPageProps) {
       ) : null}
 
       {!isPending && !isError && sorted.length === 0 ? (
-        <Empty className="border border-dashed">
+        <Empty card>
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <UsersIcon />

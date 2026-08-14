@@ -199,7 +199,7 @@ function StaffAttendancePage({ classId }: AttendancePageProps) {
       ) : null}
 
       {!isPending && !isError && filtered.length === 0 ? (
-        <Empty className="border border-dashed">
+        <Empty card>
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <UsersIcon />

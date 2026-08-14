@@ -96,7 +96,7 @@ export function PersonalExpectationsPage({ classId }: PersonalExpectationsPagePr
       ) : null}
 
       {!isPending && !isError && students.length === 0 ? (
-        <Empty className="border border-dashed">
+        <Empty card>
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <UsersIcon />
@@ -125,7 +125,7 @@ export function PersonalExpectationsPage({ classId }: PersonalExpectationsPagePr
           ) : null}
 
           {expectations.length === 0 ? (
-            <Empty className="border border-dashed">
+            <Empty card>
               <EmptyHeader>
                 <EmptyMedia variant="icon">
                   <Target />

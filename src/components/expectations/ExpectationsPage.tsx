@@ -180,7 +180,7 @@ function StaffExpectationsPage({ classId }: ExpectationsPageProps) {
       ) : null}
 
       {!pagePending && !isError && data && data.length === 0 ? (
-        <Empty className="border border-dashed">
+        <Empty card>
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <Target />
@@ -202,7 +202,7 @@ function StaffExpectationsPage({ classId }: ExpectationsPageProps) {
       ) : null}
 
       {!pagePending && !isError && data && data.length > 0 && filtered.length === 0 ? (
-        <Empty className="border border-dashed">
+        <Empty card>
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <Target />
@@ -237,7 +237,7 @@ function StaffExpectationsPage({ classId }: ExpectationsPageProps) {
         <div className="flex flex-col gap-4">
           <GroupTeamFilterButtons classId={classId} />
           {filteredStudents.length === 0 ? (
-            <Empty className="border border-dashed">
+            <Empty card>
               <EmptyHeader>
                 <EmptyMedia variant="icon">
                   <Target />

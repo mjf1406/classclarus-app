@@ -183,7 +183,7 @@ export function EquitableAssignersPage({ classId }: EquitableAssignersPageProps)
       ) : null}
 
       {!isPending && !isError && data && data.length === 0 ? (
-        <Empty className="border border-dashed">
+        <Empty card>
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <Scale />

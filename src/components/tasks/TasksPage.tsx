@@ -106,7 +106,7 @@ export function TasksPage({ classId }: TasksPageProps) {
       ) : null}
 
       {!isPending && !isError && data && data.length === 0 ? (
-        <Empty className="border border-dashed">
+        <Empty card>
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <ListTodo />
@@ -128,7 +128,7 @@ export function TasksPage({ classId }: TasksPageProps) {
       ) : null}
 
       {!isPending && !isError && data && data.length > 0 && filteredSorted.length === 0 ? (
-        <Empty className="border border-dashed">
+        <Empty card>
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <ListTodo />

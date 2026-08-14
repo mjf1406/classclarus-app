@@ -203,7 +203,7 @@ function StaffExpectationDetailPage({ classId, expectationId }: ExpectationDetai
       <GroupTeamFilterButtons classId={classId} />
 
       {filtered.length === 0 ? (
-        <Empty className="border border-dashed">
+        <Empty card>
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <Target />

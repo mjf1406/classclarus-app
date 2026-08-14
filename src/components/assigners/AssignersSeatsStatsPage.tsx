@@ -263,7 +263,7 @@ export function AssignersSeatsStatsPage({ classId }: AssignersSeatsStatsPageProp
       ) : null}
 
       {!studentsQuery.isPending && !studentsQuery.isError && students.length === 0 ? (
-        <Empty className="border border-dashed">
+        <Empty card>
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <Armchair />
@@ -310,7 +310,7 @@ export function AssignersSeatsStatsPage({ classId }: AssignersSeatsStatsPageProp
           !statsQuery.isError &&
           !statsQuery.data?.current &&
           statsQuery.data ? (
-            <Empty className="border border-dashed">
+            <Empty card>
               <EmptyHeader>
                 <EmptyTitle>{t("seatsStatsNoRecordingTitle")}</EmptyTitle>
                 <EmptyDescription>{t("seatsStatsNoRecordingDescription")}</EmptyDescription>

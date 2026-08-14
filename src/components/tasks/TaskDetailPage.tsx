@@ -303,7 +303,7 @@ function StaffTaskDetailPage({ classId, taskId }: TaskDetailPageProps) {
       <GroupTeamFilterButtons classId={classId} />
 
       {filtered.length === 0 ? (
-        <Empty className="border border-dashed">
+        <Empty card>
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <ListTodo />
@@ -521,7 +521,7 @@ function PersonalTaskDetailContent({
       </div>
 
       {task.students.length === 0 ? (
-        <Empty className="border border-dashed">
+        <Empty card>
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <ListTodo />

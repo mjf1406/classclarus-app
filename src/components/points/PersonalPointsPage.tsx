@@ -323,7 +323,7 @@ export function PersonalPointsPage({ classId }: PersonalPointsPageProps) {
       ) : null}
 
       {!isPending && !isError && students.length === 0 ? (
-        <Empty className="border border-dashed">
+        <Empty card>
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <UsersIcon />

@@ -304,7 +304,7 @@ export function PersonalAttendancePage({ classId }: PersonalAttendancePageProps)
       ) : null}
 
       {!isPending && !isError && students.length === 0 ? (
-        <Empty className="border border-dashed">
+        <Empty card>
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <UsersIcon />

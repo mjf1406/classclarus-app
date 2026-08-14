@@ -792,7 +792,7 @@ function StaffAssignmentDetailPage({ classId, assignmentId }: AssignmentDetailPa
         </h2>
         <GroupTeamFilterButtons classId={classId} />
         {filtered.length === 0 ? (
-          <Empty className="border border-dashed">
+          <Empty card>
             <EmptyHeader>
               <EmptyMedia variant="icon">
                 <ClipboardList />
@@ -991,7 +991,7 @@ function PersonalAssignmentDetailPage({ classId, assignmentId }: AssignmentDetai
     return (
       <div className="flex w-full flex-col gap-4 px-4 py-8 sm:px-8">
         <AssignmentDetailBackLink classId={classId} />
-        <Empty className="border border-dashed">
+        <Empty card>
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <ClipboardList />
@@ -1009,7 +1009,7 @@ function PersonalAssignmentDetailPage({ classId, assignmentId }: AssignmentDetai
       <div className="flex w-full flex-col gap-4 px-4 py-8 sm:px-8">
         <AssignmentDetailBackLink classId={classId} />
         <AssignmentMeta assignment={assignment} />
-        <Empty className="border border-dashed">
+        <Empty card>
           <EmptyHeader>
             <EmptyTitle>{t("personalStudentsEmptyTitle")}</EmptyTitle>
             <EmptyDescription>{t("personalStudentsEmptyDescription")}</EmptyDescription>

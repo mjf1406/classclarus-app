@@ -408,7 +408,7 @@ export function RewardsPage({ classId }: RewardsPageProps) {
       ) : null}
 
       {!isPending && !isError && isEmpty ? (
-        <Empty>
+        <Empty card>
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <Gift />
@@ -427,7 +427,7 @@ export function RewardsPage({ classId }: RewardsPageProps) {
       ) : null}
 
       {!isPending && !isError && searchEmpty ? (
-        <Empty>
+        <Empty card>
           <EmptyHeader>
             <EmptyTitle>{t("searchEmptyTitle")}</EmptyTitle>
             <EmptyDescription>{t("searchEmptyDescription")}</EmptyDescription>

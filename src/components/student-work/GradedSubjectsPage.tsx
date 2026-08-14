@@ -86,7 +86,7 @@ export function GradedSubjectsPage({ classId }: GradedSubjectsPageProps) {
       ) : null}
 
       {!isPending && !isError && data && data.length === 0 ? (
-        <Empty className="border border-dashed">
+        <Empty card>
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <BookOpen />

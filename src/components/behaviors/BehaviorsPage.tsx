@@ -394,7 +394,7 @@ export function BehaviorsPage({ classId }: BehaviorsPageProps) {
       ) : null}
 
       {!isPending && !isError && isEmpty ? (
-        <Empty>
+        <Empty card>
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <SmilePlus />
@@ -413,7 +413,7 @@ export function BehaviorsPage({ classId }: BehaviorsPageProps) {
       ) : null}
 
       {!isPending && !isError && searchEmpty ? (
-        <Empty>
+        <Empty card>
           <EmptyHeader>
             <EmptyTitle>{t("searchEmptyTitle")}</EmptyTitle>
             <EmptyDescription>{t("searchEmptyDescription")}</EmptyDescription>

@@ -306,7 +306,7 @@ export function AssignmentProcedureTasksPage({
       <GroupTeamFilterButtons classId={classId} />
 
       {data.steps.length === 0 ? (
-        <Empty className="border border-dashed">
+        <Empty card>
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <ListTodo />
@@ -316,7 +316,7 @@ export function AssignmentProcedureTasksPage({
           </EmptyHeader>
         </Empty>
       ) : filtered.length === 0 ? (
-        <Empty className="border border-dashed">
+        <Empty card>
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <ListTodo />

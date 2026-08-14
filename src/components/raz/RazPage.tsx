@@ -638,7 +638,7 @@ function StaffRazPage({ classId }: RazPageProps) {
       {!canReadStudents ? (
         <p className="text-sm text-muted-foreground">{tCommon("unauthorizedDescription")}</p>
       ) : students.length === 0 ? (
-        <Empty className="max-w-xl border border-dashed">
+        <Empty card>
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <BookOpen />
@@ -721,7 +721,7 @@ function StaffRazPage({ classId }: RazPageProps) {
           </ToggleGroup>
 
           {showNoMatches ? (
-            <Empty className="max-w-xl border border-dashed">
+            <Empty card>
               <EmptyHeader>
                 <EmptyMedia variant="icon">
                   <SearchIcon />

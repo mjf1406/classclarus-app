@@ -210,7 +210,7 @@ export function RazInitialLevelsPage({ classId }: RazInitialLevelsPageProps) {
       </div>
 
       {students.length === 0 ? (
-        <Empty className="border border-dashed">
+        <Empty card>
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <BookOpen />

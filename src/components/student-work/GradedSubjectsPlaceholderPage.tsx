@@ -17,7 +17,7 @@ export function GradedSubjectsPlaceholderPage({ classId }: GradedSubjectsPlaceho
       tab="subjects"
       description={t("subjectsPlaceholderDescription")}
     >
-      <Empty className="border border-dashed">
+      <Empty card>
         <EmptyHeader>
           <EmptyTitle>{t("subjectsPlaceholderTitle")}</EmptyTitle>
           <EmptyDescription>{t("subjectsPlaceholderDescription")}</EmptyDescription>

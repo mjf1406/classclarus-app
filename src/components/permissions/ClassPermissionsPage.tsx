@@ -111,7 +111,7 @@ export function ClassPermissionsPage({ classId }: ClassPermissionsPageProps) {
         />
       ) : null}
       {showEmptyStaff ? (
-        <Empty className="max-w-3xl border">
+        <Empty card className="max-w-3xl">
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <KeyRoundIcon />

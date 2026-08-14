@@ -134,7 +134,7 @@ export function AssignersSeatsConstraintsPage({
           }}
         />
       ) : !data?.length ? (
-        <Empty className="border border-dashed">
+        <Empty card>
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <ListChecks />

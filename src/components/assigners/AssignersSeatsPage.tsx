@@ -155,7 +155,7 @@ export function AssignersSeatsPage({ classId }: AssignersSeatsPageProps) {
       ) : null}
 
       {!isPending && !isError && data && data.length === 0 ? (
-        <Empty className="border border-dashed">
+        <Empty card>
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <RockingChair />

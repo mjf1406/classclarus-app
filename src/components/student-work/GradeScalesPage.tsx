@@ -122,7 +122,7 @@ export function GradeScalesPage({ classId }: GradeScalesPageProps) {
       ) : null}
 
       {!isPending && !isError && data && data.length === 0 ? (
-        <Empty className="border border-dashed">
+        <Empty card>
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <GraduationCap />
@@ -142,7 +142,7 @@ export function GradeScalesPage({ classId }: GradeScalesPageProps) {
       ) : null}
 
       {!isPending && !isError && data && data.length > 0 && visibleScales.length === 0 ? (
-        <Empty className="border border-dashed">
+        <Empty card>
           <EmptyHeader>
             <EmptyTitle>{t("allDefaultsHiddenTitle")}</EmptyTitle>
             <EmptyDescription>{t("allDefaultsHiddenDescription")}</EmptyDescription>

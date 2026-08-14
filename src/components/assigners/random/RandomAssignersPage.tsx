@@ -182,7 +182,7 @@ export function RandomAssignersPage({ classId }: RandomAssignersPageProps) {
       ) : null}
 
       {!isPending && !isError && data && data.length === 0 ? (
-        <Empty className="border border-dashed">
+        <Empty card>
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <Dices />
