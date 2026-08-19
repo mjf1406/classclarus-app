@@ -87,7 +87,7 @@ export function RewardCard({
       size="sm"
       style={invisiblyHeld ? undefined : { transform: CSS.Translate.toString(transform) }}
       className={cn(
-        "transition-colors hover:bg-accent/40",
+        "h-full transition-colors hover:bg-accent/40",
         compact && "shadow-none",
         canDrag && "cursor-grab active:cursor-grabbing",
         invisiblyHeld && "opacity-0",
@@ -117,13 +117,18 @@ export function RewardCard({
           <ActionMenu items={menuItems} label={t("actions")} />
         </div>
       </CardHeader>
-      <CardContent className="flex flex-col gap-1">
+      <CardContent className="mt-auto flex flex-col gap-1">
         <span className="inline-flex w-fit items-center rounded-md bg-muted px-2 py-0.5 text-sm font-semibold tabular-nums text-muted-foreground">
           {t("pointsValue", { points: pointsLabel })}
         </span>
-        {limitSummary ? (
-          <p className="text-xs text-muted-foreground tabular-nums">{limitSummary}</p>
-        ) : null}
+        <p
+          className={cn(
+            "text-xs text-muted-foreground tabular-nums",
+            limitSummary ? undefined : "invisible",
+          )}
+        >
+          {limitSummary ?? "\u00a0"}
+        </p>
       </CardContent>
     </Card>
   );

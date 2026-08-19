@@ -2133,6 +2133,8 @@ const ja = {
     randomScopeClass: "クラス全体",
     randomScopeGroups: "グループ間",
     randomReplicatesLabel: "複製を許可",
+    randomReplicatesDescription:
+      "オフのときは各項目を最大1回だけ使います（生徒が項目より多い場合、受け取れない生徒がいます）。オンのときは項目を繰り返して全員に割り当てます。",
     randomReplicatesOn: "複製オン",
     randomReplicatesOff: "複製オフ",
     randomRunScopeLabel: "範囲",

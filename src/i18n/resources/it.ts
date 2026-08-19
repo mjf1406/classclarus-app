@@ -2178,6 +2178,8 @@ const it = {
     randomScopeClass: "Intera classe",
     randomScopeGroups: "Tra i gruppi",
     randomReplicatesLabel: "Consenti duplicati",
+    randomReplicatesDescription:
+      "Se disattivato, ogni elemento viene usato al massimo una volta (alcuni studenti potrebbero non ricevere nulla se ci sono più studenti che elementi). Se attivato, gli elementi si ripetono così ogni studente ne riceve uno.",
     randomReplicatesOn: "Duplicati attivi",
     randomReplicatesOff: "Duplicati disattivi",
     randomRunScopeLabel: "Ambito",

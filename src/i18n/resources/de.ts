@@ -2183,6 +2183,8 @@ const de = {
     randomScopeClass: "Ganze Klasse",
     randomScopeGroups: "Über Gruppen",
     randomReplicatesLabel: "Duplikate erlauben",
+    randomReplicatesDescription:
+      "Aus: Jedes Element wird höchstens einmal verwendet (einige Schüler erhalten nichts, wenn es mehr Schüler als Elemente gibt). Ein: Elemente wiederholen sich, damit jede Person eines erhält.",
     randomReplicatesOn: "Duplikate an",
     randomReplicatesOff: "Duplikate aus",
     randomRunScopeLabel: "Bereich",

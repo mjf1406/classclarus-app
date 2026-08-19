@@ -13,12 +13,15 @@ import {
   DEFAULT_DESK_HEIGHT,
   DEFAULT_DESK_WIDTH,
   deskGridBlockSize,
+  deskSizeForGroupCount,
   listZoneNames,
   MAX_CANVAS_SIZE,
   MAX_DESKS_PER_ADD,
   MIN_CANVAS_SIZE,
   nextPlacementOrigin,
   nextSeatLayoutSortState,
+  placeBlockOnCanvas,
+  resizeCursorForEdge,
   resizeSeatCanvas,
   SEAT_CANVAS_GRID_SIZE,
   sortSeatLayouts,
@@ -398,6 +401,77 @@ describe("buildDeskGrid", () => {
       width: 4 * DEFAULT_DESK_WIDTH + 3 * SEAT_CANVAS_GRID_SIZE,
       height: DEFAULT_DESK_HEIGHT,
     });
+  });
+
+  test("deskGridBlockSize uses groupCount for desk height", () => {
+    const single = deskSizeForGroupCount(1);
+    expect(deskGridBlockSize(2, 2, SEAT_CANVAS_GRID_SIZE, SEAT_CANVAS_GRID_SIZE, 1)).toEqual({
+      width: 2 * single.width + SEAT_CANVAS_GRID_SIZE,
+      height: 2 * single.height + SEAT_CANVAS_GRID_SIZE,
+    });
+  });
+});
+
+describe("placeBlockOnCanvas", () => {
+  test("uses nextPlacementOrigin when the stacked block fits", () => {
+    const items = [rectItem("a", 40, 40, 100, 60)];
+    const result = placeBlockOnCanvas({
+      items,
+      blockWidth: 100,
+      blockHeight: 60,
+      canvasWidth: DEFAULT_CANVAS_WIDTH,
+      canvasHeight: DEFAULT_CANVAS_HEIGHT,
+    });
+    expect(result.origin).toEqual(nextPlacementOrigin(items));
+    expect(result.canvasWidth).toBe(DEFAULT_CANVAS_WIDTH);
+    expect(result.canvasHeight).toBe(DEFAULT_CANVAS_HEIGHT);
+  });
+
+  test("falls back to top-left when stacking would leave the canvas", () => {
+    const items = [rectItem("a", 40, DEFAULT_CANVAS_HEIGHT - 80, 100, 60)];
+    const result = placeBlockOnCanvas({
+      items,
+      blockWidth: 100,
+      blockHeight: 60,
+      canvasWidth: DEFAULT_CANVAS_WIDTH,
+      canvasHeight: DEFAULT_CANVAS_HEIGHT,
+    });
+    expect(result.origin).toEqual(topLeftPlacementOrigin());
+    expect(result.canvasWidth).toBe(DEFAULT_CANVAS_WIDTH);
+    expect(result.canvasHeight).toBe(DEFAULT_CANVAS_HEIGHT);
+  });
+
+  test("grows the canvas south when the block cannot fit at top-left either", () => {
+    const items = [rectItem("a", 40, 40, 100, 60)];
+    const result = placeBlockOnCanvas({
+      items,
+      blockWidth: DEFAULT_CANVAS_WIDTH,
+      blockHeight: DEFAULT_CANVAS_HEIGHT,
+      canvasWidth: DEFAULT_CANVAS_WIDTH,
+      canvasHeight: DEFAULT_CANVAS_HEIGHT,
+    });
+    const stacked = nextPlacementOrigin(items);
+    expect(result.origin).toEqual(stacked);
+    expect(result.canvasWidth).toBeGreaterThan(DEFAULT_CANVAS_WIDTH);
+    expect(result.canvasHeight).toBeGreaterThan(DEFAULT_CANVAS_HEIGHT);
+    expect(result.origin.x + DEFAULT_CANVAS_WIDTH).toBeLessThanOrEqual(result.canvasWidth);
+    expect(result.origin.y + DEFAULT_CANVAS_HEIGHT).toBeLessThanOrEqual(result.canvasHeight);
+    expect(result.canvasHeight).toBeLessThanOrEqual(MAX_CANVAS_SIZE);
+  });
+});
+
+describe("resizeCursorForEdge", () => {
+  test("maps n/s to ns-resize when the board faces front", () => {
+    expect(resizeCursorForEdge("n", "front")).toBe("ns-resize");
+    expect(resizeCursorForEdge("e", "front")).toBe("ew-resize");
+    expect(resizeCursorForEdge("s", "back")).toBe("ns-resize");
+  });
+
+  test("swaps axes when the board is rotated 90 degrees", () => {
+    expect(resizeCursorForEdge("n", "right")).toBe("ew-resize");
+    expect(resizeCursorForEdge("e", "right")).toBe("ns-resize");
+    expect(resizeCursorForEdge("n", "left")).toBe("ew-resize");
+    expect(resizeCursorForEdge("w", "left")).toBe("ns-resize");
   });
 });
 

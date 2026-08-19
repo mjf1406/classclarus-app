@@ -95,7 +95,7 @@ export function TaskCard({
     <Card
       size="sm"
       className={cn(
-        "transition-colors hover:bg-accent/40",
+        "h-full transition-colors hover:bg-accent/40",
         personalTone ? TASK_COMPLETION_CARD_RING_CLASS[personalTone] : null,
       )}
     >
@@ -153,7 +153,7 @@ export function TaskCard({
           </p>
         ) : null}
       </CardContent>
-      <CardFooter className="border-t text-xs text-muted-foreground">
+      <CardFooter className="mt-auto border-t text-xs text-muted-foreground">
         {t("updatedAt", { date: formatLocalizedDateTime(task.updatedAt) })}
       </CardFooter>
     </Card>

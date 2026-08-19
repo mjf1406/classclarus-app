@@ -131,7 +131,7 @@ export function AssignmentCard({ classId, assignment, onDelete }: AssignmentCard
   const meta = [assignment.subject, assignment.unit].filter(Boolean).join(" · ");
 
   return (
-    <Card size="sm" className={cn("transition-colors hover:bg-accent/40")}>
+    <Card size="sm" className={cn("h-full transition-colors hover:bg-accent/40")}>
       <CardHeader className="flex flex-row items-start gap-3">
         <div className="min-w-0 flex-1">
           <CardTitle className="text-base font-semibold">
@@ -177,7 +177,7 @@ export function AssignmentCard({ classId, assignment, onDelete }: AssignmentCard
           ) : null}
         </div>
       </CardContent>
-      <CardFooter className="border-t text-xs text-muted-foreground">
+      <CardFooter className="mt-auto border-t text-xs text-muted-foreground">
         {t("updatedAt", { date: formatLocalizedDateTime(assignment.updatedAt) })}
       </CardFooter>
     </Card>

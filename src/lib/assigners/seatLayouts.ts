@@ -309,11 +309,13 @@ export function deskGridBlockSize(
   rows: number,
   gapX = SEAT_CANVAS_GRID_SIZE,
   gapY = SEAT_CANVAS_GRID_SIZE,
+  groupCount = 2,
 ): { width: number; height: number } {
   const dims = clampDeskGridDims(cols, rows);
+  const deskSize = deskSizeForGroupCount(groupCount);
   return {
-    width: dims.cols * DEFAULT_DESK_WIDTH + Math.max(0, dims.cols - 1) * gapX,
-    height: dims.rows * DEFAULT_DESK_HEIGHT + Math.max(0, dims.rows - 1) * gapY,
+    width: dims.cols * deskSize.width + Math.max(0, dims.cols - 1) * gapX,
+    height: dims.rows * deskSize.height + Math.max(0, dims.rows - 1) * gapY,
   };
 }
 
@@ -340,6 +342,98 @@ export function nextPlacementOrigin(
   }
   const y = Math.ceil((maxBottom + grid) / grid) * grid;
   return { x: grid * 2, y };
+}
+
+function snapCanvasSize(value: number): number {
+  return Math.min(
+    MAX_CANVAS_SIZE,
+    Math.max(MIN_CANVAS_SIZE, Math.ceil(value / SEAT_CANVAS_GRID_SIZE) * SEAT_CANVAS_GRID_SIZE),
+  );
+}
+
+function originFitsCanvas(
+  origin: { x: number; y: number },
+  blockWidth: number,
+  blockHeight: number,
+  canvasWidth: number,
+  canvasHeight: number,
+): boolean {
+  return (
+    origin.x >= 0 &&
+    origin.y >= 0 &&
+    origin.x + blockWidth <= canvasWidth &&
+    origin.y + blockHeight <= canvasHeight
+  );
+}
+
+/**
+ * Pick an origin for a new block that stays on the canvas when possible.
+ * Tries stacking below existing items, then the padded top-left. If the block
+ * still cannot fit, grow the canvas east/south (snapped to the grid).
+ */
+export function placeBlockOnCanvas(options: {
+  items: Array<Pick<SeatLayoutItem, "x" | "y" | "width" | "height">>;
+  blockWidth: number;
+  blockHeight: number;
+  canvasWidth: number;
+  canvasHeight: number;
+}): {
+  origin: { x: number; y: number };
+  canvasWidth: number;
+  canvasHeight: number;
+} {
+  const stacked = nextPlacementOrigin(options.items);
+  const topLeft = topLeftPlacementOrigin();
+  if (
+    originFitsCanvas(
+      stacked,
+      options.blockWidth,
+      options.blockHeight,
+      options.canvasWidth,
+      options.canvasHeight,
+    )
+  ) {
+    return {
+      origin: stacked,
+      canvasWidth: options.canvasWidth,
+      canvasHeight: options.canvasHeight,
+    };
+  }
+  if (
+    originFitsCanvas(
+      topLeft,
+      options.blockWidth,
+      options.blockHeight,
+      options.canvasWidth,
+      options.canvasHeight,
+    )
+  ) {
+    return {
+      origin: topLeft,
+      canvasWidth: options.canvasWidth,
+      canvasHeight: options.canvasHeight,
+    };
+  }
+
+  const stackedFitsMax =
+    stacked.x + options.blockWidth <= MAX_CANVAS_SIZE &&
+    stacked.y + options.blockHeight <= MAX_CANVAS_SIZE;
+  const origin = stackedFitsMax ? stacked : topLeft;
+  return {
+    origin,
+    canvasWidth: snapCanvasSize(Math.max(options.canvasWidth, origin.x + options.blockWidth)),
+    canvasHeight: snapCanvasSize(Math.max(options.canvasHeight, origin.y + options.blockHeight)),
+  };
+}
+
+/** Screen cursor for a layout-space resize edge after the board is rotated. */
+export function resizeCursorForEdge(
+  edge: SeatCanvasEdge,
+  orientation: SeatOrientation,
+): "ns-resize" | "ew-resize" {
+  const swapped = SEAT_ORIENTATION_DEGREES[orientation] % 180 === 90;
+  const isNs = edge === "n" || edge === "s";
+  return isNs !== swapped ? "ns-resize" : "ew-resize";
 }
 
 export function buildDeskGrid(options: {

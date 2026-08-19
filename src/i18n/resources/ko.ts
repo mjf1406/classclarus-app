@@ -2105,6 +2105,8 @@ const ko = {
     randomScopeClass: "전체 학급",
     randomScopeGroups: "그룹 간",
     randomReplicatesLabel: "중복 허용",
+    randomReplicatesDescription:
+      "끄면 각 항목을 최대 한 번만 사용합니다(학생 수가 항목보다 많으면 받지 못하는 학생이 있을 수 있습니다). 켜면 항목을 반복해 모든 학생에게 하나씩 배정합니다.",
     randomReplicatesOn: "중복 켜짐",
     randomReplicatesOff: "중복 꺼짐",
     randomRunScopeLabel: "범위",

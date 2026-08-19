@@ -200,7 +200,7 @@ export function AssignersSeatsChartsPage({ classId }: AssignersSeatsChartsPagePr
 
             return (
               <li key={chart._id}>
-                <Card size="sm" className="relative transition-colors hover:bg-accent/40">
+                <Card size="sm" className="relative h-full transition-colors hover:bg-accent/40">
                   <Link
                     to="/class/$classId/assigners/seats/charts/$chartId"
                     params={{ classId, chartId: chart._id }}
@@ -221,7 +221,7 @@ export function AssignersSeatsChartsPage({ classId }: AssignersSeatsChartsPagePr
                       </Badge>
                     </div>
                   </CardHeader>
-                  <CardFooter className="relative z-10 border-t text-xs text-muted-foreground pointer-events-none">
+                  <CardFooter className="relative z-10 mt-auto border-t text-xs text-muted-foreground pointer-events-none">
                     {t("chartSeatedCount", { count: chart.seatedCount })} ·{" "}
                     {t("updatedAt", { date: formatLocalizedDateTime(chart.updatedAt) })}
                   </CardFooter>

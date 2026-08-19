@@ -136,7 +136,7 @@ function PersonalAttendanceStudentCard({
   return (
     <div
       className={cn(
-        "flex w-full flex-col gap-3 rounded-2xl border p-4 text-left",
+        "flex h-full w-full flex-col gap-3 rounded-2xl border p-4 text-left",
         STATUS_CARD_CLASS[status],
       )}
     >
@@ -164,13 +164,13 @@ function PersonalAttendanceStudentCard({
       </div>
 
       {summaryPending ? (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="mt-auto grid grid-cols-2 gap-3 sm:grid-cols-4">
           {Array.from({ length: 4 }, (_, index) => (
             <Skeleton key={index} className="h-12 w-full rounded-xl" />
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="mt-auto grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div className="flex flex-col gap-0.5">
             <span className="text-xs text-muted-foreground">{t("statusPresent")}</span>
             <span className="text-lg font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">

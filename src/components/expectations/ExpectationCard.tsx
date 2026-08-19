@@ -66,7 +66,7 @@ export function ExpectationCard({ classId, expectation, onEdit, onDelete }: Expe
     expectation.inputType === "numberRange" ? t("inputTypeNumberRange") : t("inputTypeNumber");
 
   return (
-    <Card size="sm" className="transition-colors hover:bg-accent/40">
+    <Card size="sm" className="h-full transition-colors hover:bg-accent/40">
       <CardHeader className="flex flex-row items-start gap-3">
         <div className="min-w-0 flex-1">
           <CardTitle className="text-base font-semibold">
@@ -94,7 +94,7 @@ export function ExpectationCard({ classId, expectation, onEdit, onDelete }: Expe
           {expectation.unit}
         </p>
       </CardContent>
-      <CardFooter className="text-xs text-muted-foreground">
+      <CardFooter className="mt-auto text-xs text-muted-foreground">
         {t("valueCount", { count: expectation.valueCount })}
       </CardFooter>
     </Card>

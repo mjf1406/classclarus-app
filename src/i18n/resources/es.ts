@@ -2176,6 +2176,8 @@ const es = {
     randomScopeClass: "Toda la clase",
     randomScopeGroups: "Entre grupos",
     randomReplicatesLabel: "Permitir duplicados",
+    randomReplicatesDescription:
+      "Si está desactivado, cada elemento se usa como máximo una vez (algunos estudiantes pueden no recibir nada si hay más estudiantes que elementos). Si está activado, los elementos se repiten para que cada estudiante reciba uno.",
     randomReplicatesOn: "Duplicados activados",
     randomReplicatesOff: "Duplicados desactivados",
     randomRunScopeLabel: "Ámbito",

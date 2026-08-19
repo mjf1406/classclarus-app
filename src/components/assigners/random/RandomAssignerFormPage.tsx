@@ -8,7 +8,7 @@ import { RandomAssignerItemPresetsCredenza } from "@/components/assigners/random
 import { AsyncButton } from "@/components/ui/async-button";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -276,15 +276,20 @@ export function RandomAssignerFormPage({ classId, mode, initial }: RandomAssigne
 
           <form.Field name="defaultReplicates">
             {(field) => (
-              <Field orientation="horizontal">
-                <Checkbox
-                  id="default-replicates"
-                  checked={field.state.value}
-                  onCheckedChange={(checked) => field.handleChange(checked === true)}
-                />
-                <FieldLabel htmlFor="default-replicates" className="font-normal">
-                  {t("randomReplicatesLabel")}
-                </FieldLabel>
+              <Field>
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id="default-replicates"
+                    checked={field.state.value}
+                    onCheckedChange={(checked) => field.handleChange(checked === true)}
+                  />
+                  <div className="flex flex-col gap-1">
+                    <FieldLabel htmlFor="default-replicates" className="font-normal">
+                      {t("randomReplicatesLabel")}
+                    </FieldLabel>
+                    <FieldDescription>{t("randomReplicatesDescription")}</FieldDescription>
+                  </div>
+                </div>
               </Field>
             )}
           </form.Field>

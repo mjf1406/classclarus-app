@@ -2071,6 +2071,8 @@ const zhs = {
     randomScopeClass: "全班",
     randomScopeGroups: "跨组",
     randomReplicatesLabel: "允许重复",
+    randomReplicatesDescription:
+      "关闭时，每项最多使用一次（学生多于项目时，部分学生可能分不到）。开启时，项目会重复，确保每位学生都能分到一项。",
     randomReplicatesOn: "重复已开启",
     randomReplicatesOff: "重复已关闭",
     randomRunScopeLabel: "范围",

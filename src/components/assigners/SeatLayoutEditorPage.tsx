@@ -50,8 +50,10 @@ import {
   DEFAULT_CANVAS_HEIGHT,
   DEFAULT_CANVAS_WIDTH,
   defaultSizeForKind,
+  deskGridBlockSize,
   newItemId,
-  nextPlacementOrigin,
+  placeBlockOnCanvas,
+  resizeCursorForEdge,
   resizeSeatCanvas,
   topLeftPlacementOrigin,
   listZoneNames,
@@ -386,6 +388,29 @@ export function SeatLayoutEditorPage({ classId, layoutId }: SeatLayoutEditorPage
     markDirty();
   };
 
+  const applyLayout = (after: {
+    items: Array<SeatLayoutItem>;
+    nextDeskNumber: number;
+    canvasWidth: number;
+    canvasHeight: number;
+  }) => {
+    const before = currentSnapshot();
+    if (seatSnapshotsEqual(before, after)) return;
+    historyRef.current = pushSeatHistory(historyRef.current, before);
+    syncHistoryButtons(historyRef.current);
+    setItems(after.items);
+    setNextDeskNumber(after.nextDeskNumber);
+    setCanvasWidth(after.canvasWidth);
+    setCanvasHeight(after.canvasHeight);
+    latestRef.current = {
+      items: after.items,
+      nextDeskNumber: after.nextDeskNumber,
+      canvasWidth: after.canvasWidth,
+      canvasHeight: after.canvasHeight,
+    };
+    markDirty();
+  };
+
   const handleCanvasResize = (edge: SeatCanvasEdge, deltaCells: number) => {
     if (!canManage) return;
     const before = currentSnapshot();
@@ -506,29 +531,37 @@ export function SeatLayoutEditorPage({ classId, layoutId }: SeatLayoutEditorPage
   const addItem = (kind: SeatLayoutItem["kind"]) => {
     if (!canManage) return;
     const startDesk = nextDeskNumber;
-    const groupCount = Math.max(1, board?.groups.length ?? 2);
+    const groupCount = kind === "desk" ? 1 : undefined;
     const size = defaultSizeForKind(kind, kind === "desk" ? { groupCount } : undefined);
-    const origin = topLeftPlacementOrigin();
-    updateItems(
-      (prev) => {
-        if (kind === "desk") {
-          return [
-            ...prev,
-            {
-              id: newItemId(),
-              kind: "desk",
-              label: "",
-              deskNumber: startDesk,
-              x: origin.x,
-              y: origin.y,
-              width: size.width,
-              height: size.height,
-            },
-          ];
-        }
-        return [
-          ...prev,
-          {
+    const before = currentSnapshot();
+    const placement =
+      kind === "desk"
+        ? placeBlockOnCanvas({
+            items: before.items,
+            blockWidth: size.width,
+            blockHeight: size.height,
+            canvasWidth: before.canvasWidth,
+            canvasHeight: before.canvasHeight,
+          })
+        : {
+            origin: topLeftPlacementOrigin(),
+            canvasWidth: before.canvasWidth,
+            canvasHeight: before.canvasHeight,
+          };
+    const origin = placement.origin;
+    const nextItem: SeatLayoutItem =
+      kind === "desk"
+        ? {
+            id: newItemId(),
+            kind: "desk",
+            label: "",
+            deskNumber: startDesk,
+            x: origin.x,
+            y: origin.y,
+            width: size.width,
+            height: size.height,
+          }
+        : {
             id: newItemId(),
             kind,
             label: "",
@@ -536,11 +569,13 @@ export function SeatLayoutEditorPage({ classId, layoutId }: SeatLayoutEditorPage
             y: origin.y,
             width: size.width,
             height: size.height,
-          },
-        ];
-      },
-      kind === "desk" ? { nextDeskNumber: startDesk + 1 } : undefined,
-    );
+          };
+    applyLayout({
+      items: [...before.items, nextItem],
+      nextDeskNumber: kind === "desk" ? startDesk + 1 : before.nextDeskNumber,
+      canvasWidth: placement.canvasWidth,
+      canvasHeight: placement.canvasHeight,
+    });
   };
 
   const addDeskGrid = () => {
@@ -549,24 +584,38 @@ export function SeatLayoutEditorPage({ classId, layoutId }: SeatLayoutEditorPage
     setDeskGridCols(dims.cols);
     setDeskGridRows(dims.rows);
     const startDesk = nextDeskNumber;
-    const groupCount = Math.max(1, board?.groups.length ?? 2);
-    updateItems(
-      (prev) => {
-        const origin = nextPlacementOrigin(prev);
-        return [
-          ...prev,
-          ...buildDeskGrid({
-            cols: dims.cols,
-            rows: dims.rows,
-            startDeskNumber: startDesk,
-            originX: origin.x,
-            originY: origin.y,
-            groupCount,
-          }),
-        ];
-      },
-      { nextDeskNumber: startDesk + dims.cols * dims.rows },
+    const groupCount = 1;
+    const before = currentSnapshot();
+    const block = deskGridBlockSize(
+      dims.cols,
+      dims.rows,
+      SEAT_CANVAS_GRID_SIZE,
+      SEAT_CANVAS_GRID_SIZE,
+      groupCount,
     );
+    const placement = placeBlockOnCanvas({
+      items: before.items,
+      blockWidth: block.width,
+      blockHeight: block.height,
+      canvasWidth: before.canvasWidth,
+      canvasHeight: before.canvasHeight,
+    });
+    applyLayout({
+      items: [
+        ...before.items,
+        ...buildDeskGrid({
+          cols: dims.cols,
+          rows: dims.rows,
+          startDeskNumber: startDesk,
+          originX: placement.origin.x,
+          originY: placement.origin.y,
+          groupCount,
+        }),
+      ],
+      nextDeskNumber: startDesk + dims.cols * dims.rows,
+      canvasWidth: placement.canvasWidth,
+      canvasHeight: placement.canvasHeight,
+    });
   };
 
   const applyClampedPan = (x: number, y: number) => {
@@ -744,6 +793,7 @@ export function SeatLayoutEditorPage({ classId, layoutId }: SeatLayoutEditorPage
   const endDrag = () => {
     if (!dragRef.current) return;
     dragRef.current = null;
+    document.body.style.removeProperty("cursor");
     setGuides([]);
     const baseline = dragBaselineRef.current;
     dragBaselineRef.current = null;
@@ -1047,7 +1097,7 @@ export function SeatLayoutEditorPage({ classId, layoutId }: SeatLayoutEditorPage
               >
                 <div
                   ref={stageRef}
-                  className="relative h-full w-full touch-none bg-background shadow-sm"
+                  className="relative h-full w-full overflow-hidden touch-none bg-background shadow-sm"
                   style={{
                     backgroundImage: `
                   linear-gradient(color-mix(in oklab, var(--border) 55%, transparent) 1px, transparent 1px),
@@ -1232,6 +1282,9 @@ export function SeatLayoutEditorPage({ classId, layoutId }: SeatLayoutEditorPage
                                 }
                                 className={cn(
                                   "absolute z-10 size-2.5 rounded-full bg-primary",
+                                  resizeCursorForEdge(edge, orientation) === "ns-resize"
+                                    ? "cursor-ns-resize"
+                                    : "cursor-ew-resize",
                                   edge === "n" &&
                                     "top-0 left-1/2 -translate-x-1/2 -translate-y-1/2",
                                   edge === "s" &&
@@ -1245,6 +1298,10 @@ export function SeatLayoutEditorPage({ classId, layoutId }: SeatLayoutEditorPage
                                   event.stopPropagation();
                                   setSelectedIds([item.id]);
                                   beginDragHistory();
+                                  document.body.style.cursor = resizeCursorForEdge(
+                                    edge,
+                                    orientation,
+                                  );
                                   dragRef.current = {
                                     mode: "resize",
                                     itemId: item.id,

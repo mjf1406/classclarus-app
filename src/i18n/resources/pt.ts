@@ -2163,6 +2163,8 @@ const pt = {
     randomScopeClass: "Turma inteira",
     randomScopeGroups: "Entre grupos",
     randomReplicatesLabel: "Permitir réplicas",
+    randomReplicatesDescription:
+      "Desligado: cada item é usado no máximo uma vez (alguns alunos podem não receber nada se houver mais alunos do que itens). Ligado: os itens repetem-se para que cada aluno receba um.",
     randomReplicatesOn: "Réplicas ativas",
     randomReplicatesOff: "Réplicas desativadas",
     randomRunScopeLabel: "Âmbito",

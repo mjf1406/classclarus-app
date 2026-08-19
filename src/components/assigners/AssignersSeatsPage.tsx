@@ -218,7 +218,7 @@ export function AssignersSeatsPage({ classId }: AssignersSeatsPageProps) {
 
             return (
               <li key={layout._id}>
-                <Card size="sm" className="relative transition-colors hover:bg-accent/40">
+                <Card size="sm" className="relative h-full transition-colors hover:bg-accent/40">
                   <Link
                     to="/class/$classId/assigners/seats/layouts/$layoutId"
                     params={{ classId, layoutId: layout._id }}
@@ -254,7 +254,7 @@ export function AssignersSeatsPage({ classId }: AssignersSeatsPageProps) {
                       <ActionMenu items={menuItems} label={t("layoutActions")} />
                     </div>
                   </CardHeader>
-                  <CardFooter className="relative z-10 border-t text-xs text-muted-foreground pointer-events-none">
+                  <CardFooter className="relative z-10 mt-auto border-t text-xs text-muted-foreground pointer-events-none">
                     {t("updatedAt", { date: formatLocalizedDateTime(layout.updatedAt) })}
                   </CardFooter>
                 </Card>

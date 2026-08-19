@@ -2153,6 +2153,8 @@ const ru = {
     randomScopeClass: "Весь класс",
     randomScopeGroups: "Между группами",
     randomReplicatesLabel: "Разрешать дубликаты",
+    randomReplicatesDescription:
+      "Если выключено, каждый пункт используется не более одного раза (некоторые ученики могут ничего не получить, если учеников больше, чем пунктов). Если включено, пункты повторяются, чтобы каждый ученик получил один.",
     randomReplicatesOn: "Дубликаты включены",
     randomReplicatesOff: "Дубликаты выключены",
     randomRunScopeLabel: "Область",

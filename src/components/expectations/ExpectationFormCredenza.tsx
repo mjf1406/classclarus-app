@@ -137,6 +137,9 @@ export function ExpectationFormCredenza({
           inputType: parsed.inputType,
           unit: parsed.unit,
         });
+        skipNextResetRef.current = false;
+        form.reset(defaultsRef.current);
+        setSubmitError(null);
       } catch (error) {
         onOpenChange(true);
         setSubmitError(error instanceof Error ? error.message : t("saveFailed"));

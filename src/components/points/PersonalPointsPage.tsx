@@ -93,7 +93,10 @@ function PersonalPointStudentCard({ student, nameFormat }: PersonalPointStudentC
 
   return (
     <div
-      className={cn("flex w-full flex-col gap-3 rounded-2xl border p-4", absent && "opacity-60")}
+      className={cn(
+        "flex h-full w-full flex-col gap-3 rounded-2xl border p-4",
+        absent && "opacity-60",
+      )}
     >
       <div className="flex min-w-0 items-start justify-between gap-3">
         <div className="min-w-0">
@@ -129,7 +132,7 @@ function PersonalPointStudentCard({ student, nameFormat }: PersonalPointStudentC
         ) : null}
       </div>
 
-      <div className="flex flex-col gap-1.5">
+      <div className="mt-auto flex flex-col gap-1.5">
         <div
           className="flex items-center gap-2 text-lg font-semibold tabular-nums"
           aria-label={t("statBalanceAria", { count: student.pointsBalance })}

@@ -99,7 +99,10 @@ export function ClassCard({
   return (
     <Card
       size="sm"
-      className={cn("relative transition-colors hover:bg-accent/40", isArchived && "opacity-80")}
+      className={cn(
+        "relative h-full transition-colors hover:bg-accent/40",
+        isArchived && "opacity-80",
+      )}
     >
       {openLink}
       <CardHeader className="relative z-10 flex flex-row items-start gap-3 pointer-events-none">
@@ -113,7 +116,7 @@ export function ClassCard({
         </div>
         <div className="shrink-0 pointer-events-auto">{menu}</div>
       </CardHeader>
-      <CardContent className="relative z-10 flex flex-col gap-3 pointer-events-none">
+      <CardContent className="relative z-10 mt-auto flex flex-col gap-3 pointer-events-none">
         <CardDescription className="line-clamp-3">{description}</CardDescription>
         <div className="flex flex-col gap-0.5 text-xs text-muted-foreground">
           <span>

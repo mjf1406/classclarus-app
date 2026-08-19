@@ -2166,6 +2166,8 @@ const nl = {
     randomScopeClass: "Hele klas",
     randomScopeGroups: "Over groepen",
     randomReplicatesLabel: "Duplicaten toestaan",
+    randomReplicatesDescription:
+      "Uit: elk item wordt hoogstens één keer gebruikt (sommige leerlingen krijgen niets als er meer leerlingen dan items zijn). Aan: items herhalen zodat iedere leerling er één krijgt.",
     randomReplicatesOn: "Duplicaten aan",
     randomReplicatesOff: "Duplicaten uit",
     randomRunScopeLabel: "Bereik",

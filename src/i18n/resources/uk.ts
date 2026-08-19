@@ -2150,6 +2150,8 @@ const uk = {
     randomScopeClass: "Увесь клас",
     randomScopeGroups: "Між групами",
     randomReplicatesLabel: "Дозволяти дублікати",
+    randomReplicatesDescription:
+      "Якщо вимкнено, кожен пункт використовується щонайбільше один раз (деякі учні можуть нічого не отримати, якщо учнів більше, ніж пунктів). Якщо увімкнено, пункти повторюються, щоб кожен учень отримав один.",
     randomReplicatesOn: "Дублікати увімкнено",
     randomReplicatesOff: "Дублікати вимкнено",
     randomRunScopeLabel: "Область",

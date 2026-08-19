@@ -75,7 +75,7 @@ export function BehaviorCard({
       size="sm"
       style={invisiblyHeld ? undefined : { transform: CSS.Translate.toString(transform) }}
       className={cn(
-        "transition-colors hover:bg-accent/40",
+        "h-full transition-colors hover:bg-accent/40",
         compact && "shadow-none",
         canDrag && "cursor-grab active:cursor-grabbing",
         invisiblyHeld && "opacity-0",
@@ -105,7 +105,7 @@ export function BehaviorCard({
           <ActionMenu items={menuItems} label={t("actions")} />
         </div>
       </CardHeader>
-      <CardContent className="flex flex-wrap items-center gap-2">
+      <CardContent className="mt-auto flex flex-wrap items-center gap-2">
         <span
           className={cn(
             "inline-flex items-center rounded-md px-2 py-0.5 text-sm font-semibold tabular-nums",

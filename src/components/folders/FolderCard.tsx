@@ -135,7 +135,7 @@ export function FolderCard<TItem>({
         ref={setNodeRef}
         size="sm"
         className={cn(
-          "transition-colors hover:bg-accent/40",
+          "h-full transition-colors hover:bg-accent/40",
           canDrop && isOver && "bg-primary/5 ring-2 ring-primary",
         )}
       >
@@ -160,7 +160,7 @@ export function FolderCard<TItem>({
             <ActionMenu items={menuItems} label={t("folderActions")} />
           </div>
         </CardHeader>
-        <CardContent className="flex flex-col gap-1">
+        <CardContent className="mt-auto flex flex-col gap-1">
           <PopoverTrigger
             type="button"
             className="text-left text-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"

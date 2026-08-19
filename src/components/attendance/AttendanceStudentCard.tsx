@@ -63,7 +63,7 @@ export function AttendanceStudentCard({
       onClick={onCycle}
       aria-label={t("cycleStatusAria", { name: displayName, status: statusLabel })}
       className={cn(
-        "flex w-full flex-col gap-3 rounded-2xl border p-4 text-left transition-colors",
+        "flex h-full w-full flex-col gap-3 rounded-2xl border p-4 text-left transition-colors",
         "focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
         STATUS_CARD_CLASS[status],
       )}

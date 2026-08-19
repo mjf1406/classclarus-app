@@ -2198,6 +2198,8 @@ const fr = {
     randomScopeClass: "Toute la classe",
     randomScopeGroups: "Entre les groupes",
     randomReplicatesLabel: "Autoriser les doublons",
+    randomReplicatesDescription:
+      "Désactivé : chaque élément est utilisé au plus une fois (certains élèves peuvent ne rien recevoir s’il y a plus d’élèves que d’éléments). Activé : les éléments se répètent pour que chaque élève en reçoive un.",
     randomReplicatesOn: "Doublons activés",
     randomReplicatesOff: "Doublons désactivés",
     randomRunScopeLabel: "Portée",

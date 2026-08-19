@@ -2127,6 +2127,8 @@ const en = {
     randomScopeClass: "Whole class",
     randomScopeGroups: "Across groups",
     randomReplicatesLabel: "Allow replicates",
+    randomReplicatesDescription:
+      "When off, each item is used at most once (some students may get nothing if there are more students than items). When on, items repeat so every student gets one.",
     randomReplicatesOn: "Replicates on",
     randomReplicatesOff: "Replicates off",
     randomRunScopeLabel: "Scope",

@@ -2074,6 +2074,8 @@ const th = {
     randomScopeClass: "ทั้งชั้น",
     randomScopeGroups: "ข้ามกลุ่ม",
     randomReplicatesLabel: "อนุญาตรายการซ้ำ",
+    randomReplicatesDescription:
+      "เมื่อปิด แต่ละรายการใช้ได้ไม่เกินครั้งเดียว (นักเรียนบางคนอาจไม่ได้รับหากมีนักเรียนมากกว่าจำนวนรายการ) เมื่อเปิด รายการจะถูกใช้ซ้ำเพื่อให้นักเรียนทุกคนได้รับ",
     randomReplicatesOn: "เปิดรายการซ้ำ",
     randomReplicatesOff: "ปิดรายการซ้ำ",
     randomRunScopeLabel: "ขอบเขต",

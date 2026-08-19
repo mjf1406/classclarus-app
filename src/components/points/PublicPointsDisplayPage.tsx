@@ -111,7 +111,7 @@ export function PublicPointsDisplayPage({ publicSlug }: PublicPointsDisplayPageP
                     : null;
 
                   return (
-                    <Card key={`${index}-${reward.name}`} size="sm">
+                    <Card key={`${index}-${reward.name}`} size="sm" className="h-full">
                       <CardHeader className="flex flex-row items-start gap-3">
                         <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
                           <FontAwesomeIconFromId
@@ -127,7 +127,7 @@ export function PublicPointsDisplayPage({ publicSlug }: PublicPointsDisplayPageP
                           </CardDescription>
                         </div>
                       </CardHeader>
-                      <CardContent className="flex flex-col gap-1">
+                      <CardContent className="mt-auto flex flex-col gap-1">
                         <span className="inline-flex w-fit items-center rounded-md bg-muted px-2 py-0.5 text-sm font-semibold tabular-nums text-muted-foreground">
                           {tRewards("pointsValue", { points: pointsLabel })}
                         </span>

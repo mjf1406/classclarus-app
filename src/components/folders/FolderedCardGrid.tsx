@@ -33,7 +33,9 @@ export function FolderedCardGrid<TFolder extends FolderCardModel, TItem>({
   const unfiledGrid = (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {unfiledItems.map((item) => (
-        <div key={getItemKey(item)}>{renderItem(item)}</div>
+        <div key={getItemKey(item)} className="h-full">
+          {renderItem(item)}
+        </div>
       ))}
     </div>
   );
@@ -46,7 +48,9 @@ export function FolderedCardGrid<TFolder extends FolderCardModel, TItem>({
       {folders.length > 0 ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {folders.map((folder) => (
-            <div key={folder._id}>{renderFolder(folder)}</div>
+            <div key={folder._id} className="h-full">
+              {renderFolder(folder)}
+            </div>
           ))}
         </div>
       ) : null}
