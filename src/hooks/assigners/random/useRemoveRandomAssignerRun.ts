@@ -9,6 +9,8 @@ import {
   randomAssignersListQueryKey,
   type RandomAssignerList,
 } from "@/hooks/assigners/random/useRandomAssigners";
+import { randomRosterMatrixQueryKey } from "@/hooks/assigners/random/useRandomRosterMatrix";
+import { randomStudentHistoryQueryKeyPrefix } from "@/hooks/assigners/random/useRandomStudentHistory";
 import { useOptimisticMutation } from "@/hooks/useOptimisticMutation";
 import { messageFromError } from "@/lib/errors/convexError";
 
@@ -33,6 +35,10 @@ export function useRemoveRandomAssignerRun() {
     queryKeys: (args) => [
       randomAssignersListQueryKey(args.classId),
       randomAssignerRunsQueryKey(args.classId, args.assignerId),
+      randomRosterMatrixQueryKey(args.classId, args.assignerId),
+    ],
+    invalidateQueryKeys: (args) => [
+      randomStudentHistoryQueryKeyPrefix(args.classId, args.assignerId),
     ],
     applyOptimisticUpdate: (queryClient, args) => {
       queryClient.setQueryData<RandomAssignerList>(

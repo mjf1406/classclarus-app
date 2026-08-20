@@ -1197,6 +1197,7 @@ const de = {
     activitySummary_viewedEquitableManualEditor: 'Manuellen gerechten Zuweiser "{{name}}" geöffnet',
     activitySummary_viewedEquitableAssignerData:
       'Daten des gerechten Zuweisers "{{name}}" angezeigt',
+    activitySummary_viewedRandomAssignerData: 'Daten des Zufallszuweisers "{{name}}" angezeigt',
     activitySummary_viewedSeatLayoutData: 'Sitzplan-Daten für "{{name}}" angezeigt',
     activitySummary_updatedGradedSubject: 'Benotetes Fach "{{name}}" aktualisiert',
     activitySummary_createdGradedSubject: 'Benotetes Fach "{{name}}" erstellt',
@@ -2219,6 +2220,14 @@ const de = {
     randomHistoryCount: "Zuweisungen",
     randomHistoryEmpty:
       "Noch keine Läufe. Führen Sie eine Zuweisung aus, um einen Verlauf zu erstellen.",
+    randomTabDashboard: "Dashboard",
+    randomTabData: "Daten",
+    randomDataDescription: "Zuweisungszahlen pro Schüler über {{count}} Elemente.",
+    randomDataEmptyStudents: "Noch keine Schüler in dieser Klasse.",
+    randomDataEmptyItems: "Fügen Sie Elemente zu diesem Zuweiser hinzu, um Datenspalten zu sehen.",
+    randomDataCellToggle: "{{count}} Zuweisungen für {{item}}",
+    randomDataHistoryFailed: "Zuweisungsdaten konnten nicht geladen werden.",
+    randomDataHistoryEmpty: "Keine aufgezeichneten Zuweisungen.",
     randomDeleteRun: "Löschen",
     randomRunDeleteTitle: "Lauf löschen?",
     randomRunDeleteDescription: "Diese Zuweisung aus dem Verlauf entfernen?",

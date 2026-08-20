@@ -4,6 +4,7 @@ import { APP_CONFIG } from "./appConfig.js";
 import { components } from "./_generated/api.js";
 import type { Doc, Id } from "./_generated/dataModel.js";
 import type { MutationCtx, QueryCtx } from "./_generated/server.js";
+import { buildEquitableRosterMatrixCounts } from "./lib/assigners/equitableRosterMatrix.js";
 import { assignRandom, type RandomAssignRecipient } from "./lib/assigners/randomAssign.js";
 import {
   randomAssignerFormSchemaEn,
@@ -94,6 +95,41 @@ const randomAssignerDisplayRunValidator = v.object({
     order: v.union(v.literal("firstLast"), v.literal("lastFirst")),
     space: v.boolean(),
   }),
+});
+
+const DEFAULT_HISTORY_LIMIT = 20;
+const MAX_HISTORY_LIMIT = 50;
+
+const randomHistoryItemValidator = v.object({
+  runId: v.id("randomAssignerRuns"),
+  ranAt: v.number(),
+  item: v.string(),
+});
+
+const randomRosterMatrixStudentValidator = v.object({
+  userId: v.id("users"),
+  rosterNumber: v.number(),
+  firstName: v.optional(v.string()),
+  lastName: v.optional(v.string()),
+  name: v.optional(v.string()),
+  image: v.optional(v.string()),
+  email: v.optional(v.string()),
+});
+
+const randomRosterMatrixCountValidator = v.object({
+  item: v.string(),
+  count: v.number(),
+});
+
+const randomRosterMatrixRowValidator = v.object({
+  studentUserId: v.id("users"),
+  counts: v.array(randomRosterMatrixCountValidator),
+});
+
+const randomRosterMatrixValidator = v.object({
+  items: v.array(v.string()),
+  students: v.array(randomRosterMatrixStudentValidator),
+  countsByStudent: v.array(randomRosterMatrixRowValidator),
 });
 
 function parseFormInput(input: {
@@ -262,6 +298,125 @@ async function loadRecipientsForRun(
   }
 
   return recipients;
+}
+
+type RosterStudentRow = {
+  userId: Id<"users">;
+  displayName: string;
+  rosterNumber?: number;
+  firstName?: string;
+  lastName?: string;
+  image?: string;
+  email?: string;
+};
+
+async function loadRosterStudents(
+  ctx: QueryCtx | MutationCtx,
+  classId: Id<"classes">,
+): Promise<RosterStudentRow[]> {
+  const classDoc = await ctx.db.get("classes", classId);
+  if (!classDoc) {
+    throw new ConvexError({ code: "NOT_FOUND", message: "Class not found" });
+  }
+  const nameFormat = resolveRosterNameFormat(classDoc);
+
+  const studentEntries = await ctx.runQuery(components.authz.queries.getUsersWithRole, {
+    tenantId: APP_CONFIG.authzTenantId,
+    role: "student",
+    scope: { type: "class", id: classId },
+  });
+  const studentIds = studentEntries.map((entry: { userId: string }) => entry.userId as Id<"users">);
+
+  // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded roster
+  const rosterRows = await ctx.db
+    .query("studentRosters")
+    .withIndex("by_classId", (q) => q.eq("classId", classId))
+    .collect();
+  const rosterByUserId = new Map(rosterRows.map((row) => [row.userId, row] as const));
+
+  const students: RosterStudentRow[] = [];
+  for (const userId of studentIds) {
+    const user = await ctx.db.get("users", userId);
+    const roster = rosterByUserId.get(userId);
+    students.push({
+      userId,
+      displayName: studentDisplayName(user, roster, nameFormat, userId),
+      rosterNumber: roster?.rosterNumber,
+      firstName: roster?.firstName,
+      lastName: roster?.lastName,
+      image: user?.image,
+      email: user?.email,
+    });
+  }
+
+  students.sort((a, b) => {
+    const aNum = a.rosterNumber ?? Number.MAX_SAFE_INTEGER;
+    const bNum = b.rosterNumber ?? Number.MAX_SAFE_INTEGER;
+    if (aNum !== bNum) return aNum - bNum;
+    return a.displayName.localeCompare(b.displayName);
+  });
+
+  return students;
+}
+
+async function loadPriorAssignments(
+  ctx: QueryCtx | MutationCtx,
+  assignerId: Id<"randomAssigners">,
+): Promise<Array<{ studentUserId: string; item: string }>> {
+  // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded history
+  const runs = await ctx.db
+    .query("randomAssignerRuns")
+    .withIndex("by_assignerId_ranAt", (q) => q.eq("assignerId", assignerId))
+    .order("asc")
+    .collect();
+  const prior: Array<{ studentUserId: string; item: string }> = [];
+  for (const run of runs) {
+    for (const assignment of run.assignments) {
+      prior.push({
+        studentUserId: assignment.studentUserId,
+        item: assignment.item,
+      });
+    }
+  }
+  return prior;
+}
+
+async function loadStudentPriorAssignments(
+  ctx: QueryCtx | MutationCtx,
+  assignerId: Id<"randomAssigners">,
+  studentUserId: Id<"users">,
+): Promise<
+  Array<{
+    item: string;
+    ranAt: number;
+    runId: Id<"randomAssignerRuns">;
+  }>
+> {
+  // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded history
+  const runs = await ctx.db
+    .query("randomAssignerRuns")
+    .withIndex("by_assignerId_ranAt", (q) => q.eq("assignerId", assignerId))
+    .order("desc")
+    .collect();
+
+  const prior: Array<{
+    item: string;
+    ranAt: number;
+    runId: Id<"randomAssignerRuns">;
+  }> = [];
+
+  for (const run of runs) {
+    for (const assignment of run.assignments) {
+      if (assignment.studentUserId !== studentUserId) continue;
+      prior.push({
+        item: assignment.item,
+        ranAt: run.ranAt,
+        runId: run._id,
+      });
+    }
+  }
+
+  return prior;
 }
 
 async function latestRunForAssigner(
@@ -625,5 +780,80 @@ export const removeRun = classMutation({
     });
 
     return null;
+  },
+});
+
+export const studentHistory = classQuery({
+  args: {
+    assignerId: v.id("randomAssigners"),
+    studentUserId: v.id("users"),
+    item: v.string(),
+    beforeRanAt: v.optional(v.number()),
+    limit: v.optional(v.number()),
+  },
+  returns: v.object({
+    items: v.array(randomHistoryItemValidator),
+    nextBeforeRanAt: v.optional(v.number()),
+  }),
+  handler: async (ctx, args) => {
+    await ctx.require("assigners:manage");
+    await requireRandomAssigner(ctx, ctx.classDoc._id, args.assignerId);
+
+    const limit = Math.min(
+      Math.max(1, Math.floor(args.limit ?? DEFAULT_HISTORY_LIMIT)),
+      MAX_HISTORY_LIMIT,
+    );
+
+    const prior = await loadStudentPriorAssignments(ctx, args.assignerId, args.studentUserId);
+    const filtered = prior.filter((row) => {
+      if (row.item !== args.item) return false;
+      if (args.beforeRanAt !== undefined && row.ranAt >= args.beforeRanAt) return false;
+      return true;
+    });
+
+    const items = filtered.slice(0, limit).map((row) => ({
+      runId: row.runId,
+      ranAt: row.ranAt,
+      item: row.item,
+    }));
+
+    const last = filtered.at(limit - 1);
+    return {
+      items,
+      ...(filtered.length > limit && last ? { nextBeforeRanAt: last.ranAt } : {}),
+    };
+  },
+});
+
+export const rosterMatrix = classQuery({
+  args: {
+    assignerId: v.id("randomAssigners"),
+  },
+  returns: randomRosterMatrixValidator,
+  handler: async (ctx, args) => {
+    await ctx.require("assigners:manage");
+    const assigner = await requireRandomAssigner(ctx, ctx.classDoc._id, args.assignerId);
+    const students = await loadRosterStudents(ctx, ctx.classDoc._id);
+    const priorRows = await loadPriorAssignments(ctx, assigner._id);
+    const studentUserIds = students.map((student) => student.userId);
+    const countsByStudent = buildEquitableRosterMatrixCounts(
+      assigner.items,
+      studentUserIds,
+      priorRows,
+    );
+
+    return {
+      items: assigner.items,
+      students: students.map((student) => ({
+        userId: student.userId,
+        rosterNumber: student.rosterNumber ?? Number.MAX_SAFE_INTEGER,
+        ...(student.firstName !== undefined ? { firstName: student.firstName } : {}),
+        ...(student.lastName !== undefined ? { lastName: student.lastName } : {}),
+        name: student.displayName,
+        ...(student.image !== undefined ? { image: student.image } : {}),
+        ...(student.email !== undefined ? { email: student.email } : {}),
+      })),
+      countsByStudent,
+    };
   },
 });

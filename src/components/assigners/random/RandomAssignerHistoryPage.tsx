@@ -1,11 +1,11 @@
-import { Link } from "@tanstack/react-router";
 import { convexQuery } from "@convex-dev/react-query";
-import { ArrowLeft, FileDown, Monitor, Pencil, Play, Trash2 } from "lucide-react";
+import { FileDown, Monitor, Play, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { AssignerRunPreviewTable } from "@/components/assigners/AssignerRunPreviewTable";
+import { RandomAssignerShell } from "@/components/assigners/random/RandomAssignerShell";
 import { DeleteNamedCredenza } from "@/components/groups/DeleteNamedCredenza";
 import { DataTableSortableHeader } from "@/components/feedback/DataTableSortableHeader";
 import { ActionMenu, type ActionMenuItem } from "@/components/ui/action-menu";
@@ -242,53 +242,13 @@ export function RandomAssignerHistoryPage({ classId, assignerId }: RandomAssigne
   }
 
   return (
-    <div className="flex w-full flex-col gap-6 px-4 py-8 sm:px-8">
-      <div className="flex flex-wrap items-start gap-3">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          nativeButton={false}
-          render={
-            <Link
-              to="/class/$classId/assigners/random"
-              params={{ classId }}
-              aria-label={t("randomBackToList")}
-            />
-          }
-        >
-          <ArrowLeft className="size-4" />
-        </Button>
-        <div className="min-w-0 flex-1">
-          <h1 className="text-2xl font-semibold tracking-tight">{assigner.name}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {t("randomHistoryDescription", { count: assigner.items.length })}
-          </p>
-        </div>
-        {canManage ? (
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              nativeButton={false}
-              render={
-                <Link
-                  to="/class/$classId/assigners/random/$assignerId/edit"
-                  params={{ classId, assignerId }}
-                />
-              }
-            >
-              <Pencil className="size-4" />
-              {t("randomEdit")}
-            </Button>
-            <Button type="button" onClick={() => handleRunDialogOpenChange(true)}>
-              <Play className="size-4" />
-              {t("randomRunAction")}
-            </Button>
-          </div>
-        ) : null}
-      </div>
-
+    <RandomAssignerShell
+      classId={classId}
+      assignerId={assignerId}
+      tab="dashboard"
+      description={t("randomHistoryDescription", { count: assigner.items.length })}
+      onRunClick={canManage ? () => handleRunDialogOpenChange(true) : undefined}
+    >
       <Credenza open={runDialogOpen} onOpenChange={handleRunDialogOpenChange}>
         <CredenzaContent className="sm:max-w-md">
           <CredenzaHeader>
@@ -461,7 +421,7 @@ export function RandomAssignerHistoryPage({ classId, assignerId }: RandomAssigne
           setDeletingRun(null);
         }}
       />
-    </div>
+    </RandomAssignerShell>
   );
 }
 

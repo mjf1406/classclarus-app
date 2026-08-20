@@ -1141,6 +1141,8 @@ const pt = {
     activitySummary_viewedEquitableManualEditor: 'Atribuidor equitativo manual "{{name}}" aberto',
     activitySummary_viewedEquitableAssignerData:
       'Dados do atribuidor equitativo "{{name}}" visualizados',
+    activitySummary_viewedRandomAssignerData:
+      'Dados do atribuidor aleatório "{{name}}" visualizados',
     activitySummary_viewedSeatLayoutData: 'Dados do plano de lugares "{{name}}" visualizados',
 
     activitySummary_recordedRazAssessment: "Avalia??o RAZ registada ({{result}}) ? n?vel {{level}}",
@@ -2198,6 +2200,14 @@ const pt = {
     randomHistoryReplicates: "Réplicas",
     randomHistoryCount: "Atribuições",
     randomHistoryEmpty: "Ainda não há execuções. Execute uma atribuição para criar histórico.",
+    randomTabDashboard: "Painel",
+    randomTabData: "Dados",
+    randomDataDescription: "Contagens de atribuição por aluno em {{count}} itens.",
+    randomDataEmptyStudents: "Ainda não há alunos nesta turma.",
+    randomDataEmptyItems: "Adicione itens a este atribuidor para ver colunas de dados.",
+    randomDataCellToggle: "{{count}} atribuições para {{item}}",
+    randomDataHistoryFailed: "Não foi possível carregar as datas de atribuição.",
+    randomDataHistoryEmpty: "Sem atribuições registadas.",
     randomDeleteRun: "Eliminar",
     randomRunDeleteTitle: "Eliminar execução?",
     randomRunDeleteDescription: "Remover esta atribuição do histórico?",

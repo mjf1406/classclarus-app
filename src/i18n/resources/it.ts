@@ -1195,6 +1195,8 @@ const it = {
     activitySummary_viewedEquitableManualEditor: 'Assegnatore equo manuale "{{name}}" aperto',
     activitySummary_viewedEquitableAssignerData:
       'Dati dell\'assegnatore equo "{{name}}" visualizzati',
+    activitySummary_viewedRandomAssignerData:
+      'Dati dell\'assegnatore casuale "{{name}}" visualizzati',
     activitySummary_viewedSeatLayoutData: 'Dati del piano posti "{{name}}" visualizzati',
     activitySummary_updatedGradedSubject: 'Materia valutata "{{name}}" aggiornata',
     activitySummary_createdGradedSubject: 'Materia valutata "{{name}}" creata',
@@ -2214,6 +2216,14 @@ const it = {
     randomHistoryCount: "Assegnazioni",
     randomHistoryEmpty:
       "Nessuna esecuzione ancora. Esegui un'assegnazione per creare la cronologia.",
+    randomTabDashboard: "Dashboard",
+    randomTabData: "Dati",
+    randomDataDescription: "Conteggi di assegnazione per studente su {{count}} elementi.",
+    randomDataEmptyStudents: "Nessuno studente in questa classe.",
+    randomDataEmptyItems: "Aggiungi elementi a questo assegnatore per vedere le colonne dati.",
+    randomDataCellToggle: "{{count}} assegnazioni per {{item}}",
+    randomDataHistoryFailed: "Impossibile caricare le date di assegnazione.",
+    randomDataHistoryEmpty: "Nessuna assegnazione registrata.",
     randomDeleteRun: "Elimina",
     randomRunDeleteTitle: "Eliminare l'esecuzione?",
     randomRunDeleteDescription: "Rimuovere questa assegnazione dalla cronologia?",

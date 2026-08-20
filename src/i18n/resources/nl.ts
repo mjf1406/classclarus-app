@@ -1188,6 +1188,8 @@ const nl = {
     activitySummary_viewedEquitableManualEditor: 'Handmatige eerlijke toewijzer "{{name}}" geopend',
     activitySummary_viewedEquitableAssignerData:
       'Gegevens van eerlijke toewijzer "{{name}}" bekeken',
+    activitySummary_viewedRandomAssignerData:
+      'Gegevens van willekeurige toewijzer "{{name}}" bekeken',
     activitySummary_viewedSeatLayoutData: 'Zitplaatsplattegrondgegevens voor "{{name}}" bekeken',
     activitySummary_updatedGradedSubject: 'Beoordeeld vak "{{name}}" bijgewerkt',
     activitySummary_createdGradedSubject: 'Beoordeeld vak "{{name}}" gemaakt',
@@ -2201,6 +2203,14 @@ const nl = {
     randomHistoryReplicates: "Duplicaten",
     randomHistoryCount: "Toewijzingen",
     randomHistoryEmpty: "Nog geen runs. Voer een toewijzing uit om geschiedenis te maken.",
+    randomTabDashboard: "Dashboard",
+    randomTabData: "Gegevens",
+    randomDataDescription: "Toewijzingstellingen per leerling over {{count}} items.",
+    randomDataEmptyStudents: "Nog geen leerlingen in deze klas.",
+    randomDataEmptyItems: "Voeg items toe aan deze toewijzer om gegevenskolommen te zien.",
+    randomDataCellToggle: "{{count}} toewijzingen voor {{item}}",
+    randomDataHistoryFailed: "Kon toewijzingsdatums niet laden.",
+    randomDataHistoryEmpty: "Geen geregistreerde toewijzingen.",
     randomDeleteRun: "Verwijderen",
     randomRunDeleteTitle: "Run verwijderen?",
     randomRunDeleteDescription: "Deze toewijzing uit de geschiedenis verwijderen?",

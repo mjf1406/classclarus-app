@@ -1183,6 +1183,8 @@ const ru = {
       "Открыт ручной справедливый назначатель «{{name}}»",
     activitySummary_viewedEquitableAssignerData:
       "Просмотрены данные справедливого назначателя «{{name}}»",
+    activitySummary_viewedRandomAssignerData:
+      "Просмотрены данные случайного назначателя «{{name}}»",
     activitySummary_viewedSeatLayoutData: "Просмотрены данные схемы мест «{{name}}»",
     activitySummary_updatedGradedSubject: 'Обновлен оцениваемый предмет "{{name}}"',
     activitySummary_createdGradedSubject: 'Создан оцениваемый предмет "{{name}}"',
@@ -2188,6 +2190,14 @@ const ru = {
     randomHistoryReplicates: "Дубликаты",
     randomHistoryCount: "Назначения",
     randomHistoryEmpty: "Запусков пока нет. Выполните назначение, чтобы создать историю.",
+    randomTabDashboard: "Панель",
+    randomTabData: "Данные",
+    randomDataDescription: "Количество назначений по ученикам для {{count}} элементов.",
+    randomDataEmptyStudents: "В этом классе пока нет учеников.",
+    randomDataEmptyItems: "Добавьте элементы в этот распределитель, чтобы увидеть столбцы данных.",
+    randomDataCellToggle: "{{count}} назначений для {{item}}",
+    randomDataHistoryFailed: "Не удалось загрузить даты назначений.",
+    randomDataHistoryEmpty: "Нет записанных назначений.",
     randomDeleteRun: "Удалить",
     randomRunDeleteTitle: "Удалить запуск?",
     randomRunDeleteDescription: "Удалить это назначение из истории?",

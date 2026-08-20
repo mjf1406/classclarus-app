@@ -1211,6 +1211,8 @@ const fr = {
     activitySummary_viewedEquitableManualEditor: "Assignateur équitable manuel « {{name}} » ouvert",
     activitySummary_viewedEquitableAssignerData:
       "Données de l'assignateur équitable « {{name}} » consultées",
+    activitySummary_viewedRandomAssignerData:
+      "Données de l'assignateur aléatoire « {{name}} » consultées",
     activitySummary_viewedSeatLayoutData: "Données du plan de sièges « {{name}} » consultées",
     activitySummary_duplicatedGradeScale: "Barème de notation dupliqué sous « {{name}} »",
     activitySummary_hiddenGradeScaleDefault: "Barème de notation par défaut « {{nameKey}} » masqué",
@@ -2235,6 +2237,15 @@ const fr = {
     randomHistoryCount: "Assignations",
     randomHistoryEmpty:
       "Aucune exécution pour l'instant. Exécutez une assignation pour créer un historique.",
+    randomTabDashboard: "Tableau de bord",
+    randomTabData: "Données",
+    randomDataDescription: "Nombre d'assignations par élève sur {{count}} éléments.",
+    randomDataEmptyStudents: "Aucun élève dans cette classe pour le moment.",
+    randomDataEmptyItems:
+      "Ajoutez des éléments à ce répartiteur pour afficher des colonnes de données.",
+    randomDataCellToggle: "{{count}} assignations pour {{item}}",
+    randomDataHistoryFailed: "Impossible de charger les dates d'assignation.",
+    randomDataHistoryEmpty: "Aucune assignation enregistrée.",
     randomDeleteRun: "Supprimer",
     randomRunDeleteTitle: "Supprimer l'exécution ?",
     randomRunDeleteDescription: "Retirer cette assignation de l'historique ?",
