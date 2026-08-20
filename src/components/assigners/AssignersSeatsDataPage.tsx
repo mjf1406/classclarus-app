@@ -321,6 +321,9 @@ export function AssignersSeatsDataPage({ classId }: AssignersSeatsDataPageProps)
                 {filteredRoster.map((student) => (
                   <li key={student.userId}>
                     <SeatDataStudentCard
+                      classId={classId}
+                      layoutId={matrix.layout._id}
+                      dimension={dimension}
                       student={student}
                       rows={buildSeatHistoryRows(
                         matrix.values,

@@ -2,6 +2,7 @@ import { ChevronRightIcon } from "lucide-react";
 import { useCallback, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 
+import { SeatDataItemCountCell } from "@/components/assigners/SeatDataItemCountCell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
@@ -12,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import type { SeatLayoutMatrixDimension } from "@/hooks/assigners/useSeatLayoutRosterMatrix";
 import {
   seatConstraintPlainLanguageParts,
   type SeatConstraint,
@@ -27,6 +29,9 @@ import type { SeatHistoryRow } from "@/lib/assigners/seating/seatHistoryRows";
 import type { Id } from "../../../convex/_generated/dataModel";
 
 type SeatDataStudentCardProps = {
+  classId: Id<"classes">;
+  layoutId: Id<"seatLayouts">;
+  dimension: SeatLayoutMatrixDimension;
   student: StudentRosterEntry;
   rows: SeatHistoryRow[];
   constraints: SeatConstraint[];
@@ -35,6 +40,9 @@ type SeatDataStudentCardProps = {
 };
 
 export function SeatDataStudentCard({
+  classId,
+  layoutId,
+  dimension,
   student,
   rows,
   constraints,
@@ -113,15 +121,18 @@ export function SeatDataStudentCard({
             <TableBody>
               {rows.map((row) => (
                 <TableRow key={row.key}>
-                  <TableCell className="max-w-0 whitespace-normal wrap-break-word">
-                    <div className="flex min-w-0 flex-col gap-0.5">
-                      <span>{row.label}</span>
-                      {row.detail ? (
-                        <span className="text-xs text-muted-foreground">{row.detail}</span>
-                      ) : null}
-                    </div>
+                  <TableCell colSpan={2} className="p-0 whitespace-normal">
+                    <SeatDataItemCountCell
+                      classId={classId}
+                      layoutId={layoutId}
+                      dimension={dimension}
+                      studentUserId={student.userId}
+                      itemKey={row.key}
+                      label={row.label}
+                      detail={row.detail}
+                      count={row.count}
+                    />
                   </TableCell>
-                  <TableCell className="text-right tabular-nums">{row.count}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

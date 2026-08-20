@@ -10,7 +10,12 @@ import { classScope } from "./lib/authzModel.js";
 import { recordClassActivity } from "./lib/classActivity.js";
 import { classMutation, classQuery } from "./lib/customFunctions.js";
 import { rateLimiter } from "./lib/rateLimiter.js";
-import { activeChartsForLayout, resolveTeamLabelForDesk } from "./lib/seatChartLogic.js";
+import {
+  activeChartsForLayout,
+  DEFAULT_HISTORY_LIMIT,
+  MAX_HISTORY_LIMIT,
+  resolveTeamLabelForDesk,
+} from "./lib/seatChartLogic.js";
 import { copySeatLayoutItems } from "./lib/seatLayoutCopy.js";
 import {
   buildSeatLayoutRosterMatrixCounts,
@@ -21,6 +26,7 @@ import {
   type SeatLayoutMatrixValue,
   valuesFromAggregateLabels,
 } from "./lib/seating/layoutRosterMatrix.js";
+import { loadLayoutStudentHistoryPage } from "./lib/seating/layoutStudentHistory.js";
 import { resolveLayoutGenderParityMode } from "./lib/seating/settings.js";
 import { resolveUserImageUrl } from "./lib/userImage.js";
 
@@ -577,6 +583,49 @@ export const rosterMatrix = classQuery({
       students,
       countsByStudent,
     };
+  },
+});
+
+/** Paginated occurrence timestamps for one student + layout dimension key. */
+export const studentHistory = classQuery({
+  args: {
+    layoutId: v.id("seatLayouts"),
+    studentUserId: v.id("users"),
+    dimension: seatLayoutMatrixDimensionValidator,
+    key: v.string(),
+    beforeRecordedAt: v.optional(v.number()),
+    limit: v.optional(v.number()),
+  },
+  returns: v.object({
+    items: v.array(
+      v.object({
+        recordId: v.id("seatChartRecords"),
+        recordedAt: v.number(),
+      }),
+    ),
+    nextBeforeRecordedAt: v.optional(v.number()),
+  }),
+  handler: async (ctx, args) => {
+    await ctx.require("assigners:manage");
+    const layout = await ctx.db.get("seatLayouts", args.layoutId);
+    if (!layout || layout.classId !== ctx.classDoc._id) {
+      throw new Error("Layout not found");
+    }
+
+    const limit = Math.min(
+      Math.max(1, Math.floor(args.limit ?? DEFAULT_HISTORY_LIMIT)),
+      MAX_HISTORY_LIMIT,
+    );
+
+    return await loadLayoutStudentHistoryPage(ctx, {
+      layoutId: args.layoutId,
+      studentUserId: args.studentUserId,
+      dimension: args.dimension,
+      key: args.key,
+      limit,
+      maxScan: MAX_HISTORY_LIMIT,
+      ...(args.beforeRecordedAt !== undefined ? { beforeRecordedAt: args.beforeRecordedAt } : {}),
+    });
   },
 });
 
