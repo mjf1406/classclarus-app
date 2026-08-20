@@ -19,6 +19,8 @@ export type EquitableAssignAssignment = {
   item: string;
   groupId?: string;
   groupName?: string;
+  /** Groups rows from the same historical run for partner-novelty scoring. */
+  runKey?: string;
 };
 
 export type EquitableAssignSlot = {
@@ -247,6 +249,68 @@ function poolKey(slot: EquitableAssignSlot): string {
   return `${slot.groupId ?? ""}::${slot.genderRequired ?? ""}`;
 }
 
+function occupancyKey(groupId: string | undefined, item: string): string {
+  return `${groupId ?? ""}::${item}`;
+}
+
+function pairKey(a: string, b: string): string {
+  return a < b ? `${a}::${b}` : `${b}::${a}`;
+}
+
+export function buildPairCounts(
+  priorAssignments: ReadonlyArray<EquitableAssignAssignment>,
+): Map<string, number> {
+  const cohorts = new Map<string, string[]>();
+  for (const row of priorAssignments) {
+    if (!row.runKey) continue;
+    const key = `${row.runKey}::${row.groupId ?? ""}::${row.item}`;
+    const list = cohorts.get(key) ?? [];
+    list.push(row.studentUserId);
+    cohorts.set(key, list);
+  }
+
+  const counts = new Map<string, number>();
+  for (const students of cohorts.values()) {
+    for (let i = 0; i < students.length; i += 1) {
+      for (let j = i + 1; j < students.length; j += 1) {
+        const a = students[i]!;
+        const b = students[j]!;
+        if (a === b) continue;
+        const key = pairKey(a, b);
+        counts.set(key, (counts.get(key) ?? 0) + 1);
+      }
+    }
+  }
+  return counts;
+}
+
+function addOccupancy(
+  occupancy: Map<string, string[]>,
+  groupId: string | undefined,
+  item: string,
+  studentUserId: string,
+): void {
+  const key = occupancyKey(groupId, item);
+  const list = occupancy.get(key) ?? [];
+  list.push(studentUserId);
+  occupancy.set(key, list);
+}
+
+function partnerScoreForSlot(
+  studentId: string,
+  slot: EquitableAssignSlot,
+  occupancy: Map<string, string[]>,
+  pairCounts: Map<string, number>,
+): number {
+  const partners = occupancy.get(occupancyKey(slot.groupId, slot.item)) ?? [];
+  let score = 0;
+  for (const partner of partners) {
+    if (partner === studentId) continue;
+    score += pairCounts.get(pairKey(studentId, partner)) ?? 0;
+  }
+  return score;
+}
+
 function assignPoolStudentFirst(args: {
   slots: EquitableAssignSlot[];
   recipients: ReadonlyArray<EquitableAssignRecipient>;
@@ -254,6 +318,8 @@ function assignPoolStudentFirst(args: {
   experience: ExperienceCounts;
   assignedStudentIds: Set<string>;
   filledSlotIds: Set<string>;
+  occupancy: Map<string, string[]>;
+  pairCounts: Map<string, number>;
   items: ReadonlyArray<string>;
   runCount: number;
   random: () => number;
@@ -300,17 +366,38 @@ function assignPoolStudentFirst(args: {
       const student = sortedStudents[index]!;
       let bestSlot = availableSlots[0]!;
       let bestItemCount = getItemJobs(student.studentUserId, bestSlot.item, args.experience);
+      let bestPartnerScore = partnerScoreForSlot(
+        student.studentUserId,
+        bestSlot,
+        args.occupancy,
+        args.pairCounts,
+      );
       let bestRotation = (availableSlots.indexOf(bestSlot) + args.runCount) % availableSlots.length;
 
       for (let slotIndex = 1; slotIndex < availableSlots.length; slotIndex += 1) {
         const slot = availableSlots[slotIndex]!;
         const itemCount = getItemJobs(student.studentUserId, slot.item, args.experience);
+        const partnerScore = partnerScoreForSlot(
+          student.studentUserId,
+          slot,
+          args.occupancy,
+          args.pairCounts,
+        );
         const rotation = (slotIndex + args.runCount) % availableSlots.length;
         if (itemCount < bestItemCount) {
           bestItemCount = itemCount;
+          bestPartnerScore = partnerScore;
           bestRotation = rotation;
           bestSlot = slot;
-        } else if (itemCount === bestItemCount && rotation < bestRotation) {
+        } else if (itemCount === bestItemCount && partnerScore < bestPartnerScore) {
+          bestPartnerScore = partnerScore;
+          bestRotation = rotation;
+          bestSlot = slot;
+        } else if (
+          itemCount === bestItemCount &&
+          partnerScore === bestPartnerScore &&
+          rotation < bestRotation
+        ) {
           bestRotation = rotation;
           bestSlot = slot;
         }
@@ -318,6 +405,7 @@ function assignPoolStudentFirst(args: {
 
       args.assignedStudentIds.add(student.studentUserId);
       args.filledSlotIds.add(bestSlot.id);
+      addOccupancy(args.occupancy, bestSlot.groupId, bestSlot.item, student.studentUserId);
       availableSlots.splice(availableSlots.indexOf(bestSlot), 1);
       results.push(toSlotAssignment(bestSlot, student));
     }
@@ -361,7 +449,8 @@ function toSlotAssignment(
 /**
  * Equitable assigner balances experience across students to produce fair assignments.
  * Prioritizes least-experienced students first, then assigns what they've done the least,
- * with optional separate balancing for selected gender buckets.
+ * with optional separate balancing for selected gender buckets. Gender-balanced runs
+ * break item ties by avoiding repeated same-run partners.
  */
 export function assignEquitableSlots(input: EquitableAssignInput): EquitableSlotAssignmentResult[] {
   const genderBuckets = normalizeEquitableGenderBuckets(input.genderBuckets);
@@ -381,6 +470,8 @@ export function assignEquitableSlots(input: EquitableAssignInput): EquitableSlot
 
   const slotById = new Map(slots.map((slot) => [slot.id, slot]));
   const experience = buildExperienceCounts(input.priorAssignments);
+  const pairCounts = buildPairCounts(input.priorAssignments);
+  const occupancy = new Map<string, string[]>();
   const assignedStudentIds = new Set<string>();
   const filledSlotIds = new Set<string>();
   const results: EquitableSlotAssignmentResult[] = [];
@@ -393,6 +484,7 @@ export function assignEquitableSlots(input: EquitableAssignInput): EquitableSlot
     if (assignedStudentIds.has(locked.studentUserId)) continue;
     assignedStudentIds.add(locked.studentUserId);
     filledSlotIds.add(locked.slotId);
+    addOccupancy(occupancy, slot.groupId, slot.item, recipient.studentUserId);
     results.push(toSlotAssignment(slot, recipient));
   }
 
@@ -411,6 +503,8 @@ export function assignEquitableSlots(input: EquitableAssignInput): EquitableSlot
       experience,
       assignedStudentIds,
       filledSlotIds,
+      occupancy,
+      pairCounts,
       items: input.items,
       runCount,
       random,

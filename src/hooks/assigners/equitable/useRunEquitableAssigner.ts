@@ -9,6 +9,7 @@ import {
   equitableAssignersListQueryKey,
   type EquitableAssignerList,
 } from "@/hooks/assigners/equitable/useEquitableAssigners";
+import { equitablePartnerHistoryQueryKeyPrefix } from "@/hooks/assigners/equitable/useEquitablePartnerHistory";
 import { equitableRosterMatrixQueryKey } from "@/hooks/assigners/equitable/useEquitableRosterMatrix";
 import { useOptimisticMutation } from "@/hooks/useOptimisticMutation";
 import type { EquitableAssignerScope } from "@/lib/assigners/equitableAssigners";
@@ -42,6 +43,9 @@ export function useRunEquitableAssigner() {
       equitableAssignersListQueryKey(args.classId),
       equitableAssignerRunsQueryKey(args.classId, args.assignerId),
       equitableRosterMatrixQueryKey(args.classId, args.assignerId),
+    ],
+    invalidateQueryKeys: (args) => [
+      equitablePartnerHistoryQueryKeyPrefix(args.classId, args.assignerId),
     ],
     applyOptimisticUpdate: (queryClient, args) => {
       const now = Date.now();

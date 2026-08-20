@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 
 import { DataTableSortableHeader } from "@/components/feedback/DataTableSortableHeader";
 import { EquitableAssignerItemCountCell } from "@/components/assigners/equitable/EquitableAssignerItemCountCell";
+import { EquitableAssignerPartnersCell } from "@/components/assigners/equitable/EquitableAssignerPartnersCell";
 import { EquitableAssignerShell } from "@/components/assigners/equitable/EquitableAssignerShell";
 import { RosterColumnVisibilityMenu } from "@/components/roster/RosterColumnVisibilityMenu";
 import { RosterTable } from "@/components/roster/RosterTable";
@@ -19,12 +20,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLogClassAccessOnce } from "@/hooks/activity/useLogClassAccess";
 import { useEquitableAssigner } from "@/hooks/assigners/equitable/useEquitableAssigners";
 import { useEquitableRosterMatrix } from "@/hooks/assigners/equitable/useEquitableRosterMatrix";
+import { useClass } from "@/hooks/classes/useClass";
 import { useClassUserSettings } from "@/hooks/roster/useClassUserSettings";
 import { useRosterConsumerColumnVisibility } from "@/hooks/roster/useRosterConsumerColumnVisibility";
 import { memberMatchesQuery, normalizeSearchText } from "@/lib/members/memberSearch";
 import {
   normalizeColumnOrder,
   normalizeColumnVisibility,
+  resolveRosterNameFormat,
   type StudentRosterEntry,
 } from "@/lib/roster/roster";
 import type { Id } from "../../../../convex/_generated/dataModel";
@@ -40,6 +43,8 @@ export function EquitableAssignerDataPage({ classId, assignerId }: EquitableAssi
   const { t } = useTranslation("assigners");
   const { t: tClasses } = useTranslation("classes");
   const [nameQuery, setNameQuery] = useState("");
+  const { data: classDoc } = useClass(classId);
+  const nameFormat = resolveRosterNameFormat(classDoc ?? {});
   const { data: assigner } = useEquitableAssigner(classId, assignerId);
   const {
     data: matrix,
@@ -74,6 +79,22 @@ export function EquitableAssignerDataPage({ classId, assignerId }: EquitableAssi
     return map;
   }, [matrix?.countsByStudent]);
 
+  const partnersByStudentId = useMemo(() => {
+    const map = new Map<
+      Id<"users">,
+      NonNullable<typeof matrix>["partnersByStudent"][number]["partners"]
+    >();
+    for (const row of matrix?.partnersByStudent ?? []) {
+      map.set(row.studentUserId, row.partners);
+    }
+    return map;
+  }, [matrix?.partnersByStudent]);
+
+  const showPartnersColumn = useMemo(
+    () => [...partnersByStudentId.values()].some((partners) => partners.length > 0),
+    [partnersByStudentId],
+  );
+
   const roster = useMemo((): StudentRosterEntry[] => {
     return (matrix?.students ?? []).map((student) => ({
       userId: student.userId,
@@ -105,32 +126,74 @@ export function EquitableAssignerDataPage({ classId, assignerId }: EquitableAssi
   }, [nameQuery, roster]);
 
   const extraColumns = useMemo((): ColumnDef<StudentRosterEntry, unknown>[] => {
-    return (matrix?.items ?? []).map((item) => ({
-      id: `equitable-item-${item}`,
-      accessorFn: (student) => countsByStudentId.get(student.userId)?.get(item) ?? 0,
+    const rosterById = new Map(roster.map((student) => [student.userId, student] as const));
+    const itemColumns: ColumnDef<StudentRosterEntry, unknown>[] = (matrix?.items ?? []).map(
+      (item) => ({
+        id: `equitable-item-${item}`,
+        accessorFn: (student) => countsByStudentId.get(student.userId)?.get(item) ?? 0,
+        header: ({ column }) => (
+          <DataTableSortableHeader
+            label={item}
+            sorted={column.getIsSorted()}
+            onSort={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            truncate
+          />
+        ),
+        enableSorting: true,
+        cell: ({ row }) => {
+          const count = countsByStudentId.get(row.original.userId)?.get(item) ?? 0;
+          return (
+            <EquitableAssignerItemCountCell
+              classId={classId}
+              assignerId={assignerId}
+              studentUserId={row.original.userId}
+              item={item}
+              count={count}
+            />
+          );
+        },
+      }),
+    );
+
+    if (!showPartnersColumn) return itemColumns;
+
+    const partnersColumn: ColumnDef<StudentRosterEntry, unknown> = {
+      id: "equitable-partners",
+      accessorFn: (student) =>
+        (partnersByStudentId.get(student.userId) ?? []).reduce((sum, row) => sum + row.count, 0),
       header: ({ column }) => (
         <DataTableSortableHeader
-          label={item}
+          label={t("equitableDataPartnersColumn")}
           sorted={column.getIsSorted()}
           onSort={() => column.toggleSorting(column.getIsSorted() === "asc")}
           truncate
         />
       ),
       enableSorting: true,
-      cell: ({ row }) => {
-        const count = countsByStudentId.get(row.original.userId)?.get(item) ?? 0;
-        return (
-          <EquitableAssignerItemCountCell
-            classId={classId}
-            assignerId={assignerId}
-            studentUserId={row.original.userId}
-            item={item}
-            count={count}
-          />
-        );
-      },
-    }));
-  }, [assignerId, classId, countsByStudentId, matrix?.items]);
+      cell: ({ row }) => (
+        <EquitableAssignerPartnersCell
+          classId={classId}
+          assignerId={assignerId}
+          studentUserId={row.original.userId}
+          partners={partnersByStudentId.get(row.original.userId) ?? []}
+          rosterById={rosterById}
+          nameFormat={nameFormat}
+        />
+      ),
+    };
+
+    return [partnersColumn, ...itemColumns];
+  }, [
+    assignerId,
+    classId,
+    countsByStudentId,
+    matrix?.items,
+    nameFormat,
+    partnersByStudentId,
+    roster,
+    showPartnersColumn,
+    t,
+  ]);
 
   const columnOrder = useMemo(
     () => normalizeColumnOrder(userSettings?.studentsColumnOrder),

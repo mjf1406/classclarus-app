@@ -28,6 +28,7 @@ type EquitablePriorAssignment = {
   item: string;
   groupId?: string;
   groupName?: string;
+  runKey?: string;
 };
 
 function simulateRuns(args: {
@@ -59,7 +60,7 @@ function simulateRuns(args: {
       random: rng,
       runCount: run,
     });
-    prior = [...prior, ...batch];
+    prior = [...prior, ...batch.map((row) => ({ ...row, runKey: `r${run}` }))];
   }
 
   return prior;
@@ -577,7 +578,7 @@ function simulateGroupChurnRuns(args: {
       seed: args.seed,
       run,
     });
-    prior = [...prior, ...batch];
+    prior = [...prior, ...batch.map((row) => ({ ...row, runKey: `r${run}` }))];
   }
 
   return prior;
@@ -647,10 +648,112 @@ function simulatePartialGroupChurnRuns(args: {
       seed: args.seed,
       run,
     });
-    prior = [...prior, ...batch];
+    prior = [...prior, ...batch.map((row) => ({ ...row, runKey: `r${run}` }))];
   }
 
   return prior;
+}
+
+function expectPairMixing(args: {
+  cfg: SimScenario;
+  students: SimStudent[];
+  prior: EquitablePriorAssignment[];
+  seed: number;
+}): void {
+  if (!args.cfg.balanceGender || args.cfg.items < 2) return;
+
+  const pools = new Map<string, SimStudent[]>();
+  if (args.cfg.scope === "groups") {
+    for (const student of args.students) {
+      if (!student.groupId) continue;
+      const list = pools.get(student.groupId) ?? [];
+      list.push(student);
+      pools.set(student.groupId, list);
+    }
+  } else {
+    pools.set("class", args.students);
+  }
+
+  const byRun = new Map<string, EquitablePriorAssignment[]>();
+  for (const row of args.prior) {
+    if (!row.runKey) continue;
+    const list = byRun.get(row.runKey) ?? [];
+    list.push(row);
+    byRun.set(row.runKey, list);
+  }
+
+  for (const [poolId, poolStudents] of pools) {
+    const byGender = new Map<EquitableGenderBucket, SimStudent[]>();
+    for (const student of poolStudents) {
+      const list = byGender.get(student.gender) ?? [];
+      list.push(student);
+      byGender.set(student.gender, list);
+    }
+    const remixGenders = [...byGender.entries()].filter(([, list]) => list.length >= 2);
+    if (remixGenders.length < 2) continue;
+
+    const remixIds = new Set(remixGenders.flatMap(([, list]) => list.map((student) => student.id)));
+    const genderById = new Map(poolStudents.map((student) => [student.id, student.gender]));
+    const mixedPairs = new Set<string>();
+    for (let i = 0; i < remixGenders.length; i += 1) {
+      for (let j = i + 1; j < remixGenders.length; j += 1) {
+        for (const a of remixGenders[i]![1]) {
+          for (const b of remixGenders[j]![1]) {
+            mixedPairs.add(a.id < b.id ? `${a.id}::${b.id}` : `${b.id}::${a.id}`);
+          }
+        }
+      }
+    }
+
+    const together = new Map<string, number>();
+    const bothWorked = new Map<string, number>();
+
+    for (const rows of byRun.values()) {
+      const poolRows = rows.filter((row) => {
+        if (!remixIds.has(row.studentUserId)) return false;
+        if (args.cfg.scope === "groups") return row.groupId === poolId;
+        return true;
+      });
+      const assigned = new Set(poolRows.map((row) => row.studentUserId));
+      for (const pair of mixedPairs) {
+        const separator = pair.indexOf("::");
+        const a = pair.slice(0, separator);
+        const b = pair.slice(separator + 2);
+        if (assigned.has(a) && assigned.has(b)) {
+          bothWorked.set(pair, (bothWorked.get(pair) ?? 0) + 1);
+        }
+      }
+
+      const byItem = new Map<string, string[]>();
+      for (const row of poolRows) {
+        const list = byItem.get(row.item) ?? [];
+        list.push(row.studentUserId);
+        byItem.set(row.item, list);
+      }
+      for (const studentsOnItem of byItem.values()) {
+        for (let i = 0; i < studentsOnItem.length; i += 1) {
+          for (let j = i + 1; j < studentsOnItem.length; j += 1) {
+            const a = studentsOnItem[i]!;
+            const b = studentsOnItem[j]!;
+            if (genderById.get(a) === genderById.get(b)) continue;
+            const pair = a < b ? `${a}::${b}` : `${b}::${a}`;
+            if (!mixedPairs.has(pair)) continue;
+            together.set(pair, (together.get(pair) ?? 0) + 1);
+          }
+        }
+      }
+    }
+
+    for (const pair of mixedPairs) {
+      const worked = bothWorked.get(pair) ?? 0;
+      if (worked < 6) continue;
+      const shared = together.get(pair) ?? 0;
+      expect(
+        shared,
+        `${args.cfg.name} seed=0x${args.seed.toString(16)} pool=${poolId} pair=${pair} locked together`,
+      ).toBeLessThan(worked);
+    }
+  }
 }
 
 function expectFairnessInvariants(args: {
@@ -728,6 +831,13 @@ describe.each(SIMULATION_SCENARIOS)("$name", (cfg) => {
       });
 
       const experience = buildExperienceCounts(prior);
+
+      expectPairMixing({
+        cfg,
+        students,
+        prior,
+        seed,
+      });
 
       for (const cohort of cohorts) {
         expectFairnessInvariants({

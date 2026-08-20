@@ -10,7 +10,10 @@ import {
   validateEquitableManualAssignments,
   type EquitableManualSlotAssignmentInput,
 } from "./lib/assigners/equitableManualSlots.js";
-import { buildEquitableRosterMatrixCounts } from "./lib/assigners/equitableRosterMatrix.js";
+import {
+  buildEquitablePartnerSummaries,
+  buildEquitableRosterMatrixCounts,
+} from "./lib/assigners/equitableRosterMatrix.js";
 import {
   equitableAssignerFormSchemaEn,
   normalizeStoredGenderBuckets,
@@ -119,10 +122,24 @@ const equitableRosterMatrixRowValidator = v.object({
   counts: v.array(equitableRosterMatrixCountValidator),
 });
 
+const equitablePartnerSummaryValidator = v.object({
+  partnerUserId: v.id("users"),
+  count: v.number(),
+  firstName: v.optional(v.string()),
+  lastName: v.optional(v.string()),
+  name: v.optional(v.string()),
+});
+
+const equitableStudentPartnersValidator = v.object({
+  studentUserId: v.id("users"),
+  partners: v.array(equitablePartnerSummaryValidator),
+});
+
 const equitableRosterMatrixValidator = v.object({
   items: v.array(v.string()),
   students: v.array(equitableRosterMatrixStudentValidator),
   countsByStudent: v.array(equitableRosterMatrixRowValidator),
+  partnersByStudent: v.array(equitableStudentPartnersValidator),
 });
 
 const DEFAULT_HISTORY_LIMIT = 20;
@@ -133,6 +150,7 @@ const priorAssignmentValidator = v.object({
   item: v.string(),
   groupId: v.optional(v.id("groups")),
   groupName: v.optional(v.string()),
+  runKey: v.optional(v.string()),
 });
 
 const equitableAssignerListItemValidator = v.object({
@@ -421,7 +439,15 @@ async function loadRecipientsForRun(
 async function loadPriorAssignments(
   ctx: MutationCtx | QueryCtx,
   assignerId: Id<"equitableAssigners">,
-): Promise<Array<{ studentUserId: string; item: string; groupId?: string; groupName?: string }>> {
+): Promise<
+  Array<{
+    studentUserId: string;
+    item: string;
+    groupId?: string;
+    groupName?: string;
+    runKey: string;
+  }>
+> {
   // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded history
   const runs = await ctx.db
     .query("equitableAssignerRuns")
@@ -433,6 +459,7 @@ async function loadPriorAssignments(
     item: string;
     groupId?: string;
     groupName?: string;
+    runKey: string;
   }> = [];
   for (const run of runs) {
     for (const assignment of run.assignments) {
@@ -441,6 +468,7 @@ async function loadPriorAssignments(
         item: assignment.item,
         groupId: assignment.groupId,
         groupName: assignment.groupName,
+        runKey: run._id,
       });
     }
   }
@@ -1042,6 +1070,7 @@ export const manualSetup = classQuery({
         item: row.item,
         ...(row.groupId ? { groupId: row.groupId as Id<"groups"> } : {}),
         ...(row.groupName ? { groupName: row.groupName } : {}),
+        runKey: row.runKey,
       })),
     };
   },
@@ -1278,6 +1307,79 @@ export const studentHistory = classQuery({
   },
 });
 
+export const partnerHistory = classQuery({
+  args: {
+    assignerId: v.id("equitableAssigners"),
+    studentUserId: v.id("users"),
+    partnerUserId: v.id("users"),
+    beforeRanAt: v.optional(v.number()),
+    limit: v.optional(v.number()),
+  },
+  returns: v.object({
+    items: v.array(equitableHistoryItemValidator),
+    nextBeforeRanAt: v.optional(v.number()),
+  }),
+  handler: async (ctx, args) => {
+    await ctx.require("assigners:manage");
+    await requireEquitableAssigner(ctx, ctx.classDoc._id, args.assignerId);
+
+    const limit = Math.min(
+      Math.max(1, Math.floor(args.limit ?? DEFAULT_HISTORY_LIMIT)),
+      MAX_HISTORY_LIMIT,
+    );
+
+    // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded history
+    const runs = await ctx.db
+      .query("equitableAssignerRuns")
+      .withIndex("by_assignerId_ranAt", (q) => q.eq("assignerId", args.assignerId))
+      .order("desc")
+      .collect();
+
+    const shared: Array<{
+      runId: Id<"equitableAssignerRuns">;
+      ranAt: number;
+      item: string;
+      groupName?: string;
+    }> = [];
+
+    for (const run of runs) {
+      const studentRows = run.assignments.filter(
+        (assignment) => assignment.studentUserId === args.studentUserId,
+      );
+      const partnerRows = run.assignments.filter(
+        (assignment) => assignment.studentUserId === args.partnerUserId,
+      );
+      if (studentRows.length === 0 || partnerRows.length === 0) continue;
+
+      for (const studentRow of studentRows) {
+        for (const partnerRow of partnerRows) {
+          if (studentRow.item !== partnerRow.item) continue;
+          if ((studentRow.groupId ?? "") !== (partnerRow.groupId ?? "")) continue;
+          if (args.beforeRanAt !== undefined && run.ranAt >= args.beforeRanAt) continue;
+          shared.push({
+            runId: run._id,
+            ranAt: run.ranAt,
+            item: studentRow.item,
+            ...(studentRow.groupName !== undefined ? { groupName: studentRow.groupName } : {}),
+          });
+        }
+      }
+    }
+
+    const items = shared.slice(0, limit).map((row) => ({
+      runId: row.runId,
+      ranAt: row.ranAt,
+      item: row.item,
+      ...(row.groupName !== undefined ? { groupName: row.groupName } : {}),
+    }));
+    const last = shared.at(limit - 1);
+    return {
+      items,
+      ...(shared.length > limit && last ? { nextBeforeRanAt: last.ranAt } : {}),
+    };
+  },
+});
+
 export const rosterMatrix = classQuery({
   args: {
     assignerId: v.id("equitableAssigners"),
@@ -1287,12 +1389,36 @@ export const rosterMatrix = classQuery({
     await ctx.require("assigners:manage");
     const assigner = await requireEquitableAssigner(ctx, ctx.classDoc._id, args.assignerId);
     const students = await loadManualStudents(ctx, ctx.classDoc._id, "class");
-    const priorRows = await loadPriorAssignments(ctx, assigner._id);
+    // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded history
+    const runs = await ctx.db
+      .query("equitableAssignerRuns")
+      .withIndex("by_assignerId_ranAt", (q) => q.eq("assignerId", assigner._id))
+      .order("asc")
+      .collect();
+    const priorRows = runs.flatMap((run) =>
+      run.assignments.map((assignment) => ({
+        studentUserId: assignment.studentUserId,
+        item: assignment.item,
+      })),
+    );
     const studentUserIds = students.map((student) => student.userId);
     const countsByStudent = buildEquitableRosterMatrixCounts(
       assigner.items,
       studentUserIds,
       priorRows,
+    );
+    const partnersByStudent = buildEquitablePartnerSummaries(
+      studentUserIds,
+      runs.map((run) => ({
+        assignments: run.assignments.map((assignment) => ({
+          studentUserId: assignment.studentUserId,
+          item: assignment.item,
+          groupId: assignment.groupId,
+          firstName: assignment.firstName,
+          lastName: assignment.lastName,
+          studentDisplayName: assignment.studentDisplayName,
+        })),
+      })),
     );
 
     return {
@@ -1307,6 +1433,7 @@ export const rosterMatrix = classQuery({
         ...(student.email !== undefined ? { email: student.email } : {}),
       })),
       countsByStudent,
+      partnersByStudent,
     };
   },
 });

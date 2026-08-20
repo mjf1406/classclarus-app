@@ -305,6 +305,30 @@ describe("equitable assigner production flow", () => {
       limit: 10,
     });
     expect(history.items.some((row) => row.runId === rerunId)).toBe(true);
+
+    const partnerOnSameJob = rerun.assignments.find(
+      (row) =>
+        row.studentUserId !== sample.studentUserId &&
+        row.item === sample.item &&
+        (row.groupId ?? "") === (sample.groupId ?? ""),
+    );
+    expect(partnerOnSameJob).toBeDefined();
+    const partners = afterRerun.partnersByStudent.find(
+      (row) => row.studentUserId === sample.studentUserId,
+    );
+    expect(
+      partners?.partners.some((row) => row.partnerUserId === partnerOnSameJob?.studentUserId),
+    ).toBe(true);
+    const partnerHistory = await owner.query(api.equitableAssigners.partnerHistory, {
+      classId: fixture.classId,
+      assignerId: fixture.assignerId,
+      studentUserId: sample.studentUserId,
+      partnerUserId: partnerOnSameJob!.studentUserId,
+      limit: 10,
+    });
+    expect(
+      partnerHistory.items.some((row) => row.runId === rerunId && row.item === sample.item),
+    ).toBe(true);
   });
 
   it("rejects a student who lacks assigner management permission", async () => {

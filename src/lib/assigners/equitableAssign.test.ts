@@ -174,4 +174,76 @@ describe("assignEquitable", () => {
     expect(new Set(ids).size).toBe(ids.length);
     expect(ids.length).toBe(3);
   });
+
+  it("remixes boy/girl partners across jobs instead of cycling as a locked pair", () => {
+    const items = ["Board", "Door", "Line"];
+    const recipients = [
+      recipient("B1", "m", "g1", 1),
+      recipient("G1", "f", "g1", 2),
+      recipient("B2", "m", "g1", 3),
+      recipient("G2", "f", "g1", 4),
+    ];
+    let prior: Array<{
+      studentUserId: string;
+      item: string;
+      groupId?: string;
+      groupName?: string;
+      runKey?: string;
+    }> = [];
+    const sharedJobs: string[] = [];
+
+    for (let run = 0; run < 3; run += 1) {
+      const batch = assignEquitable({
+        items,
+        recipients,
+        scope: "groups",
+        balanceGender: true,
+        genderBuckets: ["m", "f"],
+        priorAssignments: prior,
+        random: pickFirst,
+        runCount: run,
+      });
+      const byStudent = new Map(batch.map((row) => [row.studentUserId, row.item]));
+      const b1Job = byStudent.get("B1");
+      const g1Job = byStudent.get("G1");
+      if (b1Job && g1Job && b1Job === g1Job) sharedJobs.push(b1Job);
+      prior = [...prior, ...batch.map((row) => ({ ...row, runKey: `run-${run}` }))];
+    }
+
+    expect(sharedJobs.length).toBeLessThan(3);
+    expect(new Set(sharedJobs).size).toBeLessThan(items.length);
+  });
+
+  it("avoids a locked partner when another least-done job is open", () => {
+    const slots = buildEquitableAssignSlots({
+      items: ["Board", "Door"],
+      scope: "class",
+      balanceGender: true,
+      genderBuckets: ["m", "f"],
+      groups: [],
+      recipients: [recipient("B1", "m"), recipient("G1", "f")],
+    });
+    const lockedGirlSlot = slots.find(
+      (slot) => slot.item === "Board" && slot.genderRequired === "f",
+    );
+    expect(lockedGirlSlot).toBeDefined();
+
+    const result = assignEquitableSlots({
+      items: ["Board", "Door"],
+      slots,
+      recipients: [recipient("B1", "m", undefined, 1), recipient("G1", "f", undefined, 2)],
+      scope: "class",
+      balanceGender: true,
+      genderBuckets: ["m", "f"],
+      priorAssignments: [
+        { studentUserId: "B1", item: "Board", runKey: "run-0" },
+        { studentUserId: "G1", item: "Board", runKey: "run-0" },
+        { studentUserId: "B1", item: "Door", runKey: "run-1" },
+      ],
+      lockedAssignments: [{ slotId: lockedGirlSlot!.id, studentUserId: "G1" }],
+      random: pickFirst,
+    });
+
+    expect(result.find((row) => row.studentUserId === "B1")?.item).toBe("Door");
+  });
 });
