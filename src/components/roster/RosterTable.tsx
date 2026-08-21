@@ -13,6 +13,7 @@ import {
   SortableContext,
   arrayMove,
   horizontalListSortingStrategy,
+  sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
@@ -43,11 +44,13 @@ import {
   Fragment,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type Dispatch,
   type ReactNode,
   type SetStateAction,
+  type CSSProperties,
 } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -94,6 +97,27 @@ export type RosterSaveRowDraft = {
 };
 
 const DEFAULT_SORTING: SortingState = [{ id: "rosterNumber", desc: false }];
+const EMPTY_SORTING: SortingState = [];
+const EMPTY_EXPANDED: ExpandedState = {};
+
+function MaybeSortableContext({
+  enabled,
+  items,
+  strategy,
+  children,
+}: {
+  enabled: boolean;
+  items: string[];
+  strategy: typeof horizontalListSortingStrategy | typeof verticalListSortingStrategy;
+  children: ReactNode;
+}) {
+  if (!enabled) return children;
+  return (
+    <SortableContext items={items} strategy={strategy}>
+      {children}
+    </SortableContext>
+  );
+}
 
 function compareOptionalText(a: string | undefined | null, b: string | undefined | null): number {
   const left = a?.trim() ?? "";
@@ -303,7 +327,9 @@ function GenderCell({ student }: { student: StudentRosterEntry }) {
           }}
         >
           <SelectTrigger size="sm" className="w-full" aria-label={t("rosterColumnGender")}>
-            <SelectValue placeholder={dash} />
+            <SelectValue placeholder={dash}>
+              {draft.gender ? t(genderLabelKey(draft.gender)) : null}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
@@ -360,7 +386,9 @@ function PronounsCell({ student }: { student: StudentRosterEntry }) {
           }}
         >
           <SelectTrigger size="sm" className="w-full" aria-label={t("rosterColumnPronouns")}>
-            <SelectValue placeholder={dash} />
+            <SelectValue placeholder={dash}>
+              {draft.pronouns ? t(pronounLabelKey(draft.pronouns)) : null}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
@@ -405,21 +433,41 @@ function SortableHeaderCell({
   greyed: boolean;
   children: ReactNode;
 }) {
+  if (!tableEditMode) {
+    return <TableHead>{children}</TableHead>;
+  }
+  return (
+    <SortableHeaderCellActive id={id} greyed={greyed}>
+      {children}
+    </SortableHeaderCellActive>
+  );
+}
+
+function SortableHeaderCellActive({
+  id,
+  greyed,
+  children,
+}: {
+  id: string;
+  greyed: boolean;
+  children: ReactNode;
+}) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id,
-    disabled: !tableEditMode,
+    animateLayoutChanges: () => false,
   });
 
   return (
     <TableHead
       ref={setNodeRef}
       style={{
-        transform: CSS.Transform.toString(transform),
+        transform: CSS.Translate.toString(transform),
         transition,
         opacity: isDragging ? 0.7 : greyed ? 0.55 : 1,
       }}
-      className={tableEditMode ? "cursor-grab active:cursor-grabbing" : undefined}
-      {...(tableEditMode ? { ...attributes, ...listeners } : {})}
+      className="cursor-grab active:cursor-grabbing"
+      {...attributes}
+      {...listeners}
     >
       {children}
     </TableHead>
@@ -429,43 +477,50 @@ function SortableHeaderCell({
 const ROW_TOGGLE_IGNORE_SELECTOR =
   'button, a, input, select, textarea, label, [role="button"], [role="combobox"], [role="menuitem"], [role="option"], [contenteditable="true"]';
 
-function SortableBodyRow({
-  id,
-  tableEditMode,
-  rowEditActive,
+type BodyRowDragHandle = {
+  attributes: ReturnType<typeof useSortable>["attributes"];
+  listeners: ReturnType<typeof useSortable>["listeners"];
+  showHandle: boolean;
+};
+
+const INACTIVE_DRAG_HANDLE: BodyRowDragHandle = {
+  attributes: {
+    role: "button",
+    tabIndex: -1,
+    "aria-disabled": true,
+    "aria-pressed": undefined,
+    "aria-roledescription": "sortable",
+    "aria-describedby": "",
+  },
+  listeners: undefined,
+  showHandle: false,
+};
+
+function RosterBodyRow({
+  rowRef,
+  style,
+  isDragging,
   expandable,
   expanded,
   expandLabel,
   onToggleExpand,
+  dragHandle,
   children,
 }: {
-  id: string;
-  tableEditMode: boolean;
-  rowEditActive: boolean;
+  rowRef?: (node: HTMLElement | null) => void;
+  style?: CSSProperties;
+  isDragging?: boolean;
   expandable?: boolean;
   expanded?: boolean;
   expandLabel?: string;
   onToggleExpand?: () => void;
-  children: (dragHandle: {
-    attributes: ReturnType<typeof useSortable>["attributes"];
-    listeners: ReturnType<typeof useSortable>["listeners"];
-    showHandle: boolean;
-  }) => ReactNode;
+  dragHandle: BodyRowDragHandle;
+  children: (dragHandle: BodyRowDragHandle) => ReactNode;
 }) {
-  const disabled = !tableEditMode || rowEditActive;
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id,
-    disabled,
-  });
-
   return (
     <TableRow
-      ref={setNodeRef}
-      style={{
-        transform: CSS.Transform.toString(transform),
-        transition,
-        opacity: isDragging ? 0.7 : 1,
-      }}
+      ref={rowRef}
+      style={style}
       data-dragging={isDragging || undefined}
       data-state={expandable && expanded ? "selected" : undefined}
       aria-expanded={expandable ? expanded : undefined}
@@ -496,8 +551,84 @@ function SortableBodyRow({
           : undefined
       }
     >
-      {children({ attributes, listeners, showHandle: !disabled })}
+      {children(dragHandle)}
     </TableRow>
+  );
+}
+
+function SortableBodyRow({
+  id,
+  tableEditMode,
+  rowEditActive,
+  expandable,
+  expanded,
+  expandLabel,
+  onToggleExpand,
+  children,
+}: {
+  id: string;
+  tableEditMode: boolean;
+  rowEditActive: boolean;
+  expandable?: boolean;
+  expanded?: boolean;
+  expandLabel?: string;
+  onToggleExpand?: () => void;
+  children: (dragHandle: BodyRowDragHandle) => ReactNode;
+}) {
+  const shared = {
+    expandable,
+    expanded,
+    expandLabel,
+    onToggleExpand,
+    children,
+  };
+
+  if (!tableEditMode) {
+    return <RosterBodyRow dragHandle={INACTIVE_DRAG_HANDLE} {...shared} />;
+  }
+
+  return <SortableBodyRowActive id={id} rowEditActive={rowEditActive} {...shared} />;
+}
+
+function SortableBodyRowActive({
+  id,
+  rowEditActive,
+  expandable,
+  expanded,
+  expandLabel,
+  onToggleExpand,
+  children,
+}: {
+  id: string;
+  rowEditActive: boolean;
+  expandable?: boolean;
+  expanded?: boolean;
+  expandLabel?: string;
+  onToggleExpand?: () => void;
+  children: (dragHandle: BodyRowDragHandle) => ReactNode;
+}) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useSortable({
+    id,
+    disabled: rowEditActive,
+    animateLayoutChanges: () => false,
+  });
+
+  return (
+    <RosterBodyRow
+      rowRef={setNodeRef}
+      style={{
+        transform: CSS.Translate.toString(transform),
+        opacity: isDragging ? 0.7 : 1,
+      }}
+      isDragging={isDragging}
+      expandable={expandable}
+      expanded={expanded}
+      expandLabel={expandLabel}
+      onToggleExpand={onToggleExpand}
+      dragHandle={{ attributes, listeners, showHandle: !rowEditActive }}
+    >
+      {children}
+    </RosterBodyRow>
   );
 }
 
@@ -547,10 +678,18 @@ export function RosterTable({
   const [draft, setDraft] = useState<RowDraft | null>(null);
   const [sorting, setSorting] = useState<SortingState>(DEFAULT_SORTING);
   const [expanded, setExpanded] = useState<ExpandedState>({});
+  const [rowOrderOverride, setRowOrderOverride] = useState<StudentRosterEntry[] | null>(null);
+
+  const tableRows = rowOrderOverride ?? data;
+  const dataOrderKey = useMemo(() => data.map((entry) => entry.userId).join("\0"), [data]);
+
+  useEffect(() => {
+    setRowOrderOverride(null);
+  }, [dataOrderKey]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(KeyboardSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
   const dash = t("rosterUnset");
@@ -602,6 +741,17 @@ export function RosterTable({
     },
     [draft, onSaveRow],
   );
+
+  useEffect(() => {
+    if (!editingUserId) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Enter" || (!event.ctrlKey && !event.metaKey)) return;
+      event.preventDefault();
+      saveEdit(editingUserId);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [editingUserId, saveEdit]);
 
   const editContextValue = useMemo(
     (): RosterEditContextValue => ({
@@ -822,13 +972,13 @@ export function RosterTable({
   }, [t, extraColumns, showActions, showExpand, renderRowActions, expandRowLabel, tableEditMode]);
 
   const table = useReactTable({
-    data,
+    data: tableRows,
     columns,
     state: {
       columnOrder: effectiveOrder,
       columnVisibility: effectiveVisibility,
-      sorting: tableEditMode ? [] : sorting,
-      expanded: showExpand ? expanded : {},
+      sorting: tableEditMode ? EMPTY_SORTING : sorting,
+      expanded: showExpand ? expanded : EMPTY_EXPANDED,
     },
     onSortingChange: setSorting,
     onExpandedChange: setExpanded,
@@ -858,15 +1008,26 @@ export function RosterTable({
     }
 
     if (!onReorderRows) return;
-    const userIds = data.map((entry) => entry.userId);
+    const userIds = tableRows.map((entry) => entry.userId);
     const oldIndex = userIds.indexOf(activeId as Id<"users">);
     const newIndex = userIds.indexOf(overId as Id<"users">);
     if (oldIndex < 0 || newIndex < 0) return;
-    onReorderRows(arrayMove(userIds, oldIndex, newIndex));
+    const nextIds = arrayMove(userIds, oldIndex, newIndex);
+    const byId = new Map(tableRows.map((row) => [row.userId, row] as const));
+    setRowOrderOverride(
+      nextIds.flatMap((userId, index) => {
+        const entry = byId.get(userId);
+        return entry ? [{ ...entry, rosterNumber: index + 1 }] : [];
+      }),
+    );
+    onReorderRows(nextIds);
   };
 
-  const headerIds = columnOrder.filter((id) => tableEditMode || columnVisibility[id]);
-  const rowIds = data.map((entry) => entry.userId);
+  const headerIds = useMemo(
+    () => columnOrder.filter((id) => tableEditMode || columnVisibility[id]),
+    [columnOrder, tableEditMode, columnVisibility],
+  );
+  const rowIds = useMemo(() => tableRows.map((entry) => entry.userId), [tableRows]);
 
   const tableNode = (
     <div className="min-w-0 overflow-hidden rounded-xl border">
@@ -874,7 +1035,11 @@ export function RosterTable({
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>
-              <SortableContext items={headerIds} strategy={horizontalListSortingStrategy}>
+              <MaybeSortableContext
+                enabled={tableEditMode}
+                items={headerIds}
+                strategy={horizontalListSortingStrategy}
+              >
                 {headerGroup.headers.map((header) => {
                   const columnId = header.column.id;
                   const isDataColumn = ROSTER_COLUMN_IDS.includes(columnId as RosterColumnId);
@@ -942,12 +1107,16 @@ export function RosterTable({
                     </SortableHeaderCell>
                   );
                 })}
-              </SortableContext>
+              </MaybeSortableContext>
             </TableRow>
           ))}
         </TableHeader>
         <TableBody>
-          <SortableContext items={rowIds} strategy={verticalListSortingStrategy}>
+          <MaybeSortableContext
+            enabled={tableEditMode}
+            items={rowIds}
+            strategy={verticalListSortingStrategy}
+          >
             {table.getRowModel().rows.length ? (
               table.getRowModel().rows.map((row) => (
                 <Fragment key={row.id}>
@@ -1012,7 +1181,7 @@ export function RosterTable({
                 </TableCell>
               </TableRow>
             )}
-          </SortableContext>
+          </MaybeSortableContext>
         </TableBody>
       </Table>
     </div>
@@ -1021,9 +1190,17 @@ export function RosterTable({
   return (
     <RosterEditContext.Provider value={editContextValue}>
       <RosterNameFiltersContext.Provider value={nameColumnFilters}>
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          {tableNode}
-        </DndContext>
+        {tableEditMode ? (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            {tableNode}
+          </DndContext>
+        ) : (
+          tableNode
+        )}
       </RosterNameFiltersContext.Provider>
     </RosterEditContext.Provider>
   );
