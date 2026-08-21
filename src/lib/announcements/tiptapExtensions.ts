@@ -2,6 +2,11 @@ import Placeholder from "@tiptap/extension-placeholder";
 import StarterKit from "@tiptap/starter-kit";
 import type { Extensions, JSONContent } from "@tiptap/react";
 
+import {
+  ANNOUNCEMENT_LINK_HTML_ATTRIBUTES,
+  convertMarkdownLinksInDoc,
+} from "@/lib/announcements/markdownLinks";
+
 export const EMPTY_ANNOUNCEMENT_BODY: JSONContent = {
   type: "doc",
   content: [{ type: "paragraph" }],
@@ -21,13 +26,10 @@ export function createAnnouncementExtensions(options?: {
         openOnClick: !editable,
         autolink: true,
         linkOnPaste: true,
+        markdownLinks: true,
         defaultProtocol: "https",
         protocols: ["http", "https", "mailto"],
-        HTMLAttributes: {
-          target: "_blank",
-          rel: "noopener noreferrer",
-          class: "announcement-link text-primary underline underline-offset-2",
-        },
+        HTMLAttributes: { ...ANNOUNCEMENT_LINK_HTML_ATTRIBUTES },
       },
     }),
     ...(editable && options?.placeholder
@@ -50,7 +52,7 @@ export function parseAnnouncementBodyJson(bodyJson: string): JSONContent {
     if (doc.type !== "doc") {
       return EMPTY_ANNOUNCEMENT_BODY;
     }
-    return parsed as JSONContent;
+    return convertMarkdownLinksInDoc(parsed as JSONContent);
   } catch {
     return EMPTY_ANNOUNCEMENT_BODY;
   }

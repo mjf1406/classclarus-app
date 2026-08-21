@@ -1287,6 +1287,7 @@ const es = {
     titleTooLong: "El título debe tener como máximo {{max}} caracteres.",
     bodyLabel: "Cuerpo",
     bodyPlaceholder: "Escribe tu anuncio…",
+    bodyLinkHint: "Usa [text](https://example.com) para los enlaces.",
     attachmentsLabel: "Archivos adjuntos",
     attachmentsDescription: "Imágenes o documentos opcionales, hasta {{max}}.",
     attachmentsImages: "Imágenes",
@@ -1464,6 +1465,7 @@ const es = {
     instructionsLabel: "Instrucciones",
     instructionsDescription: "Indicaciones opcionales que deben seguir los estudiantes.",
     instructionsPlaceholder: "Escribe las instrucciones…",
+    bodyLinkHint: "Usa [text](https://example.com) para los enlaces.",
     procedureLabel: "Procedimiento",
     procedureDescription:
       "Pasos ordenados opcionales. Cada paso también puede ser una tarea de clase.",

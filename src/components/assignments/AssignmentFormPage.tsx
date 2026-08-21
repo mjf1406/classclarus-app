@@ -1078,10 +1078,13 @@ export function AssignmentFormPage({ classId, mode, initial }: AssignmentFormPag
           </div>
           <form.Field name="instructionsJson">
             {(field) => (
-              <AssignmentInstructionsEditor
-                value={field.state.value}
-                onChange={field.handleChange}
-              />
+              <div className="flex flex-col gap-2">
+                <AssignmentInstructionsEditor
+                  value={field.state.value}
+                  onChange={field.handleChange}
+                />
+                <p className="text-sm text-muted-foreground">{t("bodyLinkHint")}</p>
+              </div>
             )}
           </form.Field>
         </section>

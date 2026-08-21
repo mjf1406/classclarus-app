@@ -1291,6 +1291,7 @@ const it = {
     titleTooLong: "Il titolo deve contenere al massimo {{max}} caratteri.",
     bodyLabel: "Corpo",
     bodyPlaceholder: "Scrivi il tuo avviso…",
+    bodyLinkHint: "Usa [text](https://example.com) per i collegamenti.",
     attachmentsLabel: "Allegati",
     attachmentsDescription: "Immagini o documenti facoltativi, fino a {{max}}.",
     attachmentsImages: "Immagini",
@@ -1469,6 +1470,7 @@ const it = {
     instructionsLabel: "Istruzioni",
     instructionsDescription: "Indicazioni facoltative che gli studenti devono seguire.",
     instructionsPlaceholder: "Scrivi le istruzioni…",
+    bodyLinkHint: "Usa [text](https://example.com) per i collegamenti.",
     procedureLabel: "Procedura",
     procedureDescription:
       "Passaggi ordinati facoltativi. Ogni passaggio può anche diventare un’attività di classe.",

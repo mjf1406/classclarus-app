@@ -1275,6 +1275,7 @@ const uk = {
     titleTooLong: "Заголовок має містити не більше {{max}} символів.",
     bodyLabel: "Текст",
     bodyPlaceholder: "Напишіть оголошення…",
+    bodyLinkHint: "Використовуйте [text](https://example.com) для посилань.",
     attachmentsLabel: "Вкладення",
     attachmentsDescription: "Необов’язкові зображення або документи, до {{max}}.",
     attachmentsImages: "Зображення",
@@ -1452,6 +1453,7 @@ const uk = {
     instructionsLabel: "Інструкції",
     instructionsDescription: "Необов’язкові вказівки для учнів.",
     instructionsPlaceholder: "Напишіть інструкції…",
+    bodyLinkHint: "Використовуйте [text](https://example.com) для посилань.",
     procedureLabel: "Процедура",
     procedureDescription:
       "Необов’язкові впорядковані кроки. Кожен крок також може стати завданням класу.",

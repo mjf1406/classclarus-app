@@ -1278,6 +1278,7 @@ const pt = {
     titleTooLong: "O t?tulo deve ter no m?ximo {{max}} caracteres.",
     bodyLabel: "Corpo",
     bodyPlaceholder: "Escreva seu aviso?",
+    bodyLinkHint: "Use [text](https://example.com) para ligações.",
     attachmentsLabel: "Anexos",
     attachmentsDescription: "Imagens ou documentos opcionais, at? {{max}}.",
     attachmentsImages: "Imagens",
@@ -1455,6 +1456,7 @@ const pt = {
     instructionsLabel: "Instru??es",
     instructionsDescription: "Orienta??es opcionais que os alunos devem seguir.",
     instructionsPlaceholder: "Escreva as instru??es?",
+    bodyLinkHint: "Use [text](https://example.com) para ligações.",
     procedureLabel: "Procedimento",
     procedureDescription:
       "Passos ordenados opcionais. Cada passo tamb?m pode virar uma tarefa da turma.",

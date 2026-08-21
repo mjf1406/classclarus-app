@@ -1291,6 +1291,7 @@ const de = {
     titleTooLong: "Der Titel darf h?chstens {{max}} Zeichen haben.",
     bodyLabel: "Text",
     bodyPlaceholder: "Schreiben Sie Ihre Ank?ndigung?",
+    bodyLinkHint: "Verwenden Sie [text](https://example.com) für Links.",
     attachmentsLabel: "Anh?nge",
     attachmentsDescription: "Optionale Bilder oder Dokumente, bis zu {{max}}.",
     attachmentsImages: "Bilder",
@@ -1471,6 +1472,7 @@ const de = {
     instructionsLabel: "Anweisungen",
     instructionsDescription: "Optionale Hinweise, denen Sch?ler folgen sollen.",
     instructionsPlaceholder: "Anweisungen schreiben?",
+    bodyLinkHint: "Verwenden Sie [text](https://example.com) für Links.",
     procedureLabel: "Vorgehen",
     procedureDescription:
       "Optionale geordnete Schritte. Jeder Schritt kann auch eine Klassenaufgabe werden.",

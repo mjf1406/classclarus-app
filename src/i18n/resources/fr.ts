@@ -1303,6 +1303,7 @@ const fr = {
     titleTooLong: "Le titre doit comporter au plus {{max}} caractères.",
     bodyLabel: "Corps",
     bodyPlaceholder: "Rédigez votre annonce…",
+    bodyLinkHint: "Utilisez [text](https://example.com) pour les liens.",
     attachmentsLabel: "Pièces jointes",
     attachmentsDescription: "Images ou documents facultatifs, jusqu’à {{max}}.",
     attachmentsImages: "Images",
@@ -1482,6 +1483,7 @@ const fr = {
     instructionsLabel: "Consignes",
     instructionsDescription: "Indications facultatives que les élèves doivent suivre.",
     instructionsPlaceholder: "Rédigez les consignes…",
+    bodyLinkHint: "Utilisez [text](https://example.com) pour les liens.",
     procedureLabel: "Procédure",
     procedureDescription:
       "Étapes ordonnées facultatives. Chaque étape peut aussi devenir une tâche de classe.",

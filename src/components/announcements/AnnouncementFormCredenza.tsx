@@ -243,6 +243,7 @@ export function AnnouncementFormCredenza({
                   <Field>
                     <FieldLabel>{t("bodyLabel")}</FieldLabel>
                     <AnnouncementEditor value={field.state.value} onChange={field.handleChange} />
+                    <FieldDescription>{t("bodyLinkHint")}</FieldDescription>
                   </Field>
                 )}
               </form.Field>
