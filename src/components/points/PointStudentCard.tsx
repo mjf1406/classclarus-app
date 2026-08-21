@@ -242,11 +242,11 @@ export function PointStudentCard({
           onOpen();
         }}
       >
-        <span className="line-clamp-2 text-[11px] leading-tight font-semibold tracking-tight break-words sm:text-xs">
+        <span className="line-clamp-2 text-sm leading-tight font-semibold tracking-tight break-words">
           {displayName}
         </span>
         {metaLine ? (
-          <span className="mt-0.5 line-clamp-2 text-[9px] leading-tight text-muted-foreground sm:text-[10px]">
+          <span className="mt-0.5 line-clamp-2 text-xs leading-tight text-muted-foreground">
             {metaLine}
           </span>
         ) : null}
