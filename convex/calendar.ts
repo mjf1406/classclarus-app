@@ -27,8 +27,8 @@ import {
   deleteRemindersForEvent,
   dismissNotificationsForEvent,
 } from "./lib/cleanup/calendarCleanup.js";
+import { listStudentRosterUserIds } from "./lib/studentRosters.js";
 import { notifications } from "./lib/notifications/client.js";
-import { upsertHistoryFromCreated } from "./lib/notifications/history.js";
 import { rateLimiter } from "./lib/rateLimit/rateLimiter.js";
 
 const reminderUnitValidator = v.union(
@@ -259,6 +259,13 @@ async function reminderRecipientUserIds(
   const userIds = new Set<string>();
   const scope = classScope(event.classId);
   for (const role of roles) {
+    if (role === "student") {
+      const rosterIds = await listStudentRosterUserIds(ctx, event.classId);
+      for (const userId of rosterIds) {
+        userIds.add(userId);
+      }
+      continue;
+    }
     const users = await ctx.runQuery(components.authz.queries.getUsersWithRole, {
       tenantId: APP_CONFIG.authzTenantId,
       role,
@@ -495,9 +502,9 @@ export const deliverReminder = internalMutation({
     const className = classDoc?.name ?? "";
     const href = `/class/${event.classId}/calendar?event=${event._id}`;
     const recipients = await reminderRecipientUserIds(ctx, event, reminder.notifyRoles);
-    for (const userId of recipients) {
-      const created = await notifications.createIdempotent(ctx, {
-        targetId: userId,
+    if (recipients.length > 0) {
+      await notifications.enqueueBatch(ctx, {
+        targetIds: recipients,
         kind: "calendar_reminder",
         data: {
           summaryKey: "calendarReminder",
@@ -509,30 +516,7 @@ export const deliverReminder = internalMutation({
           href,
         },
         source: { type: "calendar_event", id: event._id },
-        dedupeKey: `calendar-reminder:${reminder._id}:${userId}`,
-      });
-      if (created.created) {
-        await upsertHistoryFromCreated(ctx, {
-          notificationId: created.notificationId,
-          targetId: userId,
-          kind: "calendar_reminder",
-          data: {
-            summaryKey: "calendarReminder",
-            title: event.title,
-            ...(event.description ? { description: event.description } : {}),
-            classId: event.classId,
-            className,
-            eventId: event._id,
-            href,
-          },
-          createdAt: Date.now(),
-        });
-      }
-      await ctx.scheduler.runAfter(0, internal.pushActions.sendToUser, {
-        userId,
-        title: event.title,
-        body: event.description?.trim() || className,
-        url: href,
+        dedupeKeyPrefix: `calendar-reminder:${reminder._id}`,
       });
     }
     await ctx.db.patch("calendarEventReminders", reminder._id, {

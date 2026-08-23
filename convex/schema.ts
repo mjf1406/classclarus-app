@@ -961,6 +961,13 @@ const schema = defineSchema({
   })
     .index("by_class_createdAt", ["classId", "createdAt"])
     .index("by_class_resource_createdAt", ["classId", "resourceType", "createdAt"])
+    .index("by_class_actor_action_resource_createdAt", [
+      "classId",
+      "actorUserId",
+      "action",
+      "resourceType",
+      "createdAt",
+    ])
     .index("by_createdAt", ["createdAt"]),
   /**
    * Anonymous Free-card CTA clicks (cloud prod only). No user/IP fields.

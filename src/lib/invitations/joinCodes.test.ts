@@ -2,6 +2,7 @@ import { describe, expect, test } from "vite-plus/test";
 
 import {
   formatJoinCodeDisplay,
+  isLiveJoinCode,
   joinCodeDisplayUrl,
   joinCodeShareUrl,
   joinPageUrl,
@@ -29,6 +30,13 @@ function withMockOrigin<T>(fn: () => T): T {
 }
 
 describe("joinCodes", () => {
+  test("isLiveJoinCode hides expired and exhausted codes", () => {
+    const now = 1_000_000;
+    expect(isLiveJoinCode({ expiresAt: now + 1, maxUses: 3, useCount: 0 }, now)).toBe(true);
+    expect(isLiveJoinCode({ expiresAt: now, maxUses: 3, useCount: 0 }, now)).toBe(false);
+    expect(isLiveJoinCode({ expiresAt: now + 1, maxUses: 1, useCount: 1 }, now)).toBe(false);
+  });
+
   test("formats complete codes as XXX-XXX", () => {
     expect(formatJoinCodeDisplay("ABCDEF")).toBe("ABC–DEF");
     expect(formatJoinCodeDisplay("AB12CD")).toBe("AB1–2CD");

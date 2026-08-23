@@ -25,6 +25,14 @@ export function remainingUses(code: Pick<JoinCodePublic, "maxUses" | "useCount">
   return Math.max(0, code.maxUses - code.useCount);
 }
 
+/** Still redeemable at `now` (not expired, uses remaining). */
+export function isLiveJoinCode(
+  code: Pick<JoinCodePublic, "expiresAt" | "maxUses" | "useCount">,
+  now: number,
+): boolean {
+  return code.expiresAt > now && remainingUses(code) > 0;
+}
+
 /** Display form: `ABCDEF` → `ABC-DEF`. Passes through incomplete/pending strings unchanged. */
 export function formatJoinCodeDisplay(code: string): string {
   if (code.length !== 6) {

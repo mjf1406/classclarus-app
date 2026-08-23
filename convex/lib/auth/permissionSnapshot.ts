@@ -1,6 +1,8 @@
 import { matchesPermissionPattern } from "@djpanda/convex-authz";
 
+import { APP_CONFIG } from "../../appConfig.js";
 import { authz } from "../../authz.js";
+import { components } from "../../_generated/api.js";
 import type { ClassRole } from "./authzModel.js";
 import { isClassRole, pickHighestClassRole } from "./authzModel.js";
 import type { QueryCtx } from "../../_generated/server.js";
@@ -25,7 +27,11 @@ export async function permissionSnapshotForScope(
   const [scopedRoles, scopedPerms, globalPerms] = await Promise.all([
     authz.getUserRoles(ctx, userId, scope),
     authz.getUserPermissions(ctx, userId, scope),
-    authz.getUserPermissions(ctx, userId),
+    ctx.runQuery(components.authz.indexed.getUserPermissionsFast, {
+      tenantId: APP_CONFIG.authzTenantId,
+      userId,
+      scopeKey: "global",
+    }),
   ]);
 
   const role = pickHighestClassRole(

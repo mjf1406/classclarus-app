@@ -108,20 +108,19 @@ function toPublicJoinCode(doc: Doc<"joinCodes">) {
 }
 
 export const listForClass = classQuery({
-  args: {
-    now: v.number(),
-  },
+  args: {},
   returns: v.array(joinCodeValidator),
-  handler: async (ctx, args) => {
+  handler: async (ctx) => {
     await ctx.require("invitations:read");
     // Live codes per class are intentionally bounded (short TTL + finite uses).
+    // Expiry is filtered client-side so the query args stay stable (no ticking `now`).
     // eslint-disable-next-line @convex-dev/no-collect-in-query -- bounded invitation list for one class
     const codes = await ctx.db
       .query("joinCodes")
       .withIndex("by_class", (q) => q.eq("classId", ctx.classDoc._id))
       .collect();
     return codes
-      .filter((code) => code.expiresAt > args.now && code.useCount < code.maxUses)
+      .filter((code) => code.useCount < code.maxUses)
       .map(toPublicJoinCode)
       .sort((a, b) => b._creationTime - a._creationTime);
   },

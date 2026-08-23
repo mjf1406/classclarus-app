@@ -17,20 +17,17 @@ type CreateJoinCodeArgs = {
   maxUses: number;
 };
 
-/**
- * Optimistic create for join codes.
- * `listNow` should match the `now` used by the active list query so the cache key aligns.
- */
-export function useCreateJoinCode(listNow: number) {
+/** Optimistic create for join codes. */
+export function useCreateJoinCode() {
   const { t } = useTranslation("classes");
   const { t: tCommon } = useTranslation("common");
   const mutationFn = useConvexMutation(api.joinCodes.create);
 
   return useOptimisticMutation({
     mutationFn: (args: CreateJoinCodeArgs) => mutationFn(args),
-    queryKeys: (args) => [joinCodesListQueryKey(args.classId, listNow)],
+    queryKeys: (args) => [joinCodesListQueryKey(args.classId)],
     applyOptimisticUpdate: (queryClient, args) => {
-      const queryKey = joinCodesListQueryKey(args.classId, listNow);
+      const queryKey = joinCodesListQueryKey(args.classId);
       const now = Date.now();
       const optimistic: JoinCodePublic = {
         _id: createOptimisticJoinCodeId(),

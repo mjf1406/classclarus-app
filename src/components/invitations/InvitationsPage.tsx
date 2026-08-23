@@ -22,7 +22,7 @@ import { useJoinCodes } from "@/hooks/invitations/useJoinCodes";
 import { useRevokeJoinCode } from "@/hooks/invitations/useRevokeJoinCode";
 import type { CreateJoinCodeFormValues } from "@/lib/invitations/joinCodeFormSchema";
 import { assignableJoinCodeRoles } from "@/lib/invitations/joinCodeFormSchema";
-import type { JoinCodePublic } from "@/lib/invitations/joinCodes";
+import { isLiveJoinCode, type JoinCodePublic } from "@/lib/invitations/joinCodes";
 import type { Id } from "../../../convex/_generated/dataModel";
 
 const LIST_NOW_REFRESH_MS = 30_000;
@@ -53,12 +53,12 @@ export function InvitationsPage({ classId, classArchived }: InvitationsPageProps
     return () => window.clearInterval(id);
   }, []);
 
-  const { data, isPending, isError, refetch, isAuthLoading } = useJoinCodes(classId, listNow);
-  const createMutation = useCreateJoinCode(listNow);
-  const revokeMutation = useRevokeJoinCode(listNow);
+  const { data, isPending, isError, refetch, isAuthLoading } = useJoinCodes(classId);
+  const createMutation = useCreateJoinCode();
+  const revokeMutation = useRevokeJoinCode();
 
   const assignableRoles = useMemo(() => assignableJoinCodeRoles(can), [can]);
-  const liveCodes = data ?? [];
+  const liveCodes = (data ?? []).filter((code) => isLiveJoinCode(code, listNow));
   const showSkeleton = (isPending || isAuthLoading) && data == null;
 
   const handleCreate = useCallback(

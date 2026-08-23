@@ -1,3 +1,5 @@
+import { matchesPermissionPattern } from "@djpanda/convex-authz";
+
 import { APP_CONFIG } from "../../appConfig.js";
 import { authz } from "../../authz.js";
 import { components } from "../../_generated/api.js";
@@ -11,16 +13,40 @@ type PermissionOverrideRow = {
   scope?: { type: string; id: string };
 };
 
+export async function listUserPermissionOverrides(
+  ctx: QueryCtx | MutationCtx,
+  userId: string,
+): Promise<Array<PermissionOverrideRow>> {
+  return (await ctx.runQuery(components.authz.queries.getPermissionOverrides, {
+    tenantId: APP_CONFIG.authzTenantId,
+    userId,
+  })) as Array<PermissionOverrideRow>;
+}
+
+/** True when an override denies `class:read` globally or for this class (including `*`). */
+export function classReadDeniedByOverrides(
+  rows: Array<PermissionOverrideRow>,
+  classId: string,
+): boolean {
+  return rows.some((row) => {
+    if (row.effect !== "deny") return false;
+    const deniesRead =
+      row.permission === "*" ||
+      row.permission === "*:*" ||
+      matchesPermissionPattern("class:read", row.permission);
+    if (!deniesRead) return false;
+    if (!row.scope) return true;
+    return row.scope.type === "class" && row.scope.id === classId;
+  });
+}
+
 export async function listClassPermissionOverrides(
   ctx: QueryCtx | MutationCtx,
   classId: Id<"classes">,
   userId: string,
 ): Promise<Array<{ permission: string; effect: PermissionOverrideEffect }>> {
   const scope = classScope(classId);
-  const rows = (await ctx.runQuery(components.authz.queries.getPermissionOverrides, {
-    tenantId: APP_CONFIG.authzTenantId,
-    userId,
-  })) as Array<PermissionOverrideRow>;
+  const rows = await listUserPermissionOverrides(ctx, userId);
 
   return rows
     .filter(

@@ -8,14 +8,14 @@ import { useAuthedQuery } from "@/hooks/useAuthedQuery";
 import { api } from "../../../convex/_generated/api";
 import { ONE_HOUR } from "@/lib/queryCache";
 
-export function joinCodesListQueryKey(classId: Id<"classes">, now: number) {
-  return convexQuery(api.joinCodes.listForClass, { classId, now }).queryKey;
+export function joinCodesListQueryKey(classId: Id<"classes">) {
+  return convexQuery(api.joinCodes.listForClass, { classId }).queryKey;
 }
 
-export function useJoinCodes(classId: Id<"classes">, now: number) {
+export function useJoinCodes(classId: Id<"classes">) {
   const result = useAuthedQuery(
     api.joinCodes.listForClass,
-    { classId, now },
+    { classId },
     {
       gcTime: ONE_HOUR,
       placeholderData: keepPreviousData,

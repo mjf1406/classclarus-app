@@ -10,6 +10,7 @@ import {
   isHistoryRowAfterCursor,
   matchesHistoryFilters,
   paginateHistoryRows,
+  pushPayloadFromNotification,
   statusKeyFromState,
 } from "./history";
 import type { Doc, Id } from "../../_generated/dataModel.js";
@@ -56,6 +57,37 @@ describe("notification history mapping", () => {
       title: "future_kind",
       href: "/",
     });
+  });
+
+  test("builds Web Push payload for calendar reminders only", () => {
+    expect(
+      pushPayloadFromNotification("calendar_reminder", {
+        title: "Assembly",
+        description: "Gym",
+        classId: "class_1",
+        className: "Homeroom",
+        eventId: "event_1",
+        href: "/class/class_1/calendar?event=event_1",
+      }),
+    ).toEqual({
+      title: "Assembly",
+      body: "Gym",
+      url: "/class/class_1/calendar?event=event_1",
+    });
+    expect(
+      pushPayloadFromNotification("calendar_reminder", {
+        title: "Assembly",
+        classId: "class_1",
+        className: "Homeroom",
+        eventId: "event_1",
+        href: "/class/class_1/calendar?event=event_1",
+      }),
+    ).toEqual({
+      title: "Assembly",
+      body: "Homeroom",
+      url: "/class/class_1/calendar?event=event_1",
+    });
+    expect(pushPayloadFromNotification("future_kind", { title: "Hello" })).toBeNull();
   });
 });
 

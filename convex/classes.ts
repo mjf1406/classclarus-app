@@ -13,7 +13,11 @@ import {
   type ClassRole,
 } from "./lib/authzModel.js";
 import { recordClassActivity } from "./lib/classActivity.js";
-import { clearClassPermissionOverrides } from "./lib/classPermissionOverrides.js";
+import {
+  classReadDeniedByOverrides,
+  clearClassPermissionOverrides,
+  listUserPermissionOverrides,
+} from "./lib/classPermissionOverrides.js";
 import { authedQuery, classMutation, classQuery, entitledMutation } from "./lib/customFunctions.js";
 import { rateLimiter } from "./lib/rateLimiter.js";
 import { clearLinksForClass } from "./lib/guardianLinks.js";
@@ -245,7 +249,10 @@ export const listMine = authedQuery({
   args: {},
   returns: v.array(classWithRoleValidator),
   handler: async (ctx) => {
-    const roleEntries = await authz.getUserRoles(ctx, ctx.userId);
+    const [roleEntries, overrides] = await Promise.all([
+      authz.getUserRoles(ctx, ctx.userId),
+      listUserPermissionOverrides(ctx, ctx.userId),
+    ]);
     const rolesByClassId = new Map<string, Array<string>>();
 
     for (const entry of roleEntries) {
@@ -264,9 +271,7 @@ export const listMine = authedQuery({
     const results: Array<Doc<"classes"> & ClassPublicDefaults & { role: ClassRole }> = [];
 
     for (const [classId, roleNames] of rolesByClassId) {
-      const scope = classScope(classId);
-      const canRead = await authz.can(ctx, ctx.userId, "class:read", scope);
-      if (!canRead) continue;
+      if (classReadDeniedByOverrides(overrides, classId)) continue;
 
       const role = pickHighestClassRole(roleNames.filter(isClassRole));
       if (!role) continue;

@@ -7,7 +7,8 @@ import { permissionSnapshotForScope } from "./lib/permissionSnapshot.js";
 
 /**
  * Re-materialize effective permissions after `defineRoles` / `definePermissions` changes.
- * Run once after deploying role-catalog updates (e.g. `announcements:manage` on teacher):
+ * Run once after deploying role-catalog updates (e.g. `announcements:manage` on teacher).
+ * Not part of daily `vp run ds`.
  * - Dev: `vp run perms` (or `bunx convex run internal.authzBackfill.syncCatalogRoles`)
  * - Prod: `vp run perms-prod` (or `bunx convex run --prod internal.authzBackfill.syncCatalogRoles`)
  * - Self-host (Electron / Docker): `scripts/self-host-bootstrap.mjs` runs this after deploy

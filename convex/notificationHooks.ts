@@ -1,8 +1,13 @@
 import { vOnNotificationCreatedArgs } from "convex-notification";
 import { v } from "convex/values";
 
+import { internal } from "./_generated/api.js";
+import type { Id } from "./_generated/dataModel.js";
 import { internalMutation } from "./_generated/server.js";
-import { upsertHistoryFromCreated } from "./lib/notifications/history.js";
+import {
+  pushPayloadFromNotification,
+  upsertHistoryFromCreated,
+} from "./lib/notifications/history.js";
 
 export const onNotificationCreated = internalMutation({
   args: vOnNotificationCreatedArgs.fields,
@@ -15,6 +20,15 @@ export const onNotificationCreated = internalMutation({
       data: args.data,
       createdAt: args.createdAt,
     });
+    const push = pushPayloadFromNotification(args.kind, args.data);
+    if (push) {
+      await ctx.scheduler.runAfter(0, internal.pushActions.sendToUser, {
+        userId: args.targetId as Id<"users">,
+        title: push.title,
+        body: push.body,
+        url: push.url,
+      });
+    }
     return null;
   },
 });

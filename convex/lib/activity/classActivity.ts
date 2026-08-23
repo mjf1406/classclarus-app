@@ -117,19 +117,21 @@ export async function hasRecentMatchingActivity(
 ): Promise<boolean> {
   const windowMs = args.windowMs ?? READ_DEDUPE_WINDOW_MS;
   const since = Date.now() - windowMs;
+  const takeCount = args.resourceId !== undefined && args.resourceId.length > 0 ? 16 : 1;
   const recent = await ctx.db
     .query("classActivityEvents")
-    .withIndex("by_class_createdAt", (q) => q.eq("classId", args.classId).gte("createdAt", since))
+    .withIndex("by_class_actor_action_resource_createdAt", (q) =>
+      q
+        .eq("classId", args.classId)
+        .eq("actorUserId", args.actorUserId)
+        .eq("action", args.action)
+        .eq("resourceType", args.resourceType)
+        .gte("createdAt", since),
+    )
     .order("desc")
-    .take(50);
+    .take(takeCount);
 
-  return recent.some(
-    (event) =>
-      event.actorUserId === args.actorUserId &&
-      event.action === args.action &&
-      event.resourceType === args.resourceType &&
-      sameResourceId(event.resourceId, args.resourceId),
-  );
+  return recent.some((event) => sameResourceId(event.resourceId, args.resourceId));
 }
 
 /**

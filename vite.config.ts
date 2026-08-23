@@ -37,9 +37,9 @@ export default defineConfig({
         command: "bunx convex dev",
         cache: false,
       },
-      /** Start web + Convex after syncing authz roles; echo when both exit. */
+      /** Start web + Convex. Role catalog sync is `vp run perms` after defineRoles changes. */
       ds: {
-        command: "vp run perms && vp run ds:servers",
+        command: "vp run ds:servers",
         cache: false,
       },
       "ds:servers": {

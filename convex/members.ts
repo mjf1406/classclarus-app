@@ -31,7 +31,11 @@ import {
   listLinkedStudentsForGuardian,
 } from "./lib/guardianLinks.js";
 import { clearGroupMembershipForStudent } from "./lib/groupsCleanup.js";
-import { deleteStudentRosterRow, ensureStudentRosterRow } from "./lib/studentRosters.js";
+import {
+  deleteStudentRosterRow,
+  ensureStudentRosterRow,
+  listStudentRosterUserIds,
+} from "./lib/studentRosters.js";
 import { resolveUserImageUrl } from "./lib/userImage.js";
 import { rateLimiter } from "./lib/rateLimiter.js";
 import { isSelfHosted } from "./lib/selfHosted.js";
@@ -80,6 +84,10 @@ async function countUsersForListRole(
   classId: Id<"classes">,
   listRole: MemberListRole,
 ): Promise<number> {
+  if (listRole === "student") {
+    const userIds = await listStudentRosterUserIds(ctx, classId);
+    return userIds.length;
+  }
   const scope = classScope(classId);
   const userIds = new Set<string>();
   for (const authzRole of MEMBER_LIST_AUTHZ_ROLES[listRole]) {

@@ -47,6 +47,19 @@ export async function nextRosterNumber(
   return max + 1;
 }
 
+/** Student user IDs on the class roster (class-scoped; not a tenant-wide authz scan). */
+export async function listStudentRosterUserIds(
+  ctx: QueryCtx | MutationCtx,
+  classId: Id<"classes">,
+): Promise<Array<Id<"users">>> {
+  // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded roster
+  const rows = await ctx.db
+    .query("studentRosters")
+    .withIndex("by_classId", (q) => q.eq("classId", classId))
+    .collect();
+  return rows.map((row) => row.userId);
+}
+
 /** Create a roster row if missing. Returns whether a row was inserted. */
 export async function ensureStudentRosterRow(
   ctx: MutationCtx,

@@ -11,6 +11,7 @@ export const HISTORY_PAGE_SIZE = 20;
 export const HISTORY_PAGE_SIZE_MAX = 50;
 export const HISTORY_SCAN_LIMIT = 200;
 export const HISTORY_SEARCH_SCAN_LIMIT = 1024;
+export const HISTORY_MARK_ALL_BATCH = 100;
 
 export type HistoryCursor = {
   createdAt: number;
@@ -143,6 +144,21 @@ export function contentFromNotification(kind: string, data: unknown): HistoryCon
   }
 
   return { title: kind, href: "/" };
+}
+
+/** Web Push fields for a newly created notification, when the kind supports it. */
+export function pushPayloadFromNotification(
+  kind: string,
+  data: unknown,
+): { title: string; body: string; url: string } | null {
+  if (kind === "calendar_reminder" && isCalendarReminderData(data)) {
+    return {
+      title: data.title,
+      body: data.description?.trim() || data.className,
+      url: data.href,
+    };
+  }
+  return null;
 }
 
 export function encodeHistoryCursor(cursor: HistoryCursor): string {
@@ -420,22 +436,26 @@ export async function markAllHistorySeen(
   userId: Id<"users">,
   now: number,
 ): Promise<number> {
-  // eslint-disable-next-line @convex-dev/no-collect-in-query -- per-user unread history is bounded
-  const unread = await ctx.db
-    .query("notificationHistory")
-    .withIndex("by_userId_statusKey_createdAt", (q) =>
-      q.eq("userId", userId).eq("statusKey", "unread"),
-    )
-    .collect();
-  for (const row of unread) {
-    await ctx.db.patch("notificationHistory", row._id, {
-      isSeen: true,
-      seenAt: row.seenAt ?? now,
-      statusKey: statusKeyFromState(true, row.isDismissed),
-      updatedAt: now,
-    });
+  let touched = 0;
+  for (;;) {
+    const unread = await ctx.db
+      .query("notificationHistory")
+      .withIndex("by_userId_statusKey_createdAt", (q) =>
+        q.eq("userId", userId).eq("statusKey", "unread"),
+      )
+      .take(HISTORY_MARK_ALL_BATCH);
+    if (unread.length === 0) break;
+    for (const row of unread) {
+      await ctx.db.patch("notificationHistory", row._id, {
+        isSeen: true,
+        seenAt: row.seenAt ?? now,
+        statusKey: statusKeyFromState(true, row.isDismissed),
+        updatedAt: now,
+      });
+    }
+    touched += unread.length;
   }
-  return unread.length;
+  return touched;
 }
 
 export async function markHistoryDismissed(
@@ -463,23 +483,25 @@ export async function markAllHistoryDismissed(
 ): Promise<number> {
   let touched = 0;
   for (const statusKey of ["unread", "read"] as const) {
-    // eslint-disable-next-line @convex-dev/no-collect-in-query -- per-user active history is bounded
-    const rows = await ctx.db
-      .query("notificationHistory")
-      .withIndex("by_userId_statusKey_createdAt", (q) =>
-        q.eq("userId", userId).eq("statusKey", statusKey),
-      )
-      .collect();
-    for (const row of rows) {
-      await ctx.db.patch("notificationHistory", row._id, {
-        isDismissed: true,
-        isSeen: true,
-        dismissedAt: now,
-        seenAt: row.seenAt ?? now,
-        statusKey: "dismissed",
-        updatedAt: now,
-      });
-      touched += 1;
+    for (;;) {
+      const rows = await ctx.db
+        .query("notificationHistory")
+        .withIndex("by_userId_statusKey_createdAt", (q) =>
+          q.eq("userId", userId).eq("statusKey", statusKey),
+        )
+        .take(HISTORY_MARK_ALL_BATCH);
+      if (rows.length === 0) break;
+      for (const row of rows) {
+        await ctx.db.patch("notificationHistory", row._id, {
+          isDismissed: true,
+          isSeen: true,
+          dismissedAt: now,
+          seenAt: row.seenAt ?? now,
+          statusKey: "dismissed",
+          updatedAt: now,
+        });
+        touched += 1;
+      }
     }
   }
   return touched;

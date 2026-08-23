@@ -15,16 +15,16 @@ type RevokeJoinCodeArgs = {
   joinCodeId: Id<"joinCodes">;
 };
 
-export function useRevokeJoinCode(listNow: number) {
+export function useRevokeJoinCode() {
   const { t } = useTranslation("classes");
   const { t: tCommon } = useTranslation("common");
   const mutationFn = useConvexMutation(api.joinCodes.revoke);
 
   return useOptimisticMutation({
     mutationFn: (args: RevokeJoinCodeArgs) => mutationFn(args),
-    queryKeys: (args) => [joinCodesListQueryKey(args.classId, listNow)],
+    queryKeys: (args) => [joinCodesListQueryKey(args.classId)],
     applyOptimisticUpdate: (queryClient, args) => {
-      const queryKey = joinCodesListQueryKey(args.classId, listNow);
+      const queryKey = joinCodesListQueryKey(args.classId);
       queryClient.setQueryData<JoinCodePublic[]>(queryKey, (old) =>
         old ? removeById(old, args.joinCodeId) : old,
       );
