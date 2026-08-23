@@ -13,6 +13,8 @@ const ROLE_LABELS: Record<string, string> = {
 const STRINGS: Record<string, string> = {
   activitySummary_setStudentLanguage: "Set student language to {{language}}",
   activitySummary_createdGroup: 'Created group "{{name}}"',
+  activitySummary_createdCalendarEvent: 'Created calendar event "{{name}}"',
+  activitySummary_setTimezone: "Set class time zone to {{timezone}}",
   activitySummary_viewedClass: 'Viewed class "{{name}}"',
   activitySummary_viewedActivityLog: "Viewed activity log",
   activitySummary_exportedGroupsPdf: "Exported groups PDF",
@@ -107,5 +109,15 @@ describe("formatActivitySummary", () => {
         t,
       ),
     ).toBe('Created group "Foo"');
+    expect(
+      formatActivitySummary(
+        {
+          summary: 'Created calendar event "Field trip"',
+          summaryKey: "activitySummary_createdCalendarEvent",
+          metadata: { name: "Field trip" },
+        },
+        t,
+      ),
+    ).toBe('Created calendar event "Field trip"');
   });
 });

@@ -18,6 +18,7 @@ export const ACTIVITY_RESOURCE_TYPES = [
   "groupMembership",
   "announcement",
   "attendance",
+  "calendarEvent",
   "razAssessment",
   "seatLayout",
   "seatConstraint",

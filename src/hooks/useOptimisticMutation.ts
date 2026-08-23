@@ -13,7 +13,7 @@ export type OptimisticMutationContext = {
 
 type QueryKeyFactory<TVariables> =
   | readonly QueryKey[]
-  | ((variables: TVariables) => readonly QueryKey[]);
+  | ((variables: TVariables, queryClient: QueryClient) => readonly QueryKey[]);
 
 type UseOptimisticMutationOptions<TVariables, TResult> = {
   mutationFn: (variables: TVariables) => Promise<TResult>;
@@ -49,8 +49,9 @@ type UseOptimisticMutationOptions<TVariables, TResult> = {
 function resolveQueryKeys<TVariables>(
   factory: QueryKeyFactory<TVariables>,
   variables: TVariables,
+  queryClient: QueryClient,
 ): readonly QueryKey[] {
-  return typeof factory === "function" ? factory(variables) : factory;
+  return typeof factory === "function" ? factory(variables, queryClient) : factory;
 }
 
 /**
@@ -81,7 +82,7 @@ export function useOptimisticMutation<TVariables, TResult>(
     mutationFn,
 
     onMutate: async (variables) => {
-      const queryKeys = resolveQueryKeys(queryKeysFactory, variables);
+      const queryKeys = resolveQueryKeys(queryKeysFactory, variables, queryClient);
 
       // Snapshot + paint optimistic UI synchronously so callers can exit pending
       // UI in the same turn. Cancel in-flight fetches afterward so they cannot
@@ -111,14 +112,14 @@ export function useOptimisticMutation<TVariables, TResult>(
     onSettled: (data, error, variables, context) => {
       if (onSettledInvalidate !== false) {
         const keysToInvalidate =
-          context?.queryKeys ?? resolveQueryKeys(queryKeysFactory, variables);
+          context?.queryKeys ?? resolveQueryKeys(queryKeysFactory, variables, queryClient);
         keysToInvalidate.forEach((queryKey) => {
           void queryClient.invalidateQueries({ queryKey });
         });
       }
 
       if (invalidateQueryKeys) {
-        resolveQueryKeys(invalidateQueryKeys, variables).forEach((queryKey) => {
+        resolveQueryKeys(invalidateQueryKeys, variables, queryClient).forEach((queryKey) => {
           void queryClient.invalidateQueries({ queryKey });
         });
       }

@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { ThemeToggle } from "../theme/theme-toggle";
 import { FeedbackNavButton } from "@/components/navigation/FeedbackNavButton";
+import { NotificationInboxButton } from "@/components/notifications/NotificationInboxButton";
 import { NavUser } from "@/components/navigation/NavUser";
 import { Logo } from "@/components/brand/Logo";
 import { ConnectionStatus } from "@/components/navigation/ConnectionStatus";
@@ -92,6 +93,7 @@ export function Navbar() {
             </SheetContent>
           </Sheet>
           <FeedbackNavButton />
+          <NotificationInboxButton />
           <ConnectionStatus />
           <NavUser variant="avatar" />
           <div className="hidden items-center gap-2 md:flex">

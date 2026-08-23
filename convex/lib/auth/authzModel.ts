@@ -27,6 +27,11 @@ export const permissions = definePermissions({
   /** Attendance — manage is assistant_teacher+; read is student/guardian (scoped). */
   attendance: { read: true, manage: true },
   /**
+   * Class calendar — read is every class role; manage (CUD) is teacher+.
+   * Both remain grantable on the Permissions page.
+   */
+  calendar: { read: true, manage: true },
+  /**
    * Class tasks — manage (CUD) is teacher+; complete (per-student toggles) is
    * assistant_teacher+; view uses class:read.
    */
@@ -69,7 +74,7 @@ export const permissions = definePermissions({
 });
 
 export const roles = defineRoles(permissions, {
-  class_member: { class: ["read"], files: ["read"] },
+  class_member: { class: ["read"], files: ["read"], calendar: ["read"] },
   student: {
     inherits: "class_member",
     attendance: ["read"],
@@ -108,6 +113,7 @@ export const roles = defineRoles(permissions, {
     files: ["create"],
     groups: ["manage"],
     announcements: ["manage"],
+    calendar: ["manage"],
     tasks: ["manage"],
     assignments: ["manage"],
     behaviors: ["manage"],

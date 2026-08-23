@@ -8,6 +8,7 @@ import {
   type ClassFormInitialValues,
 } from "@/components/classes/ClassFormCredenza";
 import { ClassIconDisplay } from "@/components/classes/ClassIconDisplay";
+import { TimezoneSelect } from "@/components/classes/TimezoneSelect";
 import { LanguageSelect } from "@/components/i18n/LanguageSelect";
 import { RosterNameFormatControls } from "@/components/students/RosterNameFormatControls";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,7 @@ import { useSetPointsBadgeWindows } from "@/hooks/classes/useSetPointsBadgeWindo
 import { useSetPointsPublicDisplay } from "@/hooks/classes/useSetPointsPublicDisplay";
 import { useSetRosterNameFormat } from "@/hooks/classes/useSetRosterNameFormat";
 import { useSetStudentLanguage } from "@/hooks/classes/useSetStudentLanguage";
+import { useSetTimezone } from "@/hooks/classes/useSetTimezone";
 import { useUpdateClass } from "@/hooks/classes/useUpdateClass";
 import { useFileBytes } from "@/hooks/files/useFileBytes";
 import type { ClassFormValues } from "@/lib/classes/classFormSchema";
@@ -121,6 +123,7 @@ export function ClassSettingsPage({ classId }: ClassSettingsPageProps) {
   const setBanner = useSetClassBanner();
   const clearBanner = useClearClassBanner();
   const setStudentLanguage = useSetStudentLanguage();
+  const setTimezone = useSetTimezone();
   const setRosterNameFormat = useSetRosterNameFormat();
   const setPointsBadgeWindows = useSetPointsBadgeWindows();
   const setPointsPublicDisplay = useSetPointsPublicDisplay();
@@ -264,6 +267,22 @@ export function ClassSettingsPage({ classId }: ClassSettingsPageProps) {
                 onValueChange={handleStudentLanguageChange}
                 disabled={setStudentLanguage.isPending}
                 triggerClassName="w-auto min-w-40"
+              />
+            </CardContent>
+          </Card>
+
+          <Card className="max-w-2xl">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold">{t("timezoneTitle")}</CardTitle>
+              <CardDescription>{t("timezoneDescription")}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <TimezoneSelect
+                value={classDoc.timezone}
+                disabled={!canUpdateClass || setTimezone.isPending}
+                onValueChange={(timezone) => {
+                  setTimezone.mutate({ classId, timezone });
+                }}
               />
             </CardContent>
           </Card>

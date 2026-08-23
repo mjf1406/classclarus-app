@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 
 import { LanguageSelect } from "@/components/i18n/LanguageSelect";
+import { PushSettingsCard } from "@/components/settings/PushSettingsCard";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { useAppLanguage } from "@/i18n/language-context";
 
@@ -35,6 +36,7 @@ export const Route = createFileRoute("/_authenticated/_app/settings")({
           </p>
           <ThemeToggle descriptionId="theme-description" />
         </div>
+        <PushSettingsCard />
       </div>
     );
   },

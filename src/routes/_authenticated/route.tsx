@@ -2,6 +2,7 @@ import { SessionValidityGuard } from "@/components/auth/SessionValidityGuard";
 import { AppUpdateReadyDialog } from "@/components/classroom/AppUpdateReadyDialog";
 import PendingComponent from "@/components/loading/PendingComponent";
 import { BillingGate } from "@/components/billing/BillingGate";
+import { CalendarReminderToasts } from "@/components/notifications/CalendarReminderToasts";
 import { relativeLocationHref, stashPendingJoinCode } from "@/lib/auth/pendingJoinCode";
 import { JOIN_CODE_PARAM } from "@/lib/invitations/joinCodes";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
@@ -41,6 +42,7 @@ export const Route = createFileRoute("/_authenticated")({
         <SessionValidityGuard />
         <BillingGate>
           <Outlet />
+          <CalendarReminderToasts />
           <AppUpdateReadyDialog />
         </BillingGate>
       </>

@@ -11,6 +11,7 @@ import { useEntitlement } from "@/hooks/billing/useEntitlement";
 import { useCreateClass } from "@/hooks/classes/useCreateClass";
 import { useActiveClasses } from "@/hooks/classes/useClasses";
 import { useAppLanguage } from "@/i18n/language-context";
+import { detectBrowserTimeZone } from "../../../../convex/lib/calendar/timeZone";
 import type { ClassDoc } from "@/lib/classes/classes";
 import type { ClassFormValues } from "@/lib/classes/classFormSchema";
 import { classRouteFromPathname } from "@/lib/classes/classRoutes";
@@ -64,6 +65,7 @@ export function ClassSwitcher({ currentClass }: ClassSwitcherProps) {
       description: values.description,
       icon: values.icon,
       studentLanguage: preferredLanguage,
+      timezone: detectBrowserTimeZone(),
     });
     closeMobileSidebar();
     void navigate({

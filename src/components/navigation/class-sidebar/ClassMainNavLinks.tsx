@@ -2,6 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   BookOpen,
   ChevronRight,
+  Calendar,
   ClipboardCheck,
   Coins,
   Gift,
@@ -71,6 +72,7 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
   const { t } = useTranslation("classes");
   const { t: tAnnouncements } = useTranslation("announcements");
   const { t: tAttendance } = useTranslation("attendance");
+  const { t: tCalendar } = useTranslation("calendar");
   const { t: tTasks } = useTranslation("tasks");
   const { t: tAssignments } = useTranslation("assignments");
   const { t: tPoints } = useTranslation("points");
@@ -129,6 +131,12 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
       icon: ClipboardCheck,
       to: "/class/$classId/attendance",
       permission: "attendance:read",
+    },
+    {
+      title: tCalendar("nav"),
+      icon: Calendar,
+      to: "/class/$classId/calendar",
+      permission: "calendar:read",
     },
     ...(catalogsInMainNav
       ? [

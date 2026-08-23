@@ -3,7 +3,7 @@ import { Toast as ToastPrimitive } from "@base-ui/react/toast";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { toast, useToastManager } from "@/components/ui/toast-manager";
+import { toast, useToastManager, type ToastData } from "@/components/ui/toast-manager";
 import {
   XIcon,
   CircleCheckIcon,
@@ -187,21 +187,41 @@ function ToastIcon({ type }: { type: string | undefined }) {
 }
 
 function ToastList() {
-  const { toasts } = useToastManager();
+  const { toasts } = useToastManager<ToastData>();
 
-  return toasts.map((toastItem) => (
-    <Toast key={toastItem.id} toast={toastItem}>
-      <ToastContent>
-        <ToastIcon type={toastItem.type} />
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <ToastTitle />
-          <ToastDescription />
-        </div>
-        <ToastAction />
-        <ToastClose />
-      </ToastContent>
-    </Toast>
-  ));
+  return toasts.map((toastItem) => {
+    const extraActions = toastItem.data?.extraActions ?? [];
+    return (
+      <Toast key={toastItem.id} toast={toastItem}>
+        <ToastContent className={extraActions.length > 0 ? "items-start" : undefined}>
+          <ToastIcon type={toastItem.type} />
+          <div className="flex min-w-0 flex-1 flex-col gap-2">
+            <div className="flex min-w-0 flex-col gap-1">
+              <ToastTitle />
+              <ToastDescription />
+            </div>
+            {extraActions.length > 0 ? (
+              <div className="flex flex-wrap gap-1">
+                {extraActions.map((action, index) => (
+                  <Button
+                    key={`${toastItem.id}-action-${index}`}
+                    type="button"
+                    size="xs"
+                    variant="outline"
+                    onClick={action.onClick}
+                  >
+                    {action.label}
+                  </Button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+          {extraActions.length === 0 ? <ToastAction /> : null}
+          <ToastClose />
+        </ToastContent>
+      </Toast>
+    );
+  });
 }
 
 function Toaster({ children, toastManager = toast, ...props }: ToastPrimitive.Provider.Props) {

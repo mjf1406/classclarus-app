@@ -44,6 +44,8 @@ import {
   deleteStudentRostersForClass,
 } from "./lib/studentRosters.js";
 import { resolveUserImageUrl } from "./lib/userImage.js";
+import { deleteCalendarForClass } from "./lib/cleanup/calendarCleanup.js";
+import { normalizeTimeZone } from "./lib/calendar/timeZone.js";
 
 const MIN_YEAR = 1900;
 const MAX_YEAR = 2100;
@@ -77,6 +79,7 @@ const classValidator = v.object({
   icon: v.optional(v.string()),
   bannerFileId: v.optional(v.id("files")),
   studentLanguage: languageValidator,
+  timezone: v.optional(v.string()),
   rosterNameOrder: rosterNameOrderValidator,
   rosterNameSpace: v.boolean(),
   warningWindowAmount: v.number(),
@@ -115,6 +118,7 @@ async function generateUniquePointsPublicSlug(ctx: MutationCtx): Promise<string>
 
 type ClassPublicDefaults = {
   studentLanguage: LanguageCode;
+  timezone?: string;
   rosterNameOrder: "firstLast" | "lastFirst";
   rosterNameSpace: boolean;
   warningWindowAmount: number;
@@ -147,6 +151,7 @@ function withClassDefaults(classDoc: Doc<"classes">): Doc<"classes"> & ClassPubl
   return {
     ...classDoc,
     studentLanguage: classDoc.studentLanguage ?? "en",
+    timezone: classDoc.timezone,
     rosterNameOrder: classDoc.rosterNameOrder === "lastFirst" ? "lastFirst" : "firstLast",
     rosterNameSpace: classDoc.rosterNameSpace !== false,
     ...resolvePointsBadgeWindowFields(classDoc),
@@ -317,12 +322,14 @@ export const create = entitledMutation({
     description: v.optional(v.string()),
     icon: v.optional(v.string()),
     studentLanguage: languageValidator,
+    timezone: v.optional(v.string()),
   },
   returns: classValidator,
   handler: async (ctx, args) => {
     await rateLimiter.limit(ctx, "classCreateGlobal", { key: "global", throws: true });
     await rateLimiter.limit(ctx, "classCreate", { key: ctx.userId, throws: true });
     const now = Date.now();
+    const timezone = args.timezone ? normalizeTimeZone(args.timezone) : undefined;
     const classId = await ctx.db.insert("classes", {
       ownerId: ctx.userId,
       name: normalizeName(args.name),
@@ -330,6 +337,7 @@ export const create = entitledMutation({
       description: normalizeDescription(args.description),
       icon: normalizeIcon(args.icon),
       studentLanguage: args.studentLanguage,
+      timezone,
       updatedAt: now,
     });
     await authz.assignRole(ctx, ctx.userId, "owner", classScope(classId));
@@ -486,6 +494,37 @@ export const setStudentLanguage = classMutation({
       summary: `Set student language to ${args.studentLanguage}`,
       summaryKey: "activitySummary_setStudentLanguage",
       metadata: { studentLanguage: args.studentLanguage },
+    });
+    return withClassDefaults(updated);
+  },
+});
+
+export const setTimezone = classMutation({
+  args: {
+    timezone: v.string(),
+  },
+  returns: classValidator,
+  handler: async (ctx, args) => {
+    await rateLimiter.limit(ctx, "classUpdate", { key: ctx.userId, throws: true });
+    await ctx.require("class:update");
+    const timezone = normalizeTimeZone(args.timezone);
+    await ctx.db.patch("classes", ctx.classDoc._id, {
+      timezone,
+      updatedAt: Date.now(),
+    });
+    const updated = await ctx.db.get("classes", ctx.classDoc._id);
+    if (!updated) {
+      throw new Error("Failed to update class time zone");
+    }
+    await recordClassActivity(ctx, {
+      classId: ctx.classDoc._id,
+      actorUserId: ctx.userId,
+      action: "update",
+      resourceType: "class",
+      resourceId: ctx.classDoc._id,
+      summary: `Set class time zone to ${timezone}`,
+      summaryKey: "activitySummary_setTimezone",
+      metadata: { timezone },
     });
     return withClassDefaults(updated);
   },
@@ -664,6 +703,7 @@ export const remove = classMutation({
     await deleteStudentRostersForClass(ctx, classId);
     await deleteClassUserSettingsForClass(ctx, classId);
     await deleteAnnouncementsForClass(ctx, classId);
+    await deleteCalendarForClass(ctx, classId);
     await deleteTasksForClass(ctx, classId);
     await deleteAssignmentsForClass(ctx, classId);
     await deleteExpectationsForClass(ctx, classId);

@@ -100,6 +100,11 @@ const schema = defineSchema({
     /** UI language forced for students while inside this class. */
     studentLanguage: languageValidator,
     /**
+     * IANA time zone for class calendar times and reminder scheduling.
+     * Timed events cannot be created until this is set.
+     */
+    timezone: v.optional(v.string()),
+    /**
      * How roster first/last names are combined for display.
      * Defaults to firstLast + space when unset (pre-backfill rows).
      */
@@ -834,6 +839,69 @@ const schema = defineSchema({
     .index("by_classId_student_dateKey", ["classId", "studentUserId", "dateKey"])
     .index("by_classId_student_createdAt", ["classId", "studentUserId", "createdAt"])
     .index("by_classId_dateKey", ["classId", "dateKey"]),
+  /**
+   * Class calendar events — one-off timed, all-day, and multi-day.
+   * Timed events store UTC instants plus the event time zone.
+   * All-day events store local date keys with exclusive end.
+   */
+  calendarEvents: defineTable({
+    classId: v.id("classes"),
+    title: v.string(),
+    description: v.optional(v.string()),
+    allDay: v.boolean(),
+    timezone: v.optional(v.string()),
+    startAt: v.optional(v.number()),
+    endAt: v.optional(v.number()),
+    startDateKey: v.optional(v.string()),
+    /** Exclusive local end date for all-day events. */
+    endDateKey: v.optional(v.string()),
+    audienceKind: v.union(v.literal("all"), v.literal("roles")),
+    audienceRoles: v.array(v.string()),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_classId", ["classId"])
+    .index("by_classId_startAt", ["classId", "startAt"])
+    .index("by_classId_startDateKey", ["classId", "startDateKey"]),
+  /**
+   * Relative reminders attached to a calendar event.
+   * `scheduledFunctionId` + `revision` make cancel/reschedule race-safe.
+   */
+  calendarEventReminders: defineTable({
+    classId: v.id("classes"),
+    eventId: v.id("calendarEvents"),
+    amount: v.number(),
+    unit: v.union(v.literal("minute"), v.literal("hour"), v.literal("day"), v.literal("week")),
+    notifyRoles: v.array(v.string()),
+    notifyAt: v.number(),
+    revision: v.number(),
+    status: v.union(
+      v.literal("scheduled"),
+      v.literal("delivered"),
+      v.literal("canceled"),
+      v.literal("skipped"),
+    ),
+    scheduledFunctionId: v.optional(v.id("_scheduled_functions")),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_eventId", ["eventId"])
+    .index("by_classId", ["classId"]),
+  /**
+   * Browser Web Push subscriptions (one row per endpoint).
+   */
+  pushSubscriptions: defineTable({
+    userId: v.id("users"),
+    endpoint: v.string(),
+    p256dh: v.string(),
+    auth: v.string(),
+    userAgent: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_endpoint", ["endpoint"]),
   /**
    * Per-class FERPA activity log (append-only).
    * Purged on class delete and by retention cron (1 year).

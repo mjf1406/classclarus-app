@@ -37,6 +37,7 @@ import { Route as AuthenticatedClassClassClassIdActivityRouteImport } from "./ro
 import { Route as AuthenticatedClassClassClassIdAssistantTeachersRouteImport } from "./routes/_authenticated/_class/class/$classId/assistant-teachers";
 import { Route as AuthenticatedClassClassClassIdAttendanceRouteImport } from "./routes/_authenticated/_class/class/$classId/attendance";
 import { Route as AuthenticatedClassClassClassIdBehaviorsRouteImport } from "./routes/_authenticated/_class/class/$classId/behaviors";
+import { Route as AuthenticatedClassClassClassIdCalendarRouteImport } from "./routes/_authenticated/_class/class/$classId/calendar";
 import { Route as AuthenticatedClassClassClassIdGroupsRouteImport } from "./routes/_authenticated/_class/class/$classId/groups";
 import { Route as AuthenticatedClassClassClassIdGuardiansRouteImport } from "./routes/_authenticated/_class/class/$classId/guardians";
 import { Route as AuthenticatedClassClassClassIdInvitationsRouteImport } from "./routes/_authenticated/_class/class/$classId/invitations";
@@ -229,6 +230,12 @@ const AuthenticatedClassClassClassIdBehaviorsRoute =
   AuthenticatedClassClassClassIdBehaviorsRouteImport.update({
     id: "/behaviors",
     path: "/behaviors",
+    getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
+  } as any);
+const AuthenticatedClassClassClassIdCalendarRoute =
+  AuthenticatedClassClassClassIdCalendarRouteImport.update({
+    id: "/calendar",
+    path: "/calendar",
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
   } as any);
 const AuthenticatedClassClassClassIdGroupsRoute =
@@ -562,6 +569,7 @@ export interface FileRoutesByFullPath {
   "/class/$classId/assistant-teachers": typeof AuthenticatedClassClassClassIdAssistantTeachersRoute;
   "/class/$classId/attendance": typeof AuthenticatedClassClassClassIdAttendanceRoute;
   "/class/$classId/behaviors": typeof AuthenticatedClassClassClassIdBehaviorsRoute;
+  "/class/$classId/calendar": typeof AuthenticatedClassClassClassIdCalendarRoute;
   "/class/$classId/groups": typeof AuthenticatedClassClassClassIdGroupsRoute;
   "/class/$classId/guardians": typeof AuthenticatedClassClassClassIdGuardiansRoute;
   "/class/$classId/invitations": typeof AuthenticatedClassClassClassIdInvitationsRoute;
@@ -637,6 +645,7 @@ export interface FileRoutesByTo {
   "/class/$classId/assistant-teachers": typeof AuthenticatedClassClassClassIdAssistantTeachersRoute;
   "/class/$classId/attendance": typeof AuthenticatedClassClassClassIdAttendanceRoute;
   "/class/$classId/behaviors": typeof AuthenticatedClassClassClassIdBehaviorsRoute;
+  "/class/$classId/calendar": typeof AuthenticatedClassClassClassIdCalendarRoute;
   "/class/$classId/groups": typeof AuthenticatedClassClassClassIdGroupsRoute;
   "/class/$classId/guardians": typeof AuthenticatedClassClassClassIdGuardiansRoute;
   "/class/$classId/invitations": typeof AuthenticatedClassClassClassIdInvitationsRoute;
@@ -718,6 +727,7 @@ export interface FileRoutesById {
   "/_authenticated/_class/class/$classId/assistant-teachers": typeof AuthenticatedClassClassClassIdAssistantTeachersRoute;
   "/_authenticated/_class/class/$classId/attendance": typeof AuthenticatedClassClassClassIdAttendanceRoute;
   "/_authenticated/_class/class/$classId/behaviors": typeof AuthenticatedClassClassClassIdBehaviorsRoute;
+  "/_authenticated/_class/class/$classId/calendar": typeof AuthenticatedClassClassClassIdCalendarRoute;
   "/_authenticated/_class/class/$classId/groups": typeof AuthenticatedClassClassClassIdGroupsRoute;
   "/_authenticated/_class/class/$classId/guardians": typeof AuthenticatedClassClassClassIdGuardiansRoute;
   "/_authenticated/_class/class/$classId/invitations": typeof AuthenticatedClassClassClassIdInvitationsRoute;
@@ -797,6 +807,7 @@ export interface FileRouteTypes {
     | "/class/$classId/assistant-teachers"
     | "/class/$classId/attendance"
     | "/class/$classId/behaviors"
+    | "/class/$classId/calendar"
     | "/class/$classId/groups"
     | "/class/$classId/guardians"
     | "/class/$classId/invitations"
@@ -872,6 +883,7 @@ export interface FileRouteTypes {
     | "/class/$classId/assistant-teachers"
     | "/class/$classId/attendance"
     | "/class/$classId/behaviors"
+    | "/class/$classId/calendar"
     | "/class/$classId/groups"
     | "/class/$classId/guardians"
     | "/class/$classId/invitations"
@@ -952,6 +964,7 @@ export interface FileRouteTypes {
     | "/_authenticated/_class/class/$classId/assistant-teachers"
     | "/_authenticated/_class/class/$classId/attendance"
     | "/_authenticated/_class/class/$classId/behaviors"
+    | "/_authenticated/_class/class/$classId/calendar"
     | "/_authenticated/_class/class/$classId/groups"
     | "/_authenticated/_class/class/$classId/guardians"
     | "/_authenticated/_class/class/$classId/invitations"
@@ -1210,6 +1223,13 @@ declare module "@tanstack/react-router" {
       path: "/behaviors";
       fullPath: "/class/$classId/behaviors";
       preLoaderRoute: typeof AuthenticatedClassClassClassIdBehaviorsRouteImport;
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
+    };
+    "/_authenticated/_class/class/$classId/calendar": {
+      id: "/_authenticated/_class/class/$classId/calendar";
+      path: "/calendar";
+      fullPath: "/class/$classId/calendar";
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdCalendarRouteImport;
       parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
     };
     "/_authenticated/_class/class/$classId/groups": {
@@ -1625,6 +1645,7 @@ interface AuthenticatedClassClassClassIdRouteRouteChildren {
   AuthenticatedClassClassClassIdAssistantTeachersRoute: typeof AuthenticatedClassClassClassIdAssistantTeachersRoute;
   AuthenticatedClassClassClassIdAttendanceRoute: typeof AuthenticatedClassClassClassIdAttendanceRoute;
   AuthenticatedClassClassClassIdBehaviorsRoute: typeof AuthenticatedClassClassClassIdBehaviorsRoute;
+  AuthenticatedClassClassClassIdCalendarRoute: typeof AuthenticatedClassClassClassIdCalendarRoute;
   AuthenticatedClassClassClassIdGroupsRoute: typeof AuthenticatedClassClassClassIdGroupsRoute;
   AuthenticatedClassClassClassIdGuardiansRoute: typeof AuthenticatedClassClassClassIdGuardiansRoute;
   AuthenticatedClassClassClassIdInvitationsRoute: typeof AuthenticatedClassClassClassIdInvitationsRoute;
@@ -1682,6 +1703,7 @@ const AuthenticatedClassClassClassIdRouteRouteChildren: AuthenticatedClassClassC
       AuthenticatedClassClassClassIdAssistantTeachersRoute,
     AuthenticatedClassClassClassIdAttendanceRoute: AuthenticatedClassClassClassIdAttendanceRoute,
     AuthenticatedClassClassClassIdBehaviorsRoute: AuthenticatedClassClassClassIdBehaviorsRoute,
+    AuthenticatedClassClassClassIdCalendarRoute: AuthenticatedClassClassClassIdCalendarRoute,
     AuthenticatedClassClassClassIdGroupsRoute: AuthenticatedClassClassClassIdGroupsRoute,
     AuthenticatedClassClassClassIdGuardiansRoute: AuthenticatedClassClassClassIdGuardiansRoute,
     AuthenticatedClassClassClassIdInvitationsRoute: AuthenticatedClassClassClassIdInvitationsRoute,

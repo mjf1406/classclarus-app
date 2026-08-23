@@ -22,6 +22,7 @@ export default [
       "docker/**",
       "convex/_generated/**",
       "src/routeTree.gen.ts",
+      "src/sw.ts",
       "convex/**/*.test.ts",
       // One-off Bun scripts are not in a TS project
       "scripts/**/*.ts",

@@ -1,0 +1,108 @@
+import { BellIcon, XIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  useMarkAllNotificationsSeen,
+  useDismissNotification,
+  useMarkNotificationSeen,
+} from "@/hooks/notifications/useNotificationMutations";
+import {
+  useNotificationCounts,
+  useNotificationsList,
+} from "@/hooks/notifications/useNotifications";
+
+export function NotificationInboxButton() {
+  const { t } = useTranslation("notifications");
+  const { data: items } = useNotificationsList();
+  const { data: counts } = useNotificationCounts();
+  const markSeen = useMarkNotificationSeen();
+  const markAllSeen = useMarkAllNotificationsSeen();
+  const dismiss = useDismissNotification();
+  const unseen = counts?.unseen ?? 0;
+  const list = items ?? [];
+
+  return (
+    <Popover>
+      <PopoverTrigger
+        render={<Button type="button" variant="ghost" size="icon" className="relative" />}
+      >
+        <BellIcon />
+        <span className="sr-only">{t("title")}</span>
+        {unseen > 0 ? (
+          <Badge
+            variant="destructive"
+            className="absolute -top-1 -right-1 h-5 min-w-5 px-1 text-[10px]"
+          >
+            {unseen > 99 ? "99+" : unseen}
+          </Badge>
+        ) : null}
+      </PopoverTrigger>
+      <PopoverContent className="w-80 p-0" align="end">
+        <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
+          <p className="text-sm font-medium">{t("title")}</p>
+          {unseen > 0 ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="xs"
+              onClick={() => void markAllSeen.mutateAsync({})}
+            >
+              {t("markAllSeen")}
+            </Button>
+          ) : null}
+        </div>
+        {list.length === 0 ? (
+          <p className="px-3 py-6 text-center text-sm text-muted-foreground">{t("empty")}</p>
+        ) : (
+          <ScrollArea className="max-h-80">
+            <ul className="flex flex-col p-1">
+              {list.map((item) => {
+                const href = item.kind === "calendar_reminder" ? item.data.href : "/";
+                const title = item.kind === "calendar_reminder" ? item.data.title : t("title");
+                const subtitle = item.kind === "calendar_reminder" ? item.data.className : "";
+                return (
+                  <li
+                    key={item._id}
+                    className={
+                      item.isSeen
+                        ? "flex items-start gap-1 rounded-lg p-2"
+                        : "flex items-start gap-1 rounded-lg bg-muted/50 p-2"
+                    }
+                  >
+                    <a
+                      href={href}
+                      className="min-w-0 flex-1 text-left"
+                      onClick={() => {
+                        if (!item.isSeen) {
+                          void markSeen.mutateAsync({ notificationId: item._id });
+                        }
+                      }}
+                    >
+                      <div className="truncate text-sm font-medium">{title}</div>
+                      {subtitle ? (
+                        <div className="truncate text-xs text-muted-foreground">{subtitle}</div>
+                      ) : null}
+                    </a>
+                    <Button
+                      type="button"
+                      size="icon-xs"
+                      variant="ghost"
+                      aria-label={t("dismiss")}
+                      onClick={() => void dismiss.mutateAsync({ notificationId: item._id })}
+                    >
+                      <XIcon />
+                    </Button>
+                  </li>
+                );
+              })}
+            </ul>
+          </ScrollArea>
+        )}
+      </PopoverContent>
+    </Popover>
+  );
+}

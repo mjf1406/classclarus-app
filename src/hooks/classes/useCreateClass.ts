@@ -19,6 +19,7 @@ type CreateClassArgs = {
   description?: string;
   icon?: string;
   studentLanguage: AppLanguage;
+  timezone?: string;
 };
 
 export function useCreateClass() {
@@ -44,6 +45,7 @@ export function useCreateClass() {
         description: args.description,
         icon: args.icon,
         studentLanguage: args.studentLanguage,
+        timezone: args.timezone,
         rosterNameOrder: "firstLast",
         rosterNameSpace: true,
         warningWindowAmount: 1,

@@ -91,6 +91,9 @@ export default defineConfig({
     }
     plugins.push(
       VitePWA({
+        strategies: "injectManifest",
+        srcDir: "src",
+        filename: "sw.ts",
         registerType: "prompt",
         injectRegister: false,
         includeAssets: [
@@ -127,10 +130,7 @@ export default defineConfig({
             },
           ],
         },
-        workbox: {
-          cleanupOutdatedCaches: true,
-          navigateFallback: "index.html",
-          navigateFallbackDenylist: [/\/[^/?]+\.[^/]+$/],
+        injectManifest: {
           globPatterns: ["**/*.{js,css,html,ico,png,svg,webp,woff2}"],
           globIgnores: ["**/_headers", "**/_redirects"],
         },

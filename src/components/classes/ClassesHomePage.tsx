@@ -32,6 +32,7 @@ import { useSetClassArchived } from "@/hooks/classes/useSetClassArchived";
 import { useUpdateClass } from "@/hooks/classes/useUpdateClass";
 import { useLocalStorageValue } from "@/hooks/useLocalStorageValue";
 import { useAppLanguage } from "@/i18n/language-context";
+import { detectBrowserTimeZone } from "../../../convex/lib/calendar/timeZone";
 import type { ClassPublic } from "@/lib/classes/classes";
 import type { ClassFormValues } from "@/lib/classes/classFormSchema";
 import {
@@ -198,6 +199,7 @@ export function ClassesHomePage() {
       description: values.description,
       icon: values.icon,
       studentLanguage: preferredLanguage,
+      timezone: detectBrowserTimeZone(),
     });
   };
 
