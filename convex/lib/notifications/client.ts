@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { defineNotifications } from "convex-notification";
 
-import { components } from "../../_generated/api.js";
+import { components, internal } from "../../_generated/api.js";
 
 export const calendarReminderDataValidator = v.object({
   summaryKey: v.string(),
@@ -19,4 +19,6 @@ export const notifications = defineNotifications(components.notification, {
   kinds: {
     calendar_reminder: calendarReminderDataValidator,
   },
+}).withHooks({
+  onNotificationCreated: internal.notificationHooks.onNotificationCreated,
 });

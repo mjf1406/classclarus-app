@@ -28,6 +28,7 @@ import {
   dismissNotificationsForEvent,
 } from "./lib/cleanup/calendarCleanup.js";
 import { notifications } from "./lib/notifications/client.js";
+import { upsertHistoryFromCreated } from "./lib/notifications/history.js";
 import { rateLimiter } from "./lib/rateLimit/rateLimiter.js";
 
 const reminderUnitValidator = v.union(
@@ -495,7 +496,7 @@ export const deliverReminder = internalMutation({
     const href = `/class/${event.classId}/calendar?event=${event._id}`;
     const recipients = await reminderRecipientUserIds(ctx, event, reminder.notifyRoles);
     for (const userId of recipients) {
-      await notifications.createIdempotent(ctx, {
+      const created = await notifications.createIdempotent(ctx, {
         targetId: userId,
         kind: "calendar_reminder",
         data: {
@@ -510,6 +511,23 @@ export const deliverReminder = internalMutation({
         source: { type: "calendar_event", id: event._id },
         dedupeKey: `calendar-reminder:${reminder._id}:${userId}`,
       });
+      if (created.created) {
+        await upsertHistoryFromCreated(ctx, {
+          notificationId: created.notificationId,
+          targetId: userId,
+          kind: "calendar_reminder",
+          data: {
+            summaryKey: "calendarReminder",
+            title: event.title,
+            ...(event.description ? { description: event.description } : {}),
+            classId: event.classId,
+            className,
+            eventId: event._id,
+            href,
+          },
+          createdAt: Date.now(),
+        });
+      }
       await ctx.scheduler.runAfter(0, internal.pushActions.sendToUser, {
         userId,
         title: event.title,

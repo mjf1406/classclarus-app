@@ -1,5 +1,6 @@
 import type { Id } from "../../_generated/dataModel.js";
 import type { MutationCtx } from "../../_generated/server.js";
+import { markHistoryDismissedByEventId } from "../notifications/history.js";
 import { notifications } from "../notifications/client.js";
 
 async function cancelReminderJob(
@@ -28,6 +29,7 @@ export async function dismissNotificationsForEvent(
       source: { type: "calendar_reminder", id: reminderId },
     });
   }
+  await markHistoryDismissedByEventId(ctx, eventId, Date.now());
 }
 
 export async function deleteRemindersForEvent(

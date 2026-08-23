@@ -1,4 +1,5 @@
 import { BellIcon, XIcon } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +18,7 @@ import {
 
 export function NotificationInboxButton() {
   const { t } = useTranslation("notifications");
+  const navigate = useNavigate();
   const { data: items } = useNotificationsList();
   const { data: counts } = useNotificationCounts();
   const markSeen = useMarkNotificationSeen();
@@ -61,7 +63,6 @@ export function NotificationInboxButton() {
           <ScrollArea className="max-h-80">
             <ul className="flex flex-col p-1">
               {list.map((item) => {
-                const href = item.kind === "calendar_reminder" ? item.data.href : "/";
                 const title = item.kind === "calendar_reminder" ? item.data.title : t("title");
                 const subtitle = item.kind === "calendar_reminder" ? item.data.className : "";
                 return (
@@ -73,12 +74,19 @@ export function NotificationInboxButton() {
                         : "flex items-start gap-1 rounded-lg bg-muted/50 p-2"
                     }
                   >
-                    <a
-                      href={href}
+                    <button
+                      type="button"
                       className="min-w-0 flex-1 text-left"
                       onClick={() => {
                         if (!item.isSeen) {
                           void markSeen.mutateAsync({ notificationId: item._id });
+                        }
+                        if (item.kind === "calendar_reminder") {
+                          void navigate({
+                            to: "/class/$classId/calendar",
+                            params: { classId: item.data.classId },
+                            search: { event: item.data.eventId },
+                          });
                         }
                       }}
                     >
@@ -86,7 +94,7 @@ export function NotificationInboxButton() {
                       {subtitle ? (
                         <div className="truncate text-xs text-muted-foreground">{subtitle}</div>
                       ) : null}
-                    </a>
+                    </button>
                     <Button
                       type="button"
                       size="icon-xs"
@@ -102,6 +110,18 @@ export function NotificationInboxButton() {
             </ul>
           </ScrollArea>
         )}
+        <div className="border-t border-border px-3 py-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="w-full"
+            nativeButton={false}
+            render={<Link to="/notifications" />}
+          >
+            {t("viewAll")}
+          </Button>
+        </div>
       </PopoverContent>
     </Popover>
   );

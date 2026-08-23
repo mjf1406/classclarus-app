@@ -889,6 +889,39 @@ const schema = defineSchema({
     .index("by_eventId", ["eventId"])
     .index("by_classId", ["classId"]),
   /**
+   * Searchable per-user projection of inbox notifications.
+   * Source of truth for `/notifications` history; kept in sync with the
+   * `convex-notification` component via create hooks and state wrappers.
+   */
+  notificationHistory: defineTable({
+    userId: v.id("users"),
+    notificationId: v.string(),
+    sequence: v.number(),
+    kind: v.string(),
+    statusKey: v.union(v.literal("unread"), v.literal("read"), v.literal("dismissed")),
+    title: v.string(),
+    description: v.optional(v.string()),
+    searchText: v.string(),
+    classId: v.optional(v.string()),
+    className: v.optional(v.string()),
+    eventId: v.optional(v.string()),
+    href: v.string(),
+    isSeen: v.boolean(),
+    isDismissed: v.boolean(),
+    seenAt: v.optional(v.number()),
+    dismissedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+  })
+    .index("by_userId_notificationId", ["userId", "notificationId"])
+    .index("by_userId_createdAt", ["userId", "createdAt"])
+    .index("by_userId_statusKey_createdAt", ["userId", "statusKey", "createdAt"])
+    .index("by_eventId", ["eventId"])
+    .searchIndex("search_text", {
+      searchField: "searchText",
+      filterFields: ["userId", "kind", "classId", "statusKey"],
+    }),
+  /**
    * Browser Web Push subscriptions (one row per endpoint).
    */
   pushSubscriptions: defineTable({

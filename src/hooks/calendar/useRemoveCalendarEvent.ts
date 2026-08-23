@@ -9,6 +9,10 @@ import {
   patchCalendarRanges,
 } from "@/hooks/calendar/useCalendarEventsInRange";
 import {
+  findNotificationHistoryQueryKeys,
+  patchNotificationHistory,
+} from "@/hooks/notifications/useNotificationHistory";
+import {
   notificationsCountsQueryKey,
   notificationsListQueryKey,
 } from "@/hooks/notifications/useNotifications";
@@ -40,6 +44,7 @@ export function useRemoveCalendarEvent() {
       ...findCalendarRangeQueryKeys(queryClient, args.classId),
       listKey,
       countsKey,
+      ...findNotificationHistoryQueryKeys(queryClient),
     ],
     applyOptimisticUpdate: (queryClient, args) => {
       patchCalendarRanges(queryClient, args.classId, (old) =>
@@ -65,6 +70,20 @@ export function useRemoveCalendarEvent() {
           ...old,
           active: Math.max(0, old.active - removed.length),
           unseen: Math.max(0, old.unseen - removedUnseen),
+        };
+      });
+
+      const now = Date.now();
+      patchNotificationHistory(queryClient, (item) => {
+        if (item.kind !== "calendar_reminder" || item.eventId !== args.eventId) return item;
+        if (item.isDismissed) return item;
+        return {
+          ...item,
+          isDismissed: true,
+          isSeen: true,
+          dismissedAt: now,
+          seenAt: item.seenAt ?? now,
+          statusKey: "dismissed",
         };
       });
     },

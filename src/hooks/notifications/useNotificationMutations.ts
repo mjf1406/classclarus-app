@@ -4,6 +4,10 @@ import { useTranslation } from "react-i18next";
 import { api } from "../../../convex/_generated/api";
 import { toast } from "@/components/ui/toast-manager";
 import {
+  findNotificationHistoryQueryKeys,
+  patchNotificationHistory,
+} from "@/hooks/notifications/useNotificationHistory";
+import {
   notificationsCountsQueryKey,
   notificationsListQueryKey,
 } from "@/hooks/notifications/useNotifications";
@@ -26,7 +30,11 @@ export function useMarkNotificationSeen() {
 
   return useOptimisticMutation({
     mutationFn: (args: { notificationId: string }) => mutationFn(args),
-    queryKeys: [listKey, countsKey],
+    queryKeys: (_args, queryClient) => [
+      listKey,
+      countsKey,
+      ...findNotificationHistoryQueryKeys(queryClient),
+    ],
     applyOptimisticUpdate: (queryClient, args) => {
       const previous = queryClient.getQueryData<NotificationList>(listKey);
       const wasUnseen = previous?.some((item) => item._id === args.notificationId && !item.isSeen);
@@ -39,6 +47,17 @@ export function useMarkNotificationSeen() {
       queryClient.setQueryData<NotificationCounts>(countsKey, (old) => {
         if (!old || !wasUnseen) return old;
         return { ...old, unseen: Math.max(0, old.unseen - 1) };
+      });
+      const now = Date.now();
+      patchNotificationHistory(queryClient, (item) => {
+        if (item.notificationId !== args.notificationId) return item;
+        if (item.isDismissed) return { ...item, isSeen: true, seenAt: item.seenAt ?? now };
+        return {
+          ...item,
+          isSeen: true,
+          seenAt: now,
+          statusKey: "read",
+        };
       });
     },
     onError: (error) => {
@@ -59,7 +78,11 @@ export function useMarkAllNotificationsSeen() {
 
   return useOptimisticMutation({
     mutationFn: (_args: Record<string, never>) => mutationFn({}),
-    queryKeys: [listKey, countsKey],
+    queryKeys: (_args, queryClient) => [
+      listKey,
+      countsKey,
+      ...findNotificationHistoryQueryKeys(queryClient),
+    ],
     applyOptimisticUpdate: (queryClient) => {
       const now = Date.now();
       queryClient.setQueryData<NotificationList>(listKey, (old) => {
@@ -69,6 +92,10 @@ export function useMarkAllNotificationsSeen() {
       queryClient.setQueryData<NotificationCounts>(countsKey, (old) => {
         if (!old) return old;
         return { ...old, unseen: 0 };
+      });
+      patchNotificationHistory(queryClient, (item) => {
+        if (item.isDismissed || item.isSeen) return item;
+        return { ...item, isSeen: true, seenAt: item.seenAt ?? now, statusKey: "read" };
       });
     },
     onError: (error) => {
@@ -89,7 +116,11 @@ export function useDismissNotification() {
 
   return useOptimisticMutation({
     mutationFn: (args: { notificationId: string }) => mutationFn(args),
-    queryKeys: [listKey, countsKey],
+    queryKeys: (_args, queryClient) => [
+      listKey,
+      countsKey,
+      ...findNotificationHistoryQueryKeys(queryClient),
+    ],
     applyOptimisticUpdate: (queryClient, args) => {
       let removedUnseen = false;
       queryClient.setQueryData<NotificationList>(listKey, (old) => {
@@ -106,6 +137,18 @@ export function useDismissNotification() {
           ...old,
           active: Math.max(0, old.active - 1),
           unseen: removedUnseen ? Math.max(0, old.unseen - 1) : old.unseen,
+        };
+      });
+      const now = Date.now();
+      patchNotificationHistory(queryClient, (item) => {
+        if (item.notificationId !== args.notificationId) return item;
+        return {
+          ...item,
+          isDismissed: true,
+          isSeen: true,
+          dismissedAt: now,
+          seenAt: item.seenAt ?? now,
+          statusKey: "dismissed",
         };
       });
     },

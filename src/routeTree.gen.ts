@@ -25,6 +25,7 @@ import { Route as AuthenticatedAppAccountRouteImport } from "./routes/_authentic
 import { Route as AuthenticatedAppBillingRouteImport } from "./routes/_authenticated/_app/billing";
 import { Route as AuthenticatedAppFeedbackRouteImport } from "./routes/_authenticated/_app/feedback";
 import { Route as AuthenticatedAppJoinRouteImport } from "./routes/_authenticated/_app/join";
+import { Route as AuthenticatedAppNotificationsRouteImport } from "./routes/_authenticated/_app/notifications";
 import { Route as AuthenticatedAppSettingsRouteImport } from "./routes/_authenticated/_app/settings";
 import { Route as AuthenticatedAppUiRouteImport } from "./routes/_authenticated/_app/ui";
 import { Route as AuthenticatedAdminIndexRouteImport } from "./routes/_authenticated/admin/index";
@@ -164,6 +165,11 @@ const AuthenticatedAppFeedbackRoute = AuthenticatedAppFeedbackRouteImport.update
 const AuthenticatedAppJoinRoute = AuthenticatedAppJoinRouteImport.update({
   id: "/join",
   path: "/join",
+  getParentRoute: () => AuthenticatedAppRouteRoute,
+} as any);
+const AuthenticatedAppNotificationsRoute = AuthenticatedAppNotificationsRouteImport.update({
+  id: "/notifications",
+  path: "/notifications",
   getParentRoute: () => AuthenticatedAppRouteRoute,
 } as any);
 const AuthenticatedAppSettingsRoute = AuthenticatedAppSettingsRouteImport.update({
@@ -558,6 +564,7 @@ export interface FileRoutesByFullPath {
   "/billing": typeof AuthenticatedAppBillingRoute;
   "/feedback": typeof AuthenticatedAppFeedbackRoute;
   "/join": typeof AuthenticatedAppJoinRoute;
+  "/notifications": typeof AuthenticatedAppNotificationsRoute;
   "/settings": typeof AuthenticatedAppSettingsRoute;
   "/ui": typeof AuthenticatedAppUiRoute;
   "/admin/feedback": typeof AuthenticatedAdminFeedbackRoute;
@@ -635,6 +642,7 @@ export interface FileRoutesByTo {
   "/billing": typeof AuthenticatedAppBillingRoute;
   "/feedback": typeof AuthenticatedAppFeedbackRoute;
   "/join": typeof AuthenticatedAppJoinRoute;
+  "/notifications": typeof AuthenticatedAppNotificationsRoute;
   "/settings": typeof AuthenticatedAppSettingsRoute;
   "/ui": typeof AuthenticatedAppUiRoute;
   "/admin/feedback": typeof AuthenticatedAdminFeedbackRoute;
@@ -715,6 +723,7 @@ export interface FileRoutesById {
   "/_authenticated/_app/billing": typeof AuthenticatedAppBillingRoute;
   "/_authenticated/_app/feedback": typeof AuthenticatedAppFeedbackRoute;
   "/_authenticated/_app/join": typeof AuthenticatedAppJoinRoute;
+  "/_authenticated/_app/notifications": typeof AuthenticatedAppNotificationsRoute;
   "/_authenticated/_app/settings": typeof AuthenticatedAppSettingsRoute;
   "/_authenticated/_app/ui": typeof AuthenticatedAppUiRoute;
   "/_authenticated/admin/feedback": typeof AuthenticatedAdminFeedbackRoute;
@@ -796,6 +805,7 @@ export interface FileRouteTypes {
     | "/billing"
     | "/feedback"
     | "/join"
+    | "/notifications"
     | "/settings"
     | "/ui"
     | "/admin/feedback"
@@ -873,6 +883,7 @@ export interface FileRouteTypes {
     | "/billing"
     | "/feedback"
     | "/join"
+    | "/notifications"
     | "/settings"
     | "/ui"
     | "/admin/feedback"
@@ -952,6 +963,7 @@ export interface FileRouteTypes {
     | "/_authenticated/_app/billing"
     | "/_authenticated/_app/feedback"
     | "/_authenticated/_app/join"
+    | "/_authenticated/_app/notifications"
     | "/_authenticated/_app/settings"
     | "/_authenticated/_app/ui"
     | "/_authenticated/admin/feedback"
@@ -1139,6 +1151,13 @@ declare module "@tanstack/react-router" {
       path: "/join";
       fullPath: "/join";
       preLoaderRoute: typeof AuthenticatedAppJoinRouteImport;
+      parentRoute: typeof AuthenticatedAppRouteRoute;
+    };
+    "/_authenticated/_app/notifications": {
+      id: "/_authenticated/_app/notifications";
+      path: "/notifications";
+      fullPath: "/notifications";
+      preLoaderRoute: typeof AuthenticatedAppNotificationsRouteImport;
       parentRoute: typeof AuthenticatedAppRouteRoute;
     };
     "/_authenticated/_app/settings": {
@@ -1597,6 +1616,7 @@ interface AuthenticatedAppRouteRouteChildren {
   AuthenticatedAppBillingRoute: typeof AuthenticatedAppBillingRoute;
   AuthenticatedAppFeedbackRoute: typeof AuthenticatedAppFeedbackRoute;
   AuthenticatedAppJoinRoute: typeof AuthenticatedAppJoinRoute;
+  AuthenticatedAppNotificationsRoute: typeof AuthenticatedAppNotificationsRoute;
   AuthenticatedAppSettingsRoute: typeof AuthenticatedAppSettingsRoute;
   AuthenticatedAppUiRoute: typeof AuthenticatedAppUiRoute;
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute;
@@ -1607,6 +1627,7 @@ const AuthenticatedAppRouteRouteChildren: AuthenticatedAppRouteRouteChildren = {
   AuthenticatedAppBillingRoute: AuthenticatedAppBillingRoute,
   AuthenticatedAppFeedbackRoute: AuthenticatedAppFeedbackRoute,
   AuthenticatedAppJoinRoute: AuthenticatedAppJoinRoute,
+  AuthenticatedAppNotificationsRoute: AuthenticatedAppNotificationsRoute,
   AuthenticatedAppSettingsRoute: AuthenticatedAppSettingsRoute,
   AuthenticatedAppUiRoute: AuthenticatedAppUiRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
