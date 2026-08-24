@@ -4,6 +4,7 @@ import { dayPickerLocaleForLanguage } from "@/lib/calendar/dayPickerLocale";
 import {
   addMinutesToLocalDateTime,
   ceilToNextQuarterHour,
+  dateKeyForYearMonth,
   defaultEventFormValues,
   defaultTimedRange,
   endDateTimeFromStart,
@@ -130,6 +131,17 @@ describe("dayPickerLocaleForLanguage", () => {
 
   test("falls back to en-US for unknown languages", () => {
     expect(dayPickerLocaleForLanguage("xx").code).toBe("en-US");
+  });
+});
+
+describe("dateKeyForYearMonth", () => {
+  test("keeps the same day when the month has that date", () => {
+    expect(dateKeyForYearMonth("2026-08-24", 2026, 9)).toBe("2026-09-24");
+  });
+
+  test("clamps to the last day of shorter months", () => {
+    expect(dateKeyForYearMonth("2026-01-31", 2026, 2)).toBe("2026-02-28");
+    expect(dateKeyForYearMonth("2024-01-31", 2024, 2)).toBe("2024-02-29");
   });
 });
 

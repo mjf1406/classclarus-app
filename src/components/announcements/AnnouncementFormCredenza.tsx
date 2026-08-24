@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 
-import { AnnouncementAttachmentList } from "@/components/announcements/AnnouncementAttachmentList";
 import { AnnouncementEditor } from "@/components/announcements/AnnouncementEditor";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,7 +19,8 @@ import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/c
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { FileDropzone } from "@/components/upload/FileDropzone";
+import { ImageDocumentAttachmentsField } from "@/components/upload/ImageDocumentAttachmentsField";
+import { useImageDocumentAttachments } from "@/components/upload/useImageDocumentAttachments";
 import {
   MAX_ANNOUNCEMENT_ATTACHMENTS,
   MAX_ANNOUNCEMENT_TITLE_LENGTH,
@@ -68,22 +68,18 @@ export function AnnouncementFormCredenza({
   onSubmit,
 }: AnnouncementFormCredenzaProps) {
   const { t } = useTranslation("announcements");
-  const [attachmentFileIds, setAttachmentFileIds] = useState<Array<Id<"files">>>(
-    initial?.attachmentFileIds ?? [],
-  );
-  const [attachmentMeta, setAttachmentMeta] = useState(
-    () =>
-      initial?.attachments.map((item) => ({
-        fileId: item.fileId,
-        name: item.name,
-        contentType: item.contentType,
-        size: item.size,
-        preset: item.preset,
-      })) ?? [],
-  );
+  const {
+    fileIds: attachmentFileIds,
+    items: attachmentItems,
+    reset: resetAttachments,
+    onUploaded,
+    onRemove,
+  } = useImageDocumentAttachments(MAX_ANNOUNCEMENT_ATTACHMENTS);
   const [isPublic, setIsPublic] = useState(initial?.isPublic ?? false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const skipNextResetRef = useRef(false);
+  const attachmentFileIdsRef = useRef(attachmentFileIds);
+  attachmentFileIdsRef.current = attachmentFileIds;
 
   const defaults = useMemo(
     (): FormDefaults => ({
@@ -136,7 +132,7 @@ export function AnnouncementFormCredenza({
         await onSubmit({
           title: parsed.title,
           bodyJson: parsed.bodyJson || EMPTY_ANNOUNCEMENT_BODY_JSON,
-          attachmentFileIds,
+          attachmentFileIds: attachmentFileIdsRef.current,
           isPublic,
         });
       } catch (error) {
@@ -154,50 +150,9 @@ export function AnnouncementFormCredenza({
     }
     setSubmitError(null);
     form.reset(defaultsRef.current);
-    setAttachmentFileIds(initial?.attachmentFileIds ?? []);
-    setAttachmentMeta(
-      initial?.attachments.map((item) => ({
-        fileId: item.fileId,
-        name: item.name,
-        contentType: item.contentType,
-        size: item.size,
-        preset: item.preset,
-      })) ?? [],
-    );
+    resetAttachments(initial ?? null);
     setIsPublic(initial?.isPublic ?? false);
-  }, [open, form, initial]);
-
-  const onUploaded = useCallback(
-    (fileId: Id<"files">) => {
-      setAttachmentFileIds((prev) => {
-        if (prev.includes(fileId) || prev.length >= MAX_ANNOUNCEMENT_ATTACHMENTS) {
-          return prev;
-        }
-        return [...prev, fileId];
-      });
-      setAttachmentMeta((prev) => {
-        if (prev.some((item) => item.fileId === fileId)) return prev;
-        return [
-          ...prev,
-          {
-            fileId,
-            name: t("unnamedAttachment"),
-            contentType: "application/octet-stream",
-            size: 0,
-            preset: "documents",
-          },
-        ];
-      });
-    },
-    [t],
-  );
-
-  const onRemoveAttachment = useCallback((fileId: Id<"files">) => {
-    setAttachmentFileIds((prev) => prev.filter((id) => id !== fileId));
-    setAttachmentMeta((prev) => prev.filter((item) => item.fileId !== fileId));
-  }, []);
-
-  const canAddMore = attachmentFileIds.length < MAX_ANNOUNCEMENT_ATTACHMENTS;
+  }, [open, form, initial, resetAttachments]);
 
   return (
     <Credenza open={open} onOpenChange={onOpenChange}>
@@ -262,41 +217,14 @@ export function AnnouncementFormCredenza({
                 </div>
               </Field>
 
-              <Field>
-                <FieldLabel>{t("attachmentsLabel")}</FieldLabel>
-                <FieldDescription>
-                  {t("attachmentsDescription", { max: MAX_ANNOUNCEMENT_ATTACHMENTS })}
-                </FieldDescription>
-                <AnnouncementAttachmentList
-                  attachments={attachmentMeta.filter((item) =>
-                    attachmentFileIds.includes(item.fileId),
-                  )}
-                  onRemove={onRemoveAttachment}
-                  className="mt-2"
-                />
-                {canAddMore ? (
-                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                    <FileDropzone
-                      presetKey="images"
-                      variant="compact"
-                      classId={classId}
-                      multiple
-                      title={t("attachmentsImages")}
-                      onUploaded={onUploaded}
-                    />
-                    <FileDropzone
-                      presetKey="documents"
-                      variant="compact"
-                      classId={classId}
-                      multiple
-                      title={t("attachmentsDocuments")}
-                      onUploaded={onUploaded}
-                    />
-                  </div>
-                ) : (
-                  <p className="mt-2 text-sm text-muted-foreground">{t("attachmentsMaxReached")}</p>
-                )}
-              </Field>
+              <ImageDocumentAttachmentsField
+                classId={classId}
+                max={MAX_ANNOUNCEMENT_ATTACHMENTS}
+                fileIds={attachmentFileIds}
+                items={attachmentItems}
+                onUploaded={onUploaded}
+                onRemove={onRemove}
+              />
             </FieldGroup>
             {submitError ? <p className="text-sm text-destructive">{submitError}</p> : null}
           </form>

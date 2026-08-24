@@ -21,8 +21,15 @@ import {
 import { isValidTimeZone, zonedLocalToUtcMs } from "./timeZone.js";
 
 export const MAX_EVENT_TITLE_LENGTH = 120;
-export const MAX_EVENT_DESCRIPTION_LENGTH = 2000;
+export const MAX_EVENT_DESCRIPTION_LENGTH = 50_000;
 export const MAX_CALENDAR_EVENT_ATTACHMENTS = 5;
+
+export const EMPTY_EVENT_DESCRIPTION = {
+  type: "doc",
+  content: [{ type: "paragraph" }],
+} as const;
+
+export const EMPTY_EVENT_DESCRIPTION_JSON = JSON.stringify(EMPTY_EVENT_DESCRIPTION);
 
 export type CalendarEventMessages = {
   titleRequired: string;
@@ -165,6 +172,81 @@ export function createCalendarEventFormSchema(messages: CalendarEventMessages) {
 
 export const calendarEventFormSchemaEn = createCalendarEventFormSchema(CALENDAR_EVENT_MESSAGES_EN);
 
+function isTiptapDoc(value: unknown): boolean {
+  return Boolean(
+    value &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    (value as { type?: unknown }).type === "doc",
+  );
+}
+
+function tiptapTextContent(node: unknown): string {
+  if (!node || typeof node !== "object") return "";
+  const record = node as { type?: unknown; text?: unknown; content?: unknown };
+  const own = typeof record.text === "string" ? record.text : "";
+  if (!Array.isArray(record.content)) return own;
+  const joined = record.content.map((child) => tiptapTextContent(child)).join("");
+  const text = own + joined;
+  if (record.type === "paragraph" || record.type === "heading") {
+    return `${text}\n`;
+  }
+  return text;
+}
+
+/** Wrap legacy plain-text descriptions as a TipTap doc so old events still render. */
+export function coerceEventDescriptionJson(value: string | undefined): string {
+  if (!value || !value.trim()) return EMPTY_EVENT_DESCRIPTION_JSON;
+  const trimmed = value.trim();
+  try {
+    const parsed: unknown = JSON.parse(trimmed);
+    if (isTiptapDoc(parsed)) return trimmed;
+  } catch {
+    // Legacy plain text.
+  }
+  const content = trimmed
+    .split("\n")
+    .map((line) =>
+      line.length > 0
+        ? { type: "paragraph", content: [{ type: "text", text: line }] }
+        : { type: "paragraph" },
+    );
+  return JSON.stringify({ type: "doc", content });
+}
+
+export function eventDescriptionPlainText(value: string | undefined): string | undefined {
+  if (!value?.trim()) return undefined;
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (isTiptapDoc(parsed)) {
+      const text = tiptapTextContent(parsed).replace(/\n+$/u, "").trim();
+      return text || undefined;
+    }
+  } catch {
+    // Legacy plain text.
+  }
+  return value.trim() || undefined;
+}
+
+export function eventDescriptionHasContent(value: string | undefined): boolean {
+  return Boolean(eventDescriptionPlainText(value));
+}
+
+function normalizeEventDescription(
+  description: string,
+  messages: CalendarEventMessages,
+): string | undefined {
+  const coerced = coerceEventDescriptionJson(description);
+  if (coerced.length > MAX_EVENT_DESCRIPTION_LENGTH) {
+    throw new Error(messages.descriptionTooLong);
+  }
+  const parsed: unknown = JSON.parse(coerced);
+  if (tiptapTextContent(parsed).replace(/\n+$/u, "").trim().length === 0) {
+    return undefined;
+  }
+  return coerced;
+}
+
 export function normalizeCalendarEventInput(
   values: CalendarEventFormValues,
   classTimeZone: string | undefined,
@@ -172,7 +254,7 @@ export function normalizeCalendarEventInput(
 ): NormalizedCalendarEvent {
   const parsed = createCalendarEventFormSchema(messages).parse(values);
   const title = parsed.title.trim();
-  const description = parsed.description.trim() || undefined;
+  const description = normalizeEventDescription(parsed.description, messages);
   const audienceKind = parsed.audienceKind;
   const audienceRoles = audienceKind === "all" ? [] : uniqueAudienceRoles(parsed.audienceRoles);
 

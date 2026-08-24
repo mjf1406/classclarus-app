@@ -6,10 +6,17 @@ import {
   Trash2Icon,
   TriangleAlertIcon,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentProps,
+} from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useNavigate } from "@tanstack/react-router";
-import type { DayButtonProps } from "react-day-picker";
+import { Link } from "@tanstack/react-router";
 
 import { CalendarEventFormCredenza } from "@/components/calendar/CalendarEventFormCredenza";
 import { CalendarTimezoneCredenza } from "@/components/calendar/CalendarTimezoneCredenza";
@@ -27,6 +34,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { ErrorState } from "@/components/ui/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -40,6 +48,7 @@ import { useClass } from "@/hooks/classes/useClass";
 import { useSetTimezone } from "@/hooks/classes/useSetTimezone";
 import {
   dateKeyToLocalDate,
+  dateKeyForYearMonth,
   eventSortKey,
   formatDateKeyLocalized,
   formatEventTimeLabel,
@@ -50,6 +59,7 @@ import {
 import { toIntlLocale } from "@/lib/languages";
 import { eventOverlapsDateKey } from "../../../convex/lib/calendar/overlap";
 import {
+  buildMonthGrid,
   classNowDateKey,
   dateKeyYearMonth,
   monthRangeUtc,
@@ -69,9 +79,77 @@ function formatMonthTitle(year: number, month: number, locale: string): string {
   );
 }
 
+const MONTH_DAY_CHIP_LIMIT = 3;
+
+type CalendarMonthDayContextValue = {
+  eventsByDateKey: Map<string, Array<CalendarEvent>>;
+  eventsOnDayLabel: (count: number) => string;
+};
+
+const CalendarMonthDayContext = createContext<CalendarMonthDayContextValue | null>(null);
+
+function CalendarMonthDayButton({
+  className,
+  day,
+  ...props
+}: ComponentProps<typeof CalendarDayButton>) {
+  const ctx = useContext(CalendarMonthDayContext);
+  const dateKey = localDateToDateKey(day.date);
+  const dayEvents = ctx?.eventsByDateKey.get(dateKey) ?? [];
+  const chips = dayEvents.slice(0, MONTH_DAY_CHIP_LIMIT);
+  const extraCount = dayEvents.length - chips.length;
+
+  return (
+    <CalendarDayButton
+      day={day}
+      {...props}
+      className={cn(
+        "aspect-square h-full min-h-0 min-w-0 overflow-hidden rounded-full p-0 whitespace-normal",
+        "items-center justify-center gap-0.5 md:aspect-auto md:min-h-20 md:items-start md:justify-start md:rounded-lg md:p-1",
+        "[&>span]:text-inherit [&>span]:opacity-100",
+        className,
+      )}
+    >
+      <span className="text-sm leading-none font-medium md:self-end md:text-xs md:font-normal">
+        {day.date.getDate()}
+      </span>
+      {dayEvents.length > 0 ? (
+        <span className="sr-only">{ctx?.eventsOnDayLabel(dayEvents.length)}</span>
+      ) : null}
+      {dayEvents.length > 0 ? (
+        <span
+          aria-hidden
+          className="absolute inset-x-0 bottom-1 flex items-center justify-center gap-0.5 md:hidden"
+        >
+          {dayEvents.slice(0, MONTH_DAY_CHIP_LIMIT).map((event) => (
+            <span
+              key={event._id}
+              className="size-1 shrink-0 rounded-full bg-primary group-data-[selected-single=true]/button:bg-primary-foreground"
+            />
+          ))}
+        </span>
+      ) : null}
+      <span className="hidden min-h-0 w-full min-w-0 flex-1 flex-col gap-0.5 overflow-hidden md:flex">
+        {chips.map((event) => (
+          <span
+            key={event._id}
+            className="truncate rounded-sm bg-primary/15 px-1 text-[10px] leading-4 text-foreground group-data-[selected-single=true]/button:bg-primary-foreground/20 group-data-[selected-single=true]/button:text-primary-foreground"
+          >
+            {event.title}
+          </span>
+        ))}
+        {extraCount > 0 ? (
+          <span className="px-1 text-[10px] leading-4 text-muted-foreground group-data-[selected-single=true]/button:text-primary-foreground/80">
+            +{extraCount}
+          </span>
+        ) : null}
+      </span>
+    </CalendarDayButton>
+  );
+}
+
 export function CalendarPage({ classId }: CalendarPageProps) {
   const { t, i18n } = useTranslation("calendar");
-  const navigate = useNavigate();
   const locale = toIntlLocale(i18n.language);
   const { can, isPending: permissionsPending } = useCan();
   const canManage = !permissionsPending && can("calendar:manage");
@@ -117,21 +195,41 @@ export function CalendarPage({ classId }: CalendarPageProps) {
 
   const events = useMemo(() => data ?? [], [data]);
 
+  const eventsByDateKey = useMemo(() => {
+    const map = new Map<string, Array<CalendarEvent>>();
+    for (const cell of buildMonthGrid(year, month)) {
+      const list = events
+        .filter((event) => eventOverlapsDateKey(event, cell.dateKey, zone))
+        .sort((a, b) => eventSortKey(a).localeCompare(eventSortKey(b)));
+      if (list.length > 0) {
+        map.set(cell.dateKey, list);
+      }
+    }
+    return map;
+  }, [events, month, year, zone]);
+
   const monthDate = dateKeyToLocalDate(`${year}-${String(month).padStart(2, "0")}-01`);
   const selectedDate = dateKeyToLocalDate(selectedDateKey);
-
-  const dayEvents = useMemo(
-    () =>
-      events
-        .filter((event) => eventOverlapsDateKey(event, selectedDateKey, zone))
-        .sort((a, b) => eventSortKey(a).localeCompare(eventSortKey(b))),
-    [events, selectedDateKey, zone],
-  );
+  const dayEvents = eventsByDateKey.get(selectedDateKey) ?? [];
 
   const agendaEvents = useMemo(
     () => [...events].sort((a, b) => eventSortKey(a).localeCompare(eventSortKey(b))),
     [events],
   );
+
+  const monthDayContext = useMemo<CalendarMonthDayContextValue>(
+    () => ({
+      eventsByDateKey,
+      eventsOnDayLabel: (count) => t("eventsOnDay", { count }),
+    }),
+    [eventsByDateKey, t],
+  );
+
+  const goToMonth = (next: { year: number; month: number }) => {
+    setYear(next.year);
+    setMonth(next.month);
+    setSelectedDateKey((current) => dateKeyForYearMonth(current, next.year, next.month));
+  };
 
   const openCreate = (dateKey = selectedDateKey) => {
     setEditing(null);
@@ -142,13 +240,6 @@ export function CalendarPage({ classId }: CalendarPageProps) {
   const openEdit = (event: CalendarEvent) => {
     setEditing(event);
     setFormOpen(true);
-  };
-
-  const openEvent = (event: CalendarEvent) => {
-    void navigate({
-      to: "/class/$classId/calendar/event/$eventId",
-      params: { classId, eventId: event._id },
-    });
   };
 
   const handleSubmit = async (values: CalendarEventSubmitValues) => {
@@ -168,55 +259,18 @@ export function CalendarPage({ classId }: CalendarPageProps) {
     }
   };
 
-  const MonthDayButton = (props: DayButtonProps) => {
-    const dateKey = localDateToDateKey(props.day.date);
-    const dayList = events
-      .filter((event) => eventOverlapsDateKey(event, dateKey, zone))
-      .slice(0, 3);
-    return (
-      <CalendarDayButton
-        {...props}
-        className={cn("h-full min-h-16 items-start justify-start p-1", props.className)}
-      >
-        <span className="self-end text-xs">{props.day.date.getDate()}</span>
-        <span className="flex w-full flex-col gap-0.5">
-          {dayList.map((event) => (
-            <span
-              key={event._id}
-              className="truncate rounded-sm bg-primary/15 px-1 text-[10px] leading-4 text-foreground"
-              onClick={(clickEvent) => {
-                clickEvent.stopPropagation();
-                openEvent(event);
-              }}
-              onKeyDown={(keyEvent) => {
-                if (keyEvent.key === "Enter" || keyEvent.key === " ") {
-                  keyEvent.stopPropagation();
-                  openEvent(event);
-                }
-              }}
-              role="button"
-              tabIndex={0}
-            >
-              {event.title}
-            </span>
-          ))}
-        </span>
-      </CalendarDayButton>
-    );
-  };
-
   const showSkeleton = (isPending || isAuthLoading) && data == null;
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
+    <div className="mx-auto flex w-full min-w-0 max-w-6xl flex-col gap-4 px-4 py-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
           <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
           <p className="text-sm text-muted-foreground">{t("description")}</p>
         </div>
         {canManage ? (
-          <Button type="button" onClick={() => openCreate()}>
-            <PlusIcon />
+          <Button type="button" className="w-full sm:w-auto" onClick={() => openCreate()}>
+            <PlusIcon data-icon="inline-start" />
             {t("createEvent")}
           </Button>
         ) : null}
@@ -247,18 +301,14 @@ export function CalendarPage({ classId }: CalendarPageProps) {
         </Alert>
       ) : null}
 
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-2">
           <Button
             type="button"
             size="icon"
             variant="outline"
             aria-label={t("previousMonth")}
-            onClick={() => {
-              const next = shiftYearMonth(year, month, -1);
-              setYear(next.year);
-              setMonth(next.month);
-            }}
+            onClick={() => goToMonth(shiftYearMonth(year, month, -1))}
           >
             <ChevronLeftIcon />
           </Button>
@@ -267,19 +317,18 @@ export function CalendarPage({ classId }: CalendarPageProps) {
             size="icon"
             variant="outline"
             aria-label={t("nextMonth")}
-            onClick={() => {
-              const next = shiftYearMonth(year, month, 1);
-              setYear(next.year);
-              setMonth(next.month);
-            }}
+            onClick={() => goToMonth(shiftYearMonth(year, month, 1))}
           >
             <ChevronRightIcon />
           </Button>
-          <h2 className="text-lg font-medium">{formatMonthTitle(year, month, locale)}</h2>
+          <h2 className="min-w-0 flex-1 truncate text-base font-medium sm:text-lg">
+            {formatMonthTitle(year, month, locale)}
+          </h2>
           <Button
             type="button"
             variant="outline"
             size="sm"
+            className="shrink-0"
             onClick={() => {
               const parts = todayKey.split("-").map(Number);
               setYear(parts[0] ?? year);
@@ -295,8 +344,9 @@ export function CalendarPage({ classId }: CalendarPageProps) {
           onValueChange={(value) => {
             if (value === "month" || value === "agenda") setView(value);
           }}
+          className="w-full sm:w-auto"
         >
-          <TabsList>
+          <TabsList className="w-full sm:w-auto">
             <TabsTrigger value="month">{t("viewMonth")}</TabsTrigger>
             <TabsTrigger value="agenda">{t("viewAgenda")}</TabsTrigger>
           </TabsList>
@@ -310,39 +360,42 @@ export function CalendarPage({ classId }: CalendarPageProps) {
           onRetry={() => void refetch()}
         />
       ) : showSkeleton ? (
-        <Skeleton className="h-[32rem] w-full rounded-2xl" />
+        <Skeleton className="h-72 w-full rounded-2xl md:h-[32rem]" />
       ) : (
         <>
           {view === "month" ? (
-            <div className="overflow-x-auto rounded-2xl border border-border p-2">
-              <Calendar
-                mode="single"
-                month={monthDate}
-                onMonthChange={(date) => {
-                  setYear(date.getFullYear());
-                  setMonth(date.getMonth() + 1);
-                }}
-                selected={selectedDate}
-                onSelect={(date) => {
-                  if (date) setSelectedDateKey(localDateToDateKey(date));
-                }}
-                today={dateKeyToLocalDate(todayKey)}
-                showOutsideDays
-                className="w-full [--cell-size:--spacing(16)]"
-                classNames={{
-                  root: "w-full",
-                  month: "w-full",
-                  month_grid: "w-full",
-                  weekdays: "grid w-full grid-cols-7",
-                  weekday: "min-w-0 w-full text-center",
-                  week: "grid w-full grid-cols-7",
-                  day: "aspect-auto h-20 min-w-0 w-full",
-                  nav: "hidden",
-                  month_caption: "hidden",
-                }}
-                components={{ DayButton: MonthDayButton }}
-              />
-            </div>
+            <Card size="sm" className="gap-0 py-2">
+              <CardContent className="px-1 sm:px-2">
+                <CalendarMonthDayContext.Provider value={monthDayContext}>
+                  <Calendar
+                    mode="single"
+                    month={monthDate}
+                    onMonthChange={(date) => {
+                      goToMonth({ year: date.getFullYear(), month: date.getMonth() + 1 });
+                    }}
+                    selected={selectedDate}
+                    onSelect={(date) => {
+                      if (date) setSelectedDateKey(localDateToDateKey(date));
+                    }}
+                    today={dateKeyToLocalDate(todayKey)}
+                    showOutsideDays
+                    className="w-full bg-transparent p-1 [--cell-size:--spacing(9)] md:p-2 md:[--cell-size:--spacing(16)]"
+                    classNames={{
+                      root: "w-full",
+                      month: "w-full gap-2 md:gap-4",
+                      month_grid: "w-full",
+                      weekdays: "grid w-full grid-cols-7",
+                      weekday: "min-w-0 w-full text-center",
+                      week: "mt-1 grid w-full grid-cols-7 md:mt-2",
+                      day: "relative aspect-square h-auto min-w-0 w-full overflow-hidden p-0.5 md:aspect-auto md:h-24",
+                      nav: "hidden",
+                      month_caption: "hidden",
+                    }}
+                    components={{ DayButton: CalendarMonthDayButton }}
+                  />
+                </CalendarMonthDayContext.Provider>
+              </CardContent>
+            </Card>
           ) : null}
 
           {view === "agenda" ? (
@@ -368,27 +421,29 @@ export function CalendarPage({ classId }: CalendarPageProps) {
               </ul>
             )
           ) : (
-            <div className="flex flex-col gap-2">
-              <h3 className="text-sm font-medium">
-                {formatDateKeyLocalized(selectedDateKey, locale)}
-              </h3>
-              {dayEvents.length === 0 ? (
-                <p className="text-sm text-muted-foreground">{t("noEventsThisDay")}</p>
-              ) : (
-                <ul className="flex flex-col gap-2">
-                  {dayEvents.map((event) => (
-                    <EventRow
-                      key={event._id}
-                      classId={classId}
-                      event={event}
-                      timeLabel={formatEventTimeLabel(event, zone, locale)}
-                      onEdit={() => openEdit(event)}
-                      onDelete={() => setDeleting(event)}
-                    />
-                  ))}
-                </ul>
-              )}
-            </div>
+            <Card size="sm">
+              <CardHeader className="border-b">
+                <CardTitle>{formatDateKeyLocalized(selectedDateKey, locale)}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {dayEvents.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">{t("noEventsThisDay")}</p>
+                ) : (
+                  <ul className="flex flex-col gap-2">
+                    {dayEvents.map((event) => (
+                      <EventRow
+                        key={event._id}
+                        classId={classId}
+                        event={event}
+                        timeLabel={formatEventTimeLabel(event, zone, locale)}
+                        onEdit={() => openEdit(event)}
+                        onDelete={() => setDeleting(event)}
+                      />
+                    ))}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
           )}
         </>
       )}

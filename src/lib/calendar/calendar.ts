@@ -9,7 +9,11 @@ import {
   parseDateKey,
 } from "../../../convex/lib/calendar/dateKey";
 import { utcMsToZonedParts } from "../../../convex/lib/calendar/timeZone";
-import type { CalendarEventFormValues } from "../../../convex/lib/calendar/calendarEventSchema";
+import {
+  coerceEventDescriptionJson,
+  EMPTY_EVENT_DESCRIPTION_JSON,
+  type CalendarEventFormValues,
+} from "../../../convex/lib/calendar/calendarEventSchema";
 import type { Id } from "../../../convex/_generated/dataModel";
 
 export type CalendarEvent = FunctionReturnType<typeof api.calendar.listInRange>[number];
@@ -40,6 +44,13 @@ export function dateKeyToLocalDate(dateKey: string): Date {
 
 export function localDateToDateKey(date: Date): string {
   return formatDateKey(date.getFullYear(), date.getMonth() + 1, date.getDate());
+}
+
+export function dateKeyForYearMonth(dateKey: string, year: number, month: number): string {
+  const parsed = parseDateKey(dateKey);
+  const day = parsed?.day ?? 1;
+  const lastDay = new Date(year, month, 0).getDate();
+  return formatDateKey(year, month, Math.min(day, lastDay));
 }
 
 export function formatDateKeyLocalized(dateKey: string, locale: string): string {
@@ -154,7 +165,7 @@ export function eventToFormValues(
   if (event.allDay) {
     return {
       title: event.title,
-      description: event.description ?? "",
+      description: coerceEventDescriptionJson(event.description),
       allDay: true,
       startDateKey: event.startDateKey ?? "",
       startTime: timed.startTime,
@@ -175,7 +186,7 @@ export function eventToFormValues(
   const end = event.endAt !== undefined ? utcMsToZonedParts(event.endAt, timeZone) : null;
   return {
     title: event.title,
-    description: event.description ?? "",
+    description: coerceEventDescriptionJson(event.description),
     allDay: false,
     startDateKey: start?.dateKey ?? timed.startDateKey,
     startTime: start?.timeHm ?? timed.startTime,
@@ -200,7 +211,7 @@ export function defaultEventFormValues(
   const timed = defaultTimedRange(selectedDateKey, now);
   return {
     title: "",
-    description: "",
+    description: EMPTY_EVENT_DESCRIPTION_JSON,
     allDay,
     startDateKey: timed.startDateKey,
     startTime: timed.startTime,

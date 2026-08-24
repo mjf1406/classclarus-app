@@ -17,6 +17,7 @@ import {
 import {
   CALENDAR_EVENT_MESSAGES_EN,
   MAX_CALENDAR_EVENT_ATTACHMENTS,
+  eventDescriptionPlainText,
   normalizeCalendarEventInput,
   type CalendarEventFormValues,
   type NormalizedCalendarEvent,
@@ -592,13 +593,14 @@ export const deliverReminder = internalMutation({
     const href = calendarEventHref(event.classId, event._id);
     const recipients = await reminderRecipientUserIds(ctx, event, reminder.notifyRoles);
     if (recipients.length > 0) {
+      const reminderDescription = eventDescriptionPlainText(event.description);
       await notifications.enqueueBatch(ctx, {
         targetIds: recipients,
         kind: "calendar_reminder",
         data: {
           summaryKey: "calendarReminder",
           title: event.title,
-          ...(event.description ? { description: event.description } : {}),
+          ...(reminderDescription ? { description: reminderDescription } : {}),
           classId: event.classId,
           className,
           eventId: event._id,

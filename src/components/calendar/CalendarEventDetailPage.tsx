@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { AnnouncementAttachmentList } from "@/components/announcements/AnnouncementAttachmentList";
+import { AnnouncementBody } from "@/components/announcements/AnnouncementBody";
 import { CalendarEventFormCredenza } from "@/components/calendar/CalendarEventFormCredenza";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +26,10 @@ import { useClass } from "@/hooks/classes/useClass";
 import { formatEventTimeLabel } from "@/lib/calendar/calendar";
 import { toIntlLocale } from "@/lib/languages";
 import { CALENDAR_AUDIENCE_ROLES } from "../../../convex/lib/calendar/audience";
+import {
+  coerceEventDescriptionJson,
+  eventDescriptionHasContent,
+} from "../../../convex/lib/calendar/calendarEventSchema";
 import { classNowDateKey } from "../../../convex/lib/calendar/monthGrid";
 import { isValidTimeZone } from "../../../convex/lib/calendar/timeZone";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -143,8 +148,8 @@ export function CalendarEventDetailPage({ classId, eventId }: CalendarEventDetai
         ) : null}
       </div>
 
-      {data.description ? (
-        <p className="whitespace-pre-wrap text-sm leading-6">{data.description}</p>
+      {eventDescriptionHasContent(data.description) ? (
+        <AnnouncementBody bodyJson={coerceEventDescriptionJson(data.description)} />
       ) : null}
 
       {data.attachments.length > 0 ? (

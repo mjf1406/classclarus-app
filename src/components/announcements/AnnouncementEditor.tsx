@@ -27,6 +27,7 @@ type AnnouncementEditorProps = {
   onChange: (bodyJson: string) => void;
   disabled?: boolean;
   className?: string;
+  placeholder?: string;
 };
 
 export function AnnouncementEditor({
@@ -34,6 +35,7 @@ export function AnnouncementEditor({
   onChange,
   disabled = false,
   className,
+  placeholder,
 }: AnnouncementEditorProps) {
   const { t } = useTranslation("announcements");
 
@@ -41,7 +43,7 @@ export function AnnouncementEditor({
     immediatelyRender: false,
     extensions: createAnnouncementExtensions({
       editable: true,
-      placeholder: t("bodyPlaceholder"),
+      placeholder: placeholder ?? t("bodyPlaceholder"),
     }),
     content: parseAnnouncementBodyJson(value || EMPTY_ANNOUNCEMENT_BODY_JSON),
     editable: !disabled,

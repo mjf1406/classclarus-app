@@ -1,20 +1,10 @@
-"use client";
-
 import * as React from "react";
-import {
-  DayPicker,
-  getDefaultClassNames,
-  type DayButtonProps,
-  type Locale,
-} from "react-day-picker";
-import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { DayPicker, getDefaultClassNames, type DayButton, type Locale } from "react-day-picker";
 
-import { useTranslation } from "react-i18next";
-
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { buttonVariants } from "@/components/ui/button-variants";
-import { dayPickerLocaleForLanguage } from "@/lib/calendar/dayPickerLocale";
-import { cn } from "@/lib/utils";
+import { ChevronLeftIcon, ChevronRightIcon, ChevronDownIcon } from "lucide-react";
 
 function Calendar({
   className,
@@ -22,15 +12,13 @@ function Calendar({
   showOutsideDays = true,
   captionLayout = "label",
   buttonVariant = "ghost",
-  locale: localeProp,
+  locale,
   formatters,
   components,
   ...props
 }: React.ComponentProps<typeof DayPicker> & {
   buttonVariant?: React.ComponentProps<typeof Button>["variant"];
 }) {
-  const { i18n } = useTranslation();
-  const locale = localeProp ?? dayPickerLocaleForLanguage(i18n.language);
   const defaultClassNames = getDefaultClassNames();
 
   return (
@@ -84,27 +72,33 @@ function Calendar({
           defaultClassNames.caption_label,
         ),
         month_grid: cn("w-full border-collapse", defaultClassNames.month_grid),
-        weekdays: cn(defaultClassNames.weekdays, "grid w-full grid-cols-7"),
+        weekdays: cn("flex", defaultClassNames.weekdays),
         weekday: cn(
+          "flex-1 rounded-(--cell-radius) text-[0.8rem] font-normal text-muted-foreground select-none",
           defaultClassNames.weekday,
-          "min-w-0 w-full rounded-(--cell-radius) text-center text-[0.8rem] font-normal text-muted-foreground select-none",
         ),
-        week: cn(defaultClassNames.week, "mt-2 grid w-full grid-cols-7"),
+        week: cn("mt-2 flex w-full", defaultClassNames.week),
         week_number_header: cn("w-(--cell-size) select-none", defaultClassNames.week_number_header),
         week_number: cn(
           "text-[0.8rem] text-muted-foreground select-none",
           defaultClassNames.week_number,
         ),
         day: cn(
-          "group/day relative aspect-square h-full min-w-0 w-full rounded-(--cell-radius) p-0 text-center select-none [&:last-child[data-selected=true]_button]:rounded-r-(--cell-radius)",
+          "group/day relative aspect-square h-full w-full rounded-(--cell-radius) p-0 text-center select-none [&:last-child[data-selected=true]_button]:rounded-r-(--cell-radius)",
           props.showWeekNumber
             ? "[&:nth-child(2)[data-selected=true]_button]:rounded-l-(--cell-radius)"
             : "[&:first-child[data-selected=true]_button]:rounded-l-(--cell-radius)",
           defaultClassNames.day,
         ),
-        range_start: cn("rounded-l-(--cell-radius) bg-muted", defaultClassNames.range_start),
+        range_start: cn(
+          "relative isolate z-0 rounded-l-(--cell-radius) bg-muted after:absolute after:inset-y-0 after:right-0 after:w-4 after:bg-muted",
+          defaultClassNames.range_start,
+        ),
         range_middle: cn("rounded-none", defaultClassNames.range_middle),
-        range_end: cn("rounded-r-(--cell-radius) bg-muted", defaultClassNames.range_end),
+        range_end: cn(
+          "relative isolate z-0 rounded-r-(--cell-radius) bg-muted after:absolute after:inset-y-0 after:left-0 after:w-4 after:bg-muted",
+          defaultClassNames.range_end,
+        ),
         today: cn(
           "rounded-(--cell-radius) bg-muted text-foreground data-[selected=true]:rounded-none",
           defaultClassNames.today,
@@ -118,18 +112,30 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        Chevron: ({ className: chevronClassName, orientation, ...chevronProps }) => {
-          if (orientation === "left") {
-            return <ChevronLeftIcon className={cn("size-4", chevronClassName)} {...chevronProps} />;
-          }
-          if (orientation === "right") {
-            return (
-              <ChevronRightIcon className={cn("size-4", chevronClassName)} {...chevronProps} />
-            );
-          }
-          return <ChevronDownIcon className={cn("size-4", chevronClassName)} {...chevronProps} />;
+        Root: ({ className, rootRef, ...props }) => {
+          return <div data-slot="calendar" ref={rootRef} className={cn(className)} {...props} />;
         },
-        DayButton: CalendarDayButton,
+        Chevron: ({ className, orientation, ...props }) => {
+          if (orientation === "left") {
+            return <ChevronLeftIcon className={cn("size-4", className)} {...props} />;
+          }
+
+          if (orientation === "right") {
+            return <ChevronRightIcon className={cn("size-4", className)} {...props} />;
+          }
+
+          return <ChevronDownIcon className={cn("size-4", className)} {...props} />;
+        },
+        DayButton: ({ ...props }) => <CalendarDayButton locale={locale} {...props} />,
+        WeekNumber: ({ children, ...props }) => {
+          return (
+            <td {...props}>
+              <div className="flex size-(--cell-size) items-center justify-center text-center">
+                {children}
+              </div>
+            </td>
+          );
+        },
         ...components,
       }}
       {...props}
@@ -137,20 +143,25 @@ function Calendar({
   );
 }
 
-function CalendarDayButton({ className, day, modifiers, ...props }: DayButtonProps) {
+function CalendarDayButton({
+  className,
+  day,
+  modifiers,
+  locale,
+  ...props
+}: React.ComponentProps<typeof DayButton> & { locale?: Partial<Locale> }) {
   const defaultClassNames = getDefaultClassNames();
-  const ref = React.useRef<HTMLButtonElement>(null);
 
+  const ref = React.useRef<HTMLButtonElement>(null);
   React.useEffect(() => {
     if (modifiers.focused) ref.current?.focus();
   }, [modifiers.focused]);
 
   return (
     <Button
-      ref={ref}
       variant="ghost"
       size="icon"
-      data-day={day.date.toLocaleDateString()}
+      data-day={day.date.toLocaleDateString(locale?.code)}
       data-selected-single={
         modifiers.selected &&
         !modifiers.range_start &&
@@ -171,4 +182,3 @@ function CalendarDayButton({ className, day, modifiers, ...props }: DayButtonPro
 }
 
 export { Calendar, CalendarDayButton };
-export type { Locale };

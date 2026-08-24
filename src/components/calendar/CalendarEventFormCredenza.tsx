@@ -1,9 +1,9 @@
 import { useForm } from "@tanstack/react-form";
 import { PlusIcon, Trash2, TriangleAlertIcon } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { AnnouncementAttachmentList } from "@/components/announcements/AnnouncementAttachmentList";
+import { AnnouncementEditor } from "@/components/announcements/AnnouncementEditor";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
@@ -30,8 +30,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
-import { FileDropzone } from "@/components/upload/FileDropzone";
+import { ImageDocumentAttachmentsField } from "@/components/upload/ImageDocumentAttachmentsField";
+import { useImageDocumentAttachments } from "@/components/upload/useImageDocumentAttachments";
 import {
   dateKeyToLocalDate,
   defaultEventFormValues,
@@ -166,20 +166,16 @@ export function CalendarEventFormCredenza({
   const { t } = useTranslation("calendar");
   const { t: tClasses } = useTranslation("classes");
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [attachmentFileIds, setAttachmentFileIds] = useState<Array<Id<"files">>>(
-    initial?.attachmentFileIds ?? [],
-  );
-  const [attachmentMeta, setAttachmentMeta] = useState(
-    () =>
-      initial?.attachments.map((item) => ({
-        fileId: item.fileId,
-        name: item.name,
-        contentType: item.contentType,
-        size: item.size,
-        preset: item.preset,
-      })) ?? [],
-  );
+  const {
+    fileIds: attachmentFileIds,
+    items: attachmentItems,
+    reset: resetAttachments,
+    onUploaded,
+    onRemove,
+  } = useImageDocumentAttachments(MAX_CALENDAR_EVENT_ATTACHMENTS);
   const skipNextResetRef = useRef(false);
+  const attachmentFileIdsRef = useRef(attachmentFileIds);
+  attachmentFileIdsRef.current = attachmentFileIds;
   const endManuallyAdjustedRef = useRef(false);
   const todayKeyRef = useRef(todayKey);
   const classTimeZoneRef = useRef(classTimeZone);
@@ -227,7 +223,7 @@ export function CalendarEventFormCredenza({
       skipNextResetRef.current = true;
       onOpenChange(false);
       try {
-        await onSubmit({ ...parsed.data, attachmentFileIds });
+        await onSubmit({ ...parsed.data, attachmentFileIds: attachmentFileIdsRef.current });
         skipNextResetRef.current = false;
         endManuallyAdjustedRef.current = false;
         form.reset(defaultEventFormValues(todayKeyRef.current, !classTimeZoneRef.current));
@@ -259,56 +255,15 @@ export function CalendarEventFormCredenza({
       ? eventToFormValues(initial, classTimeZone)
       : defaultEventFormValues(todayKey, !classTimeZone);
     form.reset(next);
-    setAttachmentFileIds(initial?.attachmentFileIds ?? []);
-    setAttachmentMeta(
-      initial?.attachments.map((item) => ({
-        fileId: item.fileId,
-        name: item.name,
-        contentType: item.contentType,
-        size: item.size,
-        preset: item.preset,
-      })) ?? [],
-    );
-  }, [open, form, initial, classTimeZone, todayKey, mode]);
-
-  const onUploaded = useCallback(
-    (fileId: Id<"files">) => {
-      setAttachmentFileIds((prev) => {
-        if (prev.includes(fileId) || prev.length >= MAX_CALENDAR_EVENT_ATTACHMENTS) {
-          return prev;
-        }
-        return [...prev, fileId];
-      });
-      setAttachmentMeta((prev) => {
-        if (prev.some((item) => item.fileId === fileId)) return prev;
-        return [
-          ...prev,
-          {
-            fileId,
-            name: t("unnamedAttachment"),
-            contentType: "application/octet-stream",
-            size: 0,
-            preset: "documents",
-          },
-        ];
-      });
-    },
-    [t],
-  );
-
-  const onRemoveAttachment = useCallback((fileId: Id<"files">) => {
-    setAttachmentFileIds((prev) => prev.filter((id) => id !== fileId));
-    setAttachmentMeta((prev) => prev.filter((item) => item.fileId !== fileId));
-  }, []);
-
-  const canAddMore = attachmentFileIds.length < MAX_CALENDAR_EVENT_ATTACHMENTS;
+    resetAttachments(initial ?? null);
+  }, [open, form, initial, classTimeZone, todayKey, mode, resetAttachments]);
 
   const timedBlocked = !classTimeZone;
 
   return (
     <Credenza open={open} onOpenChange={onOpenChange}>
-      <CredenzaContent className="flex max-h-[min(90dvh,56rem)] w-full flex-col gap-4 overflow-hidden sm:max-w-lg">
-        <CredenzaHeader>
+      <CredenzaContent className="flex max-h-[min(90dvh,56rem)] w-full flex-col gap-4 overflow-hidden sm:max-w-2xl">
+        <CredenzaHeader className="shrink-0">
           <CredenzaTitle>{mode === "create" ? t("createTitle") : t("editTitle")}</CredenzaTitle>
           <CredenzaDescription>
             {timedBlocked ? t("timezoneRequired") : t("formDescription")}
@@ -350,23 +305,13 @@ export function CalendarEventFormCredenza({
                   const error = fieldErrorMessage(field.state.meta.errors);
                   return (
                     <Field data-invalid={error ? true : undefined}>
-                      <FieldLabel htmlFor="calendar-event-description">
-                        {t("descriptionLabel")}
-                      </FieldLabel>
-                      <Textarea
-                        id="calendar-event-description"
+                      <FieldLabel>{t("descriptionLabel")}</FieldLabel>
+                      <AnnouncementEditor
                         value={field.state.value}
-                        maxLength={MAX_EVENT_DESCRIPTION_LENGTH}
-                        onBlur={field.handleBlur}
-                        onChange={(event) => field.handleChange(event.target.value)}
-                        onKeyDown={(event) => {
-                          if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
-                            event.preventDefault();
-                            void form.handleSubmit();
-                          }
-                        }}
-                        aria-invalid={error ? true : undefined}
+                        onChange={field.handleChange}
+                        placeholder={t("descriptionPlaceholder")}
                       />
+                      <FieldDescription>{t("bodyLinkHint")}</FieldDescription>
                       {error ? <FieldError>{error}</FieldError> : null}
                     </Field>
                   );
@@ -641,46 +586,19 @@ export function CalendarEventFormCredenza({
                 }}
               </form.Field>
 
-              <Field>
-                <FieldLabel>{t("attachmentsLabel")}</FieldLabel>
-                <FieldDescription>
-                  {t("attachmentsDescription", { max: MAX_CALENDAR_EVENT_ATTACHMENTS })}
-                </FieldDescription>
-                <AnnouncementAttachmentList
-                  attachments={attachmentMeta.filter((item) =>
-                    attachmentFileIds.includes(item.fileId),
-                  )}
-                  onRemove={onRemoveAttachment}
-                  className="mt-2"
-                />
-                {canAddMore ? (
-                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                    <FileDropzone
-                      presetKey="images"
-                      variant="compact"
-                      classId={classId}
-                      multiple
-                      title={t("attachmentsImages")}
-                      onUploaded={onUploaded}
-                    />
-                    <FileDropzone
-                      presetKey="documents"
-                      variant="compact"
-                      classId={classId}
-                      multiple
-                      title={t("attachmentsDocuments")}
-                      onUploaded={onUploaded}
-                    />
-                  </div>
-                ) : (
-                  <p className="mt-2 text-sm text-muted-foreground">{t("attachmentsMaxReached")}</p>
-                )}
-              </Field>
+              <ImageDocumentAttachmentsField
+                classId={classId}
+                max={MAX_CALENDAR_EVENT_ATTACHMENTS}
+                fileIds={attachmentFileIds}
+                items={attachmentItems}
+                onUploaded={onUploaded}
+                onRemove={onRemove}
+              />
             </FieldGroup>
             {submitError ? <p className="text-sm text-destructive">{submitError}</p> : null}
           </form>
         </CredenzaBody>
-        <CredenzaFooter>
+        <CredenzaFooter className="shrink-0">
           <CredenzaClose render={<Button type="button" variant="outline" />}>
             {t("cancel")}
           </CredenzaClose>

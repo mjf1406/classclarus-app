@@ -7,6 +7,10 @@ import { eventOverlapsDateKey, eventOverlapsRange } from "./overlap";
 import { computeNotifyAt, reminderOffsetMs } from "./reminders";
 import {
   calendarEventFormSchemaEn,
+  coerceEventDescriptionJson,
+  EMPTY_EVENT_DESCRIPTION_JSON,
+  eventDescriptionHasContent,
+  eventDescriptionPlainText,
   normalizeCalendarEventInput,
   type CalendarEventFormValues,
 } from "./calendarEventSchema";
@@ -95,7 +99,7 @@ describe("calendar form schema", () => {
     const normalized = normalizeCalendarEventInput(
       {
         title: "Trip",
-        description: "",
+        description: EMPTY_EVENT_DESCRIPTION_JSON,
         allDay: true,
         startDateKey: "2026-08-23",
         startTime: "09:00",
@@ -136,6 +140,34 @@ describe("calendar form schema", () => {
     if (result.success) return;
     expect(result.error.issues.some((issue) => issue.path[0] === "endTime")).toBe(true);
   });
+
+  test("stores TipTap JSON descriptions and drops empty docs", () => {
+    const withBody = normalizeCalendarEventInput(
+      {
+        ...validEventFormValues(),
+        allDay: true,
+        description: JSON.stringify({
+          type: "doc",
+          content: [{ type: "paragraph", content: [{ type: "text", text: "Bring forms" }] }],
+        }),
+      },
+      "Asia/Tokyo",
+    );
+    expect(eventDescriptionPlainText(withBody.description)).toBe("Bring forms");
+
+    const empty = normalizeCalendarEventInput(
+      { ...validEventFormValues(), allDay: true, description: EMPTY_EVENT_DESCRIPTION_JSON },
+      "Asia/Tokyo",
+    );
+    expect(empty.description).toBeUndefined();
+  });
+
+  test("coerces legacy plain-text descriptions into a TipTap doc", () => {
+    const json = coerceEventDescriptionJson("Line one\nLine two");
+    expect(eventDescriptionPlainText(json)).toBe("Line one\nLine two");
+    expect(eventDescriptionHasContent(json)).toBe(true);
+    expect(eventDescriptionHasContent(EMPTY_EVENT_DESCRIPTION_JSON)).toBe(false);
+  });
 });
 
 describe("calendar event href", () => {
@@ -147,7 +179,7 @@ describe("calendar event href", () => {
 function validEventFormValues(): CalendarEventFormValues {
   return {
     title: "Practice",
-    description: "",
+    description: EMPTY_EVENT_DESCRIPTION_JSON,
     allDay: false,
     startDateKey: "2026-08-23",
     startTime: "09:00",
