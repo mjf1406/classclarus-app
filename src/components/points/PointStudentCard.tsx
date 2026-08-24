@@ -176,7 +176,7 @@ export function PointStudentCard({
   return (
     <div
       className={cn(
-        "relative flex aspect-[3/4] w-full flex-col overflow-hidden rounded-2xl border p-1.5 transition-[opacity,border-color] sm:p-2",
+        "relative flex aspect-square w-full flex-col overflow-hidden rounded-2xl border p-1.5 transition-[opacity,border-color] sm:p-2",
         selected && "border-dashed border-primary",
         absent && "opacity-40",
       )}
@@ -201,7 +201,7 @@ export function PointStudentCard({
 
       <button
         type="button"
-        className="flex min-h-0 flex-1 touch-manipulation select-none flex-col items-center justify-center px-4 py-3 text-center focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:px-5 sm:py-4"
+        className="flex min-h-0 flex-1 touch-manipulation select-none flex-col items-center justify-center px-3 py-2 text-center focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:px-4 sm:py-2.5"
         onPointerDown={(event) => {
           if (event.button !== 0) return;
           didLongPressRef.current = false;

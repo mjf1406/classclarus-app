@@ -143,9 +143,8 @@ export function NotificationsPage() {
     }
     if (item.kind === "calendar_reminder" && item.classId && item.eventId) {
       void navigate({
-        to: "/class/$classId/calendar",
-        params: { classId: item.classId },
-        search: { event: item.eventId },
+        to: "/class/$classId/calendar/event/$eventId",
+        params: { classId: item.classId, eventId: item.eventId },
       });
     }
   };

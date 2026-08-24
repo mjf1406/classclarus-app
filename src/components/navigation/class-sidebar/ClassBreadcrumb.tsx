@@ -11,6 +11,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useCalendarEvent } from "@/hooks/calendar/useCalendarEvent";
 import { useEquitableAssigner } from "@/hooks/assigners/equitable/useEquitableAssigners";
 import { useSeatLayout } from "@/hooks/assigners/useSeatLayout";
 import { useSeatChart } from "@/hooks/assigners/useSeatChart";
@@ -28,6 +29,7 @@ type BreadcrumbTarget =
   | { kind: "classesKey"; key: string }
   | { kind: "attendance" }
   | { kind: "calendar" }
+  | { kind: "calendarEventDetail"; eventId: Id<"calendarEvents"> }
   | { kind: "announcements" }
   | { kind: "tasks" }
   | { kind: "taskDetail"; taskId: Id<"tasks"> }
@@ -72,6 +74,12 @@ function breadcrumbTarget(pathname: string, classId: string): BreadcrumbTarget {
   if (pathname === `${base}/guardians`) return { kind: "classesKey", key: "navGuardians" };
   if (pathname === `${base}/invitations`) return { kind: "classesKey", key: "navInvitations" };
   if (pathname === `${base}/attendance`) return { kind: "attendance" };
+  if (pathname.startsWith(`${base}/calendar/event/`)) {
+    const eventId = pathname.slice(`${base}/calendar/event/`.length).split("/")[0];
+    if (eventId) {
+      return { kind: "calendarEventDetail", eventId: eventId as Id<"calendarEvents"> };
+    }
+  }
   if (pathname === `${base}/calendar` || pathname.startsWith(`${base}/calendar/`)) {
     return { kind: "calendar" };
   }
@@ -293,6 +301,41 @@ function SeatLayoutDetailBreadcrumbItems({
       <BreadcrumbItem className="min-w-0">
         <BreadcrumbPage className="block truncate" title={layoutLabel ?? undefined}>
           {layoutLabel === null ? <Skeleton className="inline-block h-4 w-24" /> : layoutLabel}
+        </BreadcrumbPage>
+      </BreadcrumbItem>
+    </>
+  );
+}
+
+function CalendarEventDetailBreadcrumbItems({
+  classId,
+  eventId,
+  calendarLabel,
+}: {
+  classId: Id<"classes">;
+  eventId: Id<"calendarEvents">;
+  calendarLabel: string;
+}) {
+  const { t: tCalendar } = useTranslation("calendar");
+  const { data: event, isPending } = useCalendarEvent(classId, eventId);
+
+  const eventLabel = isPending && !event ? null : (event?.title ?? tCalendar("notFoundTitle"));
+
+  return (
+    <>
+      <BreadcrumbItem className="min-w-0">
+        <BreadcrumbLink
+          render={<Link to="/class/$classId/calendar" params={{ classId }} />}
+          className="block truncate"
+          title={calendarLabel}
+        >
+          {calendarLabel}
+        </BreadcrumbLink>
+      </BreadcrumbItem>
+      <BreadcrumbSeparator className="shrink-0" />
+      <BreadcrumbItem className="min-w-0">
+        <BreadcrumbPage className="block truncate" title={eventLabel ?? undefined}>
+          {eventLabel === null ? <Skeleton className="inline-block h-4 w-24" /> : eventLabel}
         </BreadcrumbPage>
       </BreadcrumbItem>
     </>
@@ -648,7 +691,7 @@ export function ClassBreadcrumb({ classDoc }: ClassBreadcrumbProps) {
   const pageLabel =
     target.kind === "attendance"
       ? tAttendance("nav")
-      : target.kind === "calendar"
+      : target.kind === "calendar" || target.kind === "calendarEventDetail"
         ? tCalendar("nav")
         : target.kind === "announcements"
           ? tAnnouncements("nav")
@@ -709,7 +752,13 @@ export function ClassBreadcrumb({ classDoc }: ClassBreadcrumbProps) {
           </BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator className="shrink-0" />
-        {target.kind === "taskDetail" ? (
+        {target.kind === "calendarEventDetail" ? (
+          <CalendarEventDetailBreadcrumbItems
+            classId={classDoc._id}
+            eventId={target.eventId}
+            calendarLabel={pageLabel}
+          />
+        ) : target.kind === "taskDetail" ? (
           <TaskDetailBreadcrumbItems
             classId={classDoc._id}
             taskId={target.taskId}

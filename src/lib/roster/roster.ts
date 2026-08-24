@@ -161,3 +161,19 @@ export function normalizeColumnVisibility(
   }
   return result;
 }
+
+/** Rewrite 1-based roster numbers from an ordered userId list. Null if the sets don't match. */
+export function applyRosterOrder(
+  entries: StudentRosterEntry[],
+  userIds: Id<"users">[],
+): StudentRosterEntry[] | null {
+  if (userIds.length !== entries.length) return null;
+  const byId = new Map(entries.map((entry) => [entry.userId, entry] as const));
+  const next: StudentRosterEntry[] = [];
+  for (let i = 0; i < userIds.length; i++) {
+    const entry = byId.get(userIds[i]);
+    if (!entry) return null;
+    next.push({ ...entry, rosterNumber: i + 1 });
+  }
+  return next;
+}

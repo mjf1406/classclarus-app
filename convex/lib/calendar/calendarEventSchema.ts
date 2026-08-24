@@ -22,6 +22,7 @@ import { isValidTimeZone, zonedLocalToUtcMs } from "./timeZone.js";
 
 export const MAX_EVENT_TITLE_LENGTH = 120;
 export const MAX_EVENT_DESCRIPTION_LENGTH = 2000;
+export const MAX_CALENDAR_EVENT_ATTACHMENTS = 5;
 
 export type CalendarEventMessages = {
   titleRequired: string;
@@ -140,15 +141,19 @@ export function createCalendarEventFormSchema(messages: CalendarEventMessages) {
           path: ["audienceRoles"],
         });
       }
-      if (value.allDay) {
-        if (compareDateKeys(value.endDateKey, value.startDateKey) < 0) {
-          ctx.addIssue({
-            code: "custom",
-            message: messages.endDateAfterStart,
-            path: ["endDateKey"],
-          });
-        }
-      } else if (isValidTimeHm(value.startTime) && isValidTimeHm(value.endTime)) {
+      const datesValid = isValidDateKey(value.startDateKey) && isValidDateKey(value.endDateKey);
+      if (datesValid && compareDateKeys(value.endDateKey, value.startDateKey) < 0) {
+        ctx.addIssue({
+          code: "custom",
+          message: messages.endDateAfterStart,
+          path: ["endDateKey"],
+        });
+      } else if (
+        !value.allDay &&
+        datesValid &&
+        isValidTimeHm(value.startTime) &&
+        isValidTimeHm(value.endTime)
+      ) {
         const startStamp = `${value.startDateKey}T${value.startTime}`;
         const endStamp = `${value.endDateKey}T${value.endTime}`;
         if (endStamp <= startStamp) {

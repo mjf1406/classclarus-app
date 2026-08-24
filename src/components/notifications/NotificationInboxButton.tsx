@@ -83,9 +83,11 @@ export function NotificationInboxButton() {
                         }
                         if (item.kind === "calendar_reminder") {
                           void navigate({
-                            to: "/class/$classId/calendar",
-                            params: { classId: item.data.classId },
-                            search: { event: item.data.eventId },
+                            to: "/class/$classId/calendar/event/$eventId",
+                            params: {
+                              classId: item.data.classId,
+                              eventId: item.data.eventId,
+                            },
                           });
                         }
                       }}

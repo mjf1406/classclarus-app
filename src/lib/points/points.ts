@@ -1,5 +1,6 @@
 import type { FunctionReturnType } from "convex/server";
 
+import { formatBehaviorPoints } from "@/lib/behaviors/behaviors";
 import { api } from "../../../convex/_generated/api";
 
 export type PointsBoardStudent = FunctionReturnType<typeof api.points.board>[number];
@@ -9,6 +10,15 @@ export type PointsSortKey = "firstName" | "lastName" | "rosterNumber" | "points"
 export type PointsSortDirection = "asc" | "desc";
 
 export type PointsApplyTab = "award" | "remove" | "redeem";
+
+/** Award/remove keep stored signs; redeem costs are stored positive but deduct points. */
+export function formatApplyCatalogPoints(
+  tab: PointsApplyTab,
+  points: number,
+  language: string,
+): string {
+  return formatBehaviorPoints(tab === "redeem" ? -Math.abs(points) : points, language);
+}
 
 /** Max length for optional notes when removing points (matches Convex). */
 export const MAX_APPLICATION_NOTE_LENGTH = 500;

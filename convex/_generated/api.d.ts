@@ -85,6 +85,7 @@ import type * as lib_billingGuards from "../lib/billingGuards.js";
 import type * as lib_calendar_audience from "../lib/calendar/audience.js";
 import type * as lib_calendar_calendarEventSchema from "../lib/calendar/calendarEventSchema.js";
 import type * as lib_calendar_dateKey from "../lib/calendar/dateKey.js";
+import type * as lib_calendar_eventHref from "../lib/calendar/eventHref.js";
 import type * as lib_calendar_monthGrid from "../lib/calendar/monthGrid.js";
 import type * as lib_calendar_overlap from "../lib/calendar/overlap.js";
 import type * as lib_calendar_reminders from "../lib/calendar/reminders.js";
@@ -312,6 +313,7 @@ declare const fullApi: ApiFromModules<{
   "lib/calendar/audience": typeof lib_calendar_audience;
   "lib/calendar/calendarEventSchema": typeof lib_calendar_calendarEventSchema;
   "lib/calendar/dateKey": typeof lib_calendar_dateKey;
+  "lib/calendar/eventHref": typeof lib_calendar_eventHref;
   "lib/calendar/monthGrid": typeof lib_calendar_monthGrid;
   "lib/calendar/overlap": typeof lib_calendar_overlap;
   "lib/calendar/reminders": typeof lib_calendar_reminders;

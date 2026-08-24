@@ -1,4 +1,12 @@
-import { LayoutGridIcon, PencilIcon, SearchIcon, TableIcon, UsersIcon, XIcon } from "lucide-react";
+import {
+  CheckIcon,
+  LayoutGridIcon,
+  PencilIcon,
+  SearchIcon,
+  TableIcon,
+  UsersIcon,
+  XIcon,
+} from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -45,6 +53,7 @@ import { buildMembershipIndex, hasGroupTeamMembershipFilters } from "@/lib/group
 import type { JoinCodeRole } from "@/lib/members/members";
 import { ONE_HOUR } from "@/lib/queryCache";
 import {
+  applyRosterOrder,
   getRosterDisplayName,
   normalizeColumnOrder,
   normalizeColumnVisibility,
@@ -131,6 +140,7 @@ export function StudentsPage({ classId }: StudentsPageProps) {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [tableEditMode, setTableEditMode] = useState(false);
+  const [pendingOrderIds, setPendingOrderIds] = useState<Id<"users">[] | null>(null);
   const [memberToRemove, setMemberToRemove] = useState<StudentRosterEntry | null>(null);
   const [removeOpen, setRemoveOpen] = useState(false);
 
@@ -144,7 +154,7 @@ export function StudentsPage({ classId }: StudentsPageProps) {
     [settings?.studentsColumnVisibility],
   );
 
-  const students = data ?? [];
+  const students = useMemo(() => data ?? [], [data]);
   const membershipByUserId = useMemo(
     () => (groupsBoard ? buildMembershipIndex(groupsBoard) : {}),
     [groupsBoard],
@@ -175,13 +185,39 @@ export function StudentsPage({ classId }: StudentsPageProps) {
   useEffect(() => {
     if (listFiltered && tableEditMode) {
       setTableEditMode(false);
+      setPendingOrderIds(null);
     }
   }, [listFiltered, tableEditMode]);
+
+  useEffect(() => {
+    if (!pendingOrderIds) return;
+    const idSet = new Set(students.map((entry) => entry.userId));
+    if (
+      pendingOrderIds.length !== students.length ||
+      pendingOrderIds.some((userId) => !idSet.has(userId))
+    ) {
+      setPendingOrderIds(null);
+    }
+  }, [pendingOrderIds, students]);
+
+  const isOrderDirty = useMemo(() => {
+    if (!pendingOrderIds) return false;
+    if (pendingOrderIds.length !== students.length) return true;
+    return pendingOrderIds.some((userId, index) => students[index]?.userId !== userId);
+  }, [pendingOrderIds, students]);
+
+  const tableStudents = useMemo(() => {
+    if (!pendingOrderIds || listFiltered) return filtered;
+    return applyRosterOrder(students, pendingOrderIds) ?? filtered;
+  }, [filtered, listFiltered, pendingOrderIds, students]);
 
   const handleViewModeChange = useCallback(
     (mode: StudentsViewMode) => {
       if (mode === viewMode) return;
-      if (mode === "grid") setTableEditMode(false);
+      if (mode === "grid") {
+        setTableEditMode(false);
+        setPendingOrderIds(null);
+      }
       void upsertPrefsMutation.mutateAsync({
         classId,
         studentsViewMode: mode,
@@ -210,12 +246,28 @@ export function StudentsPage({ classId }: StudentsPageProps) {
     [classId, upsertPrefsMutation],
   );
 
-  const handleReorderRows = useCallback(
-    (userIds: Id<"users">[]) => {
-      void reorderMutation.mutateAsync({ classId, userIds });
-    },
-    [classId, reorderMutation],
-  );
+  const handleReorderRows = useCallback((userIds: Id<"users">[]) => {
+    setPendingOrderIds(userIds);
+  }, []);
+
+  const handleCancelTableEdit = useCallback(() => {
+    setPendingOrderIds(null);
+    setTableEditMode(false);
+  }, []);
+
+  const handleSaveTableEdit = useCallback(async () => {
+    if (!pendingOrderIds || !isOrderDirty) {
+      handleCancelTableEdit();
+      return;
+    }
+    setTableEditMode(false);
+    try {
+      await reorderMutation.mutateAsync({ classId, userIds: pendingOrderIds });
+      setPendingOrderIds(null);
+    } catch {
+      setTableEditMode(true);
+    }
+  }, [classId, handleCancelTableEdit, isOrderDirty, pendingOrderIds, reorderMutation]);
 
   const handleSaveRow = useCallback(
     (
@@ -290,16 +342,48 @@ export function StudentsPage({ classId }: StudentsPageProps) {
           <div className="flex flex-col items-stretch gap-2 sm:items-end">
             <div className="flex flex-wrap items-center justify-end gap-2">
               {viewMode === "table" && canUpdateRoster ? (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={tableEditMode ? "default" : "outline"}
-                  disabled={listFiltered}
-                  onClick={() => setTableEditMode((prev) => !prev)}
-                >
-                  <PencilIcon data-icon="inline-start" />
-                  {tableEditMode ? t("rosterDoneEditingTable") : t("rosterEditTable")}
-                </Button>
+                tableEditMode ? (
+                  isOrderDirty ? (
+                    <>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={reorderMutation.isPending}
+                        onClick={handleCancelTableEdit}
+                      >
+                        <XIcon data-icon="inline-start" />
+                        {t("rosterCancelEditingTable")}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        disabled={reorderMutation.isPending}
+                        onClick={() => {
+                          void handleSaveTableEdit();
+                        }}
+                      >
+                        <CheckIcon data-icon="inline-start" />
+                        {t("rosterSaveOrder")}
+                      </Button>
+                    </>
+                  ) : (
+                    <Button type="button" size="sm" onClick={handleCancelTableEdit}>
+                      {t("rosterDoneEditingTable")}
+                    </Button>
+                  )
+                ) : (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={listFiltered || reorderMutation.isPending}
+                    onClick={() => setTableEditMode(true)}
+                  >
+                    <PencilIcon data-icon="inline-start" />
+                    {t("rosterEditTable")}
+                  </Button>
+                )
               ) : null}
 
               <ToggleGroup
@@ -415,7 +499,7 @@ export function StudentsPage({ classId }: StudentsPageProps) {
 
       {showContent && viewMode === "table" ? (
         <StudentRosterTable
-          data={filtered}
+          data={tableStudents}
           tableEditMode={tableEditMode}
           canUpdateRoster={canUpdateRoster}
           columnOrder={columnOrder}

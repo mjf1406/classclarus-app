@@ -50,7 +50,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { usePointsCatalogSearch } from "@/hooks/points/usePointsCatalogSearch";
 import { useLocalStorageValue } from "@/hooks/useLocalStorageValue";
 import type { BehaviorListItem } from "@/lib/behaviors/behaviors";
-import { formatBehaviorPoints } from "@/lib/behaviors/behaviors";
 import type {
   PointsApplyTab,
   PointsBoardStudent,
@@ -58,6 +57,7 @@ import type {
   PointsCatalogView,
 } from "@/lib/points/points";
 import {
+  formatApplyCatalogPoints,
   isPointsCatalogView,
   MAX_APPLICATION_NOTE_LENGTH,
   partitionPointsCatalogByFolder,
@@ -559,7 +559,7 @@ export function PointsApplyCredenza({
               item={item}
               checked={selectedIds.has(item._id)}
               constraint={itemConstraint(item)}
-              pointsLabel={formatBehaviorPoints(item.points, i18n.language)}
+              pointsLabel={formatApplyCatalogPoints(tab, item.points, i18n.language)}
               view="grid"
               onToggle={toggleId}
             />
@@ -576,7 +576,7 @@ export function PointsApplyCredenza({
             item={item}
             checked={selectedIds.has(item._id)}
             constraint={itemConstraint(item)}
-            pointsLabel={formatBehaviorPoints(item.points, i18n.language)}
+            pointsLabel={formatApplyCatalogPoints(tab, item.points, i18n.language)}
             view="list"
             onToggle={toggleId}
           />

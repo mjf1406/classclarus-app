@@ -16,10 +16,12 @@ import {
 } from "./lib/calendar/audience.js";
 import {
   CALENDAR_EVENT_MESSAGES_EN,
+  MAX_CALENDAR_EVENT_ATTACHMENTS,
   normalizeCalendarEventInput,
   type CalendarEventFormValues,
   type NormalizedCalendarEvent,
 } from "./lib/calendar/calendarEventSchema.js";
+import { calendarEventHref } from "./lib/calendar/eventHref.js";
 import { eventOverlapsRange } from "./lib/calendar/overlap.js";
 import { computeNotifyAt, type ReminderUnit } from "./lib/calendar/reminders.js";
 import { isValidTimeZone, startOfZonedDayUtc } from "./lib/calendar/timeZone.js";
@@ -58,6 +60,14 @@ const reminderDocValidator = v.object({
   ),
 });
 
+const calendarAttachmentValidator = v.object({
+  fileId: v.id("files"),
+  name: v.string(),
+  contentType: v.string(),
+  size: v.number(),
+  preset: v.string(),
+});
+
 const calendarEventValidator = v.object({
   _id: v.id("calendarEvents"),
   _creationTime: v.number(),
@@ -72,6 +82,8 @@ const calendarEventValidator = v.object({
   endDateKey: v.optional(v.string()),
   audienceKind: v.union(v.literal("all"), v.literal("roles")),
   audienceRoles: v.array(v.string()),
+  attachmentFileIds: v.array(v.id("files")),
+  attachments: v.array(calendarAttachmentValidator),
   createdBy: v.id("users"),
   createdAt: v.number(),
   updatedAt: v.number(),
@@ -89,6 +101,7 @@ const eventFormArgs = {
   audienceKind: v.union(v.literal("all"), v.literal("roles")),
   audienceRoles: v.array(v.string()),
   reminders: v.array(reminderInputValidator),
+  attachmentFileIds: v.optional(v.array(v.id("files"))),
 };
 
 function toFormValues(args: {
@@ -165,7 +178,72 @@ async function loadRemindersForEvent(
   }));
 }
 
+function eventAttachmentFileIds(event: Doc<"calendarEvents">): Array<Id<"files">> {
+  return event.attachmentFileIds ?? [];
+}
+
+function normalizeAttachmentFileIds(
+  fileIds: Array<Id<"files">> | undefined,
+  fallback: Array<Id<"files">> = [],
+): Array<Id<"files">> {
+  const unique = [...new Set(fileIds ?? fallback)];
+  if (unique.length > MAX_CALENDAR_EVENT_ATTACHMENTS) {
+    throw new Error(`At most ${MAX_CALENDAR_EVENT_ATTACHMENTS} attachments allowed`);
+  }
+  return unique;
+}
+
+async function requireClassAttachmentFiles(
+  ctx: MutationCtx,
+  classId: Id<"classes">,
+  fileIds: Array<Id<"files">>,
+): Promise<void> {
+  for (const fileId of fileIds) {
+    const file = await ctx.db.get("files", fileId);
+    if (!file || file.classId !== classId) {
+      throw new Error("File not found or access denied");
+    }
+    if (file.preset !== "images" && file.preset !== "documents") {
+      throw new Error("Attachments must be images or documents");
+    }
+  }
+}
+
+async function loadAttachmentMeta(
+  ctx: QueryCtx | MutationCtx,
+  fileIds: Array<Id<"files">>,
+): Promise<
+  Array<{
+    fileId: Id<"files">;
+    name: string;
+    contentType: string;
+    size: number;
+    preset: string;
+  }>
+> {
+  const attachments: Array<{
+    fileId: Id<"files">;
+    name: string;
+    contentType: string;
+    size: number;
+    preset: string;
+  }> = [];
+  for (const fileId of fileIds) {
+    const file = await ctx.db.get("files", fileId);
+    if (!file) continue;
+    attachments.push({
+      fileId: file._id,
+      name: file.name,
+      contentType: file.contentType,
+      size: file.size,
+      preset: file.preset,
+    });
+  }
+  return attachments;
+}
+
 async function withReminders(ctx: QueryCtx | MutationCtx, event: Doc<"calendarEvents">) {
+  const attachmentFileIds = eventAttachmentFileIds(event);
   return {
     _id: event._id,
     _creationTime: event._creationTime,
@@ -180,6 +258,8 @@ async function withReminders(ctx: QueryCtx | MutationCtx, event: Doc<"calendarEv
     endDateKey: event.endDateKey,
     audienceKind: event.audienceKind,
     audienceRoles: event.audienceRoles,
+    attachmentFileIds,
+    attachments: await loadAttachmentMeta(ctx, attachmentFileIds),
     createdBy: event.createdBy,
     createdAt: event.createdAt,
     updatedAt: event.updatedAt,
@@ -355,6 +435,8 @@ export const create = classMutation({
       ctx.classDoc.timezone,
       CALENDAR_EVENT_MESSAGES_EN,
     );
+    const attachmentFileIds = normalizeAttachmentFileIds(args.attachmentFileIds);
+    await requireClassAttachmentFiles(ctx, classId, attachmentFileIds);
     const now = Date.now();
     const eventId = await ctx.db.insert("calendarEvents", {
       classId,
@@ -368,6 +450,7 @@ export const create = classMutation({
       endDateKey: normalized.endDateKey,
       audienceKind: normalized.audienceKind,
       audienceRoles: normalized.audienceRoles,
+      attachmentFileIds,
       createdBy: ctx.userId,
       createdAt: now,
       updatedAt: now,
@@ -409,6 +492,11 @@ export const update = classMutation({
       ctx.classDoc.timezone,
       CALENDAR_EVENT_MESSAGES_EN,
     );
+    const attachmentFileIds = normalizeAttachmentFileIds(
+      args.attachmentFileIds,
+      eventAttachmentFileIds(existing),
+    );
+    await requireClassAttachmentFiles(ctx, classId, attachmentFileIds);
     await ctx.db.patch("calendarEvents", args.eventId, {
       title: normalized.title,
       description: normalized.description,
@@ -420,6 +508,7 @@ export const update = classMutation({
       endDateKey: normalized.endDateKey,
       audienceKind: normalized.audienceKind,
       audienceRoles: normalized.audienceRoles,
+      attachmentFileIds,
       updatedAt: Date.now(),
     });
     await replaceEventReminders(ctx, classId, args.eventId, normalized);
@@ -500,7 +589,7 @@ export const deliverReminder = internalMutation({
     }
     const classDoc = await ctx.db.get("classes", event.classId);
     const className = classDoc?.name ?? "";
-    const href = `/class/${event.classId}/calendar?event=${event._id}`;
+    const href = calendarEventHref(event.classId, event._id);
     const recipients = await reminderRecipientUserIds(ctx, event, reminder.notifyRoles);
     if (recipients.length > 0) {
       await notifications.enqueueBatch(ctx, {

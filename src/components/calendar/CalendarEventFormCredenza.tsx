@@ -1,8 +1,9 @@
 import { useForm } from "@tanstack/react-form";
-import { PlusIcon, TrashIcon, TriangleAlertIcon } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { PlusIcon, Trash2, TriangleAlertIcon } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { AnnouncementAttachmentList } from "@/components/announcements/AnnouncementAttachmentList";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
@@ -17,7 +18,7 @@ import {
   CredenzaHeader,
   CredenzaTitle,
 } from "@/components/ui/credenza";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/ui/number-input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -30,6 +31,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { FileDropzone } from "@/components/upload/FileDropzone";
 import {
   dateKeyToLocalDate,
   defaultEventFormValues,
@@ -38,15 +40,17 @@ import {
   formatDateKeyLocalized,
   localDateToDateKey,
   type CalendarEvent,
+  type CalendarEventSubmitValues,
 } from "@/lib/calendar/calendar";
 import { toIntlLocale } from "@/lib/languages";
 import { CALENDAR_AUDIENCE_ROLES } from "../../../convex/lib/calendar/audience";
 import {
   createCalendarEventFormSchema,
+  MAX_CALENDAR_EVENT_ATTACHMENTS,
   MAX_EVENT_DESCRIPTION_LENGTH,
   MAX_EVENT_TITLE_LENGTH,
-  type CalendarEventFormValues,
 } from "../../../convex/lib/calendar/calendarEventSchema";
+import type { Id } from "../../../convex/_generated/dataModel";
 import {
   MAX_REMINDER_AMOUNT,
   MAX_REMINDERS_PER_EVENT,
@@ -66,10 +70,11 @@ type CalendarEventFormCredenzaProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   mode: "create" | "edit";
+  classId: Id<"classes">;
   classTimeZone?: string;
   todayKey: string;
   initial?: CalendarEvent | null;
-  onSubmit: (values: CalendarEventFormValues) => Promise<void>;
+  onSubmit: (values: CalendarEventSubmitValues) => Promise<void>;
 };
 
 function fieldErrorMessage(errors: unknown): string | undefined {
@@ -83,27 +88,52 @@ function fieldErrorMessage(errors: unknown): string | undefined {
   return undefined;
 }
 
+function zodIssuesToFieldErrors(
+  issues: Array<{ path: ReadonlyArray<PropertyKey>; message: string }>,
+): Record<string, string> {
+  const fields: Record<string, string> = {};
+  for (const issue of issues) {
+    const path = issue.path.reduce<string>((acc, segment) => {
+      if (typeof segment === "number") return `${acc}[${segment}]`;
+      if (typeof segment === "string") return acc ? `${acc}.${segment}` : segment;
+      return acc;
+    }, "");
+    if (path && fields[path] === undefined) {
+      fields[path] = issue.message;
+    }
+  }
+  return fields;
+}
+
 function DatePickerField({
   id,
   value,
   onChange,
   label,
+  error,
 }: {
   id: string;
   value: string;
   onChange: (next: string) => void;
   label: string;
+  error?: string;
 }) {
   const { i18n } = useTranslation("calendar");
   const selected = value ? dateKeyToLocalDate(value) : undefined;
   const display = value ? formatDateKeyLocalized(value, toIntlLocale(i18n.language)) : "—";
   return (
-    <Field>
+    <Field data-invalid={error ? true : undefined}>
       <FieldLabel htmlFor={id}>{label}</FieldLabel>
       <Popover>
         <PopoverTrigger
           render={
-            <Button id={id} type="button" variant="outline" className="w-full justify-start" />
+            <Button
+              id={id}
+              type="button"
+              variant="outline"
+              className="w-full justify-start"
+              aria-invalid={error ? true : undefined}
+            />
           }
         >
           {display}
@@ -118,6 +148,7 @@ function DatePickerField({
           />
         </PopoverContent>
       </Popover>
+      {error ? <FieldError>{error}</FieldError> : null}
     </Field>
   );
 }
@@ -126,6 +157,7 @@ export function CalendarEventFormCredenza({
   open,
   onOpenChange,
   mode,
+  classId,
   classTimeZone,
   todayKey,
   initial,
@@ -134,6 +166,19 @@ export function CalendarEventFormCredenza({
   const { t } = useTranslation("calendar");
   const { t: tClasses } = useTranslation("classes");
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [attachmentFileIds, setAttachmentFileIds] = useState<Array<Id<"files">>>(
+    initial?.attachmentFileIds ?? [],
+  );
+  const [attachmentMeta, setAttachmentMeta] = useState(
+    () =>
+      initial?.attachments.map((item) => ({
+        fileId: item.fileId,
+        name: item.name,
+        contentType: item.contentType,
+        size: item.size,
+        preset: item.preset,
+      })) ?? [],
+  );
   const skipNextResetRef = useRef(false);
   const endManuallyAdjustedRef = useRef(false);
   const todayKeyRef = useRef(todayKey);
@@ -166,15 +211,23 @@ export function CalendarEventFormCredenza({
   const form = useForm({
     defaultValues: defaultEventFormValues(todayKey, !classTimeZone),
     validators: {
-      onSubmit: schema,
+      onSubmit: ({ value }) => {
+        const result = schema.safeParse(value);
+        if (result.success) return undefined;
+        return { fields: zodIssuesToFieldErrors(result.error.issues) };
+      },
     },
     onSubmit: async ({ value }) => {
       setSubmitError(null);
-      const parsed = schema.parse(value);
+      const parsed = schema.safeParse(value);
+      if (!parsed.success) {
+        setSubmitError(parsed.error.issues[0]?.message ?? t("saveFailed"));
+        return;
+      }
       skipNextResetRef.current = true;
       onOpenChange(false);
       try {
-        await onSubmit(parsed);
+        await onSubmit({ ...parsed.data, attachmentFileIds });
         skipNextResetRef.current = false;
         endManuallyAdjustedRef.current = false;
         form.reset(defaultEventFormValues(todayKeyRef.current, !classTimeZoneRef.current));
@@ -206,20 +259,62 @@ export function CalendarEventFormCredenza({
       ? eventToFormValues(initial, classTimeZone)
       : defaultEventFormValues(todayKey, !classTimeZone);
     form.reset(next);
+    setAttachmentFileIds(initial?.attachmentFileIds ?? []);
+    setAttachmentMeta(
+      initial?.attachments.map((item) => ({
+        fileId: item.fileId,
+        name: item.name,
+        contentType: item.contentType,
+        size: item.size,
+        preset: item.preset,
+      })) ?? [],
+    );
   }, [open, form, initial, classTimeZone, todayKey, mode]);
+
+  const onUploaded = useCallback(
+    (fileId: Id<"files">) => {
+      setAttachmentFileIds((prev) => {
+        if (prev.includes(fileId) || prev.length >= MAX_CALENDAR_EVENT_ATTACHMENTS) {
+          return prev;
+        }
+        return [...prev, fileId];
+      });
+      setAttachmentMeta((prev) => {
+        if (prev.some((item) => item.fileId === fileId)) return prev;
+        return [
+          ...prev,
+          {
+            fileId,
+            name: t("unnamedAttachment"),
+            contentType: "application/octet-stream",
+            size: 0,
+            preset: "documents",
+          },
+        ];
+      });
+    },
+    [t],
+  );
+
+  const onRemoveAttachment = useCallback((fileId: Id<"files">) => {
+    setAttachmentFileIds((prev) => prev.filter((id) => id !== fileId));
+    setAttachmentMeta((prev) => prev.filter((item) => item.fileId !== fileId));
+  }, []);
+
+  const canAddMore = attachmentFileIds.length < MAX_CALENDAR_EVENT_ATTACHMENTS;
 
   const timedBlocked = !classTimeZone;
 
   return (
     <Credenza open={open} onOpenChange={onOpenChange}>
-      <CredenzaContent className="sm:max-w-lg">
+      <CredenzaContent className="flex max-h-[min(90dvh,56rem)] w-full flex-col gap-4 overflow-hidden sm:max-w-lg">
         <CredenzaHeader>
           <CredenzaTitle>{mode === "create" ? t("createTitle") : t("editTitle")}</CredenzaTitle>
           <CredenzaDescription>
             {timedBlocked ? t("timezoneRequired") : t("formDescription")}
           </CredenzaDescription>
         </CredenzaHeader>
-        <CredenzaBody>
+        <CredenzaBody className="min-h-0 flex-1 overflow-y-auto">
           <form
             id="calendar-event-form"
             className="flex flex-col gap-4"
@@ -303,6 +398,7 @@ export function CalendarEventFormCredenza({
                           id="calendar-event-start-date"
                           label={t("startDate")}
                           value={field.state.value}
+                          error={fieldErrorMessage(field.state.meta.errors)}
                           onChange={(next) => {
                             field.handleChange(next);
                             syncEndFromStart(next, form.getFieldValue("startTime"));
@@ -316,6 +412,7 @@ export function CalendarEventFormCredenza({
                           id="calendar-event-end-date"
                           label={t("endDate")}
                           value={field.state.value}
+                          error={fieldErrorMessage(field.state.meta.errors)}
                           onChange={(next) => {
                             endManuallyAdjustedRef.current = true;
                             field.handleChange(next);
@@ -441,91 +538,144 @@ export function CalendarEventFormCredenza({
               </form.Subscribe>
 
               <form.Field name="reminders" mode="array">
-                {(field) => (
-                  <Field>
-                    <div className="flex items-center justify-between gap-2">
-                      <FieldLabel>{t("remindersLabel")}</FieldLabel>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        disabled={
-                          timedBlocked || field.state.value.length >= MAX_REMINDERS_PER_EVENT
-                        }
-                        onClick={() => field.pushValue({ amount: 1, unit: "day", notifyRoles: [] })}
-                      >
-                        <PlusIcon />
-                        {t("addReminder")}
-                      </Button>
-                    </div>
-                    {timedBlocked ? (
-                      <Alert variant="warning" className="rounded-xl px-3 py-2">
-                        <TriangleAlertIcon />
-                        <AlertDescription className="text-foreground">
-                          {t("remindersNeedTimezone")}
-                        </AlertDescription>
-                      </Alert>
-                    ) : null}
-                    <div className="flex flex-col gap-3">
-                      {field.state.value.map((_, index) => (
-                        <div
-                          key={index}
-                          className="flex flex-col gap-2 rounded-xl border border-border p-3"
+                {(field) => {
+                  const remindersError = fieldErrorMessage(field.state.meta.errors);
+                  return (
+                    <Field data-invalid={remindersError ? true : undefined}>
+                      <div className="flex items-center justify-between gap-2">
+                        <FieldLabel>{t("remindersLabel")}</FieldLabel>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={
+                            timedBlocked || field.state.value.length >= MAX_REMINDERS_PER_EVENT
+                          }
+                          onClick={() =>
+                            field.pushValue({ amount: 1, unit: "day", notifyRoles: [] })
+                          }
                         >
-                          <div className="flex items-center gap-2">
-                            <form.Field name={`reminders[${index}].amount`}>
-                              {(amountField) => (
-                                <NumberInput
-                                  value={amountField.state.value}
-                                  min={1}
-                                  max={MAX_REMINDER_AMOUNT}
-                                  aria-label={t("reminderAmount")}
-                                  onValueChange={amountField.handleChange}
-                                />
-                              )}
-                            </form.Field>
-                            <form.Field name={`reminders[${index}].unit`}>
-                              {(unitField) => (
-                                <Select
-                                  value={unitField.state.value}
-                                  onValueChange={(next) => {
-                                    if (
-                                      next &&
-                                      (REMINDER_UNITS as ReadonlyArray<string>).includes(next)
-                                    ) {
-                                      unitField.handleChange(next as ReminderUnit);
-                                    }
-                                  }}
-                                >
-                                  <SelectTrigger className="w-32">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {REMINDER_UNITS.map((unit) => (
-                                      <SelectItem key={unit} value={unit}>
-                                        {t(`unit_${unit}`)}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              )}
-                            </form.Field>
-                            <Button
-                              type="button"
-                              size="icon"
-                              variant="ghost"
-                              aria-label={t("removeReminder")}
-                              onClick={() => field.removeValue(index)}
-                            >
-                              <TrashIcon />
-                            </Button>
+                          <PlusIcon />
+                          {t("addReminder")}
+                        </Button>
+                      </div>
+                      {remindersError ? <FieldError>{remindersError}</FieldError> : null}
+                      {timedBlocked ? (
+                        <Alert variant="warning" className="rounded-xl px-3 py-2">
+                          <TriangleAlertIcon />
+                          <AlertDescription className="text-foreground">
+                            {t("remindersNeedTimezone")}
+                          </AlertDescription>
+                        </Alert>
+                      ) : null}
+                      <div className="flex flex-col gap-3">
+                        {field.state.value.map((_, index) => (
+                          <div
+                            key={index}
+                            className="flex flex-col gap-2 rounded-xl border border-border p-3"
+                          >
+                            <div className="flex items-center gap-2">
+                              <form.Field name={`reminders[${index}].amount`}>
+                                {(amountField) => {
+                                  const error = fieldErrorMessage(amountField.state.meta.errors);
+                                  return (
+                                    <Field
+                                      data-invalid={error ? true : undefined}
+                                      className="min-w-0 flex-1"
+                                    >
+                                      <NumberInput
+                                        value={amountField.state.value}
+                                        min={1}
+                                        max={MAX_REMINDER_AMOUNT}
+                                        aria-label={t("reminderAmount")}
+                                        aria-invalid={error ? true : undefined}
+                                        onValueChange={amountField.handleChange}
+                                      />
+                                      {error ? <FieldError>{error}</FieldError> : null}
+                                    </Field>
+                                  );
+                                }}
+                              </form.Field>
+                              <form.Field name={`reminders[${index}].unit`}>
+                                {(unitField) => (
+                                  <Select
+                                    value={unitField.state.value}
+                                    onValueChange={(next) => {
+                                      if (
+                                        next &&
+                                        (REMINDER_UNITS as ReadonlyArray<string>).includes(next)
+                                      ) {
+                                        unitField.handleChange(next as ReminderUnit);
+                                      }
+                                    }}
+                                  >
+                                    <SelectTrigger className="w-32">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {REMINDER_UNITS.map((unit) => (
+                                        <SelectItem key={unit} value={unit}>
+                                          {t(`unit_${unit}`)}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                )}
+                              </form.Field>
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="icon-sm"
+                                className="shrink-0"
+                                aria-label={t("removeReminder")}
+                                onClick={() => field.removeValue(index)}
+                              >
+                                <Trash2 className="size-4" />
+                              </Button>
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  </Field>
-                )}
+                        ))}
+                      </div>
+                    </Field>
+                  );
+                }}
               </form.Field>
+
+              <Field>
+                <FieldLabel>{t("attachmentsLabel")}</FieldLabel>
+                <FieldDescription>
+                  {t("attachmentsDescription", { max: MAX_CALENDAR_EVENT_ATTACHMENTS })}
+                </FieldDescription>
+                <AnnouncementAttachmentList
+                  attachments={attachmentMeta.filter((item) =>
+                    attachmentFileIds.includes(item.fileId),
+                  )}
+                  onRemove={onRemoveAttachment}
+                  className="mt-2"
+                />
+                {canAddMore ? (
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    <FileDropzone
+                      presetKey="images"
+                      variant="compact"
+                      classId={classId}
+                      multiple
+                      title={t("attachmentsImages")}
+                      onUploaded={onUploaded}
+                    />
+                    <FileDropzone
+                      presetKey="documents"
+                      variant="compact"
+                      classId={classId}
+                      multiple
+                      title={t("attachmentsDocuments")}
+                      onUploaded={onUploaded}
+                    />
+                  </div>
+                ) : (
+                  <p className="mt-2 text-sm text-muted-foreground">{t("attachmentsMaxReached")}</p>
+                )}
+              </Field>
             </FieldGroup>
             {submitError ? <p className="text-sm text-destructive">{submitError}</p> : null}
           </form>

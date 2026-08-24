@@ -8,1618 +8,1668 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from "./routes/__root";
-import { Route as AuthenticatedRouteRouteImport } from "./routes/_authenticated/route";
-import { Route as PublicRouteRouteImport } from "./routes/_public/route";
-import { Route as JoinDisplayRouteImport } from "./routes/join-display";
-import { Route as AuthenticatedAppRouteRouteImport } from "./routes/_authenticated/_app/route";
-import { Route as AuthenticatedClassRouteRouteImport } from "./routes/_authenticated/_class/route";
-import { Route as AuthenticatedAdminRouteRouteImport } from "./routes/_authenticated/admin/route";
-import { Route as PublicSplatRouteImport } from "./routes/_public/$";
-import { Route as PublicLoginRouteImport } from "./routes/_public/login";
-import { Route as PublicUnauthorizedRouteImport } from "./routes/_public/unauthorized";
-import { Route as APublicSlugRouteImport } from "./routes/a.$publicSlug";
-import { Route as PPublicSlugRouteImport } from "./routes/p.$publicSlug";
-import { Route as AuthenticatedAppIndexRouteImport } from "./routes/_authenticated/_app/index";
-import { Route as AuthenticatedAppAccountRouteImport } from "./routes/_authenticated/_app/account";
-import { Route as AuthenticatedAppBillingRouteImport } from "./routes/_authenticated/_app/billing";
-import { Route as AuthenticatedAppFeedbackRouteImport } from "./routes/_authenticated/_app/feedback";
-import { Route as AuthenticatedAppJoinRouteImport } from "./routes/_authenticated/_app/join";
-import { Route as AuthenticatedAppNotificationsRouteImport } from "./routes/_authenticated/_app/notifications";
-import { Route as AuthenticatedAppSettingsRouteImport } from "./routes/_authenticated/_app/settings";
-import { Route as AuthenticatedAppUiRouteImport } from "./routes/_authenticated/_app/ui";
-import { Route as AuthenticatedAdminIndexRouteImport } from "./routes/_authenticated/admin/index";
-import { Route as AuthenticatedAdminFeedbackRouteImport } from "./routes/_authenticated/admin/feedback";
-import { Route as AuthenticatedDRunIdRouteImport } from "./routes/_authenticated/d.$runId";
-import { Route as AuthenticatedDeRunIdRouteImport } from "./routes/_authenticated/de.$runId";
-import { Route as AuthenticatedClassClassClassIdRouteRouteImport } from "./routes/_authenticated/_class/class/$classId/route";
-import { Route as AuthenticatedClassClassClassIdIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/index";
-import { Route as AuthenticatedClassClassClassIdActivityRouteImport } from "./routes/_authenticated/_class/class/$classId/activity";
-import { Route as AuthenticatedClassClassClassIdAssistantTeachersRouteImport } from "./routes/_authenticated/_class/class/$classId/assistant-teachers";
-import { Route as AuthenticatedClassClassClassIdAttendanceRouteImport } from "./routes/_authenticated/_class/class/$classId/attendance";
-import { Route as AuthenticatedClassClassClassIdBehaviorsRouteImport } from "./routes/_authenticated/_class/class/$classId/behaviors";
-import { Route as AuthenticatedClassClassClassIdCalendarRouteImport } from "./routes/_authenticated/_class/class/$classId/calendar";
-import { Route as AuthenticatedClassClassClassIdGroupsRouteImport } from "./routes/_authenticated/_class/class/$classId/groups";
-import { Route as AuthenticatedClassClassClassIdGuardiansRouteImport } from "./routes/_authenticated/_class/class/$classId/guardians";
-import { Route as AuthenticatedClassClassClassIdInvitationsRouteImport } from "./routes/_authenticated/_class/class/$classId/invitations";
-import { Route as AuthenticatedClassClassClassIdPermissionsRouteImport } from "./routes/_authenticated/_class/class/$classId/permissions";
-import { Route as AuthenticatedClassClassClassIdPointsRouteImport } from "./routes/_authenticated/_class/class/$classId/points";
-import { Route as AuthenticatedClassClassClassIdRewardsRouteImport } from "./routes/_authenticated/_class/class/$classId/rewards";
-import { Route as AuthenticatedClassClassClassIdSettingsRouteImport } from "./routes/_authenticated/_class/class/$classId/settings";
-import { Route as AuthenticatedClassClassClassIdStudentsRouteImport } from "./routes/_authenticated/_class/class/$classId/students";
-import { Route as AuthenticatedClassClassClassIdTeachersRouteImport } from "./routes/_authenticated/_class/class/$classId/teachers";
-import { Route as AuthenticatedClassClassClassIdAnnouncementsIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/announcements/index";
-import { Route as AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRouteImport } from "./routes/_authenticated/_class/class/$classId/announcements/$announcementId";
-import { Route as AuthenticatedClassClassClassIdAssignmentsIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/assignments/index";
-import { Route as AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRouteImport } from "./routes/_authenticated/_class/class/$classId/assignments/$assignmentId/route";
-import { Route as AuthenticatedClassClassClassIdAssignmentsNewRouteImport } from "./routes/_authenticated/_class/class/$classId/assignments/new";
-import { Route as AuthenticatedClassClassClassIdExpectationsIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/expectations/index";
-import { Route as AuthenticatedClassClassClassIdExpectationsExpectationIdRouteImport } from "./routes/_authenticated/_class/class/$classId/expectations/$expectationId";
-import { Route as AuthenticatedClassClassClassIdRazIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/raz/index";
-import { Route as AuthenticatedClassClassClassIdRazInitialLevelsRouteImport } from "./routes/_authenticated/_class/class/$classId/raz/initial-levels";
-import { Route as AuthenticatedClassClassClassIdTasksIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/tasks/index";
-import { Route as AuthenticatedClassClassClassIdTasksTaskIdRouteImport } from "./routes/_authenticated/_class/class/$classId/tasks/$taskId";
-import { Route as AuthenticatedClassClassClassIdAssignersEquitableIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/assigners/equitable/index";
-import { Route as AuthenticatedClassClassClassIdAssignersEquitableNewRouteImport } from "./routes/_authenticated/_class/class/$classId/assigners/equitable/new";
-import { Route as AuthenticatedClassClassClassIdAssignersRandomIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/assigners/random/index";
-import { Route as AuthenticatedClassClassClassIdAssignersRandomNewRouteImport } from "./routes/_authenticated/_class/class/$classId/assigners/random/new";
-import { Route as AuthenticatedClassClassClassIdAssignersSeatsIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/assigners/seats/index";
-import { Route as AuthenticatedClassClassClassIdAssignmentsAssignmentIdIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/assignments/$assignmentId/index";
-import { Route as AuthenticatedClassClassClassIdAssignmentsAssignmentIdEditRouteImport } from "./routes/_authenticated/_class/class/$classId/assignments/$assignmentId/edit";
-import { Route as AuthenticatedClassClassClassIdAssignmentsAssignmentIdGradeRouteImport } from "./routes/_authenticated/_class/class/$classId/assignments/$assignmentId/grade";
-import { Route as AuthenticatedClassClassClassIdAssignmentsAssignmentIdTasksRouteImport } from "./routes/_authenticated/_class/class/$classId/assignments/$assignmentId/tasks";
-import { Route as AuthenticatedClassClassClassIdSwGradeScalesIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/sw/grade-scales/index";
-import { Route as AuthenticatedClassClassClassIdSwGradedSubjectsIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/sw/graded-subjects/index";
-import { Route as AuthenticatedClassClassClassIdSwGradedSubjectsNewRouteImport } from "./routes/_authenticated/_class/class/$classId/sw/graded-subjects/new";
-import { Route as AuthenticatedClassClassClassIdAssignersEquitableAssignerIdIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/index";
-import { Route as AuthenticatedClassClassClassIdAssignersEquitableAssignerIdEditRouteImport } from "./routes/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/edit";
-import { Route as AuthenticatedClassClassClassIdAssignersEquitableAssignerIdManualRouteImport } from "./routes/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/manual";
-import { Route as AuthenticatedClassClassClassIdAssignersRandomAssignerIdIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/assigners/random/$assignerId/index";
-import { Route as AuthenticatedClassClassClassIdAssignersRandomAssignerIdEditRouteImport } from "./routes/_authenticated/_class/class/$classId/assigners/random/$assignerId/edit";
-import { Route as AuthenticatedClassClassClassIdAssignersSeatsChartsIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/assigners/seats/charts/index";
-import { Route as AuthenticatedClassClassClassIdAssignersSeatsChartsChartIdRouteImport } from "./routes/_authenticated/_class/class/$classId/assigners/seats/charts/$chartId";
-import { Route as AuthenticatedClassClassClassIdAssignersSeatsConstraintsIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/assigners/seats/constraints/index";
-import { Route as AuthenticatedClassClassClassIdAssignersSeatsDataIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/assigners/seats/data/index";
-import { Route as AuthenticatedClassClassClassIdAssignersSeatsLayoutsIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/assigners/seats/layouts/index";
-import { Route as AuthenticatedClassClassClassIdAssignersSeatsLayoutsLayoutIdRouteImport } from "./routes/_authenticated/_class/class/$classId/assigners/seats/layouts/$layoutId";
-import { Route as AuthenticatedClassClassClassIdAssignersSeatsStatsIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/assigners/seats/stats/index";
-import { Route as AuthenticatedClassClassClassIdSwGradeScalesReportsIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/sw/grade-scales/reports/index";
-import { Route as AuthenticatedClassClassClassIdSwGradeScalesScalesIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/sw/grade-scales/scales/index";
-import { Route as AuthenticatedClassClassClassIdSwGradeScalesSubjectsIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/sw/grade-scales/subjects/index";
-import { Route as AuthenticatedClassClassClassIdSwGradedSubjectsGradedSubjectIdEditRouteImport } from "./routes/_authenticated/_class/class/$classId/sw/graded-subjects/$gradedSubjectId/edit";
-import { Route as AuthenticatedClassClassClassIdAssignersEquitableAssignerIdDashboardIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/dashboard/index";
-import { Route as AuthenticatedClassClassClassIdAssignersEquitableAssignerIdDataIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/data/index";
-import { Route as AuthenticatedClassClassClassIdAssignersRandomAssignerIdDataIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/assigners/random/$assignerId/data/index";
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as PublicRouteRouteImport } from './routes/_public/route'
+import { Route as JoinDisplayRouteImport } from './routes/join-display'
+import { Route as AuthenticatedAppRouteRouteImport } from './routes/_authenticated/_app/route'
+import { Route as AuthenticatedClassRouteRouteImport } from './routes/_authenticated/_class/route'
+import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
+import { Route as PublicSplatRouteImport } from './routes/_public/$'
+import { Route as PublicLoginRouteImport } from './routes/_public/login'
+import { Route as PublicUnauthorizedRouteImport } from './routes/_public/unauthorized'
+import { Route as APublicSlugRouteImport } from './routes/a.$publicSlug'
+import { Route as PPublicSlugRouteImport } from './routes/p.$publicSlug'
+import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/_app/index'
+import { Route as AuthenticatedAppAccountRouteImport } from './routes/_authenticated/_app/account'
+import { Route as AuthenticatedAppBillingRouteImport } from './routes/_authenticated/_app/billing'
+import { Route as AuthenticatedAppFeedbackRouteImport } from './routes/_authenticated/_app/feedback'
+import { Route as AuthenticatedAppJoinRouteImport } from './routes/_authenticated/_app/join'
+import { Route as AuthenticatedAppNotificationsRouteImport } from './routes/_authenticated/_app/notifications'
+import { Route as AuthenticatedAppSettingsRouteImport } from './routes/_authenticated/_app/settings'
+import { Route as AuthenticatedAppUiRouteImport } from './routes/_authenticated/_app/ui'
+import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
+import { Route as AuthenticatedAdminFeedbackRouteImport } from './routes/_authenticated/admin/feedback'
+import { Route as AuthenticatedDRunIdRouteImport } from './routes/_authenticated/d.$runId'
+import { Route as AuthenticatedDeRunIdRouteImport } from './routes/_authenticated/de.$runId'
+import { Route as AuthenticatedClassClassClassIdRouteRouteImport } from './routes/_authenticated/_class/class/$classId/route'
+import { Route as AuthenticatedClassClassClassIdIndexRouteImport } from './routes/_authenticated/_class/class/$classId/index'
+import { Route as AuthenticatedClassClassClassIdActivityRouteImport } from './routes/_authenticated/_class/class/$classId/activity'
+import { Route as AuthenticatedClassClassClassIdAssistantTeachersRouteImport } from './routes/_authenticated/_class/class/$classId/assistant-teachers'
+import { Route as AuthenticatedClassClassClassIdAttendanceRouteImport } from './routes/_authenticated/_class/class/$classId/attendance'
+import { Route as AuthenticatedClassClassClassIdBehaviorsRouteImport } from './routes/_authenticated/_class/class/$classId/behaviors'
+import { Route as AuthenticatedClassClassClassIdGroupsRouteImport } from './routes/_authenticated/_class/class/$classId/groups'
+import { Route as AuthenticatedClassClassClassIdGuardiansRouteImport } from './routes/_authenticated/_class/class/$classId/guardians'
+import { Route as AuthenticatedClassClassClassIdInvitationsRouteImport } from './routes/_authenticated/_class/class/$classId/invitations'
+import { Route as AuthenticatedClassClassClassIdPermissionsRouteImport } from './routes/_authenticated/_class/class/$classId/permissions'
+import { Route as AuthenticatedClassClassClassIdPointsRouteImport } from './routes/_authenticated/_class/class/$classId/points'
+import { Route as AuthenticatedClassClassClassIdRewardsRouteImport } from './routes/_authenticated/_class/class/$classId/rewards'
+import { Route as AuthenticatedClassClassClassIdSettingsRouteImport } from './routes/_authenticated/_class/class/$classId/settings'
+import { Route as AuthenticatedClassClassClassIdStudentsRouteImport } from './routes/_authenticated/_class/class/$classId/students'
+import { Route as AuthenticatedClassClassClassIdTeachersRouteImport } from './routes/_authenticated/_class/class/$classId/teachers'
+import { Route as AuthenticatedClassClassClassIdAnnouncementsIndexRouteImport } from './routes/_authenticated/_class/class/$classId/announcements/index'
+import { Route as AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRouteImport } from './routes/_authenticated/_class/class/$classId/announcements/$announcementId'
+import { Route as AuthenticatedClassClassClassIdAssignmentsIndexRouteImport } from './routes/_authenticated/_class/class/$classId/assignments/index'
+import { Route as AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRouteImport } from './routes/_authenticated/_class/class/$classId/assignments/$assignmentId/route'
+import { Route as AuthenticatedClassClassClassIdAssignmentsNewRouteImport } from './routes/_authenticated/_class/class/$classId/assignments/new'
+import { Route as AuthenticatedClassClassClassIdCalendarIndexRouteImport } from './routes/_authenticated/_class/class/$classId/calendar/index'
+import { Route as AuthenticatedClassClassClassIdExpectationsIndexRouteImport } from './routes/_authenticated/_class/class/$classId/expectations/index'
+import { Route as AuthenticatedClassClassClassIdExpectationsExpectationIdRouteImport } from './routes/_authenticated/_class/class/$classId/expectations/$expectationId'
+import { Route as AuthenticatedClassClassClassIdRazIndexRouteImport } from './routes/_authenticated/_class/class/$classId/raz/index'
+import { Route as AuthenticatedClassClassClassIdRazInitialLevelsRouteImport } from './routes/_authenticated/_class/class/$classId/raz/initial-levels'
+import { Route as AuthenticatedClassClassClassIdTasksIndexRouteImport } from './routes/_authenticated/_class/class/$classId/tasks/index'
+import { Route as AuthenticatedClassClassClassIdTasksTaskIdRouteImport } from './routes/_authenticated/_class/class/$classId/tasks/$taskId'
+import { Route as AuthenticatedClassClassClassIdAssignersEquitableIndexRouteImport } from './routes/_authenticated/_class/class/$classId/assigners/equitable/index'
+import { Route as AuthenticatedClassClassClassIdAssignersEquitableNewRouteImport } from './routes/_authenticated/_class/class/$classId/assigners/equitable/new'
+import { Route as AuthenticatedClassClassClassIdAssignersRandomIndexRouteImport } from './routes/_authenticated/_class/class/$classId/assigners/random/index'
+import { Route as AuthenticatedClassClassClassIdAssignersRandomNewRouteImport } from './routes/_authenticated/_class/class/$classId/assigners/random/new'
+import { Route as AuthenticatedClassClassClassIdAssignersSeatsIndexRouteImport } from './routes/_authenticated/_class/class/$classId/assigners/seats/index'
+import { Route as AuthenticatedClassClassClassIdAssignmentsAssignmentIdIndexRouteImport } from './routes/_authenticated/_class/class/$classId/assignments/$assignmentId/index'
+import { Route as AuthenticatedClassClassClassIdAssignmentsAssignmentIdEditRouteImport } from './routes/_authenticated/_class/class/$classId/assignments/$assignmentId/edit'
+import { Route as AuthenticatedClassClassClassIdAssignmentsAssignmentIdGradeRouteImport } from './routes/_authenticated/_class/class/$classId/assignments/$assignmentId/grade'
+import { Route as AuthenticatedClassClassClassIdAssignmentsAssignmentIdTasksRouteImport } from './routes/_authenticated/_class/class/$classId/assignments/$assignmentId/tasks'
+import { Route as AuthenticatedClassClassClassIdCalendarEventEventIdRouteImport } from './routes/_authenticated/_class/class/$classId/calendar/event/$eventId'
+import { Route as AuthenticatedClassClassClassIdSwGradeScalesIndexRouteImport } from './routes/_authenticated/_class/class/$classId/sw/grade-scales/index'
+import { Route as AuthenticatedClassClassClassIdSwGradedSubjectsIndexRouteImport } from './routes/_authenticated/_class/class/$classId/sw/graded-subjects/index'
+import { Route as AuthenticatedClassClassClassIdSwGradedSubjectsNewRouteImport } from './routes/_authenticated/_class/class/$classId/sw/graded-subjects/new'
+import { Route as AuthenticatedClassClassClassIdAssignersEquitableAssignerIdIndexRouteImport } from './routes/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/index'
+import { Route as AuthenticatedClassClassClassIdAssignersEquitableAssignerIdEditRouteImport } from './routes/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/edit'
+import { Route as AuthenticatedClassClassClassIdAssignersEquitableAssignerIdManualRouteImport } from './routes/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/manual'
+import { Route as AuthenticatedClassClassClassIdAssignersRandomAssignerIdIndexRouteImport } from './routes/_authenticated/_class/class/$classId/assigners/random/$assignerId/index'
+import { Route as AuthenticatedClassClassClassIdAssignersRandomAssignerIdEditRouteImport } from './routes/_authenticated/_class/class/$classId/assigners/random/$assignerId/edit'
+import { Route as AuthenticatedClassClassClassIdAssignersSeatsChartsIndexRouteImport } from './routes/_authenticated/_class/class/$classId/assigners/seats/charts/index'
+import { Route as AuthenticatedClassClassClassIdAssignersSeatsChartsChartIdRouteImport } from './routes/_authenticated/_class/class/$classId/assigners/seats/charts/$chartId'
+import { Route as AuthenticatedClassClassClassIdAssignersSeatsConstraintsIndexRouteImport } from './routes/_authenticated/_class/class/$classId/assigners/seats/constraints/index'
+import { Route as AuthenticatedClassClassClassIdAssignersSeatsDataIndexRouteImport } from './routes/_authenticated/_class/class/$classId/assigners/seats/data/index'
+import { Route as AuthenticatedClassClassClassIdAssignersSeatsLayoutsIndexRouteImport } from './routes/_authenticated/_class/class/$classId/assigners/seats/layouts/index'
+import { Route as AuthenticatedClassClassClassIdAssignersSeatsLayoutsLayoutIdRouteImport } from './routes/_authenticated/_class/class/$classId/assigners/seats/layouts/$layoutId'
+import { Route as AuthenticatedClassClassClassIdAssignersSeatsStatsIndexRouteImport } from './routes/_authenticated/_class/class/$classId/assigners/seats/stats/index'
+import { Route as AuthenticatedClassClassClassIdSwGradeScalesReportsIndexRouteImport } from './routes/_authenticated/_class/class/$classId/sw/grade-scales/reports/index'
+import { Route as AuthenticatedClassClassClassIdSwGradeScalesScalesIndexRouteImport } from './routes/_authenticated/_class/class/$classId/sw/grade-scales/scales/index'
+import { Route as AuthenticatedClassClassClassIdSwGradeScalesSubjectsIndexRouteImport } from './routes/_authenticated/_class/class/$classId/sw/grade-scales/subjects/index'
+import { Route as AuthenticatedClassClassClassIdSwGradedSubjectsGradedSubjectIdEditRouteImport } from './routes/_authenticated/_class/class/$classId/sw/graded-subjects/$gradedSubjectId/edit'
+import { Route as AuthenticatedClassClassClassIdAssignersEquitableAssignerIdDashboardIndexRouteImport } from './routes/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/dashboard/index'
+import { Route as AuthenticatedClassClassClassIdAssignersEquitableAssignerIdDataIndexRouteImport } from './routes/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/data/index'
+import { Route as AuthenticatedClassClassClassIdAssignersRandomAssignerIdDataIndexRouteImport } from './routes/_authenticated/_class/class/$classId/assigners/random/$assignerId/data/index'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: "/_authenticated",
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const PublicRouteRoute = PublicRouteRouteImport.update({
-  id: "/_public",
+  id: '/_public',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const JoinDisplayRoute = JoinDisplayRouteImport.update({
-  id: "/join-display",
-  path: "/join-display",
+  id: '/join-display',
+  path: '/join-display',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const AuthenticatedAppRouteRoute = AuthenticatedAppRouteRouteImport.update({
-  id: "/_app",
+  id: '/_app',
   getParentRoute: () => AuthenticatedRouteRoute,
-} as any);
+} as any)
 const AuthenticatedClassRouteRoute = AuthenticatedClassRouteRouteImport.update({
-  id: "/_class",
+  id: '/_class',
   getParentRoute: () => AuthenticatedRouteRoute,
-} as any);
+} as any)
 const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
-  id: "/admin",
-  path: "/admin",
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
-} as any);
+} as any)
 const PublicSplatRoute = PublicSplatRouteImport.update({
-  id: "/$",
-  path: "/$",
+  id: '/$',
+  path: '/$',
   getParentRoute: () => PublicRouteRoute,
-} as any);
+} as any)
 const PublicLoginRoute = PublicLoginRouteImport.update({
-  id: "/login",
-  path: "/login",
+  id: '/login',
+  path: '/login',
   getParentRoute: () => PublicRouteRoute,
-} as any);
+} as any)
 const PublicUnauthorizedRoute = PublicUnauthorizedRouteImport.update({
-  id: "/unauthorized",
-  path: "/unauthorized",
+  id: '/unauthorized',
+  path: '/unauthorized',
   getParentRoute: () => PublicRouteRoute,
-} as any);
+} as any)
 const APublicSlugRoute = APublicSlugRouteImport.update({
-  id: "/a/$publicSlug",
-  path: "/a/$publicSlug",
+  id: '/a/$publicSlug',
+  path: '/a/$publicSlug',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const PPublicSlugRoute = PPublicSlugRouteImport.update({
-  id: "/p/$publicSlug",
-  path: "/p/$publicSlug",
+  id: '/p/$publicSlug',
+  path: '/p/$publicSlug',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
-  id: "/",
-  path: "/",
+  id: '/',
+  path: '/',
   getParentRoute: () => AuthenticatedAppRouteRoute,
-} as any);
+} as any)
 const AuthenticatedAppAccountRoute = AuthenticatedAppAccountRouteImport.update({
-  id: "/account",
-  path: "/account",
+  id: '/account',
+  path: '/account',
   getParentRoute: () => AuthenticatedAppRouteRoute,
-} as any);
+} as any)
 const AuthenticatedAppBillingRoute = AuthenticatedAppBillingRouteImport.update({
-  id: "/billing",
-  path: "/billing",
+  id: '/billing',
+  path: '/billing',
   getParentRoute: () => AuthenticatedAppRouteRoute,
-} as any);
-const AuthenticatedAppFeedbackRoute = AuthenticatedAppFeedbackRouteImport.update({
-  id: "/feedback",
-  path: "/feedback",
-  getParentRoute: () => AuthenticatedAppRouteRoute,
-} as any);
+} as any)
+const AuthenticatedAppFeedbackRoute =
+  AuthenticatedAppFeedbackRouteImport.update({
+    id: '/feedback',
+    path: '/feedback',
+    getParentRoute: () => AuthenticatedAppRouteRoute,
+  } as any)
 const AuthenticatedAppJoinRoute = AuthenticatedAppJoinRouteImport.update({
-  id: "/join",
-  path: "/join",
+  id: '/join',
+  path: '/join',
   getParentRoute: () => AuthenticatedAppRouteRoute,
-} as any);
-const AuthenticatedAppNotificationsRoute = AuthenticatedAppNotificationsRouteImport.update({
-  id: "/notifications",
-  path: "/notifications",
-  getParentRoute: () => AuthenticatedAppRouteRoute,
-} as any);
-const AuthenticatedAppSettingsRoute = AuthenticatedAppSettingsRouteImport.update({
-  id: "/settings",
-  path: "/settings",
-  getParentRoute: () => AuthenticatedAppRouteRoute,
-} as any);
+} as any)
+const AuthenticatedAppNotificationsRoute =
+  AuthenticatedAppNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedAppRouteRoute,
+  } as any)
+const AuthenticatedAppSettingsRoute =
+  AuthenticatedAppSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedAppRouteRoute,
+  } as any)
 const AuthenticatedAppUiRoute = AuthenticatedAppUiRouteImport.update({
-  id: "/ui",
-  path: "/ui",
+  id: '/ui',
+  path: '/ui',
   getParentRoute: () => AuthenticatedAppRouteRoute,
-} as any);
+} as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
-  id: "/",
-  path: "/",
+  id: '/',
+  path: '/',
   getParentRoute: () => AuthenticatedAdminRouteRoute,
-} as any);
-const AuthenticatedAdminFeedbackRoute = AuthenticatedAdminFeedbackRouteImport.update({
-  id: "/feedback",
-  path: "/feedback",
-  getParentRoute: () => AuthenticatedAdminRouteRoute,
-} as any);
+} as any)
+const AuthenticatedAdminFeedbackRoute =
+  AuthenticatedAdminFeedbackRouteImport.update({
+    id: '/feedback',
+    path: '/feedback',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const AuthenticatedDRunIdRoute = AuthenticatedDRunIdRouteImport.update({
-  id: "/d/$runId",
-  path: "/d/$runId",
+  id: '/d/$runId',
+  path: '/d/$runId',
   getParentRoute: () => AuthenticatedRouteRoute,
-} as any);
+} as any)
 const AuthenticatedDeRunIdRoute = AuthenticatedDeRunIdRouteImport.update({
-  id: "/de/$runId",
-  path: "/de/$runId",
+  id: '/de/$runId',
+  path: '/de/$runId',
   getParentRoute: () => AuthenticatedRouteRoute,
-} as any);
+} as any)
 const AuthenticatedClassClassClassIdRouteRoute =
   AuthenticatedClassClassClassIdRouteRouteImport.update({
-    id: "/class/$classId",
-    path: "/class/$classId",
+    id: '/class/$classId',
+    path: '/class/$classId',
     getParentRoute: () => AuthenticatedClassRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdIndexRoute =
   AuthenticatedClassClassClassIdIndexRouteImport.update({
-    id: "/",
-    path: "/",
+    id: '/',
+    path: '/',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdActivityRoute =
   AuthenticatedClassClassClassIdActivityRouteImport.update({
-    id: "/activity",
-    path: "/activity",
+    id: '/activity',
+    path: '/activity',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdAssistantTeachersRoute =
   AuthenticatedClassClassClassIdAssistantTeachersRouteImport.update({
-    id: "/assistant-teachers",
-    path: "/assistant-teachers",
+    id: '/assistant-teachers',
+    path: '/assistant-teachers',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdAttendanceRoute =
   AuthenticatedClassClassClassIdAttendanceRouteImport.update({
-    id: "/attendance",
-    path: "/attendance",
+    id: '/attendance',
+    path: '/attendance',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdBehaviorsRoute =
   AuthenticatedClassClassClassIdBehaviorsRouteImport.update({
-    id: "/behaviors",
-    path: "/behaviors",
+    id: '/behaviors',
+    path: '/behaviors',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
-const AuthenticatedClassClassClassIdCalendarRoute =
-  AuthenticatedClassClassClassIdCalendarRouteImport.update({
-    id: "/calendar",
-    path: "/calendar",
-    getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdGroupsRoute =
   AuthenticatedClassClassClassIdGroupsRouteImport.update({
-    id: "/groups",
-    path: "/groups",
+    id: '/groups',
+    path: '/groups',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdGuardiansRoute =
   AuthenticatedClassClassClassIdGuardiansRouteImport.update({
-    id: "/guardians",
-    path: "/guardians",
+    id: '/guardians',
+    path: '/guardians',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdInvitationsRoute =
   AuthenticatedClassClassClassIdInvitationsRouteImport.update({
-    id: "/invitations",
-    path: "/invitations",
+    id: '/invitations',
+    path: '/invitations',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdPermissionsRoute =
   AuthenticatedClassClassClassIdPermissionsRouteImport.update({
-    id: "/permissions",
-    path: "/permissions",
+    id: '/permissions',
+    path: '/permissions',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdPointsRoute =
   AuthenticatedClassClassClassIdPointsRouteImport.update({
-    id: "/points",
-    path: "/points",
+    id: '/points',
+    path: '/points',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdRewardsRoute =
   AuthenticatedClassClassClassIdRewardsRouteImport.update({
-    id: "/rewards",
-    path: "/rewards",
+    id: '/rewards',
+    path: '/rewards',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdSettingsRoute =
   AuthenticatedClassClassClassIdSettingsRouteImport.update({
-    id: "/settings",
-    path: "/settings",
+    id: '/settings',
+    path: '/settings',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdStudentsRoute =
   AuthenticatedClassClassClassIdStudentsRouteImport.update({
-    id: "/students",
-    path: "/students",
+    id: '/students',
+    path: '/students',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdTeachersRoute =
   AuthenticatedClassClassClassIdTeachersRouteImport.update({
-    id: "/teachers",
-    path: "/teachers",
+    id: '/teachers',
+    path: '/teachers',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdAnnouncementsIndexRoute =
   AuthenticatedClassClassClassIdAnnouncementsIndexRouteImport.update({
-    id: "/announcements/",
-    path: "/announcements/",
+    id: '/announcements/',
+    path: '/announcements/',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute =
   AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRouteImport.update({
-    id: "/announcements/$announcementId",
-    path: "/announcements/$announcementId",
+    id: '/announcements/$announcementId',
+    path: '/announcements/$announcementId',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdAssignmentsIndexRoute =
   AuthenticatedClassClassClassIdAssignmentsIndexRouteImport.update({
-    id: "/assignments/",
-    path: "/assignments/",
+    id: '/assignments/',
+    path: '/assignments/',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRoute =
   AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRouteImport.update({
-    id: "/assignments/$assignmentId",
-    path: "/assignments/$assignmentId",
+    id: '/assignments/$assignmentId',
+    path: '/assignments/$assignmentId',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdAssignmentsNewRoute =
   AuthenticatedClassClassClassIdAssignmentsNewRouteImport.update({
-    id: "/assignments/new",
-    path: "/assignments/new",
+    id: '/assignments/new',
+    path: '/assignments/new',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
+const AuthenticatedClassClassClassIdCalendarIndexRoute =
+  AuthenticatedClassClassClassIdCalendarIndexRouteImport.update({
+    id: '/calendar/',
+    path: '/calendar/',
+    getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
+  } as any)
 const AuthenticatedClassClassClassIdExpectationsIndexRoute =
   AuthenticatedClassClassClassIdExpectationsIndexRouteImport.update({
-    id: "/expectations/",
-    path: "/expectations/",
+    id: '/expectations/',
+    path: '/expectations/',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdExpectationsExpectationIdRoute =
   AuthenticatedClassClassClassIdExpectationsExpectationIdRouteImport.update({
-    id: "/expectations/$expectationId",
-    path: "/expectations/$expectationId",
+    id: '/expectations/$expectationId',
+    path: '/expectations/$expectationId',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdRazIndexRoute =
   AuthenticatedClassClassClassIdRazIndexRouteImport.update({
-    id: "/raz/",
-    path: "/raz/",
+    id: '/raz/',
+    path: '/raz/',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdRazInitialLevelsRoute =
   AuthenticatedClassClassClassIdRazInitialLevelsRouteImport.update({
-    id: "/raz/initial-levels",
-    path: "/raz/initial-levels",
+    id: '/raz/initial-levels',
+    path: '/raz/initial-levels',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdTasksIndexRoute =
   AuthenticatedClassClassClassIdTasksIndexRouteImport.update({
-    id: "/tasks/",
-    path: "/tasks/",
+    id: '/tasks/',
+    path: '/tasks/',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdTasksTaskIdRoute =
   AuthenticatedClassClassClassIdTasksTaskIdRouteImport.update({
-    id: "/tasks/$taskId",
-    path: "/tasks/$taskId",
+    id: '/tasks/$taskId',
+    path: '/tasks/$taskId',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdAssignersEquitableIndexRoute =
   AuthenticatedClassClassClassIdAssignersEquitableIndexRouteImport.update({
-    id: "/assigners/equitable/",
-    path: "/assigners/equitable/",
+    id: '/assigners/equitable/',
+    path: '/assigners/equitable/',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdAssignersEquitableNewRoute =
   AuthenticatedClassClassClassIdAssignersEquitableNewRouteImport.update({
-    id: "/assigners/equitable/new",
-    path: "/assigners/equitable/new",
+    id: '/assigners/equitable/new',
+    path: '/assigners/equitable/new',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdAssignersRandomIndexRoute =
   AuthenticatedClassClassClassIdAssignersRandomIndexRouteImport.update({
-    id: "/assigners/random/",
-    path: "/assigners/random/",
+    id: '/assigners/random/',
+    path: '/assigners/random/',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdAssignersRandomNewRoute =
   AuthenticatedClassClassClassIdAssignersRandomNewRouteImport.update({
-    id: "/assigners/random/new",
-    path: "/assigners/random/new",
+    id: '/assigners/random/new',
+    path: '/assigners/random/new',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdAssignersSeatsIndexRoute =
   AuthenticatedClassClassClassIdAssignersSeatsIndexRouteImport.update({
-    id: "/assigners/seats/",
-    path: "/assigners/seats/",
+    id: '/assigners/seats/',
+    path: '/assigners/seats/',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdAssignmentsAssignmentIdIndexRoute =
   AuthenticatedClassClassClassIdAssignmentsAssignmentIdIndexRouteImport.update({
-    id: "/",
-    path: "/",
-    getParentRoute: () => AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRoute,
-  } as any);
+    id: '/',
+    path: '/',
+    getParentRoute: () =>
+      AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRoute,
+  } as any)
 const AuthenticatedClassClassClassIdAssignmentsAssignmentIdEditRoute =
   AuthenticatedClassClassClassIdAssignmentsAssignmentIdEditRouteImport.update({
-    id: "/edit",
-    path: "/edit",
-    getParentRoute: () => AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRoute,
-  } as any);
+    id: '/edit',
+    path: '/edit',
+    getParentRoute: () =>
+      AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRoute,
+  } as any)
 const AuthenticatedClassClassClassIdAssignmentsAssignmentIdGradeRoute =
   AuthenticatedClassClassClassIdAssignmentsAssignmentIdGradeRouteImport.update({
-    id: "/grade",
-    path: "/grade",
-    getParentRoute: () => AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRoute,
-  } as any);
+    id: '/grade',
+    path: '/grade',
+    getParentRoute: () =>
+      AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRoute,
+  } as any)
 const AuthenticatedClassClassClassIdAssignmentsAssignmentIdTasksRoute =
   AuthenticatedClassClassClassIdAssignmentsAssignmentIdTasksRouteImport.update({
-    id: "/tasks",
-    path: "/tasks",
-    getParentRoute: () => AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRoute,
-  } as any);
+    id: '/tasks',
+    path: '/tasks',
+    getParentRoute: () =>
+      AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRoute,
+  } as any)
+const AuthenticatedClassClassClassIdCalendarEventEventIdRoute =
+  AuthenticatedClassClassClassIdCalendarEventEventIdRouteImport.update({
+    id: '/calendar/event/$eventId',
+    path: '/calendar/event/$eventId',
+    getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
+  } as any)
 const AuthenticatedClassClassClassIdSwGradeScalesIndexRoute =
   AuthenticatedClassClassClassIdSwGradeScalesIndexRouteImport.update({
-    id: "/sw/grade-scales/",
-    path: "/sw/grade-scales/",
+    id: '/sw/grade-scales/',
+    path: '/sw/grade-scales/',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdSwGradedSubjectsIndexRoute =
   AuthenticatedClassClassClassIdSwGradedSubjectsIndexRouteImport.update({
-    id: "/sw/graded-subjects/",
-    path: "/sw/graded-subjects/",
+    id: '/sw/graded-subjects/',
+    path: '/sw/graded-subjects/',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdSwGradedSubjectsNewRoute =
   AuthenticatedClassClassClassIdSwGradedSubjectsNewRouteImport.update({
-    id: "/sw/graded-subjects/new",
-    path: "/sw/graded-subjects/new",
+    id: '/sw/graded-subjects/new',
+    path: '/sw/graded-subjects/new',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdAssignersEquitableAssignerIdIndexRoute =
-  AuthenticatedClassClassClassIdAssignersEquitableAssignerIdIndexRouteImport.update({
-    id: "/assigners/equitable/$assignerId/",
-    path: "/assigners/equitable/$assignerId/",
-    getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  AuthenticatedClassClassClassIdAssignersEquitableAssignerIdIndexRouteImport.update(
+    {
+      id: '/assigners/equitable/$assignerId/',
+      path: '/assigners/equitable/$assignerId/',
+      getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
+    } as any,
+  )
 const AuthenticatedClassClassClassIdAssignersEquitableAssignerIdEditRoute =
-  AuthenticatedClassClassClassIdAssignersEquitableAssignerIdEditRouteImport.update({
-    id: "/assigners/equitable/$assignerId/edit",
-    path: "/assigners/equitable/$assignerId/edit",
-    getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  AuthenticatedClassClassClassIdAssignersEquitableAssignerIdEditRouteImport.update(
+    {
+      id: '/assigners/equitable/$assignerId/edit',
+      path: '/assigners/equitable/$assignerId/edit',
+      getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
+    } as any,
+  )
 const AuthenticatedClassClassClassIdAssignersEquitableAssignerIdManualRoute =
-  AuthenticatedClassClassClassIdAssignersEquitableAssignerIdManualRouteImport.update({
-    id: "/assigners/equitable/$assignerId/manual",
-    path: "/assigners/equitable/$assignerId/manual",
-    getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  AuthenticatedClassClassClassIdAssignersEquitableAssignerIdManualRouteImport.update(
+    {
+      id: '/assigners/equitable/$assignerId/manual',
+      path: '/assigners/equitable/$assignerId/manual',
+      getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
+    } as any,
+  )
 const AuthenticatedClassClassClassIdAssignersRandomAssignerIdIndexRoute =
-  AuthenticatedClassClassClassIdAssignersRandomAssignerIdIndexRouteImport.update({
-    id: "/assigners/random/$assignerId/",
-    path: "/assigners/random/$assignerId/",
-    getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  AuthenticatedClassClassClassIdAssignersRandomAssignerIdIndexRouteImport.update(
+    {
+      id: '/assigners/random/$assignerId/',
+      path: '/assigners/random/$assignerId/',
+      getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
+    } as any,
+  )
 const AuthenticatedClassClassClassIdAssignersRandomAssignerIdEditRoute =
-  AuthenticatedClassClassClassIdAssignersRandomAssignerIdEditRouteImport.update({
-    id: "/assigners/random/$assignerId/edit",
-    path: "/assigners/random/$assignerId/edit",
-    getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  AuthenticatedClassClassClassIdAssignersRandomAssignerIdEditRouteImport.update(
+    {
+      id: '/assigners/random/$assignerId/edit',
+      path: '/assigners/random/$assignerId/edit',
+      getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
+    } as any,
+  )
 const AuthenticatedClassClassClassIdAssignersSeatsChartsIndexRoute =
   AuthenticatedClassClassClassIdAssignersSeatsChartsIndexRouteImport.update({
-    id: "/assigners/seats/charts/",
-    path: "/assigners/seats/charts/",
+    id: '/assigners/seats/charts/',
+    path: '/assigners/seats/charts/',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdAssignersSeatsChartsChartIdRoute =
   AuthenticatedClassClassClassIdAssignersSeatsChartsChartIdRouteImport.update({
-    id: "/assigners/seats/charts/$chartId",
-    path: "/assigners/seats/charts/$chartId",
+    id: '/assigners/seats/charts/$chartId',
+    path: '/assigners/seats/charts/$chartId',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdAssignersSeatsConstraintsIndexRoute =
-  AuthenticatedClassClassClassIdAssignersSeatsConstraintsIndexRouteImport.update({
-    id: "/assigners/seats/constraints/",
-    path: "/assigners/seats/constraints/",
-    getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  AuthenticatedClassClassClassIdAssignersSeatsConstraintsIndexRouteImport.update(
+    {
+      id: '/assigners/seats/constraints/',
+      path: '/assigners/seats/constraints/',
+      getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
+    } as any,
+  )
 const AuthenticatedClassClassClassIdAssignersSeatsDataIndexRoute =
   AuthenticatedClassClassClassIdAssignersSeatsDataIndexRouteImport.update({
-    id: "/assigners/seats/data/",
-    path: "/assigners/seats/data/",
+    id: '/assigners/seats/data/',
+    path: '/assigners/seats/data/',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdAssignersSeatsLayoutsIndexRoute =
   AuthenticatedClassClassClassIdAssignersSeatsLayoutsIndexRouteImport.update({
-    id: "/assigners/seats/layouts/",
-    path: "/assigners/seats/layouts/",
+    id: '/assigners/seats/layouts/',
+    path: '/assigners/seats/layouts/',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdAssignersSeatsLayoutsLayoutIdRoute =
-  AuthenticatedClassClassClassIdAssignersSeatsLayoutsLayoutIdRouteImport.update({
-    id: "/assigners/seats/layouts/$layoutId",
-    path: "/assigners/seats/layouts/$layoutId",
-    getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  AuthenticatedClassClassClassIdAssignersSeatsLayoutsLayoutIdRouteImport.update(
+    {
+      id: '/assigners/seats/layouts/$layoutId',
+      path: '/assigners/seats/layouts/$layoutId',
+      getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
+    } as any,
+  )
 const AuthenticatedClassClassClassIdAssignersSeatsStatsIndexRoute =
   AuthenticatedClassClassClassIdAssignersSeatsStatsIndexRouteImport.update({
-    id: "/assigners/seats/stats/",
-    path: "/assigners/seats/stats/",
+    id: '/assigners/seats/stats/',
+    path: '/assigners/seats/stats/',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdSwGradeScalesReportsIndexRoute =
   AuthenticatedClassClassClassIdSwGradeScalesReportsIndexRouteImport.update({
-    id: "/sw/grade-scales/reports/",
-    path: "/sw/grade-scales/reports/",
+    id: '/sw/grade-scales/reports/',
+    path: '/sw/grade-scales/reports/',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdSwGradeScalesScalesIndexRoute =
   AuthenticatedClassClassClassIdSwGradeScalesScalesIndexRouteImport.update({
-    id: "/sw/grade-scales/scales/",
-    path: "/sw/grade-scales/scales/",
+    id: '/sw/grade-scales/scales/',
+    path: '/sw/grade-scales/scales/',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdSwGradeScalesSubjectsIndexRoute =
   AuthenticatedClassClassClassIdSwGradeScalesSubjectsIndexRouteImport.update({
-    id: "/sw/grade-scales/subjects/",
-    path: "/sw/grade-scales/subjects/",
+    id: '/sw/grade-scales/subjects/',
+    path: '/sw/grade-scales/subjects/',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClassClassClassIdSwGradedSubjectsGradedSubjectIdEditRoute =
-  AuthenticatedClassClassClassIdSwGradedSubjectsGradedSubjectIdEditRouteImport.update({
-    id: "/sw/graded-subjects/$gradedSubjectId/edit",
-    path: "/sw/graded-subjects/$gradedSubjectId/edit",
-    getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  AuthenticatedClassClassClassIdSwGradedSubjectsGradedSubjectIdEditRouteImport.update(
+    {
+      id: '/sw/graded-subjects/$gradedSubjectId/edit',
+      path: '/sw/graded-subjects/$gradedSubjectId/edit',
+      getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
+    } as any,
+  )
 const AuthenticatedClassClassClassIdAssignersEquitableAssignerIdDashboardIndexRoute =
-  AuthenticatedClassClassClassIdAssignersEquitableAssignerIdDashboardIndexRouteImport.update({
-    id: "/assigners/equitable/$assignerId/dashboard/",
-    path: "/assigners/equitable/$assignerId/dashboard/",
-    getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  AuthenticatedClassClassClassIdAssignersEquitableAssignerIdDashboardIndexRouteImport.update(
+    {
+      id: '/assigners/equitable/$assignerId/dashboard/',
+      path: '/assigners/equitable/$assignerId/dashboard/',
+      getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
+    } as any,
+  )
 const AuthenticatedClassClassClassIdAssignersEquitableAssignerIdDataIndexRoute =
-  AuthenticatedClassClassClassIdAssignersEquitableAssignerIdDataIndexRouteImport.update({
-    id: "/assigners/equitable/$assignerId/data/",
-    path: "/assigners/equitable/$assignerId/data/",
-    getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  AuthenticatedClassClassClassIdAssignersEquitableAssignerIdDataIndexRouteImport.update(
+    {
+      id: '/assigners/equitable/$assignerId/data/',
+      path: '/assigners/equitable/$assignerId/data/',
+      getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
+    } as any,
+  )
 const AuthenticatedClassClassClassIdAssignersRandomAssignerIdDataIndexRoute =
-  AuthenticatedClassClassClassIdAssignersRandomAssignerIdDataIndexRouteImport.update({
-    id: "/assigners/random/$assignerId/data/",
-    path: "/assigners/random/$assignerId/data/",
-    getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
+  AuthenticatedClassClassClassIdAssignersRandomAssignerIdDataIndexRouteImport.update(
+    {
+      id: '/assigners/random/$assignerId/data/',
+      path: '/assigners/random/$assignerId/data/',
+      getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
+    } as any,
+  )
 
 export interface FileRoutesByFullPath {
-  "/": typeof AuthenticatedAppIndexRoute;
-  "/join-display": typeof JoinDisplayRoute;
-  "/admin": typeof AuthenticatedAdminRouteRouteWithChildren;
-  "/$": typeof PublicSplatRoute;
-  "/login": typeof PublicLoginRoute;
-  "/unauthorized": typeof PublicUnauthorizedRoute;
-  "/a/$publicSlug": typeof APublicSlugRoute;
-  "/p/$publicSlug": typeof PPublicSlugRoute;
-  "/account": typeof AuthenticatedAppAccountRoute;
-  "/billing": typeof AuthenticatedAppBillingRoute;
-  "/feedback": typeof AuthenticatedAppFeedbackRoute;
-  "/join": typeof AuthenticatedAppJoinRoute;
-  "/notifications": typeof AuthenticatedAppNotificationsRoute;
-  "/settings": typeof AuthenticatedAppSettingsRoute;
-  "/ui": typeof AuthenticatedAppUiRoute;
-  "/admin/feedback": typeof AuthenticatedAdminFeedbackRoute;
-  "/d/$runId": typeof AuthenticatedDRunIdRoute;
-  "/de/$runId": typeof AuthenticatedDeRunIdRoute;
-  "/admin/": typeof AuthenticatedAdminIndexRoute;
-  "/class/$classId": typeof AuthenticatedClassClassClassIdRouteRouteWithChildren;
-  "/class/$classId/activity": typeof AuthenticatedClassClassClassIdActivityRoute;
-  "/class/$classId/assistant-teachers": typeof AuthenticatedClassClassClassIdAssistantTeachersRoute;
-  "/class/$classId/attendance": typeof AuthenticatedClassClassClassIdAttendanceRoute;
-  "/class/$classId/behaviors": typeof AuthenticatedClassClassClassIdBehaviorsRoute;
-  "/class/$classId/calendar": typeof AuthenticatedClassClassClassIdCalendarRoute;
-  "/class/$classId/groups": typeof AuthenticatedClassClassClassIdGroupsRoute;
-  "/class/$classId/guardians": typeof AuthenticatedClassClassClassIdGuardiansRoute;
-  "/class/$classId/invitations": typeof AuthenticatedClassClassClassIdInvitationsRoute;
-  "/class/$classId/permissions": typeof AuthenticatedClassClassClassIdPermissionsRoute;
-  "/class/$classId/points": typeof AuthenticatedClassClassClassIdPointsRoute;
-  "/class/$classId/rewards": typeof AuthenticatedClassClassClassIdRewardsRoute;
-  "/class/$classId/settings": typeof AuthenticatedClassClassClassIdSettingsRoute;
-  "/class/$classId/students": typeof AuthenticatedClassClassClassIdStudentsRoute;
-  "/class/$classId/teachers": typeof AuthenticatedClassClassClassIdTeachersRoute;
-  "/class/$classId/": typeof AuthenticatedClassClassClassIdIndexRoute;
-  "/class/$classId/assignments/$assignmentId": typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRouteWithChildren;
-  "/class/$classId/announcements/$announcementId": typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute;
-  "/class/$classId/assignments/new": typeof AuthenticatedClassClassClassIdAssignmentsNewRoute;
-  "/class/$classId/expectations/$expectationId": typeof AuthenticatedClassClassClassIdExpectationsExpectationIdRoute;
-  "/class/$classId/raz/initial-levels": typeof AuthenticatedClassClassClassIdRazInitialLevelsRoute;
-  "/class/$classId/tasks/$taskId": typeof AuthenticatedClassClassClassIdTasksTaskIdRoute;
-  "/class/$classId/announcements/": typeof AuthenticatedClassClassClassIdAnnouncementsIndexRoute;
-  "/class/$classId/assignments/": typeof AuthenticatedClassClassClassIdAssignmentsIndexRoute;
-  "/class/$classId/expectations/": typeof AuthenticatedClassClassClassIdExpectationsIndexRoute;
-  "/class/$classId/raz/": typeof AuthenticatedClassClassClassIdRazIndexRoute;
-  "/class/$classId/tasks/": typeof AuthenticatedClassClassClassIdTasksIndexRoute;
-  "/class/$classId/assigners/equitable/new": typeof AuthenticatedClassClassClassIdAssignersEquitableNewRoute;
-  "/class/$classId/assigners/random/new": typeof AuthenticatedClassClassClassIdAssignersRandomNewRoute;
-  "/class/$classId/assignments/$assignmentId/edit": typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdEditRoute;
-  "/class/$classId/assignments/$assignmentId/grade": typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdGradeRoute;
-  "/class/$classId/assignments/$assignmentId/tasks": typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdTasksRoute;
-  "/class/$classId/sw/graded-subjects/new": typeof AuthenticatedClassClassClassIdSwGradedSubjectsNewRoute;
-  "/class/$classId/assigners/equitable/": typeof AuthenticatedClassClassClassIdAssignersEquitableIndexRoute;
-  "/class/$classId/assigners/random/": typeof AuthenticatedClassClassClassIdAssignersRandomIndexRoute;
-  "/class/$classId/assigners/seats/": typeof AuthenticatedClassClassClassIdAssignersSeatsIndexRoute;
-  "/class/$classId/assignments/$assignmentId/": typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdIndexRoute;
-  "/class/$classId/sw/grade-scales/": typeof AuthenticatedClassClassClassIdSwGradeScalesIndexRoute;
-  "/class/$classId/sw/graded-subjects/": typeof AuthenticatedClassClassClassIdSwGradedSubjectsIndexRoute;
-  "/class/$classId/assigners/equitable/$assignerId/edit": typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdEditRoute;
-  "/class/$classId/assigners/equitable/$assignerId/manual": typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdManualRoute;
-  "/class/$classId/assigners/random/$assignerId/edit": typeof AuthenticatedClassClassClassIdAssignersRandomAssignerIdEditRoute;
-  "/class/$classId/assigners/seats/charts/$chartId": typeof AuthenticatedClassClassClassIdAssignersSeatsChartsChartIdRoute;
-  "/class/$classId/assigners/seats/layouts/$layoutId": typeof AuthenticatedClassClassClassIdAssignersSeatsLayoutsLayoutIdRoute;
-  "/class/$classId/sw/graded-subjects/$gradedSubjectId/edit": typeof AuthenticatedClassClassClassIdSwGradedSubjectsGradedSubjectIdEditRoute;
-  "/class/$classId/assigners/equitable/$assignerId/": typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdIndexRoute;
-  "/class/$classId/assigners/random/$assignerId/": typeof AuthenticatedClassClassClassIdAssignersRandomAssignerIdIndexRoute;
-  "/class/$classId/assigners/seats/charts/": typeof AuthenticatedClassClassClassIdAssignersSeatsChartsIndexRoute;
-  "/class/$classId/assigners/seats/constraints/": typeof AuthenticatedClassClassClassIdAssignersSeatsConstraintsIndexRoute;
-  "/class/$classId/assigners/seats/data/": typeof AuthenticatedClassClassClassIdAssignersSeatsDataIndexRoute;
-  "/class/$classId/assigners/seats/layouts/": typeof AuthenticatedClassClassClassIdAssignersSeatsLayoutsIndexRoute;
-  "/class/$classId/assigners/seats/stats/": typeof AuthenticatedClassClassClassIdAssignersSeatsStatsIndexRoute;
-  "/class/$classId/sw/grade-scales/reports/": typeof AuthenticatedClassClassClassIdSwGradeScalesReportsIndexRoute;
-  "/class/$classId/sw/grade-scales/scales/": typeof AuthenticatedClassClassClassIdSwGradeScalesScalesIndexRoute;
-  "/class/$classId/sw/grade-scales/subjects/": typeof AuthenticatedClassClassClassIdSwGradeScalesSubjectsIndexRoute;
-  "/class/$classId/assigners/equitable/$assignerId/dashboard/": typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdDashboardIndexRoute;
-  "/class/$classId/assigners/equitable/$assignerId/data/": typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdDataIndexRoute;
-  "/class/$classId/assigners/random/$assignerId/data/": typeof AuthenticatedClassClassClassIdAssignersRandomAssignerIdDataIndexRoute;
+  '/': typeof AuthenticatedAppIndexRoute
+  '/join-display': typeof JoinDisplayRoute
+  '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
+  '/$': typeof PublicSplatRoute
+  '/login': typeof PublicLoginRoute
+  '/unauthorized': typeof PublicUnauthorizedRoute
+  '/a/$publicSlug': typeof APublicSlugRoute
+  '/p/$publicSlug': typeof PPublicSlugRoute
+  '/account': typeof AuthenticatedAppAccountRoute
+  '/billing': typeof AuthenticatedAppBillingRoute
+  '/feedback': typeof AuthenticatedAppFeedbackRoute
+  '/join': typeof AuthenticatedAppJoinRoute
+  '/notifications': typeof AuthenticatedAppNotificationsRoute
+  '/settings': typeof AuthenticatedAppSettingsRoute
+  '/ui': typeof AuthenticatedAppUiRoute
+  '/admin/feedback': typeof AuthenticatedAdminFeedbackRoute
+  '/d/$runId': typeof AuthenticatedDRunIdRoute
+  '/de/$runId': typeof AuthenticatedDeRunIdRoute
+  '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/class/$classId': typeof AuthenticatedClassClassClassIdRouteRouteWithChildren
+  '/class/$classId/activity': typeof AuthenticatedClassClassClassIdActivityRoute
+  '/class/$classId/assistant-teachers': typeof AuthenticatedClassClassClassIdAssistantTeachersRoute
+  '/class/$classId/attendance': typeof AuthenticatedClassClassClassIdAttendanceRoute
+  '/class/$classId/behaviors': typeof AuthenticatedClassClassClassIdBehaviorsRoute
+  '/class/$classId/groups': typeof AuthenticatedClassClassClassIdGroupsRoute
+  '/class/$classId/guardians': typeof AuthenticatedClassClassClassIdGuardiansRoute
+  '/class/$classId/invitations': typeof AuthenticatedClassClassClassIdInvitationsRoute
+  '/class/$classId/permissions': typeof AuthenticatedClassClassClassIdPermissionsRoute
+  '/class/$classId/points': typeof AuthenticatedClassClassClassIdPointsRoute
+  '/class/$classId/rewards': typeof AuthenticatedClassClassClassIdRewardsRoute
+  '/class/$classId/settings': typeof AuthenticatedClassClassClassIdSettingsRoute
+  '/class/$classId/students': typeof AuthenticatedClassClassClassIdStudentsRoute
+  '/class/$classId/teachers': typeof AuthenticatedClassClassClassIdTeachersRoute
+  '/class/$classId/': typeof AuthenticatedClassClassClassIdIndexRoute
+  '/class/$classId/assignments/$assignmentId': typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRouteWithChildren
+  '/class/$classId/announcements/$announcementId': typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute
+  '/class/$classId/assignments/new': typeof AuthenticatedClassClassClassIdAssignmentsNewRoute
+  '/class/$classId/expectations/$expectationId': typeof AuthenticatedClassClassClassIdExpectationsExpectationIdRoute
+  '/class/$classId/raz/initial-levels': typeof AuthenticatedClassClassClassIdRazInitialLevelsRoute
+  '/class/$classId/tasks/$taskId': typeof AuthenticatedClassClassClassIdTasksTaskIdRoute
+  '/class/$classId/announcements/': typeof AuthenticatedClassClassClassIdAnnouncementsIndexRoute
+  '/class/$classId/assignments/': typeof AuthenticatedClassClassClassIdAssignmentsIndexRoute
+  '/class/$classId/calendar/': typeof AuthenticatedClassClassClassIdCalendarIndexRoute
+  '/class/$classId/expectations/': typeof AuthenticatedClassClassClassIdExpectationsIndexRoute
+  '/class/$classId/raz/': typeof AuthenticatedClassClassClassIdRazIndexRoute
+  '/class/$classId/tasks/': typeof AuthenticatedClassClassClassIdTasksIndexRoute
+  '/class/$classId/assigners/equitable/new': typeof AuthenticatedClassClassClassIdAssignersEquitableNewRoute
+  '/class/$classId/assigners/random/new': typeof AuthenticatedClassClassClassIdAssignersRandomNewRoute
+  '/class/$classId/assignments/$assignmentId/edit': typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdEditRoute
+  '/class/$classId/assignments/$assignmentId/grade': typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdGradeRoute
+  '/class/$classId/assignments/$assignmentId/tasks': typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdTasksRoute
+  '/class/$classId/calendar/event/$eventId': typeof AuthenticatedClassClassClassIdCalendarEventEventIdRoute
+  '/class/$classId/sw/graded-subjects/new': typeof AuthenticatedClassClassClassIdSwGradedSubjectsNewRoute
+  '/class/$classId/assigners/equitable/': typeof AuthenticatedClassClassClassIdAssignersEquitableIndexRoute
+  '/class/$classId/assigners/random/': typeof AuthenticatedClassClassClassIdAssignersRandomIndexRoute
+  '/class/$classId/assigners/seats/': typeof AuthenticatedClassClassClassIdAssignersSeatsIndexRoute
+  '/class/$classId/assignments/$assignmentId/': typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdIndexRoute
+  '/class/$classId/sw/grade-scales/': typeof AuthenticatedClassClassClassIdSwGradeScalesIndexRoute
+  '/class/$classId/sw/graded-subjects/': typeof AuthenticatedClassClassClassIdSwGradedSubjectsIndexRoute
+  '/class/$classId/assigners/equitable/$assignerId/edit': typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdEditRoute
+  '/class/$classId/assigners/equitable/$assignerId/manual': typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdManualRoute
+  '/class/$classId/assigners/random/$assignerId/edit': typeof AuthenticatedClassClassClassIdAssignersRandomAssignerIdEditRoute
+  '/class/$classId/assigners/seats/charts/$chartId': typeof AuthenticatedClassClassClassIdAssignersSeatsChartsChartIdRoute
+  '/class/$classId/assigners/seats/layouts/$layoutId': typeof AuthenticatedClassClassClassIdAssignersSeatsLayoutsLayoutIdRoute
+  '/class/$classId/sw/graded-subjects/$gradedSubjectId/edit': typeof AuthenticatedClassClassClassIdSwGradedSubjectsGradedSubjectIdEditRoute
+  '/class/$classId/assigners/equitable/$assignerId/': typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdIndexRoute
+  '/class/$classId/assigners/random/$assignerId/': typeof AuthenticatedClassClassClassIdAssignersRandomAssignerIdIndexRoute
+  '/class/$classId/assigners/seats/charts/': typeof AuthenticatedClassClassClassIdAssignersSeatsChartsIndexRoute
+  '/class/$classId/assigners/seats/constraints/': typeof AuthenticatedClassClassClassIdAssignersSeatsConstraintsIndexRoute
+  '/class/$classId/assigners/seats/data/': typeof AuthenticatedClassClassClassIdAssignersSeatsDataIndexRoute
+  '/class/$classId/assigners/seats/layouts/': typeof AuthenticatedClassClassClassIdAssignersSeatsLayoutsIndexRoute
+  '/class/$classId/assigners/seats/stats/': typeof AuthenticatedClassClassClassIdAssignersSeatsStatsIndexRoute
+  '/class/$classId/sw/grade-scales/reports/': typeof AuthenticatedClassClassClassIdSwGradeScalesReportsIndexRoute
+  '/class/$classId/sw/grade-scales/scales/': typeof AuthenticatedClassClassClassIdSwGradeScalesScalesIndexRoute
+  '/class/$classId/sw/grade-scales/subjects/': typeof AuthenticatedClassClassClassIdSwGradeScalesSubjectsIndexRoute
+  '/class/$classId/assigners/equitable/$assignerId/dashboard/': typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdDashboardIndexRoute
+  '/class/$classId/assigners/equitable/$assignerId/data/': typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdDataIndexRoute
+  '/class/$classId/assigners/random/$assignerId/data/': typeof AuthenticatedClassClassClassIdAssignersRandomAssignerIdDataIndexRoute
 }
 export interface FileRoutesByTo {
-  "/": typeof AuthenticatedAppIndexRoute;
-  "/join-display": typeof JoinDisplayRoute;
-  "/$": typeof PublicSplatRoute;
-  "/login": typeof PublicLoginRoute;
-  "/unauthorized": typeof PublicUnauthorizedRoute;
-  "/a/$publicSlug": typeof APublicSlugRoute;
-  "/p/$publicSlug": typeof PPublicSlugRoute;
-  "/account": typeof AuthenticatedAppAccountRoute;
-  "/billing": typeof AuthenticatedAppBillingRoute;
-  "/feedback": typeof AuthenticatedAppFeedbackRoute;
-  "/join": typeof AuthenticatedAppJoinRoute;
-  "/notifications": typeof AuthenticatedAppNotificationsRoute;
-  "/settings": typeof AuthenticatedAppSettingsRoute;
-  "/ui": typeof AuthenticatedAppUiRoute;
-  "/admin/feedback": typeof AuthenticatedAdminFeedbackRoute;
-  "/d/$runId": typeof AuthenticatedDRunIdRoute;
-  "/de/$runId": typeof AuthenticatedDeRunIdRoute;
-  "/admin": typeof AuthenticatedAdminIndexRoute;
-  "/class/$classId/activity": typeof AuthenticatedClassClassClassIdActivityRoute;
-  "/class/$classId/assistant-teachers": typeof AuthenticatedClassClassClassIdAssistantTeachersRoute;
-  "/class/$classId/attendance": typeof AuthenticatedClassClassClassIdAttendanceRoute;
-  "/class/$classId/behaviors": typeof AuthenticatedClassClassClassIdBehaviorsRoute;
-  "/class/$classId/calendar": typeof AuthenticatedClassClassClassIdCalendarRoute;
-  "/class/$classId/groups": typeof AuthenticatedClassClassClassIdGroupsRoute;
-  "/class/$classId/guardians": typeof AuthenticatedClassClassClassIdGuardiansRoute;
-  "/class/$classId/invitations": typeof AuthenticatedClassClassClassIdInvitationsRoute;
-  "/class/$classId/permissions": typeof AuthenticatedClassClassClassIdPermissionsRoute;
-  "/class/$classId/points": typeof AuthenticatedClassClassClassIdPointsRoute;
-  "/class/$classId/rewards": typeof AuthenticatedClassClassClassIdRewardsRoute;
-  "/class/$classId/settings": typeof AuthenticatedClassClassClassIdSettingsRoute;
-  "/class/$classId/students": typeof AuthenticatedClassClassClassIdStudentsRoute;
-  "/class/$classId/teachers": typeof AuthenticatedClassClassClassIdTeachersRoute;
-  "/class/$classId": typeof AuthenticatedClassClassClassIdIndexRoute;
-  "/class/$classId/announcements/$announcementId": typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute;
-  "/class/$classId/assignments/new": typeof AuthenticatedClassClassClassIdAssignmentsNewRoute;
-  "/class/$classId/expectations/$expectationId": typeof AuthenticatedClassClassClassIdExpectationsExpectationIdRoute;
-  "/class/$classId/raz/initial-levels": typeof AuthenticatedClassClassClassIdRazInitialLevelsRoute;
-  "/class/$classId/tasks/$taskId": typeof AuthenticatedClassClassClassIdTasksTaskIdRoute;
-  "/class/$classId/announcements": typeof AuthenticatedClassClassClassIdAnnouncementsIndexRoute;
-  "/class/$classId/assignments": typeof AuthenticatedClassClassClassIdAssignmentsIndexRoute;
-  "/class/$classId/expectations": typeof AuthenticatedClassClassClassIdExpectationsIndexRoute;
-  "/class/$classId/raz": typeof AuthenticatedClassClassClassIdRazIndexRoute;
-  "/class/$classId/tasks": typeof AuthenticatedClassClassClassIdTasksIndexRoute;
-  "/class/$classId/assigners/equitable/new": typeof AuthenticatedClassClassClassIdAssignersEquitableNewRoute;
-  "/class/$classId/assigners/random/new": typeof AuthenticatedClassClassClassIdAssignersRandomNewRoute;
-  "/class/$classId/assignments/$assignmentId/edit": typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdEditRoute;
-  "/class/$classId/assignments/$assignmentId/grade": typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdGradeRoute;
-  "/class/$classId/assignments/$assignmentId/tasks": typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdTasksRoute;
-  "/class/$classId/sw/graded-subjects/new": typeof AuthenticatedClassClassClassIdSwGradedSubjectsNewRoute;
-  "/class/$classId/assigners/equitable": typeof AuthenticatedClassClassClassIdAssignersEquitableIndexRoute;
-  "/class/$classId/assigners/random": typeof AuthenticatedClassClassClassIdAssignersRandomIndexRoute;
-  "/class/$classId/assigners/seats": typeof AuthenticatedClassClassClassIdAssignersSeatsIndexRoute;
-  "/class/$classId/assignments/$assignmentId": typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdIndexRoute;
-  "/class/$classId/sw/grade-scales": typeof AuthenticatedClassClassClassIdSwGradeScalesIndexRoute;
-  "/class/$classId/sw/graded-subjects": typeof AuthenticatedClassClassClassIdSwGradedSubjectsIndexRoute;
-  "/class/$classId/assigners/equitable/$assignerId/edit": typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdEditRoute;
-  "/class/$classId/assigners/equitable/$assignerId/manual": typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdManualRoute;
-  "/class/$classId/assigners/random/$assignerId/edit": typeof AuthenticatedClassClassClassIdAssignersRandomAssignerIdEditRoute;
-  "/class/$classId/assigners/seats/charts/$chartId": typeof AuthenticatedClassClassClassIdAssignersSeatsChartsChartIdRoute;
-  "/class/$classId/assigners/seats/layouts/$layoutId": typeof AuthenticatedClassClassClassIdAssignersSeatsLayoutsLayoutIdRoute;
-  "/class/$classId/sw/graded-subjects/$gradedSubjectId/edit": typeof AuthenticatedClassClassClassIdSwGradedSubjectsGradedSubjectIdEditRoute;
-  "/class/$classId/assigners/equitable/$assignerId": typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdIndexRoute;
-  "/class/$classId/assigners/random/$assignerId": typeof AuthenticatedClassClassClassIdAssignersRandomAssignerIdIndexRoute;
-  "/class/$classId/assigners/seats/charts": typeof AuthenticatedClassClassClassIdAssignersSeatsChartsIndexRoute;
-  "/class/$classId/assigners/seats/constraints": typeof AuthenticatedClassClassClassIdAssignersSeatsConstraintsIndexRoute;
-  "/class/$classId/assigners/seats/data": typeof AuthenticatedClassClassClassIdAssignersSeatsDataIndexRoute;
-  "/class/$classId/assigners/seats/layouts": typeof AuthenticatedClassClassClassIdAssignersSeatsLayoutsIndexRoute;
-  "/class/$classId/assigners/seats/stats": typeof AuthenticatedClassClassClassIdAssignersSeatsStatsIndexRoute;
-  "/class/$classId/sw/grade-scales/reports": typeof AuthenticatedClassClassClassIdSwGradeScalesReportsIndexRoute;
-  "/class/$classId/sw/grade-scales/scales": typeof AuthenticatedClassClassClassIdSwGradeScalesScalesIndexRoute;
-  "/class/$classId/sw/grade-scales/subjects": typeof AuthenticatedClassClassClassIdSwGradeScalesSubjectsIndexRoute;
-  "/class/$classId/assigners/equitable/$assignerId/dashboard": typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdDashboardIndexRoute;
-  "/class/$classId/assigners/equitable/$assignerId/data": typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdDataIndexRoute;
-  "/class/$classId/assigners/random/$assignerId/data": typeof AuthenticatedClassClassClassIdAssignersRandomAssignerIdDataIndexRoute;
+  '/': typeof AuthenticatedAppIndexRoute
+  '/join-display': typeof JoinDisplayRoute
+  '/$': typeof PublicSplatRoute
+  '/login': typeof PublicLoginRoute
+  '/unauthorized': typeof PublicUnauthorizedRoute
+  '/a/$publicSlug': typeof APublicSlugRoute
+  '/p/$publicSlug': typeof PPublicSlugRoute
+  '/account': typeof AuthenticatedAppAccountRoute
+  '/billing': typeof AuthenticatedAppBillingRoute
+  '/feedback': typeof AuthenticatedAppFeedbackRoute
+  '/join': typeof AuthenticatedAppJoinRoute
+  '/notifications': typeof AuthenticatedAppNotificationsRoute
+  '/settings': typeof AuthenticatedAppSettingsRoute
+  '/ui': typeof AuthenticatedAppUiRoute
+  '/admin/feedback': typeof AuthenticatedAdminFeedbackRoute
+  '/d/$runId': typeof AuthenticatedDRunIdRoute
+  '/de/$runId': typeof AuthenticatedDeRunIdRoute
+  '/admin': typeof AuthenticatedAdminIndexRoute
+  '/class/$classId/activity': typeof AuthenticatedClassClassClassIdActivityRoute
+  '/class/$classId/assistant-teachers': typeof AuthenticatedClassClassClassIdAssistantTeachersRoute
+  '/class/$classId/attendance': typeof AuthenticatedClassClassClassIdAttendanceRoute
+  '/class/$classId/behaviors': typeof AuthenticatedClassClassClassIdBehaviorsRoute
+  '/class/$classId/groups': typeof AuthenticatedClassClassClassIdGroupsRoute
+  '/class/$classId/guardians': typeof AuthenticatedClassClassClassIdGuardiansRoute
+  '/class/$classId/invitations': typeof AuthenticatedClassClassClassIdInvitationsRoute
+  '/class/$classId/permissions': typeof AuthenticatedClassClassClassIdPermissionsRoute
+  '/class/$classId/points': typeof AuthenticatedClassClassClassIdPointsRoute
+  '/class/$classId/rewards': typeof AuthenticatedClassClassClassIdRewardsRoute
+  '/class/$classId/settings': typeof AuthenticatedClassClassClassIdSettingsRoute
+  '/class/$classId/students': typeof AuthenticatedClassClassClassIdStudentsRoute
+  '/class/$classId/teachers': typeof AuthenticatedClassClassClassIdTeachersRoute
+  '/class/$classId': typeof AuthenticatedClassClassClassIdIndexRoute
+  '/class/$classId/announcements/$announcementId': typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute
+  '/class/$classId/assignments/new': typeof AuthenticatedClassClassClassIdAssignmentsNewRoute
+  '/class/$classId/expectations/$expectationId': typeof AuthenticatedClassClassClassIdExpectationsExpectationIdRoute
+  '/class/$classId/raz/initial-levels': typeof AuthenticatedClassClassClassIdRazInitialLevelsRoute
+  '/class/$classId/tasks/$taskId': typeof AuthenticatedClassClassClassIdTasksTaskIdRoute
+  '/class/$classId/announcements': typeof AuthenticatedClassClassClassIdAnnouncementsIndexRoute
+  '/class/$classId/assignments': typeof AuthenticatedClassClassClassIdAssignmentsIndexRoute
+  '/class/$classId/calendar': typeof AuthenticatedClassClassClassIdCalendarIndexRoute
+  '/class/$classId/expectations': typeof AuthenticatedClassClassClassIdExpectationsIndexRoute
+  '/class/$classId/raz': typeof AuthenticatedClassClassClassIdRazIndexRoute
+  '/class/$classId/tasks': typeof AuthenticatedClassClassClassIdTasksIndexRoute
+  '/class/$classId/assigners/equitable/new': typeof AuthenticatedClassClassClassIdAssignersEquitableNewRoute
+  '/class/$classId/assigners/random/new': typeof AuthenticatedClassClassClassIdAssignersRandomNewRoute
+  '/class/$classId/assignments/$assignmentId/edit': typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdEditRoute
+  '/class/$classId/assignments/$assignmentId/grade': typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdGradeRoute
+  '/class/$classId/assignments/$assignmentId/tasks': typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdTasksRoute
+  '/class/$classId/calendar/event/$eventId': typeof AuthenticatedClassClassClassIdCalendarEventEventIdRoute
+  '/class/$classId/sw/graded-subjects/new': typeof AuthenticatedClassClassClassIdSwGradedSubjectsNewRoute
+  '/class/$classId/assigners/equitable': typeof AuthenticatedClassClassClassIdAssignersEquitableIndexRoute
+  '/class/$classId/assigners/random': typeof AuthenticatedClassClassClassIdAssignersRandomIndexRoute
+  '/class/$classId/assigners/seats': typeof AuthenticatedClassClassClassIdAssignersSeatsIndexRoute
+  '/class/$classId/assignments/$assignmentId': typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdIndexRoute
+  '/class/$classId/sw/grade-scales': typeof AuthenticatedClassClassClassIdSwGradeScalesIndexRoute
+  '/class/$classId/sw/graded-subjects': typeof AuthenticatedClassClassClassIdSwGradedSubjectsIndexRoute
+  '/class/$classId/assigners/equitable/$assignerId/edit': typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdEditRoute
+  '/class/$classId/assigners/equitable/$assignerId/manual': typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdManualRoute
+  '/class/$classId/assigners/random/$assignerId/edit': typeof AuthenticatedClassClassClassIdAssignersRandomAssignerIdEditRoute
+  '/class/$classId/assigners/seats/charts/$chartId': typeof AuthenticatedClassClassClassIdAssignersSeatsChartsChartIdRoute
+  '/class/$classId/assigners/seats/layouts/$layoutId': typeof AuthenticatedClassClassClassIdAssignersSeatsLayoutsLayoutIdRoute
+  '/class/$classId/sw/graded-subjects/$gradedSubjectId/edit': typeof AuthenticatedClassClassClassIdSwGradedSubjectsGradedSubjectIdEditRoute
+  '/class/$classId/assigners/equitable/$assignerId': typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdIndexRoute
+  '/class/$classId/assigners/random/$assignerId': typeof AuthenticatedClassClassClassIdAssignersRandomAssignerIdIndexRoute
+  '/class/$classId/assigners/seats/charts': typeof AuthenticatedClassClassClassIdAssignersSeatsChartsIndexRoute
+  '/class/$classId/assigners/seats/constraints': typeof AuthenticatedClassClassClassIdAssignersSeatsConstraintsIndexRoute
+  '/class/$classId/assigners/seats/data': typeof AuthenticatedClassClassClassIdAssignersSeatsDataIndexRoute
+  '/class/$classId/assigners/seats/layouts': typeof AuthenticatedClassClassClassIdAssignersSeatsLayoutsIndexRoute
+  '/class/$classId/assigners/seats/stats': typeof AuthenticatedClassClassClassIdAssignersSeatsStatsIndexRoute
+  '/class/$classId/sw/grade-scales/reports': typeof AuthenticatedClassClassClassIdSwGradeScalesReportsIndexRoute
+  '/class/$classId/sw/grade-scales/scales': typeof AuthenticatedClassClassClassIdSwGradeScalesScalesIndexRoute
+  '/class/$classId/sw/grade-scales/subjects': typeof AuthenticatedClassClassClassIdSwGradeScalesSubjectsIndexRoute
+  '/class/$classId/assigners/equitable/$assignerId/dashboard': typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdDashboardIndexRoute
+  '/class/$classId/assigners/equitable/$assignerId/data': typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdDataIndexRoute
+  '/class/$classId/assigners/random/$assignerId/data': typeof AuthenticatedClassClassClassIdAssignersRandomAssignerIdDataIndexRoute
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport;
-  "/_authenticated": typeof AuthenticatedRouteRouteWithChildren;
-  "/_public": typeof PublicRouteRouteWithChildren;
-  "/join-display": typeof JoinDisplayRoute;
-  "/_authenticated/_app": typeof AuthenticatedAppRouteRouteWithChildren;
-  "/_authenticated/_class": typeof AuthenticatedClassRouteRouteWithChildren;
-  "/_authenticated/admin": typeof AuthenticatedAdminRouteRouteWithChildren;
-  "/_public/$": typeof PublicSplatRoute;
-  "/_public/login": typeof PublicLoginRoute;
-  "/_public/unauthorized": typeof PublicUnauthorizedRoute;
-  "/a/$publicSlug": typeof APublicSlugRoute;
-  "/p/$publicSlug": typeof PPublicSlugRoute;
-  "/_authenticated/_app/account": typeof AuthenticatedAppAccountRoute;
-  "/_authenticated/_app/billing": typeof AuthenticatedAppBillingRoute;
-  "/_authenticated/_app/feedback": typeof AuthenticatedAppFeedbackRoute;
-  "/_authenticated/_app/join": typeof AuthenticatedAppJoinRoute;
-  "/_authenticated/_app/notifications": typeof AuthenticatedAppNotificationsRoute;
-  "/_authenticated/_app/settings": typeof AuthenticatedAppSettingsRoute;
-  "/_authenticated/_app/ui": typeof AuthenticatedAppUiRoute;
-  "/_authenticated/admin/feedback": typeof AuthenticatedAdminFeedbackRoute;
-  "/_authenticated/d/$runId": typeof AuthenticatedDRunIdRoute;
-  "/_authenticated/de/$runId": typeof AuthenticatedDeRunIdRoute;
-  "/_authenticated/_app/": typeof AuthenticatedAppIndexRoute;
-  "/_authenticated/admin/": typeof AuthenticatedAdminIndexRoute;
-  "/_authenticated/_class/class/$classId": typeof AuthenticatedClassClassClassIdRouteRouteWithChildren;
-  "/_authenticated/_class/class/$classId/activity": typeof AuthenticatedClassClassClassIdActivityRoute;
-  "/_authenticated/_class/class/$classId/assistant-teachers": typeof AuthenticatedClassClassClassIdAssistantTeachersRoute;
-  "/_authenticated/_class/class/$classId/attendance": typeof AuthenticatedClassClassClassIdAttendanceRoute;
-  "/_authenticated/_class/class/$classId/behaviors": typeof AuthenticatedClassClassClassIdBehaviorsRoute;
-  "/_authenticated/_class/class/$classId/calendar": typeof AuthenticatedClassClassClassIdCalendarRoute;
-  "/_authenticated/_class/class/$classId/groups": typeof AuthenticatedClassClassClassIdGroupsRoute;
-  "/_authenticated/_class/class/$classId/guardians": typeof AuthenticatedClassClassClassIdGuardiansRoute;
-  "/_authenticated/_class/class/$classId/invitations": typeof AuthenticatedClassClassClassIdInvitationsRoute;
-  "/_authenticated/_class/class/$classId/permissions": typeof AuthenticatedClassClassClassIdPermissionsRoute;
-  "/_authenticated/_class/class/$classId/points": typeof AuthenticatedClassClassClassIdPointsRoute;
-  "/_authenticated/_class/class/$classId/rewards": typeof AuthenticatedClassClassClassIdRewardsRoute;
-  "/_authenticated/_class/class/$classId/settings": typeof AuthenticatedClassClassClassIdSettingsRoute;
-  "/_authenticated/_class/class/$classId/students": typeof AuthenticatedClassClassClassIdStudentsRoute;
-  "/_authenticated/_class/class/$classId/teachers": typeof AuthenticatedClassClassClassIdTeachersRoute;
-  "/_authenticated/_class/class/$classId/": typeof AuthenticatedClassClassClassIdIndexRoute;
-  "/_authenticated/_class/class/$classId/assignments/$assignmentId": typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRouteWithChildren;
-  "/_authenticated/_class/class/$classId/announcements/$announcementId": typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute;
-  "/_authenticated/_class/class/$classId/assignments/new": typeof AuthenticatedClassClassClassIdAssignmentsNewRoute;
-  "/_authenticated/_class/class/$classId/expectations/$expectationId": typeof AuthenticatedClassClassClassIdExpectationsExpectationIdRoute;
-  "/_authenticated/_class/class/$classId/raz/initial-levels": typeof AuthenticatedClassClassClassIdRazInitialLevelsRoute;
-  "/_authenticated/_class/class/$classId/tasks/$taskId": typeof AuthenticatedClassClassClassIdTasksTaskIdRoute;
-  "/_authenticated/_class/class/$classId/announcements/": typeof AuthenticatedClassClassClassIdAnnouncementsIndexRoute;
-  "/_authenticated/_class/class/$classId/assignments/": typeof AuthenticatedClassClassClassIdAssignmentsIndexRoute;
-  "/_authenticated/_class/class/$classId/expectations/": typeof AuthenticatedClassClassClassIdExpectationsIndexRoute;
-  "/_authenticated/_class/class/$classId/raz/": typeof AuthenticatedClassClassClassIdRazIndexRoute;
-  "/_authenticated/_class/class/$classId/tasks/": typeof AuthenticatedClassClassClassIdTasksIndexRoute;
-  "/_authenticated/_class/class/$classId/assigners/equitable/new": typeof AuthenticatedClassClassClassIdAssignersEquitableNewRoute;
-  "/_authenticated/_class/class/$classId/assigners/random/new": typeof AuthenticatedClassClassClassIdAssignersRandomNewRoute;
-  "/_authenticated/_class/class/$classId/assignments/$assignmentId/edit": typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdEditRoute;
-  "/_authenticated/_class/class/$classId/assignments/$assignmentId/grade": typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdGradeRoute;
-  "/_authenticated/_class/class/$classId/assignments/$assignmentId/tasks": typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdTasksRoute;
-  "/_authenticated/_class/class/$classId/sw/graded-subjects/new": typeof AuthenticatedClassClassClassIdSwGradedSubjectsNewRoute;
-  "/_authenticated/_class/class/$classId/assigners/equitable/": typeof AuthenticatedClassClassClassIdAssignersEquitableIndexRoute;
-  "/_authenticated/_class/class/$classId/assigners/random/": typeof AuthenticatedClassClassClassIdAssignersRandomIndexRoute;
-  "/_authenticated/_class/class/$classId/assigners/seats/": typeof AuthenticatedClassClassClassIdAssignersSeatsIndexRoute;
-  "/_authenticated/_class/class/$classId/assignments/$assignmentId/": typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdIndexRoute;
-  "/_authenticated/_class/class/$classId/sw/grade-scales/": typeof AuthenticatedClassClassClassIdSwGradeScalesIndexRoute;
-  "/_authenticated/_class/class/$classId/sw/graded-subjects/": typeof AuthenticatedClassClassClassIdSwGradedSubjectsIndexRoute;
-  "/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/edit": typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdEditRoute;
-  "/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/manual": typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdManualRoute;
-  "/_authenticated/_class/class/$classId/assigners/random/$assignerId/edit": typeof AuthenticatedClassClassClassIdAssignersRandomAssignerIdEditRoute;
-  "/_authenticated/_class/class/$classId/assigners/seats/charts/$chartId": typeof AuthenticatedClassClassClassIdAssignersSeatsChartsChartIdRoute;
-  "/_authenticated/_class/class/$classId/assigners/seats/layouts/$layoutId": typeof AuthenticatedClassClassClassIdAssignersSeatsLayoutsLayoutIdRoute;
-  "/_authenticated/_class/class/$classId/sw/graded-subjects/$gradedSubjectId/edit": typeof AuthenticatedClassClassClassIdSwGradedSubjectsGradedSubjectIdEditRoute;
-  "/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/": typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdIndexRoute;
-  "/_authenticated/_class/class/$classId/assigners/random/$assignerId/": typeof AuthenticatedClassClassClassIdAssignersRandomAssignerIdIndexRoute;
-  "/_authenticated/_class/class/$classId/assigners/seats/charts/": typeof AuthenticatedClassClassClassIdAssignersSeatsChartsIndexRoute;
-  "/_authenticated/_class/class/$classId/assigners/seats/constraints/": typeof AuthenticatedClassClassClassIdAssignersSeatsConstraintsIndexRoute;
-  "/_authenticated/_class/class/$classId/assigners/seats/data/": typeof AuthenticatedClassClassClassIdAssignersSeatsDataIndexRoute;
-  "/_authenticated/_class/class/$classId/assigners/seats/layouts/": typeof AuthenticatedClassClassClassIdAssignersSeatsLayoutsIndexRoute;
-  "/_authenticated/_class/class/$classId/assigners/seats/stats/": typeof AuthenticatedClassClassClassIdAssignersSeatsStatsIndexRoute;
-  "/_authenticated/_class/class/$classId/sw/grade-scales/reports/": typeof AuthenticatedClassClassClassIdSwGradeScalesReportsIndexRoute;
-  "/_authenticated/_class/class/$classId/sw/grade-scales/scales/": typeof AuthenticatedClassClassClassIdSwGradeScalesScalesIndexRoute;
-  "/_authenticated/_class/class/$classId/sw/grade-scales/subjects/": typeof AuthenticatedClassClassClassIdSwGradeScalesSubjectsIndexRoute;
-  "/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/dashboard/": typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdDashboardIndexRoute;
-  "/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/data/": typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdDataIndexRoute;
-  "/_authenticated/_class/class/$classId/assigners/random/$assignerId/data/": typeof AuthenticatedClassClassClassIdAssignersRandomAssignerIdDataIndexRoute;
+  __root__: typeof rootRouteImport
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/_public': typeof PublicRouteRouteWithChildren
+  '/join-display': typeof JoinDisplayRoute
+  '/_authenticated/_app': typeof AuthenticatedAppRouteRouteWithChildren
+  '/_authenticated/_class': typeof AuthenticatedClassRouteRouteWithChildren
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
+  '/_public/$': typeof PublicSplatRoute
+  '/_public/login': typeof PublicLoginRoute
+  '/_public/unauthorized': typeof PublicUnauthorizedRoute
+  '/a/$publicSlug': typeof APublicSlugRoute
+  '/p/$publicSlug': typeof PPublicSlugRoute
+  '/_authenticated/_app/account': typeof AuthenticatedAppAccountRoute
+  '/_authenticated/_app/billing': typeof AuthenticatedAppBillingRoute
+  '/_authenticated/_app/feedback': typeof AuthenticatedAppFeedbackRoute
+  '/_authenticated/_app/join': typeof AuthenticatedAppJoinRoute
+  '/_authenticated/_app/notifications': typeof AuthenticatedAppNotificationsRoute
+  '/_authenticated/_app/settings': typeof AuthenticatedAppSettingsRoute
+  '/_authenticated/_app/ui': typeof AuthenticatedAppUiRoute
+  '/_authenticated/admin/feedback': typeof AuthenticatedAdminFeedbackRoute
+  '/_authenticated/d/$runId': typeof AuthenticatedDRunIdRoute
+  '/_authenticated/de/$runId': typeof AuthenticatedDeRunIdRoute
+  '/_authenticated/_app/': typeof AuthenticatedAppIndexRoute
+  '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/_class/class/$classId': typeof AuthenticatedClassClassClassIdRouteRouteWithChildren
+  '/_authenticated/_class/class/$classId/activity': typeof AuthenticatedClassClassClassIdActivityRoute
+  '/_authenticated/_class/class/$classId/assistant-teachers': typeof AuthenticatedClassClassClassIdAssistantTeachersRoute
+  '/_authenticated/_class/class/$classId/attendance': typeof AuthenticatedClassClassClassIdAttendanceRoute
+  '/_authenticated/_class/class/$classId/behaviors': typeof AuthenticatedClassClassClassIdBehaviorsRoute
+  '/_authenticated/_class/class/$classId/groups': typeof AuthenticatedClassClassClassIdGroupsRoute
+  '/_authenticated/_class/class/$classId/guardians': typeof AuthenticatedClassClassClassIdGuardiansRoute
+  '/_authenticated/_class/class/$classId/invitations': typeof AuthenticatedClassClassClassIdInvitationsRoute
+  '/_authenticated/_class/class/$classId/permissions': typeof AuthenticatedClassClassClassIdPermissionsRoute
+  '/_authenticated/_class/class/$classId/points': typeof AuthenticatedClassClassClassIdPointsRoute
+  '/_authenticated/_class/class/$classId/rewards': typeof AuthenticatedClassClassClassIdRewardsRoute
+  '/_authenticated/_class/class/$classId/settings': typeof AuthenticatedClassClassClassIdSettingsRoute
+  '/_authenticated/_class/class/$classId/students': typeof AuthenticatedClassClassClassIdStudentsRoute
+  '/_authenticated/_class/class/$classId/teachers': typeof AuthenticatedClassClassClassIdTeachersRoute
+  '/_authenticated/_class/class/$classId/': typeof AuthenticatedClassClassClassIdIndexRoute
+  '/_authenticated/_class/class/$classId/assignments/$assignmentId': typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRouteWithChildren
+  '/_authenticated/_class/class/$classId/announcements/$announcementId': typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute
+  '/_authenticated/_class/class/$classId/assignments/new': typeof AuthenticatedClassClassClassIdAssignmentsNewRoute
+  '/_authenticated/_class/class/$classId/expectations/$expectationId': typeof AuthenticatedClassClassClassIdExpectationsExpectationIdRoute
+  '/_authenticated/_class/class/$classId/raz/initial-levels': typeof AuthenticatedClassClassClassIdRazInitialLevelsRoute
+  '/_authenticated/_class/class/$classId/tasks/$taskId': typeof AuthenticatedClassClassClassIdTasksTaskIdRoute
+  '/_authenticated/_class/class/$classId/announcements/': typeof AuthenticatedClassClassClassIdAnnouncementsIndexRoute
+  '/_authenticated/_class/class/$classId/assignments/': typeof AuthenticatedClassClassClassIdAssignmentsIndexRoute
+  '/_authenticated/_class/class/$classId/calendar/': typeof AuthenticatedClassClassClassIdCalendarIndexRoute
+  '/_authenticated/_class/class/$classId/expectations/': typeof AuthenticatedClassClassClassIdExpectationsIndexRoute
+  '/_authenticated/_class/class/$classId/raz/': typeof AuthenticatedClassClassClassIdRazIndexRoute
+  '/_authenticated/_class/class/$classId/tasks/': typeof AuthenticatedClassClassClassIdTasksIndexRoute
+  '/_authenticated/_class/class/$classId/assigners/equitable/new': typeof AuthenticatedClassClassClassIdAssignersEquitableNewRoute
+  '/_authenticated/_class/class/$classId/assigners/random/new': typeof AuthenticatedClassClassClassIdAssignersRandomNewRoute
+  '/_authenticated/_class/class/$classId/assignments/$assignmentId/edit': typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdEditRoute
+  '/_authenticated/_class/class/$classId/assignments/$assignmentId/grade': typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdGradeRoute
+  '/_authenticated/_class/class/$classId/assignments/$assignmentId/tasks': typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdTasksRoute
+  '/_authenticated/_class/class/$classId/calendar/event/$eventId': typeof AuthenticatedClassClassClassIdCalendarEventEventIdRoute
+  '/_authenticated/_class/class/$classId/sw/graded-subjects/new': typeof AuthenticatedClassClassClassIdSwGradedSubjectsNewRoute
+  '/_authenticated/_class/class/$classId/assigners/equitable/': typeof AuthenticatedClassClassClassIdAssignersEquitableIndexRoute
+  '/_authenticated/_class/class/$classId/assigners/random/': typeof AuthenticatedClassClassClassIdAssignersRandomIndexRoute
+  '/_authenticated/_class/class/$classId/assigners/seats/': typeof AuthenticatedClassClassClassIdAssignersSeatsIndexRoute
+  '/_authenticated/_class/class/$classId/assignments/$assignmentId/': typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdIndexRoute
+  '/_authenticated/_class/class/$classId/sw/grade-scales/': typeof AuthenticatedClassClassClassIdSwGradeScalesIndexRoute
+  '/_authenticated/_class/class/$classId/sw/graded-subjects/': typeof AuthenticatedClassClassClassIdSwGradedSubjectsIndexRoute
+  '/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/edit': typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdEditRoute
+  '/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/manual': typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdManualRoute
+  '/_authenticated/_class/class/$classId/assigners/random/$assignerId/edit': typeof AuthenticatedClassClassClassIdAssignersRandomAssignerIdEditRoute
+  '/_authenticated/_class/class/$classId/assigners/seats/charts/$chartId': typeof AuthenticatedClassClassClassIdAssignersSeatsChartsChartIdRoute
+  '/_authenticated/_class/class/$classId/assigners/seats/layouts/$layoutId': typeof AuthenticatedClassClassClassIdAssignersSeatsLayoutsLayoutIdRoute
+  '/_authenticated/_class/class/$classId/sw/graded-subjects/$gradedSubjectId/edit': typeof AuthenticatedClassClassClassIdSwGradedSubjectsGradedSubjectIdEditRoute
+  '/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/': typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdIndexRoute
+  '/_authenticated/_class/class/$classId/assigners/random/$assignerId/': typeof AuthenticatedClassClassClassIdAssignersRandomAssignerIdIndexRoute
+  '/_authenticated/_class/class/$classId/assigners/seats/charts/': typeof AuthenticatedClassClassClassIdAssignersSeatsChartsIndexRoute
+  '/_authenticated/_class/class/$classId/assigners/seats/constraints/': typeof AuthenticatedClassClassClassIdAssignersSeatsConstraintsIndexRoute
+  '/_authenticated/_class/class/$classId/assigners/seats/data/': typeof AuthenticatedClassClassClassIdAssignersSeatsDataIndexRoute
+  '/_authenticated/_class/class/$classId/assigners/seats/layouts/': typeof AuthenticatedClassClassClassIdAssignersSeatsLayoutsIndexRoute
+  '/_authenticated/_class/class/$classId/assigners/seats/stats/': typeof AuthenticatedClassClassClassIdAssignersSeatsStatsIndexRoute
+  '/_authenticated/_class/class/$classId/sw/grade-scales/reports/': typeof AuthenticatedClassClassClassIdSwGradeScalesReportsIndexRoute
+  '/_authenticated/_class/class/$classId/sw/grade-scales/scales/': typeof AuthenticatedClassClassClassIdSwGradeScalesScalesIndexRoute
+  '/_authenticated/_class/class/$classId/sw/grade-scales/subjects/': typeof AuthenticatedClassClassClassIdSwGradeScalesSubjectsIndexRoute
+  '/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/dashboard/': typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdDashboardIndexRoute
+  '/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/data/': typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdDataIndexRoute
+  '/_authenticated/_class/class/$classId/assigners/random/$assignerId/data/': typeof AuthenticatedClassClassClassIdAssignersRandomAssignerIdDataIndexRoute
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath;
+  fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | "/"
-    | "/join-display"
-    | "/admin"
-    | "/$"
-    | "/login"
-    | "/unauthorized"
-    | "/a/$publicSlug"
-    | "/p/$publicSlug"
-    | "/account"
-    | "/billing"
-    | "/feedback"
-    | "/join"
-    | "/notifications"
-    | "/settings"
-    | "/ui"
-    | "/admin/feedback"
-    | "/d/$runId"
-    | "/de/$runId"
-    | "/admin/"
-    | "/class/$classId"
-    | "/class/$classId/activity"
-    | "/class/$classId/assistant-teachers"
-    | "/class/$classId/attendance"
-    | "/class/$classId/behaviors"
-    | "/class/$classId/calendar"
-    | "/class/$classId/groups"
-    | "/class/$classId/guardians"
-    | "/class/$classId/invitations"
-    | "/class/$classId/permissions"
-    | "/class/$classId/points"
-    | "/class/$classId/rewards"
-    | "/class/$classId/settings"
-    | "/class/$classId/students"
-    | "/class/$classId/teachers"
-    | "/class/$classId/"
-    | "/class/$classId/assignments/$assignmentId"
-    | "/class/$classId/announcements/$announcementId"
-    | "/class/$classId/assignments/new"
-    | "/class/$classId/expectations/$expectationId"
-    | "/class/$classId/raz/initial-levels"
-    | "/class/$classId/tasks/$taskId"
-    | "/class/$classId/announcements/"
-    | "/class/$classId/assignments/"
-    | "/class/$classId/expectations/"
-    | "/class/$classId/raz/"
-    | "/class/$classId/tasks/"
-    | "/class/$classId/assigners/equitable/new"
-    | "/class/$classId/assigners/random/new"
-    | "/class/$classId/assignments/$assignmentId/edit"
-    | "/class/$classId/assignments/$assignmentId/grade"
-    | "/class/$classId/assignments/$assignmentId/tasks"
-    | "/class/$classId/sw/graded-subjects/new"
-    | "/class/$classId/assigners/equitable/"
-    | "/class/$classId/assigners/random/"
-    | "/class/$classId/assigners/seats/"
-    | "/class/$classId/assignments/$assignmentId/"
-    | "/class/$classId/sw/grade-scales/"
-    | "/class/$classId/sw/graded-subjects/"
-    | "/class/$classId/assigners/equitable/$assignerId/edit"
-    | "/class/$classId/assigners/equitable/$assignerId/manual"
-    | "/class/$classId/assigners/random/$assignerId/edit"
-    | "/class/$classId/assigners/seats/charts/$chartId"
-    | "/class/$classId/assigners/seats/layouts/$layoutId"
-    | "/class/$classId/sw/graded-subjects/$gradedSubjectId/edit"
-    | "/class/$classId/assigners/equitable/$assignerId/"
-    | "/class/$classId/assigners/random/$assignerId/"
-    | "/class/$classId/assigners/seats/charts/"
-    | "/class/$classId/assigners/seats/constraints/"
-    | "/class/$classId/assigners/seats/data/"
-    | "/class/$classId/assigners/seats/layouts/"
-    | "/class/$classId/assigners/seats/stats/"
-    | "/class/$classId/sw/grade-scales/reports/"
-    | "/class/$classId/sw/grade-scales/scales/"
-    | "/class/$classId/sw/grade-scales/subjects/"
-    | "/class/$classId/assigners/equitable/$assignerId/dashboard/"
-    | "/class/$classId/assigners/equitable/$assignerId/data/"
-    | "/class/$classId/assigners/random/$assignerId/data/";
-  fileRoutesByTo: FileRoutesByTo;
+    | '/'
+    | '/join-display'
+    | '/admin'
+    | '/$'
+    | '/login'
+    | '/unauthorized'
+    | '/a/$publicSlug'
+    | '/p/$publicSlug'
+    | '/account'
+    | '/billing'
+    | '/feedback'
+    | '/join'
+    | '/notifications'
+    | '/settings'
+    | '/ui'
+    | '/admin/feedback'
+    | '/d/$runId'
+    | '/de/$runId'
+    | '/admin/'
+    | '/class/$classId'
+    | '/class/$classId/activity'
+    | '/class/$classId/assistant-teachers'
+    | '/class/$classId/attendance'
+    | '/class/$classId/behaviors'
+    | '/class/$classId/groups'
+    | '/class/$classId/guardians'
+    | '/class/$classId/invitations'
+    | '/class/$classId/permissions'
+    | '/class/$classId/points'
+    | '/class/$classId/rewards'
+    | '/class/$classId/settings'
+    | '/class/$classId/students'
+    | '/class/$classId/teachers'
+    | '/class/$classId/'
+    | '/class/$classId/assignments/$assignmentId'
+    | '/class/$classId/announcements/$announcementId'
+    | '/class/$classId/assignments/new'
+    | '/class/$classId/expectations/$expectationId'
+    | '/class/$classId/raz/initial-levels'
+    | '/class/$classId/tasks/$taskId'
+    | '/class/$classId/announcements/'
+    | '/class/$classId/assignments/'
+    | '/class/$classId/calendar/'
+    | '/class/$classId/expectations/'
+    | '/class/$classId/raz/'
+    | '/class/$classId/tasks/'
+    | '/class/$classId/assigners/equitable/new'
+    | '/class/$classId/assigners/random/new'
+    | '/class/$classId/assignments/$assignmentId/edit'
+    | '/class/$classId/assignments/$assignmentId/grade'
+    | '/class/$classId/assignments/$assignmentId/tasks'
+    | '/class/$classId/calendar/event/$eventId'
+    | '/class/$classId/sw/graded-subjects/new'
+    | '/class/$classId/assigners/equitable/'
+    | '/class/$classId/assigners/random/'
+    | '/class/$classId/assigners/seats/'
+    | '/class/$classId/assignments/$assignmentId/'
+    | '/class/$classId/sw/grade-scales/'
+    | '/class/$classId/sw/graded-subjects/'
+    | '/class/$classId/assigners/equitable/$assignerId/edit'
+    | '/class/$classId/assigners/equitable/$assignerId/manual'
+    | '/class/$classId/assigners/random/$assignerId/edit'
+    | '/class/$classId/assigners/seats/charts/$chartId'
+    | '/class/$classId/assigners/seats/layouts/$layoutId'
+    | '/class/$classId/sw/graded-subjects/$gradedSubjectId/edit'
+    | '/class/$classId/assigners/equitable/$assignerId/'
+    | '/class/$classId/assigners/random/$assignerId/'
+    | '/class/$classId/assigners/seats/charts/'
+    | '/class/$classId/assigners/seats/constraints/'
+    | '/class/$classId/assigners/seats/data/'
+    | '/class/$classId/assigners/seats/layouts/'
+    | '/class/$classId/assigners/seats/stats/'
+    | '/class/$classId/sw/grade-scales/reports/'
+    | '/class/$classId/sw/grade-scales/scales/'
+    | '/class/$classId/sw/grade-scales/subjects/'
+    | '/class/$classId/assigners/equitable/$assignerId/dashboard/'
+    | '/class/$classId/assigners/equitable/$assignerId/data/'
+    | '/class/$classId/assigners/random/$assignerId/data/'
+  fileRoutesByTo: FileRoutesByTo
   to:
-    | "/"
-    | "/join-display"
-    | "/$"
-    | "/login"
-    | "/unauthorized"
-    | "/a/$publicSlug"
-    | "/p/$publicSlug"
-    | "/account"
-    | "/billing"
-    | "/feedback"
-    | "/join"
-    | "/notifications"
-    | "/settings"
-    | "/ui"
-    | "/admin/feedback"
-    | "/d/$runId"
-    | "/de/$runId"
-    | "/admin"
-    | "/class/$classId/activity"
-    | "/class/$classId/assistant-teachers"
-    | "/class/$classId/attendance"
-    | "/class/$classId/behaviors"
-    | "/class/$classId/calendar"
-    | "/class/$classId/groups"
-    | "/class/$classId/guardians"
-    | "/class/$classId/invitations"
-    | "/class/$classId/permissions"
-    | "/class/$classId/points"
-    | "/class/$classId/rewards"
-    | "/class/$classId/settings"
-    | "/class/$classId/students"
-    | "/class/$classId/teachers"
-    | "/class/$classId"
-    | "/class/$classId/announcements/$announcementId"
-    | "/class/$classId/assignments/new"
-    | "/class/$classId/expectations/$expectationId"
-    | "/class/$classId/raz/initial-levels"
-    | "/class/$classId/tasks/$taskId"
-    | "/class/$classId/announcements"
-    | "/class/$classId/assignments"
-    | "/class/$classId/expectations"
-    | "/class/$classId/raz"
-    | "/class/$classId/tasks"
-    | "/class/$classId/assigners/equitable/new"
-    | "/class/$classId/assigners/random/new"
-    | "/class/$classId/assignments/$assignmentId/edit"
-    | "/class/$classId/assignments/$assignmentId/grade"
-    | "/class/$classId/assignments/$assignmentId/tasks"
-    | "/class/$classId/sw/graded-subjects/new"
-    | "/class/$classId/assigners/equitable"
-    | "/class/$classId/assigners/random"
-    | "/class/$classId/assigners/seats"
-    | "/class/$classId/assignments/$assignmentId"
-    | "/class/$classId/sw/grade-scales"
-    | "/class/$classId/sw/graded-subjects"
-    | "/class/$classId/assigners/equitable/$assignerId/edit"
-    | "/class/$classId/assigners/equitable/$assignerId/manual"
-    | "/class/$classId/assigners/random/$assignerId/edit"
-    | "/class/$classId/assigners/seats/charts/$chartId"
-    | "/class/$classId/assigners/seats/layouts/$layoutId"
-    | "/class/$classId/sw/graded-subjects/$gradedSubjectId/edit"
-    | "/class/$classId/assigners/equitable/$assignerId"
-    | "/class/$classId/assigners/random/$assignerId"
-    | "/class/$classId/assigners/seats/charts"
-    | "/class/$classId/assigners/seats/constraints"
-    | "/class/$classId/assigners/seats/data"
-    | "/class/$classId/assigners/seats/layouts"
-    | "/class/$classId/assigners/seats/stats"
-    | "/class/$classId/sw/grade-scales/reports"
-    | "/class/$classId/sw/grade-scales/scales"
-    | "/class/$classId/sw/grade-scales/subjects"
-    | "/class/$classId/assigners/equitable/$assignerId/dashboard"
-    | "/class/$classId/assigners/equitable/$assignerId/data"
-    | "/class/$classId/assigners/random/$assignerId/data";
+    | '/'
+    | '/join-display'
+    | '/$'
+    | '/login'
+    | '/unauthorized'
+    | '/a/$publicSlug'
+    | '/p/$publicSlug'
+    | '/account'
+    | '/billing'
+    | '/feedback'
+    | '/join'
+    | '/notifications'
+    | '/settings'
+    | '/ui'
+    | '/admin/feedback'
+    | '/d/$runId'
+    | '/de/$runId'
+    | '/admin'
+    | '/class/$classId/activity'
+    | '/class/$classId/assistant-teachers'
+    | '/class/$classId/attendance'
+    | '/class/$classId/behaviors'
+    | '/class/$classId/groups'
+    | '/class/$classId/guardians'
+    | '/class/$classId/invitations'
+    | '/class/$classId/permissions'
+    | '/class/$classId/points'
+    | '/class/$classId/rewards'
+    | '/class/$classId/settings'
+    | '/class/$classId/students'
+    | '/class/$classId/teachers'
+    | '/class/$classId'
+    | '/class/$classId/announcements/$announcementId'
+    | '/class/$classId/assignments/new'
+    | '/class/$classId/expectations/$expectationId'
+    | '/class/$classId/raz/initial-levels'
+    | '/class/$classId/tasks/$taskId'
+    | '/class/$classId/announcements'
+    | '/class/$classId/assignments'
+    | '/class/$classId/calendar'
+    | '/class/$classId/expectations'
+    | '/class/$classId/raz'
+    | '/class/$classId/tasks'
+    | '/class/$classId/assigners/equitable/new'
+    | '/class/$classId/assigners/random/new'
+    | '/class/$classId/assignments/$assignmentId/edit'
+    | '/class/$classId/assignments/$assignmentId/grade'
+    | '/class/$classId/assignments/$assignmentId/tasks'
+    | '/class/$classId/calendar/event/$eventId'
+    | '/class/$classId/sw/graded-subjects/new'
+    | '/class/$classId/assigners/equitable'
+    | '/class/$classId/assigners/random'
+    | '/class/$classId/assigners/seats'
+    | '/class/$classId/assignments/$assignmentId'
+    | '/class/$classId/sw/grade-scales'
+    | '/class/$classId/sw/graded-subjects'
+    | '/class/$classId/assigners/equitable/$assignerId/edit'
+    | '/class/$classId/assigners/equitable/$assignerId/manual'
+    | '/class/$classId/assigners/random/$assignerId/edit'
+    | '/class/$classId/assigners/seats/charts/$chartId'
+    | '/class/$classId/assigners/seats/layouts/$layoutId'
+    | '/class/$classId/sw/graded-subjects/$gradedSubjectId/edit'
+    | '/class/$classId/assigners/equitable/$assignerId'
+    | '/class/$classId/assigners/random/$assignerId'
+    | '/class/$classId/assigners/seats/charts'
+    | '/class/$classId/assigners/seats/constraints'
+    | '/class/$classId/assigners/seats/data'
+    | '/class/$classId/assigners/seats/layouts'
+    | '/class/$classId/assigners/seats/stats'
+    | '/class/$classId/sw/grade-scales/reports'
+    | '/class/$classId/sw/grade-scales/scales'
+    | '/class/$classId/sw/grade-scales/subjects'
+    | '/class/$classId/assigners/equitable/$assignerId/dashboard'
+    | '/class/$classId/assigners/equitable/$assignerId/data'
+    | '/class/$classId/assigners/random/$assignerId/data'
   id:
-    | "__root__"
-    | "/_authenticated"
-    | "/_public"
-    | "/join-display"
-    | "/_authenticated/_app"
-    | "/_authenticated/_class"
-    | "/_authenticated/admin"
-    | "/_public/$"
-    | "/_public/login"
-    | "/_public/unauthorized"
-    | "/a/$publicSlug"
-    | "/p/$publicSlug"
-    | "/_authenticated/_app/account"
-    | "/_authenticated/_app/billing"
-    | "/_authenticated/_app/feedback"
-    | "/_authenticated/_app/join"
-    | "/_authenticated/_app/notifications"
-    | "/_authenticated/_app/settings"
-    | "/_authenticated/_app/ui"
-    | "/_authenticated/admin/feedback"
-    | "/_authenticated/d/$runId"
-    | "/_authenticated/de/$runId"
-    | "/_authenticated/_app/"
-    | "/_authenticated/admin/"
-    | "/_authenticated/_class/class/$classId"
-    | "/_authenticated/_class/class/$classId/activity"
-    | "/_authenticated/_class/class/$classId/assistant-teachers"
-    | "/_authenticated/_class/class/$classId/attendance"
-    | "/_authenticated/_class/class/$classId/behaviors"
-    | "/_authenticated/_class/class/$classId/calendar"
-    | "/_authenticated/_class/class/$classId/groups"
-    | "/_authenticated/_class/class/$classId/guardians"
-    | "/_authenticated/_class/class/$classId/invitations"
-    | "/_authenticated/_class/class/$classId/permissions"
-    | "/_authenticated/_class/class/$classId/points"
-    | "/_authenticated/_class/class/$classId/rewards"
-    | "/_authenticated/_class/class/$classId/settings"
-    | "/_authenticated/_class/class/$classId/students"
-    | "/_authenticated/_class/class/$classId/teachers"
-    | "/_authenticated/_class/class/$classId/"
-    | "/_authenticated/_class/class/$classId/assignments/$assignmentId"
-    | "/_authenticated/_class/class/$classId/announcements/$announcementId"
-    | "/_authenticated/_class/class/$classId/assignments/new"
-    | "/_authenticated/_class/class/$classId/expectations/$expectationId"
-    | "/_authenticated/_class/class/$classId/raz/initial-levels"
-    | "/_authenticated/_class/class/$classId/tasks/$taskId"
-    | "/_authenticated/_class/class/$classId/announcements/"
-    | "/_authenticated/_class/class/$classId/assignments/"
-    | "/_authenticated/_class/class/$classId/expectations/"
-    | "/_authenticated/_class/class/$classId/raz/"
-    | "/_authenticated/_class/class/$classId/tasks/"
-    | "/_authenticated/_class/class/$classId/assigners/equitable/new"
-    | "/_authenticated/_class/class/$classId/assigners/random/new"
-    | "/_authenticated/_class/class/$classId/assignments/$assignmentId/edit"
-    | "/_authenticated/_class/class/$classId/assignments/$assignmentId/grade"
-    | "/_authenticated/_class/class/$classId/assignments/$assignmentId/tasks"
-    | "/_authenticated/_class/class/$classId/sw/graded-subjects/new"
-    | "/_authenticated/_class/class/$classId/assigners/equitable/"
-    | "/_authenticated/_class/class/$classId/assigners/random/"
-    | "/_authenticated/_class/class/$classId/assigners/seats/"
-    | "/_authenticated/_class/class/$classId/assignments/$assignmentId/"
-    | "/_authenticated/_class/class/$classId/sw/grade-scales/"
-    | "/_authenticated/_class/class/$classId/sw/graded-subjects/"
-    | "/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/edit"
-    | "/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/manual"
-    | "/_authenticated/_class/class/$classId/assigners/random/$assignerId/edit"
-    | "/_authenticated/_class/class/$classId/assigners/seats/charts/$chartId"
-    | "/_authenticated/_class/class/$classId/assigners/seats/layouts/$layoutId"
-    | "/_authenticated/_class/class/$classId/sw/graded-subjects/$gradedSubjectId/edit"
-    | "/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/"
-    | "/_authenticated/_class/class/$classId/assigners/random/$assignerId/"
-    | "/_authenticated/_class/class/$classId/assigners/seats/charts/"
-    | "/_authenticated/_class/class/$classId/assigners/seats/constraints/"
-    | "/_authenticated/_class/class/$classId/assigners/seats/data/"
-    | "/_authenticated/_class/class/$classId/assigners/seats/layouts/"
-    | "/_authenticated/_class/class/$classId/assigners/seats/stats/"
-    | "/_authenticated/_class/class/$classId/sw/grade-scales/reports/"
-    | "/_authenticated/_class/class/$classId/sw/grade-scales/scales/"
-    | "/_authenticated/_class/class/$classId/sw/grade-scales/subjects/"
-    | "/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/dashboard/"
-    | "/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/data/"
-    | "/_authenticated/_class/class/$classId/assigners/random/$assignerId/data/";
-  fileRoutesById: FileRoutesById;
+    | '__root__'
+    | '/_authenticated'
+    | '/_public'
+    | '/join-display'
+    | '/_authenticated/_app'
+    | '/_authenticated/_class'
+    | '/_authenticated/admin'
+    | '/_public/$'
+    | '/_public/login'
+    | '/_public/unauthorized'
+    | '/a/$publicSlug'
+    | '/p/$publicSlug'
+    | '/_authenticated/_app/account'
+    | '/_authenticated/_app/billing'
+    | '/_authenticated/_app/feedback'
+    | '/_authenticated/_app/join'
+    | '/_authenticated/_app/notifications'
+    | '/_authenticated/_app/settings'
+    | '/_authenticated/_app/ui'
+    | '/_authenticated/admin/feedback'
+    | '/_authenticated/d/$runId'
+    | '/_authenticated/de/$runId'
+    | '/_authenticated/_app/'
+    | '/_authenticated/admin/'
+    | '/_authenticated/_class/class/$classId'
+    | '/_authenticated/_class/class/$classId/activity'
+    | '/_authenticated/_class/class/$classId/assistant-teachers'
+    | '/_authenticated/_class/class/$classId/attendance'
+    | '/_authenticated/_class/class/$classId/behaviors'
+    | '/_authenticated/_class/class/$classId/groups'
+    | '/_authenticated/_class/class/$classId/guardians'
+    | '/_authenticated/_class/class/$classId/invitations'
+    | '/_authenticated/_class/class/$classId/permissions'
+    | '/_authenticated/_class/class/$classId/points'
+    | '/_authenticated/_class/class/$classId/rewards'
+    | '/_authenticated/_class/class/$classId/settings'
+    | '/_authenticated/_class/class/$classId/students'
+    | '/_authenticated/_class/class/$classId/teachers'
+    | '/_authenticated/_class/class/$classId/'
+    | '/_authenticated/_class/class/$classId/assignments/$assignmentId'
+    | '/_authenticated/_class/class/$classId/announcements/$announcementId'
+    | '/_authenticated/_class/class/$classId/assignments/new'
+    | '/_authenticated/_class/class/$classId/expectations/$expectationId'
+    | '/_authenticated/_class/class/$classId/raz/initial-levels'
+    | '/_authenticated/_class/class/$classId/tasks/$taskId'
+    | '/_authenticated/_class/class/$classId/announcements/'
+    | '/_authenticated/_class/class/$classId/assignments/'
+    | '/_authenticated/_class/class/$classId/calendar/'
+    | '/_authenticated/_class/class/$classId/expectations/'
+    | '/_authenticated/_class/class/$classId/raz/'
+    | '/_authenticated/_class/class/$classId/tasks/'
+    | '/_authenticated/_class/class/$classId/assigners/equitable/new'
+    | '/_authenticated/_class/class/$classId/assigners/random/new'
+    | '/_authenticated/_class/class/$classId/assignments/$assignmentId/edit'
+    | '/_authenticated/_class/class/$classId/assignments/$assignmentId/grade'
+    | '/_authenticated/_class/class/$classId/assignments/$assignmentId/tasks'
+    | '/_authenticated/_class/class/$classId/calendar/event/$eventId'
+    | '/_authenticated/_class/class/$classId/sw/graded-subjects/new'
+    | '/_authenticated/_class/class/$classId/assigners/equitable/'
+    | '/_authenticated/_class/class/$classId/assigners/random/'
+    | '/_authenticated/_class/class/$classId/assigners/seats/'
+    | '/_authenticated/_class/class/$classId/assignments/$assignmentId/'
+    | '/_authenticated/_class/class/$classId/sw/grade-scales/'
+    | '/_authenticated/_class/class/$classId/sw/graded-subjects/'
+    | '/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/edit'
+    | '/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/manual'
+    | '/_authenticated/_class/class/$classId/assigners/random/$assignerId/edit'
+    | '/_authenticated/_class/class/$classId/assigners/seats/charts/$chartId'
+    | '/_authenticated/_class/class/$classId/assigners/seats/layouts/$layoutId'
+    | '/_authenticated/_class/class/$classId/sw/graded-subjects/$gradedSubjectId/edit'
+    | '/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/'
+    | '/_authenticated/_class/class/$classId/assigners/random/$assignerId/'
+    | '/_authenticated/_class/class/$classId/assigners/seats/charts/'
+    | '/_authenticated/_class/class/$classId/assigners/seats/constraints/'
+    | '/_authenticated/_class/class/$classId/assigners/seats/data/'
+    | '/_authenticated/_class/class/$classId/assigners/seats/layouts/'
+    | '/_authenticated/_class/class/$classId/assigners/seats/stats/'
+    | '/_authenticated/_class/class/$classId/sw/grade-scales/reports/'
+    | '/_authenticated/_class/class/$classId/sw/grade-scales/scales/'
+    | '/_authenticated/_class/class/$classId/sw/grade-scales/subjects/'
+    | '/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/dashboard/'
+    | '/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/data/'
+    | '/_authenticated/_class/class/$classId/assigners/random/$assignerId/data/'
+  fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren;
-  PublicRouteRoute: typeof PublicRouteRouteWithChildren;
-  JoinDisplayRoute: typeof JoinDisplayRoute;
-  APublicSlugRoute: typeof APublicSlugRoute;
-  PPublicSlugRoute: typeof PPublicSlugRoute;
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  PublicRouteRoute: typeof PublicRouteRouteWithChildren
+  JoinDisplayRoute: typeof JoinDisplayRoute
+  APublicSlugRoute: typeof APublicSlugRoute
+  PPublicSlugRoute: typeof PPublicSlugRoute
 }
 
-declare module "@tanstack/react-router" {
+declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    "/_authenticated": {
-      id: "/_authenticated";
-      path: "";
-      fullPath: "/";
-      preLoaderRoute: typeof AuthenticatedRouteRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/_public": {
-      id: "/_public";
-      path: "";
-      fullPath: "/";
-      preLoaderRoute: typeof PublicRouteRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/join-display": {
-      id: "/join-display";
-      path: "/join-display";
-      fullPath: "/join-display";
-      preLoaderRoute: typeof JoinDisplayRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/_authenticated/_app": {
-      id: "/_authenticated/_app";
-      path: "";
-      fullPath: "/";
-      preLoaderRoute: typeof AuthenticatedAppRouteRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/_class": {
-      id: "/_authenticated/_class";
-      path: "";
-      fullPath: "/";
-      preLoaderRoute: typeof AuthenticatedClassRouteRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/admin": {
-      id: "/_authenticated/admin";
-      path: "/admin";
-      fullPath: "/admin";
-      preLoaderRoute: typeof AuthenticatedAdminRouteRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_public/$": {
-      id: "/_public/$";
-      path: "/$";
-      fullPath: "/$";
-      preLoaderRoute: typeof PublicSplatRouteImport;
-      parentRoute: typeof PublicRouteRoute;
-    };
-    "/_public/login": {
-      id: "/_public/login";
-      path: "/login";
-      fullPath: "/login";
-      preLoaderRoute: typeof PublicLoginRouteImport;
-      parentRoute: typeof PublicRouteRoute;
-    };
-    "/_public/unauthorized": {
-      id: "/_public/unauthorized";
-      path: "/unauthorized";
-      fullPath: "/unauthorized";
-      preLoaderRoute: typeof PublicUnauthorizedRouteImport;
-      parentRoute: typeof PublicRouteRoute;
-    };
-    "/a/$publicSlug": {
-      id: "/a/$publicSlug";
-      path: "/a/$publicSlug";
-      fullPath: "/a/$publicSlug";
-      preLoaderRoute: typeof APublicSlugRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/p/$publicSlug": {
-      id: "/p/$publicSlug";
-      path: "/p/$publicSlug";
-      fullPath: "/p/$publicSlug";
-      preLoaderRoute: typeof PPublicSlugRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/_authenticated/_app/": {
-      id: "/_authenticated/_app/";
-      path: "/";
-      fullPath: "/";
-      preLoaderRoute: typeof AuthenticatedAppIndexRouteImport;
-      parentRoute: typeof AuthenticatedAppRouteRoute;
-    };
-    "/_authenticated/_app/account": {
-      id: "/_authenticated/_app/account";
-      path: "/account";
-      fullPath: "/account";
-      preLoaderRoute: typeof AuthenticatedAppAccountRouteImport;
-      parentRoute: typeof AuthenticatedAppRouteRoute;
-    };
-    "/_authenticated/_app/billing": {
-      id: "/_authenticated/_app/billing";
-      path: "/billing";
-      fullPath: "/billing";
-      preLoaderRoute: typeof AuthenticatedAppBillingRouteImport;
-      parentRoute: typeof AuthenticatedAppRouteRoute;
-    };
-    "/_authenticated/_app/feedback": {
-      id: "/_authenticated/_app/feedback";
-      path: "/feedback";
-      fullPath: "/feedback";
-      preLoaderRoute: typeof AuthenticatedAppFeedbackRouteImport;
-      parentRoute: typeof AuthenticatedAppRouteRoute;
-    };
-    "/_authenticated/_app/join": {
-      id: "/_authenticated/_app/join";
-      path: "/join";
-      fullPath: "/join";
-      preLoaderRoute: typeof AuthenticatedAppJoinRouteImport;
-      parentRoute: typeof AuthenticatedAppRouteRoute;
-    };
-    "/_authenticated/_app/notifications": {
-      id: "/_authenticated/_app/notifications";
-      path: "/notifications";
-      fullPath: "/notifications";
-      preLoaderRoute: typeof AuthenticatedAppNotificationsRouteImport;
-      parentRoute: typeof AuthenticatedAppRouteRoute;
-    };
-    "/_authenticated/_app/settings": {
-      id: "/_authenticated/_app/settings";
-      path: "/settings";
-      fullPath: "/settings";
-      preLoaderRoute: typeof AuthenticatedAppSettingsRouteImport;
-      parentRoute: typeof AuthenticatedAppRouteRoute;
-    };
-    "/_authenticated/_app/ui": {
-      id: "/_authenticated/_app/ui";
-      path: "/ui";
-      fullPath: "/ui";
-      preLoaderRoute: typeof AuthenticatedAppUiRouteImport;
-      parentRoute: typeof AuthenticatedAppRouteRoute;
-    };
-    "/_authenticated/admin/": {
-      id: "/_authenticated/admin/";
-      path: "/";
-      fullPath: "/admin/";
-      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport;
-      parentRoute: typeof AuthenticatedAdminRouteRoute;
-    };
-    "/_authenticated/admin/feedback": {
-      id: "/_authenticated/admin/feedback";
-      path: "/feedback";
-      fullPath: "/admin/feedback";
-      preLoaderRoute: typeof AuthenticatedAdminFeedbackRouteImport;
-      parentRoute: typeof AuthenticatedAdminRouteRoute;
-    };
-    "/_authenticated/d/$runId": {
-      id: "/_authenticated/d/$runId";
-      path: "/d/$runId";
-      fullPath: "/d/$runId";
-      preLoaderRoute: typeof AuthenticatedDRunIdRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/de/$runId": {
-      id: "/_authenticated/de/$runId";
-      path: "/de/$runId";
-      fullPath: "/de/$runId";
-      preLoaderRoute: typeof AuthenticatedDeRunIdRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId": {
-      id: "/_authenticated/_class/class/$classId";
-      path: "/class/$classId";
-      fullPath: "/class/$classId";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdRouteRouteImport;
-      parentRoute: typeof AuthenticatedClassRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/": {
-      id: "/_authenticated/_class/class/$classId/";
-      path: "/";
-      fullPath: "/class/$classId/";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdIndexRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/activity": {
-      id: "/_authenticated/_class/class/$classId/activity";
-      path: "/activity";
-      fullPath: "/class/$classId/activity";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdActivityRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/assistant-teachers": {
-      id: "/_authenticated/_class/class/$classId/assistant-teachers";
-      path: "/assistant-teachers";
-      fullPath: "/class/$classId/assistant-teachers";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssistantTeachersRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/attendance": {
-      id: "/_authenticated/_class/class/$classId/attendance";
-      path: "/attendance";
-      fullPath: "/class/$classId/attendance";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdAttendanceRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/behaviors": {
-      id: "/_authenticated/_class/class/$classId/behaviors";
-      path: "/behaviors";
-      fullPath: "/class/$classId/behaviors";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdBehaviorsRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/calendar": {
-      id: "/_authenticated/_class/class/$classId/calendar";
-      path: "/calendar";
-      fullPath: "/class/$classId/calendar";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdCalendarRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/groups": {
-      id: "/_authenticated/_class/class/$classId/groups";
-      path: "/groups";
-      fullPath: "/class/$classId/groups";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdGroupsRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/guardians": {
-      id: "/_authenticated/_class/class/$classId/guardians";
-      path: "/guardians";
-      fullPath: "/class/$classId/guardians";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdGuardiansRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/invitations": {
-      id: "/_authenticated/_class/class/$classId/invitations";
-      path: "/invitations";
-      fullPath: "/class/$classId/invitations";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdInvitationsRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/permissions": {
-      id: "/_authenticated/_class/class/$classId/permissions";
-      path: "/permissions";
-      fullPath: "/class/$classId/permissions";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdPermissionsRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/points": {
-      id: "/_authenticated/_class/class/$classId/points";
-      path: "/points";
-      fullPath: "/class/$classId/points";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdPointsRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/rewards": {
-      id: "/_authenticated/_class/class/$classId/rewards";
-      path: "/rewards";
-      fullPath: "/class/$classId/rewards";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdRewardsRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/settings": {
-      id: "/_authenticated/_class/class/$classId/settings";
-      path: "/settings";
-      fullPath: "/class/$classId/settings";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdSettingsRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/students": {
-      id: "/_authenticated/_class/class/$classId/students";
-      path: "/students";
-      fullPath: "/class/$classId/students";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdStudentsRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/teachers": {
-      id: "/_authenticated/_class/class/$classId/teachers";
-      path: "/teachers";
-      fullPath: "/class/$classId/teachers";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdTeachersRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/announcements/": {
-      id: "/_authenticated/_class/class/$classId/announcements/";
-      path: "/announcements";
-      fullPath: "/class/$classId/announcements/";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdAnnouncementsIndexRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/announcements/$announcementId": {
-      id: "/_authenticated/_class/class/$classId/announcements/$announcementId";
-      path: "/announcements/$announcementId";
-      fullPath: "/class/$classId/announcements/$announcementId";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/assignments/": {
-      id: "/_authenticated/_class/class/$classId/assignments/";
-      path: "/assignments";
-      fullPath: "/class/$classId/assignments/";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignmentsIndexRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/assignments/$assignmentId": {
-      id: "/_authenticated/_class/class/$classId/assignments/$assignmentId";
-      path: "/assignments/$assignmentId";
-      fullPath: "/class/$classId/assignments/$assignmentId";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/assignments/new": {
-      id: "/_authenticated/_class/class/$classId/assignments/new";
-      path: "/assignments/new";
-      fullPath: "/class/$classId/assignments/new";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignmentsNewRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/expectations/": {
-      id: "/_authenticated/_class/class/$classId/expectations/";
-      path: "/expectations";
-      fullPath: "/class/$classId/expectations/";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdExpectationsIndexRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/expectations/$expectationId": {
-      id: "/_authenticated/_class/class/$classId/expectations/$expectationId";
-      path: "/expectations/$expectationId";
-      fullPath: "/class/$classId/expectations/$expectationId";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdExpectationsExpectationIdRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/raz/": {
-      id: "/_authenticated/_class/class/$classId/raz/";
-      path: "/raz";
-      fullPath: "/class/$classId/raz/";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdRazIndexRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/raz/initial-levels": {
-      id: "/_authenticated/_class/class/$classId/raz/initial-levels";
-      path: "/raz/initial-levels";
-      fullPath: "/class/$classId/raz/initial-levels";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdRazInitialLevelsRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/tasks/": {
-      id: "/_authenticated/_class/class/$classId/tasks/";
-      path: "/tasks";
-      fullPath: "/class/$classId/tasks/";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdTasksIndexRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/tasks/$taskId": {
-      id: "/_authenticated/_class/class/$classId/tasks/$taskId";
-      path: "/tasks/$taskId";
-      fullPath: "/class/$classId/tasks/$taskId";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdTasksTaskIdRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/assigners/equitable/": {
-      id: "/_authenticated/_class/class/$classId/assigners/equitable/";
-      path: "/assigners/equitable";
-      fullPath: "/class/$classId/assigners/equitable/";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersEquitableIndexRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/assigners/equitable/new": {
-      id: "/_authenticated/_class/class/$classId/assigners/equitable/new";
-      path: "/assigners/equitable/new";
-      fullPath: "/class/$classId/assigners/equitable/new";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersEquitableNewRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/assigners/random/": {
-      id: "/_authenticated/_class/class/$classId/assigners/random/";
-      path: "/assigners/random";
-      fullPath: "/class/$classId/assigners/random/";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersRandomIndexRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/assigners/random/new": {
-      id: "/_authenticated/_class/class/$classId/assigners/random/new";
-      path: "/assigners/random/new";
-      fullPath: "/class/$classId/assigners/random/new";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersRandomNewRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/assigners/seats/": {
-      id: "/_authenticated/_class/class/$classId/assigners/seats/";
-      path: "/assigners/seats";
-      fullPath: "/class/$classId/assigners/seats/";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsIndexRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/assignments/$assignmentId/": {
-      id: "/_authenticated/_class/class/$classId/assignments/$assignmentId/";
-      path: "/";
-      fullPath: "/class/$classId/assignments/$assignmentId/";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdIndexRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/assignments/$assignmentId/edit": {
-      id: "/_authenticated/_class/class/$classId/assignments/$assignmentId/edit";
-      path: "/edit";
-      fullPath: "/class/$classId/assignments/$assignmentId/edit";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdEditRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/assignments/$assignmentId/grade": {
-      id: "/_authenticated/_class/class/$classId/assignments/$assignmentId/grade";
-      path: "/grade";
-      fullPath: "/class/$classId/assignments/$assignmentId/grade";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdGradeRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/assignments/$assignmentId/tasks": {
-      id: "/_authenticated/_class/class/$classId/assignments/$assignmentId/tasks";
-      path: "/tasks";
-      fullPath: "/class/$classId/assignments/$assignmentId/tasks";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdTasksRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/sw/grade-scales/": {
-      id: "/_authenticated/_class/class/$classId/sw/grade-scales/";
-      path: "/sw/grade-scales";
-      fullPath: "/class/$classId/sw/grade-scales/";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdSwGradeScalesIndexRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/sw/graded-subjects/": {
-      id: "/_authenticated/_class/class/$classId/sw/graded-subjects/";
-      path: "/sw/graded-subjects";
-      fullPath: "/class/$classId/sw/graded-subjects/";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdSwGradedSubjectsIndexRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/sw/graded-subjects/new": {
-      id: "/_authenticated/_class/class/$classId/sw/graded-subjects/new";
-      path: "/sw/graded-subjects/new";
-      fullPath: "/class/$classId/sw/graded-subjects/new";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdSwGradedSubjectsNewRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/": {
-      id: "/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/";
-      path: "/assigners/equitable/$assignerId";
-      fullPath: "/class/$classId/assigners/equitable/$assignerId/";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdIndexRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/edit": {
-      id: "/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/edit";
-      path: "/assigners/equitable/$assignerId/edit";
-      fullPath: "/class/$classId/assigners/equitable/$assignerId/edit";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdEditRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/manual": {
-      id: "/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/manual";
-      path: "/assigners/equitable/$assignerId/manual";
-      fullPath: "/class/$classId/assigners/equitable/$assignerId/manual";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdManualRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/assigners/random/$assignerId/": {
-      id: "/_authenticated/_class/class/$classId/assigners/random/$assignerId/";
-      path: "/assigners/random/$assignerId";
-      fullPath: "/class/$classId/assigners/random/$assignerId/";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersRandomAssignerIdIndexRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/assigners/random/$assignerId/edit": {
-      id: "/_authenticated/_class/class/$classId/assigners/random/$assignerId/edit";
-      path: "/assigners/random/$assignerId/edit";
-      fullPath: "/class/$classId/assigners/random/$assignerId/edit";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersRandomAssignerIdEditRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/assigners/seats/charts/": {
-      id: "/_authenticated/_class/class/$classId/assigners/seats/charts/";
-      path: "/assigners/seats/charts";
-      fullPath: "/class/$classId/assigners/seats/charts/";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsChartsIndexRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/assigners/seats/charts/$chartId": {
-      id: "/_authenticated/_class/class/$classId/assigners/seats/charts/$chartId";
-      path: "/assigners/seats/charts/$chartId";
-      fullPath: "/class/$classId/assigners/seats/charts/$chartId";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsChartsChartIdRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/assigners/seats/constraints/": {
-      id: "/_authenticated/_class/class/$classId/assigners/seats/constraints/";
-      path: "/assigners/seats/constraints";
-      fullPath: "/class/$classId/assigners/seats/constraints/";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsConstraintsIndexRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/assigners/seats/data/": {
-      id: "/_authenticated/_class/class/$classId/assigners/seats/data/";
-      path: "/assigners/seats/data";
-      fullPath: "/class/$classId/assigners/seats/data/";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsDataIndexRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/assigners/seats/layouts/": {
-      id: "/_authenticated/_class/class/$classId/assigners/seats/layouts/";
-      path: "/assigners/seats/layouts";
-      fullPath: "/class/$classId/assigners/seats/layouts/";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsLayoutsIndexRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/assigners/seats/layouts/$layoutId": {
-      id: "/_authenticated/_class/class/$classId/assigners/seats/layouts/$layoutId";
-      path: "/assigners/seats/layouts/$layoutId";
-      fullPath: "/class/$classId/assigners/seats/layouts/$layoutId";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsLayoutsLayoutIdRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/assigners/seats/stats/": {
-      id: "/_authenticated/_class/class/$classId/assigners/seats/stats/";
-      path: "/assigners/seats/stats";
-      fullPath: "/class/$classId/assigners/seats/stats/";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsStatsIndexRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/sw/grade-scales/reports/": {
-      id: "/_authenticated/_class/class/$classId/sw/grade-scales/reports/";
-      path: "/sw/grade-scales/reports";
-      fullPath: "/class/$classId/sw/grade-scales/reports/";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdSwGradeScalesReportsIndexRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/sw/grade-scales/scales/": {
-      id: "/_authenticated/_class/class/$classId/sw/grade-scales/scales/";
-      path: "/sw/grade-scales/scales";
-      fullPath: "/class/$classId/sw/grade-scales/scales/";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdSwGradeScalesScalesIndexRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/sw/grade-scales/subjects/": {
-      id: "/_authenticated/_class/class/$classId/sw/grade-scales/subjects/";
-      path: "/sw/grade-scales/subjects";
-      fullPath: "/class/$classId/sw/grade-scales/subjects/";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdSwGradeScalesSubjectsIndexRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/sw/graded-subjects/$gradedSubjectId/edit": {
-      id: "/_authenticated/_class/class/$classId/sw/graded-subjects/$gradedSubjectId/edit";
-      path: "/sw/graded-subjects/$gradedSubjectId/edit";
-      fullPath: "/class/$classId/sw/graded-subjects/$gradedSubjectId/edit";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdSwGradedSubjectsGradedSubjectIdEditRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/dashboard/": {
-      id: "/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/dashboard/";
-      path: "/assigners/equitable/$assignerId/dashboard";
-      fullPath: "/class/$classId/assigners/equitable/$assignerId/dashboard/";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdDashboardIndexRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/data/": {
-      id: "/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/data/";
-      path: "/assigners/equitable/$assignerId/data";
-      fullPath: "/class/$classId/assigners/equitable/$assignerId/data/";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdDataIndexRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
-    "/_authenticated/_class/class/$classId/assigners/random/$assignerId/data/": {
-      id: "/_authenticated/_class/class/$classId/assigners/random/$assignerId/data/";
-      path: "/assigners/random/$assignerId/data";
-      fullPath: "/class/$classId/assigners/random/$assignerId/data/";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersRandomAssignerIdDataIndexRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_public': {
+      id: '/_public'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof PublicRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/join-display': {
+      id: '/join-display'
+      path: '/join-display'
+      fullPath: '/join-display'
+      preLoaderRoute: typeof JoinDisplayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/_app': {
+      id: '/_authenticated/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedAppRouteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/_class': {
+      id: '/_authenticated/_class'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedClassRouteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_public/$': {
+      id: '/_public/$'
+      path: '/$'
+      fullPath: '/$'
+      preLoaderRoute: typeof PublicSplatRouteImport
+      parentRoute: typeof PublicRouteRoute
+    }
+    '/_public/login': {
+      id: '/_public/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof PublicLoginRouteImport
+      parentRoute: typeof PublicRouteRoute
+    }
+    '/_public/unauthorized': {
+      id: '/_public/unauthorized'
+      path: '/unauthorized'
+      fullPath: '/unauthorized'
+      preLoaderRoute: typeof PublicUnauthorizedRouteImport
+      parentRoute: typeof PublicRouteRoute
+    }
+    '/a/$publicSlug': {
+      id: '/a/$publicSlug'
+      path: '/a/$publicSlug'
+      fullPath: '/a/$publicSlug'
+      preLoaderRoute: typeof APublicSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/p/$publicSlug': {
+      id: '/p/$publicSlug'
+      path: '/p/$publicSlug'
+      fullPath: '/p/$publicSlug'
+      preLoaderRoute: typeof PPublicSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/_app/': {
+      id: '/_authenticated/_app/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedAppIndexRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/_app/account': {
+      id: '/_authenticated/_app/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AuthenticatedAppAccountRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/_app/billing': {
+      id: '/_authenticated/_app/billing'
+      path: '/billing'
+      fullPath: '/billing'
+      preLoaderRoute: typeof AuthenticatedAppBillingRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/_app/feedback': {
+      id: '/_authenticated/_app/feedback'
+      path: '/feedback'
+      fullPath: '/feedback'
+      preLoaderRoute: typeof AuthenticatedAppFeedbackRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/_app/join': {
+      id: '/_authenticated/_app/join'
+      path: '/join'
+      fullPath: '/join'
+      preLoaderRoute: typeof AuthenticatedAppJoinRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/_app/notifications': {
+      id: '/_authenticated/_app/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AuthenticatedAppNotificationsRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/_app/settings': {
+      id: '/_authenticated/_app/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedAppSettingsRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/_app/ui': {
+      id: '/_authenticated/_app/ui'
+      path: '/ui'
+      fullPath: '/ui'
+      preLoaderRoute: typeof AuthenticatedAppUiRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/admin/': {
+      id: '/_authenticated/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/feedback': {
+      id: '/_authenticated/admin/feedback'
+      path: '/feedback'
+      fullPath: '/admin/feedback'
+      preLoaderRoute: typeof AuthenticatedAdminFeedbackRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/d/$runId': {
+      id: '/_authenticated/d/$runId'
+      path: '/d/$runId'
+      fullPath: '/d/$runId'
+      preLoaderRoute: typeof AuthenticatedDRunIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/de/$runId': {
+      id: '/_authenticated/de/$runId'
+      path: '/de/$runId'
+      fullPath: '/de/$runId'
+      preLoaderRoute: typeof AuthenticatedDeRunIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/_class/class/$classId': {
+      id: '/_authenticated/_class/class/$classId'
+      path: '/class/$classId'
+      fullPath: '/class/$classId'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdRouteRouteImport
+      parentRoute: typeof AuthenticatedClassRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/': {
+      id: '/_authenticated/_class/class/$classId/'
+      path: '/'
+      fullPath: '/class/$classId/'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdIndexRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/activity': {
+      id: '/_authenticated/_class/class/$classId/activity'
+      path: '/activity'
+      fullPath: '/class/$classId/activity'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdActivityRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/assistant-teachers': {
+      id: '/_authenticated/_class/class/$classId/assistant-teachers'
+      path: '/assistant-teachers'
+      fullPath: '/class/$classId/assistant-teachers'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssistantTeachersRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/attendance': {
+      id: '/_authenticated/_class/class/$classId/attendance'
+      path: '/attendance'
+      fullPath: '/class/$classId/attendance'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdAttendanceRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/behaviors': {
+      id: '/_authenticated/_class/class/$classId/behaviors'
+      path: '/behaviors'
+      fullPath: '/class/$classId/behaviors'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdBehaviorsRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/groups': {
+      id: '/_authenticated/_class/class/$classId/groups'
+      path: '/groups'
+      fullPath: '/class/$classId/groups'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdGroupsRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/guardians': {
+      id: '/_authenticated/_class/class/$classId/guardians'
+      path: '/guardians'
+      fullPath: '/class/$classId/guardians'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdGuardiansRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/invitations': {
+      id: '/_authenticated/_class/class/$classId/invitations'
+      path: '/invitations'
+      fullPath: '/class/$classId/invitations'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdInvitationsRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/permissions': {
+      id: '/_authenticated/_class/class/$classId/permissions'
+      path: '/permissions'
+      fullPath: '/class/$classId/permissions'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdPermissionsRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/points': {
+      id: '/_authenticated/_class/class/$classId/points'
+      path: '/points'
+      fullPath: '/class/$classId/points'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdPointsRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/rewards': {
+      id: '/_authenticated/_class/class/$classId/rewards'
+      path: '/rewards'
+      fullPath: '/class/$classId/rewards'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdRewardsRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/settings': {
+      id: '/_authenticated/_class/class/$classId/settings'
+      path: '/settings'
+      fullPath: '/class/$classId/settings'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdSettingsRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/students': {
+      id: '/_authenticated/_class/class/$classId/students'
+      path: '/students'
+      fullPath: '/class/$classId/students'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdStudentsRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/teachers': {
+      id: '/_authenticated/_class/class/$classId/teachers'
+      path: '/teachers'
+      fullPath: '/class/$classId/teachers'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdTeachersRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/announcements/': {
+      id: '/_authenticated/_class/class/$classId/announcements/'
+      path: '/announcements'
+      fullPath: '/class/$classId/announcements/'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdAnnouncementsIndexRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/announcements/$announcementId': {
+      id: '/_authenticated/_class/class/$classId/announcements/$announcementId'
+      path: '/announcements/$announcementId'
+      fullPath: '/class/$classId/announcements/$announcementId'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/assignments/': {
+      id: '/_authenticated/_class/class/$classId/assignments/'
+      path: '/assignments'
+      fullPath: '/class/$classId/assignments/'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignmentsIndexRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/assignments/$assignmentId': {
+      id: '/_authenticated/_class/class/$classId/assignments/$assignmentId'
+      path: '/assignments/$assignmentId'
+      fullPath: '/class/$classId/assignments/$assignmentId'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/assignments/new': {
+      id: '/_authenticated/_class/class/$classId/assignments/new'
+      path: '/assignments/new'
+      fullPath: '/class/$classId/assignments/new'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignmentsNewRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/calendar/': {
+      id: '/_authenticated/_class/class/$classId/calendar/'
+      path: '/calendar'
+      fullPath: '/class/$classId/calendar/'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdCalendarIndexRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/expectations/': {
+      id: '/_authenticated/_class/class/$classId/expectations/'
+      path: '/expectations'
+      fullPath: '/class/$classId/expectations/'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdExpectationsIndexRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/expectations/$expectationId': {
+      id: '/_authenticated/_class/class/$classId/expectations/$expectationId'
+      path: '/expectations/$expectationId'
+      fullPath: '/class/$classId/expectations/$expectationId'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdExpectationsExpectationIdRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/raz/': {
+      id: '/_authenticated/_class/class/$classId/raz/'
+      path: '/raz'
+      fullPath: '/class/$classId/raz/'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdRazIndexRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/raz/initial-levels': {
+      id: '/_authenticated/_class/class/$classId/raz/initial-levels'
+      path: '/raz/initial-levels'
+      fullPath: '/class/$classId/raz/initial-levels'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdRazInitialLevelsRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/tasks/': {
+      id: '/_authenticated/_class/class/$classId/tasks/'
+      path: '/tasks'
+      fullPath: '/class/$classId/tasks/'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdTasksIndexRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/tasks/$taskId': {
+      id: '/_authenticated/_class/class/$classId/tasks/$taskId'
+      path: '/tasks/$taskId'
+      fullPath: '/class/$classId/tasks/$taskId'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdTasksTaskIdRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/assigners/equitable/': {
+      id: '/_authenticated/_class/class/$classId/assigners/equitable/'
+      path: '/assigners/equitable'
+      fullPath: '/class/$classId/assigners/equitable/'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersEquitableIndexRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/assigners/equitable/new': {
+      id: '/_authenticated/_class/class/$classId/assigners/equitable/new'
+      path: '/assigners/equitable/new'
+      fullPath: '/class/$classId/assigners/equitable/new'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersEquitableNewRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/assigners/random/': {
+      id: '/_authenticated/_class/class/$classId/assigners/random/'
+      path: '/assigners/random'
+      fullPath: '/class/$classId/assigners/random/'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersRandomIndexRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/assigners/random/new': {
+      id: '/_authenticated/_class/class/$classId/assigners/random/new'
+      path: '/assigners/random/new'
+      fullPath: '/class/$classId/assigners/random/new'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersRandomNewRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/assigners/seats/': {
+      id: '/_authenticated/_class/class/$classId/assigners/seats/'
+      path: '/assigners/seats'
+      fullPath: '/class/$classId/assigners/seats/'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsIndexRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/assignments/$assignmentId/': {
+      id: '/_authenticated/_class/class/$classId/assignments/$assignmentId/'
+      path: '/'
+      fullPath: '/class/$classId/assignments/$assignmentId/'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdIndexRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/assignments/$assignmentId/edit': {
+      id: '/_authenticated/_class/class/$classId/assignments/$assignmentId/edit'
+      path: '/edit'
+      fullPath: '/class/$classId/assignments/$assignmentId/edit'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdEditRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/assignments/$assignmentId/grade': {
+      id: '/_authenticated/_class/class/$classId/assignments/$assignmentId/grade'
+      path: '/grade'
+      fullPath: '/class/$classId/assignments/$assignmentId/grade'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdGradeRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/assignments/$assignmentId/tasks': {
+      id: '/_authenticated/_class/class/$classId/assignments/$assignmentId/tasks'
+      path: '/tasks'
+      fullPath: '/class/$classId/assignments/$assignmentId/tasks'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdTasksRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/calendar/event/$eventId': {
+      id: '/_authenticated/_class/class/$classId/calendar/event/$eventId'
+      path: '/calendar/event/$eventId'
+      fullPath: '/class/$classId/calendar/event/$eventId'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdCalendarEventEventIdRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/sw/grade-scales/': {
+      id: '/_authenticated/_class/class/$classId/sw/grade-scales/'
+      path: '/sw/grade-scales'
+      fullPath: '/class/$classId/sw/grade-scales/'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdSwGradeScalesIndexRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/sw/graded-subjects/': {
+      id: '/_authenticated/_class/class/$classId/sw/graded-subjects/'
+      path: '/sw/graded-subjects'
+      fullPath: '/class/$classId/sw/graded-subjects/'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdSwGradedSubjectsIndexRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/sw/graded-subjects/new': {
+      id: '/_authenticated/_class/class/$classId/sw/graded-subjects/new'
+      path: '/sw/graded-subjects/new'
+      fullPath: '/class/$classId/sw/graded-subjects/new'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdSwGradedSubjectsNewRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/': {
+      id: '/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/'
+      path: '/assigners/equitable/$assignerId'
+      fullPath: '/class/$classId/assigners/equitable/$assignerId/'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdIndexRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/edit': {
+      id: '/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/edit'
+      path: '/assigners/equitable/$assignerId/edit'
+      fullPath: '/class/$classId/assigners/equitable/$assignerId/edit'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdEditRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/manual': {
+      id: '/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/manual'
+      path: '/assigners/equitable/$assignerId/manual'
+      fullPath: '/class/$classId/assigners/equitable/$assignerId/manual'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdManualRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/assigners/random/$assignerId/': {
+      id: '/_authenticated/_class/class/$classId/assigners/random/$assignerId/'
+      path: '/assigners/random/$assignerId'
+      fullPath: '/class/$classId/assigners/random/$assignerId/'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersRandomAssignerIdIndexRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/assigners/random/$assignerId/edit': {
+      id: '/_authenticated/_class/class/$classId/assigners/random/$assignerId/edit'
+      path: '/assigners/random/$assignerId/edit'
+      fullPath: '/class/$classId/assigners/random/$assignerId/edit'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersRandomAssignerIdEditRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/assigners/seats/charts/': {
+      id: '/_authenticated/_class/class/$classId/assigners/seats/charts/'
+      path: '/assigners/seats/charts'
+      fullPath: '/class/$classId/assigners/seats/charts/'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsChartsIndexRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/assigners/seats/charts/$chartId': {
+      id: '/_authenticated/_class/class/$classId/assigners/seats/charts/$chartId'
+      path: '/assigners/seats/charts/$chartId'
+      fullPath: '/class/$classId/assigners/seats/charts/$chartId'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsChartsChartIdRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/assigners/seats/constraints/': {
+      id: '/_authenticated/_class/class/$classId/assigners/seats/constraints/'
+      path: '/assigners/seats/constraints'
+      fullPath: '/class/$classId/assigners/seats/constraints/'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsConstraintsIndexRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/assigners/seats/data/': {
+      id: '/_authenticated/_class/class/$classId/assigners/seats/data/'
+      path: '/assigners/seats/data'
+      fullPath: '/class/$classId/assigners/seats/data/'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsDataIndexRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/assigners/seats/layouts/': {
+      id: '/_authenticated/_class/class/$classId/assigners/seats/layouts/'
+      path: '/assigners/seats/layouts'
+      fullPath: '/class/$classId/assigners/seats/layouts/'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsLayoutsIndexRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/assigners/seats/layouts/$layoutId': {
+      id: '/_authenticated/_class/class/$classId/assigners/seats/layouts/$layoutId'
+      path: '/assigners/seats/layouts/$layoutId'
+      fullPath: '/class/$classId/assigners/seats/layouts/$layoutId'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsLayoutsLayoutIdRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/assigners/seats/stats/': {
+      id: '/_authenticated/_class/class/$classId/assigners/seats/stats/'
+      path: '/assigners/seats/stats'
+      fullPath: '/class/$classId/assigners/seats/stats/'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsStatsIndexRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/sw/grade-scales/reports/': {
+      id: '/_authenticated/_class/class/$classId/sw/grade-scales/reports/'
+      path: '/sw/grade-scales/reports'
+      fullPath: '/class/$classId/sw/grade-scales/reports/'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdSwGradeScalesReportsIndexRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/sw/grade-scales/scales/': {
+      id: '/_authenticated/_class/class/$classId/sw/grade-scales/scales/'
+      path: '/sw/grade-scales/scales'
+      fullPath: '/class/$classId/sw/grade-scales/scales/'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdSwGradeScalesScalesIndexRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/sw/grade-scales/subjects/': {
+      id: '/_authenticated/_class/class/$classId/sw/grade-scales/subjects/'
+      path: '/sw/grade-scales/subjects'
+      fullPath: '/class/$classId/sw/grade-scales/subjects/'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdSwGradeScalesSubjectsIndexRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/sw/graded-subjects/$gradedSubjectId/edit': {
+      id: '/_authenticated/_class/class/$classId/sw/graded-subjects/$gradedSubjectId/edit'
+      path: '/sw/graded-subjects/$gradedSubjectId/edit'
+      fullPath: '/class/$classId/sw/graded-subjects/$gradedSubjectId/edit'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdSwGradedSubjectsGradedSubjectIdEditRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/dashboard/': {
+      id: '/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/dashboard/'
+      path: '/assigners/equitable/$assignerId/dashboard'
+      fullPath: '/class/$classId/assigners/equitable/$assignerId/dashboard/'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdDashboardIndexRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/data/': {
+      id: '/_authenticated/_class/class/$classId/assigners/equitable/$assignerId/data/'
+      path: '/assigners/equitable/$assignerId/data'
+      fullPath: '/class/$classId/assigners/equitable/$assignerId/data/'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdDataIndexRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/assigners/random/$assignerId/data/': {
+      id: '/_authenticated/_class/class/$classId/assigners/random/$assignerId/data/'
+      path: '/assigners/random/$assignerId/data'
+      fullPath: '/class/$classId/assigners/random/$assignerId/data/'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdAssignersRandomAssignerIdDataIndexRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
   }
 }
 
 interface AuthenticatedAppRouteRouteChildren {
-  AuthenticatedAppAccountRoute: typeof AuthenticatedAppAccountRoute;
-  AuthenticatedAppBillingRoute: typeof AuthenticatedAppBillingRoute;
-  AuthenticatedAppFeedbackRoute: typeof AuthenticatedAppFeedbackRoute;
-  AuthenticatedAppJoinRoute: typeof AuthenticatedAppJoinRoute;
-  AuthenticatedAppNotificationsRoute: typeof AuthenticatedAppNotificationsRoute;
-  AuthenticatedAppSettingsRoute: typeof AuthenticatedAppSettingsRoute;
-  AuthenticatedAppUiRoute: typeof AuthenticatedAppUiRoute;
-  AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute;
+  AuthenticatedAppAccountRoute: typeof AuthenticatedAppAccountRoute
+  AuthenticatedAppBillingRoute: typeof AuthenticatedAppBillingRoute
+  AuthenticatedAppFeedbackRoute: typeof AuthenticatedAppFeedbackRoute
+  AuthenticatedAppJoinRoute: typeof AuthenticatedAppJoinRoute
+  AuthenticatedAppNotificationsRoute: typeof AuthenticatedAppNotificationsRoute
+  AuthenticatedAppSettingsRoute: typeof AuthenticatedAppSettingsRoute
+  AuthenticatedAppUiRoute: typeof AuthenticatedAppUiRoute
+  AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
 }
 
 const AuthenticatedAppRouteRouteChildren: AuthenticatedAppRouteRouteChildren = {
@@ -1631,17 +1681,18 @@ const AuthenticatedAppRouteRouteChildren: AuthenticatedAppRouteRouteChildren = {
   AuthenticatedAppSettingsRoute: AuthenticatedAppSettingsRoute,
   AuthenticatedAppUiRoute: AuthenticatedAppUiRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
-};
+}
 
-const AuthenticatedAppRouteRouteWithChildren = AuthenticatedAppRouteRoute._addFileChildren(
-  AuthenticatedAppRouteRouteChildren,
-);
+const AuthenticatedAppRouteRouteWithChildren =
+  AuthenticatedAppRouteRoute._addFileChildren(
+    AuthenticatedAppRouteRouteChildren,
+  )
 
 interface AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRouteChildren {
-  AuthenticatedClassClassClassIdAssignmentsAssignmentIdEditRoute: typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdEditRoute;
-  AuthenticatedClassClassClassIdAssignmentsAssignmentIdGradeRoute: typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdGradeRoute;
-  AuthenticatedClassClassClassIdAssignmentsAssignmentIdTasksRoute: typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdTasksRoute;
-  AuthenticatedClassClassClassIdAssignmentsAssignmentIdIndexRoute: typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdIndexRoute;
+  AuthenticatedClassClassClassIdAssignmentsAssignmentIdEditRoute: typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdEditRoute
+  AuthenticatedClassClassClassIdAssignmentsAssignmentIdGradeRoute: typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdGradeRoute
+  AuthenticatedClassClassClassIdAssignmentsAssignmentIdTasksRoute: typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdTasksRoute
+  AuthenticatedClassClassClassIdAssignmentsAssignmentIdIndexRoute: typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdIndexRoute
 }
 
 const AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRouteChildren: AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRouteChildren =
@@ -1654,87 +1705,100 @@ const AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRouteChildren: A
       AuthenticatedClassClassClassIdAssignmentsAssignmentIdTasksRoute,
     AuthenticatedClassClassClassIdAssignmentsAssignmentIdIndexRoute:
       AuthenticatedClassClassClassIdAssignmentsAssignmentIdIndexRoute,
-  };
+  }
 
 const AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRouteWithChildren =
   AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRoute._addFileChildren(
     AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRouteChildren,
-  );
+  )
 
 interface AuthenticatedClassClassClassIdRouteRouteChildren {
-  AuthenticatedClassClassClassIdActivityRoute: typeof AuthenticatedClassClassClassIdActivityRoute;
-  AuthenticatedClassClassClassIdAssistantTeachersRoute: typeof AuthenticatedClassClassClassIdAssistantTeachersRoute;
-  AuthenticatedClassClassClassIdAttendanceRoute: typeof AuthenticatedClassClassClassIdAttendanceRoute;
-  AuthenticatedClassClassClassIdBehaviorsRoute: typeof AuthenticatedClassClassClassIdBehaviorsRoute;
-  AuthenticatedClassClassClassIdCalendarRoute: typeof AuthenticatedClassClassClassIdCalendarRoute;
-  AuthenticatedClassClassClassIdGroupsRoute: typeof AuthenticatedClassClassClassIdGroupsRoute;
-  AuthenticatedClassClassClassIdGuardiansRoute: typeof AuthenticatedClassClassClassIdGuardiansRoute;
-  AuthenticatedClassClassClassIdInvitationsRoute: typeof AuthenticatedClassClassClassIdInvitationsRoute;
-  AuthenticatedClassClassClassIdPermissionsRoute: typeof AuthenticatedClassClassClassIdPermissionsRoute;
-  AuthenticatedClassClassClassIdPointsRoute: typeof AuthenticatedClassClassClassIdPointsRoute;
-  AuthenticatedClassClassClassIdRewardsRoute: typeof AuthenticatedClassClassClassIdRewardsRoute;
-  AuthenticatedClassClassClassIdSettingsRoute: typeof AuthenticatedClassClassClassIdSettingsRoute;
-  AuthenticatedClassClassClassIdStudentsRoute: typeof AuthenticatedClassClassClassIdStudentsRoute;
-  AuthenticatedClassClassClassIdTeachersRoute: typeof AuthenticatedClassClassClassIdTeachersRoute;
-  AuthenticatedClassClassClassIdIndexRoute: typeof AuthenticatedClassClassClassIdIndexRoute;
-  AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRoute: typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRouteWithChildren;
-  AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute: typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute;
-  AuthenticatedClassClassClassIdAssignmentsNewRoute: typeof AuthenticatedClassClassClassIdAssignmentsNewRoute;
-  AuthenticatedClassClassClassIdExpectationsExpectationIdRoute: typeof AuthenticatedClassClassClassIdExpectationsExpectationIdRoute;
-  AuthenticatedClassClassClassIdRazInitialLevelsRoute: typeof AuthenticatedClassClassClassIdRazInitialLevelsRoute;
-  AuthenticatedClassClassClassIdTasksTaskIdRoute: typeof AuthenticatedClassClassClassIdTasksTaskIdRoute;
-  AuthenticatedClassClassClassIdAnnouncementsIndexRoute: typeof AuthenticatedClassClassClassIdAnnouncementsIndexRoute;
-  AuthenticatedClassClassClassIdAssignmentsIndexRoute: typeof AuthenticatedClassClassClassIdAssignmentsIndexRoute;
-  AuthenticatedClassClassClassIdExpectationsIndexRoute: typeof AuthenticatedClassClassClassIdExpectationsIndexRoute;
-  AuthenticatedClassClassClassIdRazIndexRoute: typeof AuthenticatedClassClassClassIdRazIndexRoute;
-  AuthenticatedClassClassClassIdTasksIndexRoute: typeof AuthenticatedClassClassClassIdTasksIndexRoute;
-  AuthenticatedClassClassClassIdAssignersEquitableNewRoute: typeof AuthenticatedClassClassClassIdAssignersEquitableNewRoute;
-  AuthenticatedClassClassClassIdAssignersRandomNewRoute: typeof AuthenticatedClassClassClassIdAssignersRandomNewRoute;
-  AuthenticatedClassClassClassIdSwGradedSubjectsNewRoute: typeof AuthenticatedClassClassClassIdSwGradedSubjectsNewRoute;
-  AuthenticatedClassClassClassIdAssignersEquitableIndexRoute: typeof AuthenticatedClassClassClassIdAssignersEquitableIndexRoute;
-  AuthenticatedClassClassClassIdAssignersRandomIndexRoute: typeof AuthenticatedClassClassClassIdAssignersRandomIndexRoute;
-  AuthenticatedClassClassClassIdAssignersSeatsIndexRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsIndexRoute;
-  AuthenticatedClassClassClassIdSwGradeScalesIndexRoute: typeof AuthenticatedClassClassClassIdSwGradeScalesIndexRoute;
-  AuthenticatedClassClassClassIdSwGradedSubjectsIndexRoute: typeof AuthenticatedClassClassClassIdSwGradedSubjectsIndexRoute;
-  AuthenticatedClassClassClassIdAssignersEquitableAssignerIdEditRoute: typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdEditRoute;
-  AuthenticatedClassClassClassIdAssignersEquitableAssignerIdManualRoute: typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdManualRoute;
-  AuthenticatedClassClassClassIdAssignersRandomAssignerIdEditRoute: typeof AuthenticatedClassClassClassIdAssignersRandomAssignerIdEditRoute;
-  AuthenticatedClassClassClassIdAssignersSeatsChartsChartIdRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsChartsChartIdRoute;
-  AuthenticatedClassClassClassIdAssignersSeatsLayoutsLayoutIdRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsLayoutsLayoutIdRoute;
-  AuthenticatedClassClassClassIdSwGradedSubjectsGradedSubjectIdEditRoute: typeof AuthenticatedClassClassClassIdSwGradedSubjectsGradedSubjectIdEditRoute;
-  AuthenticatedClassClassClassIdAssignersEquitableAssignerIdIndexRoute: typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdIndexRoute;
-  AuthenticatedClassClassClassIdAssignersRandomAssignerIdIndexRoute: typeof AuthenticatedClassClassClassIdAssignersRandomAssignerIdIndexRoute;
-  AuthenticatedClassClassClassIdAssignersSeatsChartsIndexRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsChartsIndexRoute;
-  AuthenticatedClassClassClassIdAssignersSeatsConstraintsIndexRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsConstraintsIndexRoute;
-  AuthenticatedClassClassClassIdAssignersSeatsDataIndexRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsDataIndexRoute;
-  AuthenticatedClassClassClassIdAssignersSeatsLayoutsIndexRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsLayoutsIndexRoute;
-  AuthenticatedClassClassClassIdAssignersSeatsStatsIndexRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsStatsIndexRoute;
-  AuthenticatedClassClassClassIdSwGradeScalesReportsIndexRoute: typeof AuthenticatedClassClassClassIdSwGradeScalesReportsIndexRoute;
-  AuthenticatedClassClassClassIdSwGradeScalesScalesIndexRoute: typeof AuthenticatedClassClassClassIdSwGradeScalesScalesIndexRoute;
-  AuthenticatedClassClassClassIdSwGradeScalesSubjectsIndexRoute: typeof AuthenticatedClassClassClassIdSwGradeScalesSubjectsIndexRoute;
-  AuthenticatedClassClassClassIdAssignersEquitableAssignerIdDashboardIndexRoute: typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdDashboardIndexRoute;
-  AuthenticatedClassClassClassIdAssignersEquitableAssignerIdDataIndexRoute: typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdDataIndexRoute;
-  AuthenticatedClassClassClassIdAssignersRandomAssignerIdDataIndexRoute: typeof AuthenticatedClassClassClassIdAssignersRandomAssignerIdDataIndexRoute;
+  AuthenticatedClassClassClassIdActivityRoute: typeof AuthenticatedClassClassClassIdActivityRoute
+  AuthenticatedClassClassClassIdAssistantTeachersRoute: typeof AuthenticatedClassClassClassIdAssistantTeachersRoute
+  AuthenticatedClassClassClassIdAttendanceRoute: typeof AuthenticatedClassClassClassIdAttendanceRoute
+  AuthenticatedClassClassClassIdBehaviorsRoute: typeof AuthenticatedClassClassClassIdBehaviorsRoute
+  AuthenticatedClassClassClassIdGroupsRoute: typeof AuthenticatedClassClassClassIdGroupsRoute
+  AuthenticatedClassClassClassIdGuardiansRoute: typeof AuthenticatedClassClassClassIdGuardiansRoute
+  AuthenticatedClassClassClassIdInvitationsRoute: typeof AuthenticatedClassClassClassIdInvitationsRoute
+  AuthenticatedClassClassClassIdPermissionsRoute: typeof AuthenticatedClassClassClassIdPermissionsRoute
+  AuthenticatedClassClassClassIdPointsRoute: typeof AuthenticatedClassClassClassIdPointsRoute
+  AuthenticatedClassClassClassIdRewardsRoute: typeof AuthenticatedClassClassClassIdRewardsRoute
+  AuthenticatedClassClassClassIdSettingsRoute: typeof AuthenticatedClassClassClassIdSettingsRoute
+  AuthenticatedClassClassClassIdStudentsRoute: typeof AuthenticatedClassClassClassIdStudentsRoute
+  AuthenticatedClassClassClassIdTeachersRoute: typeof AuthenticatedClassClassClassIdTeachersRoute
+  AuthenticatedClassClassClassIdIndexRoute: typeof AuthenticatedClassClassClassIdIndexRoute
+  AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRoute: typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRouteWithChildren
+  AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute: typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute
+  AuthenticatedClassClassClassIdAssignmentsNewRoute: typeof AuthenticatedClassClassClassIdAssignmentsNewRoute
+  AuthenticatedClassClassClassIdExpectationsExpectationIdRoute: typeof AuthenticatedClassClassClassIdExpectationsExpectationIdRoute
+  AuthenticatedClassClassClassIdRazInitialLevelsRoute: typeof AuthenticatedClassClassClassIdRazInitialLevelsRoute
+  AuthenticatedClassClassClassIdTasksTaskIdRoute: typeof AuthenticatedClassClassClassIdTasksTaskIdRoute
+  AuthenticatedClassClassClassIdAnnouncementsIndexRoute: typeof AuthenticatedClassClassClassIdAnnouncementsIndexRoute
+  AuthenticatedClassClassClassIdAssignmentsIndexRoute: typeof AuthenticatedClassClassClassIdAssignmentsIndexRoute
+  AuthenticatedClassClassClassIdCalendarIndexRoute: typeof AuthenticatedClassClassClassIdCalendarIndexRoute
+  AuthenticatedClassClassClassIdExpectationsIndexRoute: typeof AuthenticatedClassClassClassIdExpectationsIndexRoute
+  AuthenticatedClassClassClassIdRazIndexRoute: typeof AuthenticatedClassClassClassIdRazIndexRoute
+  AuthenticatedClassClassClassIdTasksIndexRoute: typeof AuthenticatedClassClassClassIdTasksIndexRoute
+  AuthenticatedClassClassClassIdAssignersEquitableNewRoute: typeof AuthenticatedClassClassClassIdAssignersEquitableNewRoute
+  AuthenticatedClassClassClassIdAssignersRandomNewRoute: typeof AuthenticatedClassClassClassIdAssignersRandomNewRoute
+  AuthenticatedClassClassClassIdCalendarEventEventIdRoute: typeof AuthenticatedClassClassClassIdCalendarEventEventIdRoute
+  AuthenticatedClassClassClassIdSwGradedSubjectsNewRoute: typeof AuthenticatedClassClassClassIdSwGradedSubjectsNewRoute
+  AuthenticatedClassClassClassIdAssignersEquitableIndexRoute: typeof AuthenticatedClassClassClassIdAssignersEquitableIndexRoute
+  AuthenticatedClassClassClassIdAssignersRandomIndexRoute: typeof AuthenticatedClassClassClassIdAssignersRandomIndexRoute
+  AuthenticatedClassClassClassIdAssignersSeatsIndexRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsIndexRoute
+  AuthenticatedClassClassClassIdSwGradeScalesIndexRoute: typeof AuthenticatedClassClassClassIdSwGradeScalesIndexRoute
+  AuthenticatedClassClassClassIdSwGradedSubjectsIndexRoute: typeof AuthenticatedClassClassClassIdSwGradedSubjectsIndexRoute
+  AuthenticatedClassClassClassIdAssignersEquitableAssignerIdEditRoute: typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdEditRoute
+  AuthenticatedClassClassClassIdAssignersEquitableAssignerIdManualRoute: typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdManualRoute
+  AuthenticatedClassClassClassIdAssignersRandomAssignerIdEditRoute: typeof AuthenticatedClassClassClassIdAssignersRandomAssignerIdEditRoute
+  AuthenticatedClassClassClassIdAssignersSeatsChartsChartIdRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsChartsChartIdRoute
+  AuthenticatedClassClassClassIdAssignersSeatsLayoutsLayoutIdRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsLayoutsLayoutIdRoute
+  AuthenticatedClassClassClassIdSwGradedSubjectsGradedSubjectIdEditRoute: typeof AuthenticatedClassClassClassIdSwGradedSubjectsGradedSubjectIdEditRoute
+  AuthenticatedClassClassClassIdAssignersEquitableAssignerIdIndexRoute: typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdIndexRoute
+  AuthenticatedClassClassClassIdAssignersRandomAssignerIdIndexRoute: typeof AuthenticatedClassClassClassIdAssignersRandomAssignerIdIndexRoute
+  AuthenticatedClassClassClassIdAssignersSeatsChartsIndexRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsChartsIndexRoute
+  AuthenticatedClassClassClassIdAssignersSeatsConstraintsIndexRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsConstraintsIndexRoute
+  AuthenticatedClassClassClassIdAssignersSeatsDataIndexRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsDataIndexRoute
+  AuthenticatedClassClassClassIdAssignersSeatsLayoutsIndexRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsLayoutsIndexRoute
+  AuthenticatedClassClassClassIdAssignersSeatsStatsIndexRoute: typeof AuthenticatedClassClassClassIdAssignersSeatsStatsIndexRoute
+  AuthenticatedClassClassClassIdSwGradeScalesReportsIndexRoute: typeof AuthenticatedClassClassClassIdSwGradeScalesReportsIndexRoute
+  AuthenticatedClassClassClassIdSwGradeScalesScalesIndexRoute: typeof AuthenticatedClassClassClassIdSwGradeScalesScalesIndexRoute
+  AuthenticatedClassClassClassIdSwGradeScalesSubjectsIndexRoute: typeof AuthenticatedClassClassClassIdSwGradeScalesSubjectsIndexRoute
+  AuthenticatedClassClassClassIdAssignersEquitableAssignerIdDashboardIndexRoute: typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdDashboardIndexRoute
+  AuthenticatedClassClassClassIdAssignersEquitableAssignerIdDataIndexRoute: typeof AuthenticatedClassClassClassIdAssignersEquitableAssignerIdDataIndexRoute
+  AuthenticatedClassClassClassIdAssignersRandomAssignerIdDataIndexRoute: typeof AuthenticatedClassClassClassIdAssignersRandomAssignerIdDataIndexRoute
 }
 
 const AuthenticatedClassClassClassIdRouteRouteChildren: AuthenticatedClassClassClassIdRouteRouteChildren =
   {
-    AuthenticatedClassClassClassIdActivityRoute: AuthenticatedClassClassClassIdActivityRoute,
+    AuthenticatedClassClassClassIdActivityRoute:
+      AuthenticatedClassClassClassIdActivityRoute,
     AuthenticatedClassClassClassIdAssistantTeachersRoute:
       AuthenticatedClassClassClassIdAssistantTeachersRoute,
-    AuthenticatedClassClassClassIdAttendanceRoute: AuthenticatedClassClassClassIdAttendanceRoute,
-    AuthenticatedClassClassClassIdBehaviorsRoute: AuthenticatedClassClassClassIdBehaviorsRoute,
-    AuthenticatedClassClassClassIdCalendarRoute: AuthenticatedClassClassClassIdCalendarRoute,
-    AuthenticatedClassClassClassIdGroupsRoute: AuthenticatedClassClassClassIdGroupsRoute,
-    AuthenticatedClassClassClassIdGuardiansRoute: AuthenticatedClassClassClassIdGuardiansRoute,
-    AuthenticatedClassClassClassIdInvitationsRoute: AuthenticatedClassClassClassIdInvitationsRoute,
-    AuthenticatedClassClassClassIdPermissionsRoute: AuthenticatedClassClassClassIdPermissionsRoute,
-    AuthenticatedClassClassClassIdPointsRoute: AuthenticatedClassClassClassIdPointsRoute,
-    AuthenticatedClassClassClassIdRewardsRoute: AuthenticatedClassClassClassIdRewardsRoute,
-    AuthenticatedClassClassClassIdSettingsRoute: AuthenticatedClassClassClassIdSettingsRoute,
-    AuthenticatedClassClassClassIdStudentsRoute: AuthenticatedClassClassClassIdStudentsRoute,
-    AuthenticatedClassClassClassIdTeachersRoute: AuthenticatedClassClassClassIdTeachersRoute,
-    AuthenticatedClassClassClassIdIndexRoute: AuthenticatedClassClassClassIdIndexRoute,
+    AuthenticatedClassClassClassIdAttendanceRoute:
+      AuthenticatedClassClassClassIdAttendanceRoute,
+    AuthenticatedClassClassClassIdBehaviorsRoute:
+      AuthenticatedClassClassClassIdBehaviorsRoute,
+    AuthenticatedClassClassClassIdGroupsRoute:
+      AuthenticatedClassClassClassIdGroupsRoute,
+    AuthenticatedClassClassClassIdGuardiansRoute:
+      AuthenticatedClassClassClassIdGuardiansRoute,
+    AuthenticatedClassClassClassIdInvitationsRoute:
+      AuthenticatedClassClassClassIdInvitationsRoute,
+    AuthenticatedClassClassClassIdPermissionsRoute:
+      AuthenticatedClassClassClassIdPermissionsRoute,
+    AuthenticatedClassClassClassIdPointsRoute:
+      AuthenticatedClassClassClassIdPointsRoute,
+    AuthenticatedClassClassClassIdRewardsRoute:
+      AuthenticatedClassClassClassIdRewardsRoute,
+    AuthenticatedClassClassClassIdSettingsRoute:
+      AuthenticatedClassClassClassIdSettingsRoute,
+    AuthenticatedClassClassClassIdStudentsRoute:
+      AuthenticatedClassClassClassIdStudentsRoute,
+    AuthenticatedClassClassClassIdTeachersRoute:
+      AuthenticatedClassClassClassIdTeachersRoute,
+    AuthenticatedClassClassClassIdIndexRoute:
+      AuthenticatedClassClassClassIdIndexRoute,
     AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRoute:
       AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRouteWithChildren,
     AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute:
@@ -1745,19 +1809,26 @@ const AuthenticatedClassClassClassIdRouteRouteChildren: AuthenticatedClassClassC
       AuthenticatedClassClassClassIdExpectationsExpectationIdRoute,
     AuthenticatedClassClassClassIdRazInitialLevelsRoute:
       AuthenticatedClassClassClassIdRazInitialLevelsRoute,
-    AuthenticatedClassClassClassIdTasksTaskIdRoute: AuthenticatedClassClassClassIdTasksTaskIdRoute,
+    AuthenticatedClassClassClassIdTasksTaskIdRoute:
+      AuthenticatedClassClassClassIdTasksTaskIdRoute,
     AuthenticatedClassClassClassIdAnnouncementsIndexRoute:
       AuthenticatedClassClassClassIdAnnouncementsIndexRoute,
     AuthenticatedClassClassClassIdAssignmentsIndexRoute:
       AuthenticatedClassClassClassIdAssignmentsIndexRoute,
+    AuthenticatedClassClassClassIdCalendarIndexRoute:
+      AuthenticatedClassClassClassIdCalendarIndexRoute,
     AuthenticatedClassClassClassIdExpectationsIndexRoute:
       AuthenticatedClassClassClassIdExpectationsIndexRoute,
-    AuthenticatedClassClassClassIdRazIndexRoute: AuthenticatedClassClassClassIdRazIndexRoute,
-    AuthenticatedClassClassClassIdTasksIndexRoute: AuthenticatedClassClassClassIdTasksIndexRoute,
+    AuthenticatedClassClassClassIdRazIndexRoute:
+      AuthenticatedClassClassClassIdRazIndexRoute,
+    AuthenticatedClassClassClassIdTasksIndexRoute:
+      AuthenticatedClassClassClassIdTasksIndexRoute,
     AuthenticatedClassClassClassIdAssignersEquitableNewRoute:
       AuthenticatedClassClassClassIdAssignersEquitableNewRoute,
     AuthenticatedClassClassClassIdAssignersRandomNewRoute:
       AuthenticatedClassClassClassIdAssignersRandomNewRoute,
+    AuthenticatedClassClassClassIdCalendarEventEventIdRoute:
+      AuthenticatedClassClassClassIdCalendarEventEventIdRoute,
     AuthenticatedClassClassClassIdSwGradedSubjectsNewRoute:
       AuthenticatedClassClassClassIdSwGradedSubjectsNewRoute,
     AuthenticatedClassClassClassIdAssignersEquitableIndexRoute:
@@ -1808,45 +1879,50 @@ const AuthenticatedClassClassClassIdRouteRouteChildren: AuthenticatedClassClassC
       AuthenticatedClassClassClassIdAssignersEquitableAssignerIdDataIndexRoute,
     AuthenticatedClassClassClassIdAssignersRandomAssignerIdDataIndexRoute:
       AuthenticatedClassClassClassIdAssignersRandomAssignerIdDataIndexRoute,
-  };
+  }
 
 const AuthenticatedClassClassClassIdRouteRouteWithChildren =
   AuthenticatedClassClassClassIdRouteRoute._addFileChildren(
     AuthenticatedClassClassClassIdRouteRouteChildren,
-  );
+  )
 
 interface AuthenticatedClassRouteRouteChildren {
-  AuthenticatedClassClassClassIdRouteRoute: typeof AuthenticatedClassClassClassIdRouteRouteWithChildren;
+  AuthenticatedClassClassClassIdRouteRoute: typeof AuthenticatedClassClassClassIdRouteRouteWithChildren
 }
 
-const AuthenticatedClassRouteRouteChildren: AuthenticatedClassRouteRouteChildren = {
-  AuthenticatedClassClassClassIdRouteRoute: AuthenticatedClassClassClassIdRouteRouteWithChildren,
-};
+const AuthenticatedClassRouteRouteChildren: AuthenticatedClassRouteRouteChildren =
+  {
+    AuthenticatedClassClassClassIdRouteRoute:
+      AuthenticatedClassClassClassIdRouteRouteWithChildren,
+  }
 
-const AuthenticatedClassRouteRouteWithChildren = AuthenticatedClassRouteRoute._addFileChildren(
-  AuthenticatedClassRouteRouteChildren,
-);
+const AuthenticatedClassRouteRouteWithChildren =
+  AuthenticatedClassRouteRoute._addFileChildren(
+    AuthenticatedClassRouteRouteChildren,
+  )
 
 interface AuthenticatedAdminRouteRouteChildren {
-  AuthenticatedAdminFeedbackRoute: typeof AuthenticatedAdminFeedbackRoute;
-  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute;
+  AuthenticatedAdminFeedbackRoute: typeof AuthenticatedAdminFeedbackRoute
+  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
-const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren = {
-  AuthenticatedAdminFeedbackRoute: AuthenticatedAdminFeedbackRoute,
-  AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
-};
+const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
+  {
+    AuthenticatedAdminFeedbackRoute: AuthenticatedAdminFeedbackRoute,
+    AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+  }
 
-const AuthenticatedAdminRouteRouteWithChildren = AuthenticatedAdminRouteRoute._addFileChildren(
-  AuthenticatedAdminRouteRouteChildren,
-);
+const AuthenticatedAdminRouteRouteWithChildren =
+  AuthenticatedAdminRouteRoute._addFileChildren(
+    AuthenticatedAdminRouteRouteChildren,
+  )
 
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedAppRouteRoute: typeof AuthenticatedAppRouteRouteWithChildren;
-  AuthenticatedClassRouteRoute: typeof AuthenticatedClassRouteRouteWithChildren;
-  AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren;
-  AuthenticatedDRunIdRoute: typeof AuthenticatedDRunIdRoute;
-  AuthenticatedDeRunIdRoute: typeof AuthenticatedDeRunIdRoute;
+  AuthenticatedAppRouteRoute: typeof AuthenticatedAppRouteRouteWithChildren
+  AuthenticatedClassRouteRoute: typeof AuthenticatedClassRouteRouteWithChildren
+  AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
+  AuthenticatedDRunIdRoute: typeof AuthenticatedDRunIdRoute
+  AuthenticatedDeRunIdRoute: typeof AuthenticatedDeRunIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -1855,25 +1931,26 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRouteRoute: AuthenticatedAdminRouteRouteWithChildren,
   AuthenticatedDRunIdRoute: AuthenticatedDRunIdRoute,
   AuthenticatedDeRunIdRoute: AuthenticatedDeRunIdRoute,
-};
+}
 
-const AuthenticatedRouteRouteWithChildren = AuthenticatedRouteRoute._addFileChildren(
-  AuthenticatedRouteRouteChildren,
-);
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
 interface PublicRouteRouteChildren {
-  PublicSplatRoute: typeof PublicSplatRoute;
-  PublicLoginRoute: typeof PublicLoginRoute;
-  PublicUnauthorizedRoute: typeof PublicUnauthorizedRoute;
+  PublicSplatRoute: typeof PublicSplatRoute
+  PublicLoginRoute: typeof PublicLoginRoute
+  PublicUnauthorizedRoute: typeof PublicUnauthorizedRoute
 }
 
 const PublicRouteRouteChildren: PublicRouteRouteChildren = {
   PublicSplatRoute: PublicSplatRoute,
   PublicLoginRoute: PublicLoginRoute,
   PublicUnauthorizedRoute: PublicUnauthorizedRoute,
-};
+}
 
-const PublicRouteRouteWithChildren = PublicRouteRoute._addFileChildren(PublicRouteRouteChildren);
+const PublicRouteRouteWithChildren = PublicRouteRoute._addFileChildren(
+  PublicRouteRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
@@ -1881,7 +1958,7 @@ const rootRouteChildren: RootRouteChildren = {
   JoinDisplayRoute: JoinDisplayRoute,
   APublicSlugRoute: APublicSlugRoute,
   PPublicSlugRoute: PPublicSlugRoute,
-};
+}
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>();
+  ._addFileTypes<FileRouteTypes>()

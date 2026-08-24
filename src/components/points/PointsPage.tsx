@@ -273,63 +273,66 @@ function StaffPointsPage({ classId }: PointsPageProps) {
         <p className="hidden text-muted-foreground sm:block">{t("description")}</p>
       </div>
 
-      <GroupTeamFilterButtons classId={classId} />
-
-      <div className="flex min-w-0 flex-nowrap items-center gap-2 overflow-x-auto">
-        <PointsSortMenu
-          sortKey={sortKey}
-          sortDirection={sortDirection}
-          labels={sortLabels}
-          labelsShort={sortLabelsShort}
-          ariaLabel={t("sortMenuAria", {
-            label: sortLabels[sortKey],
-            direction: sortDirection === "asc" ? t("sortDirectionAsc") : t("sortDirectionDesc"),
-          })}
-          onSortChange={(key) => {
-            const state = nextPointsSortState(sortKey, sortDirection, key);
-            setSortKey(state.sortKey);
-            setSortDirection(state.sortDirection);
-          }}
-        />
-        {selectMode ? (
+      <GroupTeamFilterButtons
+        classId={classId}
+        trailing={
           <>
-            <Button
-              type="button"
-              variant="outline"
-              className="shrink-0 border-dashed"
-              onClick={() => {
-                setSelectMode(false);
-                clearSelection();
+            <PointsSortMenu
+              sortKey={sortKey}
+              sortDirection={sortDirection}
+              labels={sortLabels}
+              labelsShort={sortLabelsShort}
+              ariaLabel={t("sortMenuAria", {
+                label: sortLabels[sortKey],
+                direction: sortDirection === "asc" ? t("sortDirectionAsc") : t("sortDirectionDesc"),
+              })}
+              onSortChange={(key) => {
+                const state = nextPointsSortState(sortKey, sortDirection, key);
+                setSortKey(state.sortKey);
+                setSortDirection(state.sortDirection);
               }}
-            >
-              <span aria-hidden="true">{t("selectModeOn")}</span>
-              <span className="sr-only">{t("selectModeOnAria")}</span>
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="shrink-0 border-dashed"
-              aria-label={t("selectAllVisibleAria")}
-              onClick={selectAllVisible}
-            >
-              {t("selectAllVisible")}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="shrink-0 border-dashed border-primary text-primary hover:bg-primary/10 hover:text-primary"
-              disabled={selectedStudents.length === 0}
-              onClick={() => openForStudents(selectedStudents)}
-            >
-              <CircleCheckBigIcon aria-hidden="true" />
-              <span className="sr-only">
-                {t("applyToSelectedAria", { count: selectedStudents.length })}
-              </span>
-            </Button>
+            />
+            {selectMode ? (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="shrink-0 border-dashed"
+                  onClick={() => {
+                    setSelectMode(false);
+                    clearSelection();
+                  }}
+                >
+                  <span aria-hidden="true">{t("selectModeOn")}</span>
+                  <span className="sr-only">{t("selectModeOnAria")}</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="shrink-0 border-dashed"
+                  aria-label={t("selectAllVisibleAria")}
+                  onClick={selectAllVisible}
+                >
+                  {t("selectAllVisible")}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="shrink-0 border-dashed border-primary text-primary hover:bg-primary/10 hover:text-primary"
+                  disabled={selectedStudents.length === 0}
+                  onClick={() => openForStudents(selectedStudents)}
+                >
+                  <CircleCheckBigIcon aria-hidden="true" />
+                  <span className="sr-only">
+                    {t("applyToSelectedAria", { count: selectedStudents.length })}
+                  </span>
+                </Button>
+              </>
+            ) : null}
           </>
-        ) : null}
-      </div>
+        }
+      />
 
       {isPending ? (
         <div className={GRID_CLASS}>

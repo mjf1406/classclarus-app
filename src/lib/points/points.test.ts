@@ -3,6 +3,7 @@ import { describe, expect, test } from "vite-plus/test";
 import type { Id } from "../../../convex/_generated/dataModel";
 import {
   comparePointsStudents,
+  formatApplyCatalogPoints,
   nextPointsSortState,
   partitionPointsCatalogByFolder,
   sortPointsStudents,
@@ -78,5 +79,17 @@ describe("partitionPointsCatalogByFolder", () => {
     expect(partitionPointsCatalogByFolder(items, "folder-a").map((item) => item._id)).toEqual([
       "2",
     ]);
+  });
+});
+
+describe("formatApplyCatalogPoints", () => {
+  test("keeps stored signs on award and remove", () => {
+    expect(formatApplyCatalogPoints("award", 5, "en")).toBe("+5");
+    expect(formatApplyCatalogPoints("remove", -5, "en")).toBe("-5");
+  });
+
+  test("shows redeem costs as negative", () => {
+    expect(formatApplyCatalogPoints("redeem", 5, "en")).toBe("-5");
+    expect(formatApplyCatalogPoints("redeem", 0, "en")).toBe("0");
   });
 });

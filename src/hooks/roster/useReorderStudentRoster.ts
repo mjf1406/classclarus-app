@@ -7,7 +7,7 @@ import { toast } from "@/components/ui/toast-manager";
 import { studentRosterQueryKey } from "@/hooks/roster/useStudentRoster";
 import { useOptimisticMutation } from "@/hooks/useOptimisticMutation";
 import { messageFromError } from "@/lib/errors/convexError";
-import type { StudentRosterEntry } from "@/lib/roster/roster";
+import { applyRosterOrder, type StudentRosterEntry } from "@/lib/roster/roster";
 
 export type ReorderStudentRosterArgs = {
   classId: Id<"classes">;
@@ -27,14 +27,7 @@ export function useReorderStudentRoster() {
       const key = studentRosterQueryKey(args.classId);
       queryClient.setQueryData<StudentRosterEntry[]>(key, (old) => {
         if (!old) return old;
-        const byId = new Map(old.map((entry) => [entry.userId, entry] as const));
-        const next: StudentRosterEntry[] = [];
-        for (let i = 0; i < args.userIds.length; i++) {
-          const entry = byId.get(args.userIds[i]);
-          if (!entry) continue;
-          next.push({ ...entry, rosterNumber: i + 1 });
-        }
-        return next;
+        return applyRosterOrder(old, args.userIds) ?? old;
       });
     },
     onError: (error) => {

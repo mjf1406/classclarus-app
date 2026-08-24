@@ -18,6 +18,7 @@ import { normalizeCalendarEventInput } from "../../../convex/lib/calendar/calend
 type CreateCalendarEventArgs = CalendarEventFormValues & {
   classId: Id<"classes">;
   classTimeZone?: string;
+  attachmentFileIds?: Array<Id<"files">>;
 };
 
 export function useCreateCalendarEvent() {
@@ -39,6 +40,7 @@ export function useCreateCalendarEvent() {
         audienceKind: args.audienceKind,
         audienceRoles: args.audienceRoles,
         reminders: args.reminders,
+        attachmentFileIds: args.attachmentFileIds,
       }),
     queryKeys: (args, queryClient) => findCalendarRangeQueryKeys(queryClient, args.classId),
     applyOptimisticUpdate: (queryClient, args) => {
@@ -49,6 +51,7 @@ export function useCreateCalendarEvent() {
         return;
       }
       const now = Date.now();
+      const attachmentFileIds = args.attachmentFileIds ?? [];
       const next: CalendarEvent = {
         _id: `optimistic:${randomClientId()}` as Id<"calendarEvents">,
         _creationTime: now,
@@ -63,6 +66,14 @@ export function useCreateCalendarEvent() {
         endDateKey: normalized.endDateKey,
         audienceKind: normalized.audienceKind,
         audienceRoles: normalized.audienceRoles,
+        attachmentFileIds,
+        attachments: attachmentFileIds.map((fileId) => ({
+          fileId,
+          name: "",
+          contentType: "application/octet-stream",
+          size: 0,
+          preset: "documents",
+        })),
         createdBy: `optimistic:${randomClientId()}` as Id<"users">,
         createdAt: now,
         updatedAt: now,

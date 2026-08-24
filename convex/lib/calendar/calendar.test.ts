@@ -2,9 +2,14 @@ import { describe, expect, test } from "vite-plus/test";
 
 import { eventVisibleToRole } from "./audience";
 import { inclusiveEndToExclusive, isValidDateKey, isValidTimeHm } from "./dateKey";
+import { calendarEventHref } from "./eventHref";
 import { eventOverlapsDateKey, eventOverlapsRange } from "./overlap";
 import { computeNotifyAt, reminderOffsetMs } from "./reminders";
-import { normalizeCalendarEventInput } from "./calendarEventSchema";
+import {
+  calendarEventFormSchemaEn,
+  normalizeCalendarEventInput,
+  type CalendarEventFormValues,
+} from "./calendarEventSchema";
 import {
   startOfZonedDayUtc,
   timezoneCityLabel,
@@ -105,7 +110,54 @@ describe("calendar form schema", () => {
     expect(normalized.startDateKey).toBe("2026-08-23");
     expect(normalized.endDateKey).toBe("2026-08-25");
   });
+
+  test("flags an all-day end date that is before the start date", () => {
+    const result = calendarEventFormSchemaEn.safeParse({
+      ...validEventFormValues(),
+      allDay: true,
+      startDateKey: "2026-08-24",
+      endDateKey: "2026-08-23",
+    });
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error.issues.some((issue) => issue.path[0] === "endDateKey")).toBe(true);
+  });
+
+  test("flags a timed end that is not after start", () => {
+    const result = calendarEventFormSchemaEn.safeParse({
+      ...validEventFormValues(),
+      allDay: false,
+      startDateKey: "2026-08-23",
+      startTime: "10:00",
+      endDateKey: "2026-08-23",
+      endTime: "10:00",
+    });
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error.issues.some((issue) => issue.path[0] === "endTime")).toBe(true);
+  });
 });
+
+describe("calendar event href", () => {
+  test("builds the class event detail path", () => {
+    expect(calendarEventHref("class_1", "event_1")).toBe("/class/class_1/calendar/event/event_1");
+  });
+});
+
+function validEventFormValues(): CalendarEventFormValues {
+  return {
+    title: "Practice",
+    description: "",
+    allDay: false,
+    startDateKey: "2026-08-23",
+    startTime: "09:00",
+    endDateKey: "2026-08-23",
+    endTime: "10:00",
+    audienceKind: "all",
+    audienceRoles: [],
+    reminders: [],
+  };
+}
 
 describe("month grid", () => {
   test("builds a 6-week Sunday-start grid", () => {

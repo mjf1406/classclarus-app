@@ -38,7 +38,7 @@ describe("notification history mapping", () => {
         classId: "class_1",
         className: "Homeroom",
         eventId: "event_1",
-        href: "/class/class_1/calendar?event=event_1",
+        href: "/class/class_1/calendar/event/event_1",
       }),
     ).toEqual({
       title: "Assembly",
@@ -46,7 +46,7 @@ describe("notification history mapping", () => {
       classId: "class_1",
       className: "Homeroom",
       eventId: "event_1",
-      href: "/class/class_1/calendar?event=event_1",
+      href: "/class/class_1/calendar/event/event_1",
     });
 
     expect(contentFromNotification("future_kind", { title: "Hello" })).toEqual({
@@ -67,12 +67,12 @@ describe("notification history mapping", () => {
         classId: "class_1",
         className: "Homeroom",
         eventId: "event_1",
-        href: "/class/class_1/calendar?event=event_1",
+        href: "/class/class_1/calendar/event/event_1",
       }),
     ).toEqual({
       title: "Assembly",
       body: "Gym",
-      url: "/class/class_1/calendar?event=event_1",
+      url: "/class/class_1/calendar/event/event_1",
     });
     expect(
       pushPayloadFromNotification("calendar_reminder", {
@@ -80,12 +80,12 @@ describe("notification history mapping", () => {
         classId: "class_1",
         className: "Homeroom",
         eventId: "event_1",
-        href: "/class/class_1/calendar?event=event_1",
+        href: "/class/class_1/calendar/event/event_1",
       }),
     ).toEqual({
       title: "Assembly",
       body: "Homeroom",
-      url: "/class/class_1/calendar?event=event_1",
+      url: "/class/class_1/calendar/event/event_1",
     });
     expect(pushPayloadFromNotification("future_kind", { title: "Hello" })).toBeNull();
   });

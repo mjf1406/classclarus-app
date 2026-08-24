@@ -74,9 +74,8 @@ export function CalendarReminderToasts() {
                 closeToast();
                 void markSeenRef.current.mutateAsync({ notificationId });
                 void navigateRef.current({
-                  to: "/class/$classId/calendar",
-                  params: { classId },
-                  search: { event: eventId },
+                  to: "/class/$classId/calendar/event/$eventId",
+                  params: { classId, eventId },
                 });
               },
             },

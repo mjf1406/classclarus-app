@@ -248,6 +248,7 @@ export type RosterTableProps = {
   tableEditMode?: boolean;
   canUpdateRoster?: boolean;
   onColumnOrderChange?: (order: RosterColumnId[]) => void;
+  /** Local row-order draft. Persist from the parent (e.g. Save), not on every drag. */
   onReorderRows?: (userIds: Id<"users">[]) => void;
   onSaveRow?: (userId: Id<"users">, draft: RosterSaveRowDraft) => void;
   /** Appended after base roster columns (before actions). */
@@ -686,6 +687,11 @@ export function RosterTable({
   useEffect(() => {
     setRowOrderOverride(null);
   }, [dataOrderKey]);
+
+  useEffect(() => {
+    if (tableEditMode) return;
+    setRowOrderOverride(null);
+  }, [tableEditMode]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),

@@ -857,6 +857,8 @@ const schema = defineSchema({
     endDateKey: v.optional(v.string()),
     audienceKind: v.union(v.literal("all"), v.literal("roles")),
     audienceRoles: v.array(v.string()),
+    /** Optional; missing on events created before attachments existed. */
+    attachmentFileIds: v.optional(v.array(v.id("files"))),
     createdBy: v.id("users"),
     createdAt: v.number(),
     updatedAt: v.number(),

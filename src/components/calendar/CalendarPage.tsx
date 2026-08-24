@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Link, useNavigate } from "@tanstack/react-router";
 import type { DayButtonProps } from "react-day-picker";
 
 import { CalendarEventFormCredenza } from "@/components/calendar/CalendarEventFormCredenza";
@@ -30,7 +31,6 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/u
 import { ErrorState } from "@/components/ui/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useCalendarEvent } from "@/hooks/calendar/useCalendarEvent";
 import { useCalendarEventsInRange } from "@/hooks/calendar/useCalendarEventsInRange";
 import { useCreateCalendarEvent } from "@/hooks/calendar/useCreateCalendarEvent";
 import { useRemoveCalendarEvent } from "@/hooks/calendar/useRemoveCalendarEvent";
@@ -45,6 +45,7 @@ import {
   formatEventTimeLabel,
   localDateToDateKey,
   type CalendarEvent,
+  type CalendarEventSubmitValues,
 } from "@/lib/calendar/calendar";
 import { toIntlLocale } from "@/lib/languages";
 import { eventOverlapsDateKey } from "../../../convex/lib/calendar/overlap";
@@ -54,14 +55,12 @@ import {
   monthRangeUtc,
   shiftYearMonth,
 } from "../../../convex/lib/calendar/monthGrid";
-import { isValidTimeZone, utcMsToZonedParts } from "../../../convex/lib/calendar/timeZone";
-import type { CalendarEventFormValues } from "../../../convex/lib/calendar/calendarEventSchema";
+import { isValidTimeZone } from "../../../convex/lib/calendar/timeZone";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
 
 type CalendarPageProps = {
   classId: Id<"classes">;
-  eventId?: Id<"calendarEvents">;
 };
 
 function formatMonthTitle(year: number, month: number, locale: string): string {
@@ -70,8 +69,9 @@ function formatMonthTitle(year: number, month: number, locale: string): string {
   );
 }
 
-export function CalendarPage({ classId, eventId }: CalendarPageProps) {
+export function CalendarPage({ classId }: CalendarPageProps) {
   const { t, i18n } = useTranslation("calendar");
+  const navigate = useNavigate();
   const locale = toIntlLocale(i18n.language);
   const { can, isPending: permissionsPending } = useCan();
   const canManage = !permissionsPending && can("calendar:manage");
@@ -91,20 +91,19 @@ export function CalendarPage({ classId, eventId }: CalendarPageProps) {
   const [editing, setEditing] = useState<CalendarEvent | null>(null);
   const [deleting, setDeleting] = useState<CalendarEvent | null>(null);
   const initializedZoneRef = useRef<string | undefined>(undefined);
-  const openedEventRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!classTimeZone || !isValidTimeZone(classTimeZone)) return;
     if (initializedZoneRef.current === classTimeZone) return;
     const firstLoad = initializedZoneRef.current === undefined;
     initializedZoneRef.current = classTimeZone;
-    if (!firstLoad || eventId) return;
+    if (!firstLoad) return;
     const key = classNowDateKey(Date.now(), classTimeZone);
     const next = dateKeyYearMonth(key);
     setYear(next.year);
     setMonth(next.month);
     setSelectedDateKey(key);
-  }, [classTimeZone, eventId]);
+  }, [classTimeZone]);
 
   const range = monthRangeUtc(year, month, zone);
   const { data, isPending, isError, refetch, isAuthLoading } = useCalendarEventsInRange(
@@ -112,30 +111,11 @@ export function CalendarPage({ classId, eventId }: CalendarPageProps) {
     range.rangeStartMs,
     range.rangeEndMs,
   );
-  const { data: focusEvent } = useCalendarEvent(classId, eventId);
   const createEvent = useCreateCalendarEvent();
   const updateEvent = useUpdateCalendarEvent();
   const removeEvent = useRemoveCalendarEvent();
 
   const events = useMemo(() => data ?? [], [data]);
-
-  useEffect(() => {
-    if (!eventId || !focusEvent || openedEventRef.current === eventId) return;
-    openedEventRef.current = eventId;
-    const dateKey =
-      focusEvent.startDateKey ??
-      (focusEvent.startAt !== undefined
-        ? utcMsToZonedParts(focusEvent.startAt, zone).dateKey
-        : undefined);
-    if (dateKey) {
-      const next = dateKeyYearMonth(dateKey);
-      setYear(next.year);
-      setMonth(next.month);
-      setSelectedDateKey(dateKey);
-    }
-    setEditing(focusEvent);
-    setFormOpen(true);
-  }, [eventId, focusEvent, zone]);
 
   const monthDate = dateKeyToLocalDate(`${year}-${String(month).padStart(2, "0")}-01`);
   const selectedDate = dateKeyToLocalDate(selectedDateKey);
@@ -164,7 +144,14 @@ export function CalendarPage({ classId, eventId }: CalendarPageProps) {
     setFormOpen(true);
   };
 
-  const handleSubmit = async (values: CalendarEventFormValues) => {
+  const openEvent = (event: CalendarEvent) => {
+    void navigate({
+      to: "/class/$classId/calendar/event/$eventId",
+      params: { classId, eventId: event._id },
+    });
+  };
+
+  const handleSubmit = async (values: CalendarEventSubmitValues) => {
     if (editing) {
       await updateEvent.mutateAsync({
         ...values,
@@ -199,12 +186,12 @@ export function CalendarPage({ classId, eventId }: CalendarPageProps) {
               className="truncate rounded-sm bg-primary/15 px-1 text-[10px] leading-4 text-foreground"
               onClick={(clickEvent) => {
                 clickEvent.stopPropagation();
-                openEdit(event);
+                openEvent(event);
               }}
               onKeyDown={(keyEvent) => {
                 if (keyEvent.key === "Enter" || keyEvent.key === " ") {
                   keyEvent.stopPropagation();
-                  openEdit(event);
+                  openEvent(event);
                 }
               }}
               role="button"
@@ -371,6 +358,7 @@ export function CalendarPage({ classId, eventId }: CalendarPageProps) {
                 {agendaEvents.map((event) => (
                   <EventRow
                     key={event._id}
+                    classId={classId}
                     event={event}
                     timeLabel={formatEventTimeLabel(event, zone, locale)}
                     onEdit={() => openEdit(event)}
@@ -391,6 +379,7 @@ export function CalendarPage({ classId, eventId }: CalendarPageProps) {
                   {dayEvents.map((event) => (
                     <EventRow
                       key={event._id}
+                      classId={classId}
                       event={event}
                       timeLabel={formatEventTimeLabel(event, zone, locale)}
                       onEdit={() => openEdit(event)}
@@ -418,6 +407,7 @@ export function CalendarPage({ classId, eventId }: CalendarPageProps) {
           if (!open) setEditing(null);
         }}
         mode={editing ? "edit" : "create"}
+        classId={classId}
         classTimeZone={classTimeZone}
         todayKey={editing ? eventToCreateDate(editing, todayKey) : selectedDateKey}
         initial={editing}
@@ -461,11 +451,13 @@ function eventToCreateDate(event: CalendarEvent, fallback: string): string {
 }
 
 function EventRow({
+  classId,
   event,
   timeLabel,
   onEdit,
   onDelete,
 }: {
+  classId: Id<"classes">;
   event: CalendarEvent;
   timeLabel: string;
   onEdit: () => void;
@@ -497,10 +489,14 @@ function EventRow({
 
   return (
     <li className="flex items-center justify-between gap-3 rounded-xl border border-border px-3 py-2">
-      <button type="button" className="min-w-0 flex-1 text-left" onClick={onEdit}>
+      <Link
+        to="/class/$classId/calendar/event/$eventId"
+        params={{ classId, eventId: event._id }}
+        className="min-w-0 flex-1 rounded-sm text-left outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+      >
         <div className="truncate font-medium">{event.title}</div>
         <div className="truncate text-xs text-muted-foreground">{timeLabel}</div>
-      </button>
+      </Link>
       <ActionMenu items={menuItems} label={t("actions")} />
     </li>
   );

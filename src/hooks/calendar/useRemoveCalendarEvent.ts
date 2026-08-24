@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { toast } from "@/components/ui/toast-manager";
+import { calendarEventQueryKey } from "@/hooks/calendar/useCalendarEvent";
 import {
   findCalendarRangeQueryKeys,
   patchCalendarRanges,
@@ -42,6 +43,7 @@ export function useRemoveCalendarEvent() {
     mutationFn: (args: RemoveCalendarEventArgs) => mutationFn(args),
     queryKeys: (args, queryClient) => [
       ...findCalendarRangeQueryKeys(queryClient, args.classId),
+      calendarEventQueryKey(args.classId, args.eventId),
       listKey,
       countsKey,
       ...findNotificationHistoryQueryKeys(queryClient),
@@ -50,6 +52,7 @@ export function useRemoveCalendarEvent() {
       patchCalendarRanges(queryClient, args.classId, (old) =>
         old.filter((event) => event._id !== args.eventId),
       );
+      queryClient.setQueryData(calendarEventQueryKey(args.classId, args.eventId), null);
 
       const previous = queryClient.getQueryData<NotificationList>(listKey);
       const removed =

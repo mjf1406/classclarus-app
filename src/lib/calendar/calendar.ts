@@ -10,8 +10,19 @@ import {
 } from "../../../convex/lib/calendar/dateKey";
 import { utcMsToZonedParts } from "../../../convex/lib/calendar/timeZone";
 import type { CalendarEventFormValues } from "../../../convex/lib/calendar/calendarEventSchema";
+import type { Id } from "../../../convex/_generated/dataModel";
 
 export type CalendarEvent = FunctionReturnType<typeof api.calendar.listInRange>[number];
+
+export type CalendarEventSubmitValues = CalendarEventFormValues & {
+  attachmentFileIds: Array<Id<"files">>;
+};
+
+export {
+  MAX_CALENDAR_EVENT_ATTACHMENTS,
+  MAX_EVENT_DESCRIPTION_LENGTH,
+  MAX_EVENT_TITLE_LENGTH,
+} from "../../../convex/lib/calendar/calendarEventSchema";
 
 export const DEFAULT_EVENT_DURATION_MINUTES = 30;
 
