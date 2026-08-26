@@ -7,7 +7,8 @@ import { toast } from "@/components/ui/toast-manager";
 import { pointsBoardQueryKey } from "@/hooks/points/usePointsBoard";
 import { useOptimisticMutation } from "@/hooks/useOptimisticMutation";
 import { messageFromError } from "@/lib/errors/convexError";
-import type { PointsBoard } from "@/lib/points/points";
+import { applyBehaviorItemsToBoard, type PointsBoard } from "@/lib/points/points";
+import { optimisticApplyBehaviorsToBoardQueries } from "@/lib/points/pointsBoardOptimistic";
 
 type ApplyBehaviorsArgs = {
   classId: Id<"classes">;
@@ -25,7 +26,14 @@ export function useApplyBehaviors() {
 
   return useOptimisticMutation({
     mutationFn: (args: ApplyBehaviorsArgs) =>
-      mutationFn({
+      mutationFn.withOptimisticUpdate((localStore) => {
+        optimisticApplyBehaviorsToBoardQueries(
+          localStore,
+          args.classId,
+          args.studentUserIds,
+          args.items,
+        );
+      })({
         classId: args.classId,
         studentUserIds: args.studentUserIds,
         mode: args.mode,
@@ -38,26 +46,9 @@ export function useApplyBehaviors() {
     queryKeys: (args) => [pointsBoardQueryKey(args.classId, args.dateKey)],
     applyOptimisticUpdate: (queryClient, args) => {
       const queryKey = pointsBoardQueryKey(args.classId, args.dateKey);
-      const selected = new Set(args.studentUserIds);
       queryClient.setQueryData<PointsBoard>(queryKey, (old) => {
         if (!old) return old;
-        return old.map((student) => {
-          if (!selected.has(student.userId)) return student;
-          let pointsBalance = student.pointsBalance;
-          let pointsAwarded = student.pointsAwarded;
-          let pointsRemoved = student.pointsRemoved;
-          let minusCount = student.minusCount;
-          for (const item of args.items) {
-            const applied = item.points * item.quantity;
-            pointsBalance += applied;
-            if (applied > 0) pointsAwarded += applied;
-            if (applied < 0) {
-              pointsRemoved += Math.abs(applied);
-              minusCount += item.quantity;
-            }
-          }
-          return { ...student, pointsBalance, pointsAwarded, pointsRemoved, minusCount };
-        });
+        return applyBehaviorItemsToBoard(old, args.studentUserIds, args.items);
       });
     },
     onError: (error) => {

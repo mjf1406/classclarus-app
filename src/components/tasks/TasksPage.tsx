@@ -19,17 +19,20 @@ import {
 } from "@/components/ui/empty";
 import { ErrorState } from "@/components/ui/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useGroupsBoard } from "@/hooks/groups/useGroupsBoard";
 import { useCreateTask } from "@/hooks/tasks/useCreateTask";
 import { useRemoveTask } from "@/hooks/tasks/useRemoveTask";
 import { useTasks } from "@/hooks/tasks/useTasks";
 import { useUpdateTask } from "@/hooks/tasks/useUpdateTask";
 import { useCan } from "@/hooks/permissions/useCan";
 import {
+  computeTaskGroupCompletionStats,
   filterTasksByName,
   formatTaskAssignmentFolderMeta,
   groupTasksByAssignment,
   nextTaskSortState,
   sortTasks,
+  type TaskGroupCompletionStat,
   type TaskListItem,
   type TaskSortDirection,
   type TaskSortKey,
@@ -43,11 +46,13 @@ type TasksPageProps = {
 
 export function TasksPage({ classId }: TasksPageProps) {
   const { t } = useTranslation("tasks");
+  const { t: tGroups } = useTranslation("groups");
   const { can, isPending: permissionsPending } = useCan();
   const canManage = can("tasks:manage");
   const canComplete = can("tasks:complete");
   const personalView = !permissionsPending && !canComplete;
   const { data, isPending, isError, refetch } = useTasks(classId);
+  const { data: groupsBoard } = useGroupsBoard(classId);
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
   const removeTask = useRemoveTask();
@@ -71,6 +76,24 @@ export function TasksPage({ classId }: TasksPageProps) {
     () => groupTasksByAssignment(filteredSorted),
     [filteredSorted],
   );
+
+  const groupStatsByTaskId = useMemo(() => {
+    const empty = new Map<Id<"tasks">, TaskGroupCompletionStat[]>();
+    if (personalView || !groupsBoard) {
+      return empty;
+    }
+    const ungroupedLabel = tGroups("groupsUngroupedTitle");
+    return new Map(
+      (data ?? []).map((task) => [
+        task._id,
+        computeTaskGroupCompletionStats({
+          board: groupsBoard,
+          completedStudentIds: new Set(task.completedStudentIds ?? []),
+          ungroupedLabel,
+        }),
+      ]),
+    );
+  }, [data, groupsBoard, personalView, tGroups]);
 
   return (
     <div className="flex w-full flex-col gap-4 px-4 py-8 sm:px-8">
@@ -209,6 +232,7 @@ export function TasksPage({ classId }: TasksPageProps) {
                           personalView={personalView}
                           hideAssignmentLink
                           showProcedureStepNumber
+                          groupStats={groupStatsByTaskId.get(task._id)}
                           onEdit={setEditing}
                           onDelete={setDeleting}
                         />
@@ -232,6 +256,7 @@ export function TasksPage({ classId }: TasksPageProps) {
                       classId={classId}
                       task={task}
                       personalView={personalView}
+                      groupStats={groupStatsByTaskId.get(task._id)}
                       onEdit={setEditing}
                       onDelete={setDeleting}
                     />

@@ -23,6 +23,12 @@ import {
   resolvePointsBadgeWindow,
 } from "./lib/pointsBadgeWindow.js";
 import {
+  countStudentMinusesInBadgeWindow,
+  countStudentWarningsInBadgeWindow,
+  maybeNotifyPointsBadgeAlert,
+} from "./lib/points/notifyPointsBadgeAlert.js";
+import { resolvePointsBadgeAlerts } from "./lib/points/pointsBadgeAlert.js";
+import {
   applyBehaviorPointsDelta,
   applyRewardPointsDelta,
   ensureRosterPointCounters,
@@ -670,6 +676,18 @@ export const applyBehaviors = classMutation({
     const note = normalizeOptionalApplicationNote(args.note);
 
     const now = Date.now();
+    const minusAlerts = resolvePointsBadgeAlerts(ctx.classDoc.minusAlerts);
+    const previousMinusByStudent = new Map<Id<"users">, number>();
+    const minusDeltaByStudent = new Map<Id<"users">, number>();
+    if (args.mode === "remove" && minusAlerts.length > 0) {
+      for (const studentUserId of args.studentUserIds) {
+        previousMinusByStudent.set(
+          studentUserId,
+          await countStudentMinusesInBadgeWindow(ctx, ctx.classDoc, studentUserId, now),
+        );
+      }
+    }
+
     for (const item of args.items) {
       const quantity = normalizeQuantity(item.quantity);
       const behavior = await ctx.db.get("behaviors", item.behaviorId);
@@ -695,6 +713,28 @@ export const applyBehaviors = classMutation({
           ...(note ? { note } : {}),
         });
         await applyBehaviorPointsDelta(ctx, classId, studentUserId, pointsApplied, 1);
+        if (args.mode === "remove") {
+          minusDeltaByStudent.set(
+            studentUserId,
+            (minusDeltaByStudent.get(studentUserId) ?? 0) + quantity,
+          );
+        }
+      }
+    }
+
+    if (minusAlerts.length > 0) {
+      for (const studentUserId of args.studentUserIds) {
+        const delta = minusDeltaByStudent.get(studentUserId) ?? 0;
+        if (delta <= 0) continue;
+        const previousCount = previousMinusByStudent.get(studentUserId) ?? 0;
+        await maybeNotifyPointsBadgeAlert(ctx, {
+          classDoc: ctx.classDoc,
+          studentUserId,
+          metric: "minus",
+          previousCount,
+          newCount: previousCount + delta,
+          now,
+        });
       }
     }
 
@@ -1062,6 +1102,11 @@ export const giveWarning = classMutation({
     await requireStudentInClass(ctx, classId, args.studentUserId);
 
     const now = Date.now();
+    const warningAlerts = resolvePointsBadgeAlerts(ctx.classDoc.warningAlerts);
+    const previousCount =
+      warningAlerts.length > 0
+        ? await countStudentWarningsInBadgeWindow(ctx, ctx.classDoc, args.studentUserId, now)
+        : 0;
     await ctx.db.insert("studentWarningEvents", {
       classId,
       studentUserId: args.studentUserId,
@@ -1076,6 +1121,17 @@ export const giveWarning = classMutation({
       warningCount: current + 1,
       warningDateKey: args.dateKey,
     });
+
+    if (warningAlerts.length > 0) {
+      await maybeNotifyPointsBadgeAlert(ctx, {
+        classDoc: ctx.classDoc,
+        studentUserId: args.studentUserId,
+        metric: "warning",
+        previousCount,
+        newCount: previousCount + 1,
+        now,
+      });
+    }
 
     await recordClassActivity(ctx, {
       classId,

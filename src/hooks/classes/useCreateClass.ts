@@ -52,6 +52,8 @@ export function useCreateClass() {
         warningWindowUnit: "day",
         minusWindowAmount: 1,
         minusWindowUnit: "day",
+        warningAlerts: [],
+        minusAlerts: [],
         updatedAt: now,
         role: "owner",
         _pending: true,

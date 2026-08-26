@@ -3,6 +3,7 @@ import { Eye, Pencil, Trash2 } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
+import { TaskCompletionGroupStats } from "@/components/tasks/TaskCompletionGroupStats";
 import { TaskCompletionStatusBadge } from "@/components/tasks/TaskCompletionStatusBadge";
 import {
   TASK_COMPLETION_CARD_RING_CLASS,
@@ -18,7 +19,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { formatLocalizedDateTime, formatLocalizedDueDate } from "@/i18n/formatDate";
-import { isTaskPastDue, type TaskListItem } from "@/lib/tasks/tasks";
+import { isTaskPastDue, type TaskGroupCompletionStat, type TaskListItem } from "@/lib/tasks/tasks";
 import { cn } from "@/lib/utils";
 import type { Id } from "../../../convex/_generated/dataModel";
 
@@ -32,6 +33,8 @@ type TaskCardProps = {
   showProcedureStepNumber?: boolean;
   onEdit: (task: TaskListItem) => void;
   onDelete: (task: TaskListItem) => void;
+  /** Staff-only per-group completion rows. Omitted for personal view. */
+  groupStats?: TaskGroupCompletionStat[];
 };
 
 export function TaskCard({
@@ -42,6 +45,7 @@ export function TaskCard({
   showProcedureStepNumber = false,
   onEdit,
   onDelete,
+  groupStats = [],
 }: TaskCardProps) {
   const { t } = useTranslation("tasks");
   const navigate = useNavigate();
@@ -131,12 +135,11 @@ export function TaskCard({
             }
           />
         ) : (
-          <p>
-            {t("statsCompleted", {
-              completed: task.completedCount,
-              total: task.studentCount,
-            })}
-          </p>
+          <TaskCompletionGroupStats
+            completedCount={task.completedCount}
+            studentCount={task.studentCount}
+            groupStats={groupStats}
+          />
         )}
         {task.dueDateKey ? (
           <p>{t("dueDateValue", { date: formatLocalizedDueDate(task.dueDateKey) })}</p>

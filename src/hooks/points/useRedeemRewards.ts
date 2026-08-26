@@ -8,7 +8,8 @@ import { pointsBoardQueryKey } from "@/hooks/points/usePointsBoard";
 import { rewardPurchaseLimitsQueryKeyRoot } from "@/hooks/points/useRewardPurchaseLimits";
 import { useOptimisticMutation } from "@/hooks/useOptimisticMutation";
 import { messageFromError } from "@/lib/errors/convexError";
-import type { PointsBoard } from "@/lib/points/points";
+import { applyRewardRedemptionsToBoard, type PointsBoard } from "@/lib/points/points";
+import { optimisticApplyRedemptionsToBoardQueries } from "@/lib/points/pointsBoardOptimistic";
 
 type RedeemRewardsArgs = {
   classId: Id<"classes">;
@@ -26,7 +27,14 @@ export function useRedeemRewards() {
 
   return useOptimisticMutation({
     mutationFn: (args: RedeemRewardsArgs) =>
-      mutationFn({
+      mutationFn.withOptimisticUpdate((localStore) => {
+        optimisticApplyRedemptionsToBoardQueries(
+          localStore,
+          args.classId,
+          args.studentUserIds,
+          args.items,
+        );
+      })({
         classId: args.classId,
         studentUserIds: args.studentUserIds,
         items: args.items.map((item) => ({
@@ -40,18 +48,9 @@ export function useRedeemRewards() {
     invalidateQueryKeys: () => [rewardPurchaseLimitsQueryKeyRoot()],
     applyOptimisticUpdate: (queryClient, args) => {
       const queryKey = pointsBoardQueryKey(args.classId, args.dateKey);
-      const selected = new Set(args.studentUserIds);
-      const totalCost = args.items.reduce((sum, item) => sum + item.points * item.quantity, 0);
       queryClient.setQueryData<PointsBoard>(queryKey, (old) => {
         if (!old) return old;
-        return old.map((student) => {
-          if (!selected.has(student.userId)) return student;
-          return {
-            ...student,
-            pointsBalance: student.pointsBalance - totalCost,
-            pointsRedeemed: student.pointsRedeemed + totalCost,
-          };
-        });
+        return applyRewardRedemptionsToBoard(old, args.studentUserIds, args.items);
       });
     },
     onError: (error) => {

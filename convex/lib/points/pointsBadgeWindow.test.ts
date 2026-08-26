@@ -5,6 +5,7 @@ import {
   aggregateWarningCountsByStudent,
   daysInPointsBadgeWindow,
   normalizePointsBadgeWindow,
+  pointsBadgeLookbackForTimeZone,
   pointsBadgeLookbackWindow,
   resolvePointsBadgeWindow,
 } from "./pointsBadgeWindow";
@@ -49,6 +50,13 @@ describe("pointsBadgeWindow", () => {
     const window = pointsBadgeLookbackWindow("2026-08-09", offset, { amount: 1, unit: "week" });
     expect(window.startMs).toBe(Date.UTC(2026, 7, 3, 0, 0));
     expect(window.endMs).toBe(Date.UTC(2026, 7, 10, 0, 0));
+  });
+
+  test("pointsBadgeLookbackForTimeZone uses the zoned calendar day", () => {
+    const utcMs = Date.UTC(2026, 7, 8, 16, 0); // 2026-08-09 01:00 in UTC+9
+    const window = pointsBadgeLookbackForTimeZone(utcMs, "Asia/Seoul", { amount: 1, unit: "day" });
+    expect(window.startMs).toBe(Date.UTC(2026, 7, 8, 15, 0));
+    expect(window.endMs).toBe(Date.UTC(2026, 7, 9, 15, 0));
   });
 
   test("aggregateWarningCountsByStudent counts in window", () => {

@@ -4,7 +4,7 @@ import type { MutationCtx, QueryCtx } from "../../_generated/server.js";
 export const NOTIFICATION_HISTORY_STATUSES = ["unread", "read", "dismissed"] as const;
 export type NotificationHistoryStatus = (typeof NOTIFICATION_HISTORY_STATUSES)[number];
 
-export const NOTIFICATION_HISTORY_KINDS = ["calendar_reminder"] as const;
+export const NOTIFICATION_HISTORY_KINDS = ["calendar_reminder", "points_badge_alert"] as const;
 export type NotificationHistoryKind = (typeof NOTIFICATION_HISTORY_KINDS)[number];
 
 export const HISTORY_PAGE_SIZE = 20;
@@ -76,6 +76,19 @@ type CalendarReminderData = {
   href: string;
 };
 
+type PointsBadgeAlertData = {
+  title: string;
+  classId: string;
+  className: string;
+  studentUserId: string;
+  studentName: string;
+  metric: "warning" | "minus";
+  count: number;
+  threshold: number;
+  action?: string;
+  href: string;
+};
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
@@ -93,6 +106,22 @@ function isCalendarReminderData(value: unknown): value is CalendarReminderData {
     typeof value.eventId === "string" &&
     typeof value.href === "string" &&
     (value.description === undefined || typeof value.description === "string")
+  );
+}
+
+function isPointsBadgeAlertData(value: unknown): value is PointsBadgeAlertData {
+  if (!isRecord(value)) return false;
+  return (
+    typeof value.title === "string" &&
+    typeof value.classId === "string" &&
+    typeof value.className === "string" &&
+    typeof value.studentUserId === "string" &&
+    typeof value.studentName === "string" &&
+    (value.metric === "warning" || value.metric === "minus") &&
+    typeof value.count === "number" &&
+    typeof value.threshold === "number" &&
+    (value.action === undefined || typeof value.action === "string") &&
+    typeof value.href === "string"
   );
 }
 
@@ -126,6 +155,17 @@ export function contentFromNotification(kind: string, data: unknown): HistoryCon
     };
   }
 
+  if (kind === "points_badge_alert" && isPointsBadgeAlertData(data)) {
+    const action = data.action?.trim();
+    return {
+      title: data.title,
+      ...(action ? { description: action } : {}),
+      classId: data.classId,
+      className: data.className,
+      href: data.href,
+    };
+  }
+
   if (isRecord(data)) {
     const title = asOptionalString(data.title) ?? kind;
     const description = asOptionalString(data.description);
@@ -155,6 +195,13 @@ export function pushPayloadFromNotification(
     return {
       title: data.title,
       body: data.description?.trim() || data.className,
+      url: data.href,
+    };
+  }
+  if (kind === "points_badge_alert" && isPointsBadgeAlertData(data)) {
+    return {
+      title: data.title,
+      body: data.action?.trim() || data.className,
       url: data.href,
     };
   }

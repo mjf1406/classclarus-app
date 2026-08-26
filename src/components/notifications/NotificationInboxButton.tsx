@@ -63,8 +63,26 @@ export function NotificationInboxButton() {
           <ScrollArea className="max-h-80">
             <ul className="flex flex-col p-1">
               {list.map((item) => {
-                const title = item.kind === "calendar_reminder" ? item.data.title : t("title");
-                const subtitle = item.kind === "calendar_reminder" ? item.data.className : "";
+                const title =
+                  item.kind === "points_badge_alert"
+                    ? item.data.metric === "warning"
+                      ? t("pointsBadgeAlertWarning", {
+                          name: item.data.studentName,
+                          count: item.data.count,
+                        })
+                      : t("pointsBadgeAlertMinus", {
+                          name: item.data.studentName,
+                          count: item.data.count,
+                        })
+                    : item.kind === "calendar_reminder"
+                      ? item.data.title
+                      : t("title");
+                const subtitle =
+                  item.kind === "points_badge_alert"
+                    ? item.data.action?.trim() || item.data.className
+                    : item.kind === "calendar_reminder"
+                      ? item.data.className
+                      : "";
                 return (
                   <li
                     key={item._id}
@@ -88,6 +106,11 @@ export function NotificationInboxButton() {
                               classId: item.data.classId,
                               eventId: item.data.eventId,
                             },
+                          });
+                        } else if (item.kind === "points_badge_alert") {
+                          void navigate({
+                            to: "/class/$classId/points",
+                            params: { classId: item.data.classId },
                           });
                         }
                       }}

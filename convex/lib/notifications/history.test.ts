@@ -57,9 +57,30 @@ describe("notification history mapping", () => {
       title: "future_kind",
       href: "/",
     });
+    expect(
+      contentFromNotification("points_badge_alert", {
+        summaryKey: "pointsBadgeAlert",
+        title: "Alex has 3 warnings",
+        classId: "class_1",
+        className: "Homeroom",
+        studentUserId: "user_1",
+        studentName: "Alex",
+        metric: "warning",
+        count: 3,
+        threshold: 3,
+        action: "Write a letter",
+        href: "/class/class_1/points",
+      }),
+    ).toEqual({
+      title: "Alex has 3 warnings",
+      description: "Write a letter",
+      classId: "class_1",
+      className: "Homeroom",
+      href: "/class/class_1/points",
+    });
   });
 
-  test("builds Web Push payload for calendar reminders only", () => {
+  test("builds Web Push payload for calendar reminders and points badge alerts", () => {
     expect(
       pushPayloadFromNotification("calendar_reminder", {
         title: "Assembly",
@@ -88,6 +109,24 @@ describe("notification history mapping", () => {
       url: "/class/class_1/calendar/event/event_1",
     });
     expect(pushPayloadFromNotification("future_kind", { title: "Hello" })).toBeNull();
+    expect(
+      pushPayloadFromNotification("points_badge_alert", {
+        title: "Alex has 3 warnings",
+        classId: "class_1",
+        className: "Homeroom",
+        studentUserId: "user_1",
+        studentName: "Alex",
+        metric: "warning",
+        count: 3,
+        threshold: 3,
+        action: "Write a letter",
+        href: "/class/class_1/points",
+      }),
+    ).toEqual({
+      title: "Alex has 3 warnings",
+      body: "Write a letter",
+      url: "/class/class_1/points",
+    });
   });
 });
 

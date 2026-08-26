@@ -13,11 +13,26 @@ export const calendarReminderDataValidator = v.object({
   href: v.string(),
 });
 
+export const pointsBadgeAlertDataValidator = v.object({
+  summaryKey: v.string(),
+  title: v.string(),
+  classId: v.string(),
+  className: v.string(),
+  studentUserId: v.string(),
+  studentName: v.string(),
+  metric: v.union(v.literal("warning"), v.literal("minus")),
+  count: v.number(),
+  threshold: v.number(),
+  action: v.optional(v.string()),
+  href: v.string(),
+});
+
 export const notifications = defineNotifications(components.notification, {
   defaultListLimit: 50,
   batchChunkSize: 100,
   kinds: {
     calendar_reminder: calendarReminderDataValidator,
+    points_badge_alert: pointsBadgeAlertDataValidator,
   },
 }).withHooks({
   onNotificationCreated: internal.notificationHooks.onNotificationCreated,

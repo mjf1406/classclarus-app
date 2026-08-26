@@ -61,8 +61,13 @@ function formatNotificationTime(createdAt: number, locale: string): string {
   }).format(new Date(createdAt));
 }
 
-function kindLabel(kind: string, t: (key: "calendarReminder") => string): string {
-  return kind === "calendar_reminder" ? t("calendarReminder") : kind;
+function kindLabel(
+  kind: string,
+  t: (key: "calendarReminder" | "pointsBadgeAlert") => string,
+): string {
+  if (kind === "calendar_reminder") return t("calendarReminder");
+  if (kind === "points_badge_alert") return t("pointsBadgeAlert");
+  return kind;
 }
 
 function NotificationsSkeleton() {
@@ -145,6 +150,13 @@ export function NotificationsPage() {
       void navigate({
         to: "/class/$classId/calendar/event/$eventId",
         params: { classId: item.classId, eventId: item.eventId },
+      });
+      return;
+    }
+    if (item.kind === "points_badge_alert" && item.classId) {
+      void navigate({
+        to: "/class/$classId/points",
+        params: { classId: item.classId },
       });
     }
   };

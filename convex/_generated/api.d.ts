@@ -138,6 +138,9 @@ import type * as lib_notifications_history from "../lib/notifications/history.js
 import type * as lib_permissionSnapshot from "../lib/permissionSnapshot.js";
 import type * as lib_platform_accountDeletion from "../lib/platform/accountDeletion.js";
 import type * as lib_platform_usageTracking from "../lib/platform/usageTracking.js";
+import type * as lib_points_notifyPointsBadgeAlert from "../lib/points/notifyPointsBadgeAlert.js";
+import type * as lib_points_pointsBadgeAlert from "../lib/points/pointsBadgeAlert.js";
+import type * as lib_points_pointsBadgeAlertSchema from "../lib/points/pointsBadgeAlertSchema.js";
 import type * as lib_points_pointsBadgeWindow from "../lib/points/pointsBadgeWindow.js";
 import type * as lib_points_pointsRoster from "../lib/points/pointsRoster.js";
 import type * as lib_pointsBadgeWindow from "../lib/pointsBadgeWindow.js";
@@ -366,6 +369,9 @@ declare const fullApi: ApiFromModules<{
   "lib/permissionSnapshot": typeof lib_permissionSnapshot;
   "lib/platform/accountDeletion": typeof lib_platform_accountDeletion;
   "lib/platform/usageTracking": typeof lib_platform_usageTracking;
+  "lib/points/notifyPointsBadgeAlert": typeof lib_points_notifyPointsBadgeAlert;
+  "lib/points/pointsBadgeAlert": typeof lib_points_pointsBadgeAlert;
+  "lib/points/pointsBadgeAlertSchema": typeof lib_points_pointsBadgeAlertSchema;
   "lib/points/pointsBadgeWindow": typeof lib_points_pointsBadgeWindow;
   "lib/points/pointsRoster": typeof lib_points_pointsRoster;
   "lib/pointsBadgeWindow": typeof lib_pointsBadgeWindow;

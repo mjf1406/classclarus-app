@@ -37,6 +37,7 @@ const taskValidator = v.object({
   ...taskBaseFields,
   completedCount: v.number(),
   studentCount: v.number(),
+  completedStudentIds: v.array(v.id("users")),
 });
 
 const taskDetailClassValidator = v.object({
@@ -227,7 +228,7 @@ function resolveTaskAssignment(
 
 function toPublicTask(
   task: Doc<"tasks">,
-  completedCount: number,
+  completedStudentIds: Array<Id<"users">>,
   studentCount: number,
   assignment: TaskAssignmentMeta | undefined,
 ): {
@@ -247,6 +248,7 @@ function toPublicTask(
   updatedAt: number;
   completedCount: number;
   studentCount: number;
+  completedStudentIds: Array<Id<"users">>;
 } {
   return {
     _id: task._id,
@@ -271,8 +273,9 @@ function toPublicTask(
     createdBy: task.createdBy,
     createdAt: task.createdAt,
     updatedAt: task.updatedAt,
-    completedCount,
+    completedCount: completedStudentIds.length,
     studentCount,
+    completedStudentIds,
   };
 }
 
@@ -308,11 +311,13 @@ export const list = classQuery({
         .query("taskCompletions")
         .withIndex("by_task", (q) => q.eq("taskId", doc._id))
         .collect();
-      const completedCount = completions.filter((row) => studentSet.has(row.studentUserId)).length;
+      const completedStudentIds = completions
+        .map((row) => row.studentUserId)
+        .filter((userId) => studentSet.has(userId));
       result.push(
         toPublicTask(
           doc,
-          completedCount,
+          completedStudentIds,
           studentCount,
           resolveTaskAssignment(doc, assignmentIndex),
         ),

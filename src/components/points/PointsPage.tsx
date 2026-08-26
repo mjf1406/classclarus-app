@@ -1,4 +1,4 @@
-import { CheckIcon, ChevronDownIcon, CircleCheckBigIcon, UsersIcon } from "lucide-react";
+import { CircleCheckBigIcon, UsersIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -7,6 +7,7 @@ import PendingComponent from "@/components/loading/PendingComponent";
 import { PointStudentCard } from "@/components/points/PointStudentCard";
 import { PersonalPointsPage } from "@/components/points/PersonalPointsPage";
 import { PointsApplyCredenza } from "@/components/points/PointsApplyCredenza";
+import { StudentGridSortMenu } from "@/components/students/StudentGridSortMenu";
 import {
   Empty,
   EmptyDescription,
@@ -16,13 +17,6 @@ import {
 } from "@/components/ui/empty";
 import { ErrorState } from "@/components/ui/error-state";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBehaviorFolders } from "@/hooks/behaviorFolders/useBehaviorFolders";
 import { useBehaviors } from "@/hooks/behaviors/useBehaviors";
@@ -70,70 +64,6 @@ const SORT_KEYS = ["firstName", "lastName", "rosterNumber", "points"] as const;
 type PointsPageProps = {
   classId: Id<"classes">;
 };
-
-type PointsSortMenuProps = {
-  sortKey: PointsSortKey;
-  sortDirection: PointsSortDirection;
-  labels: Record<PointsSortKey, string>;
-  labelsShort: Record<PointsSortKey, string>;
-  ariaLabel: string;
-  onSortChange: (key: PointsSortKey) => void;
-};
-
-function PointsSortMenu({
-  sortKey,
-  sortDirection,
-  labels,
-  labelsShort,
-  ariaLabel,
-  onSortChange,
-}: PointsSortMenuProps) {
-  const directionMark = sortDirection === "asc" ? "↑" : "↓";
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        render={
-          <Button type="button" variant="outline" className="shrink-0" aria-label={ariaLabel} />
-        }
-      >
-        {/* Stack all short labels invisibly so the trigger width never shifts. */}
-        <span className="inline-grid justify-items-start">
-          {SORT_KEYS.map((key) => (
-            <span
-              key={key}
-              className="invisible col-start-1 row-start-1 whitespace-nowrap"
-              aria-hidden="true"
-            >
-              {labelsShort[key]} <span className="inline-block w-[1em] text-center">↑</span>
-            </span>
-          ))}
-          <span className="col-start-1 row-start-1 whitespace-nowrap">
-            {labelsShort[sortKey]}{" "}
-            <span className="inline-block w-[1em] text-center">{directionMark}</span>
-          </span>
-        </span>
-        <ChevronDownIcon data-icon="inline-end" className="opacity-70" />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-auto min-w-44">
-        <DropdownMenuGroup>
-          {SORT_KEYS.map((key) => {
-            const active = key === sortKey;
-            return (
-              <DropdownMenuItem key={key} onClick={() => onSortChange(key)}>
-                <span className="min-w-0 flex-1">
-                  {labels[key]}
-                  {active ? ` ${directionMark}` : null}
-                </span>
-                {active ? <CheckIcon /> : null}
-              </DropdownMenuItem>
-            );
-          })}
-        </DropdownMenuGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
 
 export function PointsPage({ classId }: PointsPageProps) {
   const { can, isPending: permissionsPending } = useCan();
@@ -277,7 +207,8 @@ function StaffPointsPage({ classId }: PointsPageProps) {
         classId={classId}
         trailing={
           <>
-            <PointsSortMenu
+            <StudentGridSortMenu
+              keys={SORT_KEYS}
               sortKey={sortKey}
               sortDirection={sortDirection}
               labels={sortLabels}
@@ -448,28 +379,32 @@ function StaffPointsPage({ classId }: PointsPageProps) {
         purchaseLimitStatuses={purchaseLimits.data ?? []}
         purchaseLimitsPending={purchaseLimits.isPending}
         onApplyBehaviors={async ({ mode, items, note }) => {
-          await applyBehaviors.mutateAsync({
+          const studentUserIds = applyTargets.map((student) => student.userId);
+          const applyPromise = applyBehaviors.mutateAsync({
             classId,
             dateKey,
-            studentUserIds: applyTargets.map((student) => student.userId),
+            studentUserIds,
             mode,
             items,
             ...(note ? { note } : {}),
           });
           clearSelection();
           setSelectMode(false);
+          await applyPromise;
         }}
         onRedeemRewards={async ({ items, allowOverride }) => {
-          await redeemRewards.mutateAsync({
+          const studentUserIds = applyTargets.map((student) => student.userId);
+          const redeemPromise = redeemRewards.mutateAsync({
             classId,
             dateKey,
-            studentUserIds: applyTargets.map((student) => student.userId),
+            studentUserIds,
             items,
             timeZoneOffsetMinutes: purchaseLimits.timeZoneOffsetMinutes,
             allowOverride,
           });
           clearSelection();
           setSelectMode(false);
+          await redeemPromise;
         }}
       />
     </div>

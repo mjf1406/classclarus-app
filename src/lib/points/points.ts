@@ -111,3 +111,58 @@ export function sortPointsStudents(
 export function isAbsentStudent(student: PointsBoardStudent): boolean {
   return student.attendanceStatus === "absent";
 }
+
+type PointsBoardItemDelta = {
+  points: number;
+  quantity: number;
+};
+
+function withBehaviorDeltas(
+  student: PointsBoardStudent,
+  items: ReadonlyArray<PointsBoardItemDelta>,
+): PointsBoardStudent {
+  let pointsBalance = student.pointsBalance;
+  let pointsAwarded = student.pointsAwarded;
+  let pointsRemoved = student.pointsRemoved;
+  let minusCount = student.minusCount;
+  for (const item of items) {
+    const applied = item.points * item.quantity;
+    pointsBalance += applied;
+    if (applied > 0) pointsAwarded += applied;
+    if (applied < 0) {
+      pointsRemoved += Math.abs(applied);
+      minusCount += item.quantity;
+    }
+  }
+  return { ...student, pointsBalance, pointsAwarded, pointsRemoved, minusCount };
+}
+
+/** Optimistic points-board patch when awarding or removing behaviors. */
+export function applyBehaviorItemsToBoard(
+  board: PointsBoard,
+  studentUserIds: ReadonlyArray<PointsBoardStudent["userId"]>,
+  items: ReadonlyArray<PointsBoardItemDelta>,
+): PointsBoard {
+  const selected = new Set(studentUserIds);
+  return board.map((student) =>
+    selected.has(student.userId) ? withBehaviorDeltas(student, items) : student,
+  );
+}
+
+/** Optimistic points-board patch when redeeming rewards. */
+export function applyRewardRedemptionsToBoard(
+  board: PointsBoard,
+  studentUserIds: ReadonlyArray<PointsBoardStudent["userId"]>,
+  items: ReadonlyArray<PointsBoardItemDelta>,
+): PointsBoard {
+  const selected = new Set(studentUserIds);
+  const totalCost = items.reduce((sum, item) => sum + item.points * item.quantity, 0);
+  return board.map((student) => {
+    if (!selected.has(student.userId)) return student;
+    return {
+      ...student,
+      pointsBalance: student.pointsBalance - totalCost,
+      pointsRedeemed: student.pointsRedeemed + totalCost,
+    };
+  });
+}

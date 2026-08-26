@@ -2,6 +2,8 @@ import { describe, expect, test } from "vite-plus/test";
 
 import type { Id } from "../../../convex/_generated/dataModel";
 import {
+  applyBehaviorItemsToBoard,
+  applyRewardRedemptionsToBoard,
   comparePointsStudents,
   formatApplyCatalogPoints,
   nextPointsSortState,
@@ -91,5 +93,50 @@ describe("formatApplyCatalogPoints", () => {
   test("shows redeem costs as negative", () => {
     expect(formatApplyCatalogPoints("redeem", 5, "en")).toBe("-5");
     expect(formatApplyCatalogPoints("redeem", 0, "en")).toBe("0");
+  });
+});
+
+describe("applyBehaviorItemsToBoard", () => {
+  test("awards and removes points for selected students only", () => {
+    const board = [
+      student({ userId: "a" as Id<"users">, rosterNumber: 1, pointsBalance: 10 }),
+      student({ userId: "b" as Id<"users">, rosterNumber: 2, pointsBalance: 4 }),
+    ];
+    const next = applyBehaviorItemsToBoard(
+      board,
+      ["a" as Id<"users">],
+      [
+        { points: 3, quantity: 2 },
+        { points: -1, quantity: 1 },
+      ],
+    );
+    expect(next[0]).toMatchObject({
+      userId: "a",
+      pointsBalance: 15,
+      pointsAwarded: 6,
+      pointsRemoved: 1,
+      minusCount: 1,
+    });
+    expect(next[1]).toEqual(board[1]);
+  });
+});
+
+describe("applyRewardRedemptionsToBoard", () => {
+  test("deducts redeem cost from selected students only", () => {
+    const board = [
+      student({ userId: "a" as Id<"users">, rosterNumber: 1, pointsBalance: 20 }),
+      student({ userId: "b" as Id<"users">, rosterNumber: 2, pointsBalance: 20 }),
+    ];
+    const next = applyRewardRedemptionsToBoard(
+      board,
+      ["b" as Id<"users">],
+      [{ points: 5, quantity: 2 }],
+    );
+    expect(next[0]).toEqual(board[0]);
+    expect(next[1]).toMatchObject({
+      userId: "b",
+      pointsBalance: 10,
+      pointsRedeemed: 10,
+    });
   });
 });

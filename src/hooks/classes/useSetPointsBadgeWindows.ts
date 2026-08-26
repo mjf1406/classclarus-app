@@ -20,6 +20,8 @@ type SetPointsBadgeWindowsArgs = {
   warningWindowUnit: PointsBadgeWindowUnit;
   minusWindowAmount: number;
   minusWindowUnit: PointsBadgeWindowUnit;
+  warningAlerts: Array<{ count: number; action: string }>;
+  minusAlerts: Array<{ count: number; action: string }>;
 };
 
 export function useSetPointsBadgeWindows() {
@@ -39,6 +41,8 @@ export function useSetPointsBadgeWindows() {
         warningWindowUnit: args.warningWindowUnit,
         minusWindowAmount: args.minusWindowAmount,
         minusWindowUnit: args.minusWindowUnit,
+        warningAlerts: args.warningAlerts,
+        minusAlerts: args.minusAlerts,
         updatedAt: now,
       };
       queryClient.setQueryData<ClassPublic[]>(listKey, (old) => {

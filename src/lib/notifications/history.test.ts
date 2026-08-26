@@ -14,5 +14,6 @@ describe("notification history date presets", () => {
   test("omits kind when the filter is all", () => {
     expect(kindFilterArg("all")).toBeUndefined();
     expect(kindFilterArg("calendar_reminder")).toBe("calendar_reminder");
+    expect(kindFilterArg("points_badge_alert")).toBe("points_badge_alert");
   });
 });

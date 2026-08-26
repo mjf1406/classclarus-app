@@ -57,9 +57,13 @@ function resolveQueryKeys<TVariables>(
 /**
  * Generic optimistic mutation helper for TanStack Query + Convex.
  *
- * - onMutate: cancel + snapshot + apply optimistic update
+ * - onMutate: snapshot + apply optimistic update (sync so UI paints immediately)
  * - onError: restore snapshot, then call caller onError
  * - onSettled: invalidate snapshotted (+ optional extra) keys, then call caller onSettled
+ *
+ * Do not cancelQueries after painting: Convex live queries refetch via
+ * `convexClient.query()`, which returns stale server data and overwrites the
+ * optimistic cache until the mutation completes.
  */
 export function useOptimisticMutation<TVariables, TResult>(
   options: UseOptimisticMutationOptions<TVariables, TResult>,
@@ -81,21 +85,14 @@ export function useOptimisticMutation<TVariables, TResult>(
     retry: false,
     mutationFn,
 
-    onMutate: async (variables) => {
+    onMutate: (variables) => {
       const queryKeys = resolveQueryKeys(queryKeysFactory, variables, queryClient);
-
-      // Snapshot + paint optimistic UI synchronously so callers can exit pending
-      // UI in the same turn. Cancel in-flight fetches afterward so they cannot
-      // overwrite the optimistic data when they settle.
       const previousByKey = queryKeys.map((queryKey) => queryClient.getQueryData(queryKey));
       const snapshot: OptimisticMutationContext = {
         queryKeys,
         previousByKey,
       };
       applyOptimisticUpdate?.(queryClient, variables, snapshot);
-
-      await Promise.all(queryKeys.map((queryKey) => queryClient.cancelQueries({ queryKey })));
-
       return snapshot;
     },
 

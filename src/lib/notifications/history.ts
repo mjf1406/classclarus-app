@@ -7,7 +7,11 @@ export type NotificationDatePreset = (typeof NOTIFICATION_DATE_PRESETS)[number];
 export const NOTIFICATION_STATUS_FILTERS = ["all", "unread", "read", "dismissed"] as const;
 export type NotificationStatusFilter = (typeof NOTIFICATION_STATUS_FILTERS)[number];
 
-export const NOTIFICATION_KIND_FILTERS = ["all", "calendar_reminder"] as const;
+export const NOTIFICATION_KIND_FILTERS = [
+  "all",
+  "calendar_reminder",
+  "points_badge_alert",
+] as const;
 export type NotificationKindFilter = (typeof NOTIFICATION_KIND_FILTERS)[number];
 
 const DAY_MS = 24 * 60 * 60 * 1000;

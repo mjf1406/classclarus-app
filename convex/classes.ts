@@ -38,6 +38,11 @@ import { deleteWarningEventsForClass } from "./lib/pointsCleanup.js";
 import { deleteJoinCodesForClass } from "./lib/joinCodesCleanup.js";
 import { languageValidator, type LanguageCode } from "./lib/languages.js";
 import {
+  normalizePointsBadgeAlerts,
+  pointsBadgeAlertsValidator,
+  resolvePointsBadgeAlerts,
+} from "./lib/points/pointsBadgeAlert.js";
+import {
   normalizePointsBadgeWindow,
   pointsBadgeWindowUnitValidator,
   resolvePointsBadgeWindow,
@@ -90,6 +95,8 @@ const classValidator = v.object({
   warningWindowUnit: pointsBadgeWindowUnitValidator,
   minusWindowAmount: v.number(),
   minusWindowUnit: pointsBadgeWindowUnitValidator,
+  warningAlerts: pointsBadgeAlertsValidator,
+  minusAlerts: pointsBadgeAlertsValidator,
   pointsPublicEnabled: v.optional(v.boolean()),
   pointsPublicSlug: v.optional(v.string()),
   updatedAt: v.number(),
@@ -129,6 +136,8 @@ type ClassPublicDefaults = {
   warningWindowUnit: PointsBadgeWindowUnit;
   minusWindowAmount: number;
   minusWindowUnit: PointsBadgeWindowUnit;
+  warningAlerts: Array<{ count: number; action: string }>;
+  minusAlerts: Array<{ count: number; action: string }>;
 };
 
 function resolvePointsBadgeWindowFields(classDoc: Doc<"classes">): {
@@ -136,6 +145,8 @@ function resolvePointsBadgeWindowFields(classDoc: Doc<"classes">): {
   warningWindowUnit: PointsBadgeWindowUnit;
   minusWindowAmount: number;
   minusWindowUnit: PointsBadgeWindowUnit;
+  warningAlerts: Array<{ count: number; action: string }>;
+  minusAlerts: Array<{ count: number; action: string }>;
 } {
   const warning = resolvePointsBadgeWindow(
     classDoc.warningWindowAmount,
@@ -147,6 +158,8 @@ function resolvePointsBadgeWindowFields(classDoc: Doc<"classes">): {
     warningWindowUnit: warning.unit,
     minusWindowAmount: minus.amount,
     minusWindowUnit: minus.unit,
+    warningAlerts: resolvePointsBadgeAlerts(classDoc.warningAlerts),
+    minusAlerts: resolvePointsBadgeAlerts(classDoc.minusAlerts),
   };
 }
 
@@ -573,13 +586,15 @@ export const setRosterNameFormat = classMutation({
   },
 });
 
-/** Lookback windows for warning and minus badges on the points board. */
+/** Lookback windows and custom teacher notifications for points-board badges. */
 export const setPointsBadgeWindows = classMutation({
   args: {
     warningWindowAmount: v.number(),
     warningWindowUnit: pointsBadgeWindowUnitValidator,
     minusWindowAmount: v.number(),
     minusWindowUnit: pointsBadgeWindowUnitValidator,
+    warningAlerts: pointsBadgeAlertsValidator,
+    minusAlerts: pointsBadgeAlertsValidator,
   },
   returns: classValidator,
   handler: async (ctx, args) => {
@@ -587,11 +602,15 @@ export const setPointsBadgeWindows = classMutation({
     await ctx.require("class:update");
     const warning = normalizePointsBadgeWindow(args.warningWindowAmount, args.warningWindowUnit);
     const minus = normalizePointsBadgeWindow(args.minusWindowAmount, args.minusWindowUnit);
+    const warningAlerts = normalizePointsBadgeAlerts(args.warningAlerts);
+    const minusAlerts = normalizePointsBadgeAlerts(args.minusAlerts);
     await ctx.db.patch("classes", ctx.classDoc._id, {
       warningWindowAmount: warning.amount,
       warningWindowUnit: warning.unit,
       minusWindowAmount: minus.amount,
       minusWindowUnit: minus.unit,
+      warningAlerts,
+      minusAlerts,
       updatedAt: Date.now(),
     });
     const updated = await ctx.db.get("classes", ctx.classDoc._id);
@@ -604,13 +623,15 @@ export const setPointsBadgeWindows = classMutation({
       action: "update",
       resourceType: "class",
       resourceId: ctx.classDoc._id,
-      summary: "Updated points badge lookback windows",
+      summary: "Updated points board badge settings",
       summaryKey: "activitySummary_setPointsBadgeWindows",
       metadata: {
         warningWindowAmount: String(warning.amount),
         warningWindowUnit: warning.unit,
         minusWindowAmount: String(minus.amount),
         minusWindowUnit: minus.unit,
+        warningAlerts: warningAlerts.map((alert) => `${alert.count}:${alert.action}`).join("; "),
+        minusAlerts: minusAlerts.map((alert) => `${alert.count}:${alert.action}`).join("; "),
       },
     });
     return withClassDefaults(updated);

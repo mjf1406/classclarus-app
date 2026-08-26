@@ -190,12 +190,6 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
           },
         ]
       : []),
-    {
-      title: tTasks("nav"),
-      icon: ListTodo,
-      to: "/class/$classId/tasks",
-      permission: "class:read",
-    },
   ];
 
   const peopleItems: Array<NavItem> = [
@@ -264,16 +258,22 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
       permission: "class:read",
     },
     {
-      title: tStudentWork("navGradeScales"),
-      icon: GraduationCap,
-      to: "/class/$classId/sw/grade-scales",
-      permission: "gradeScales:read",
+      title: tTasks("nav"),
+      icon: ListTodo,
+      to: "/class/$classId/tasks",
+      permission: "class:read",
     },
     {
       title: tStudentWork("navGradedSubjects"),
       icon: BookOpen,
       to: "/class/$classId/sw/graded-subjects",
       permission: "class:read",
+    },
+    {
+      title: tStudentWork("navGradeScales"),
+      icon: GraduationCap,
+      to: "/class/$classId/sw/grade-scales",
+      permission: "gradeScales:read",
     },
   ];
 

@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 
+import { getTimeZoneOffsetMs, isValidTimeZone, utcMsToZonedParts } from "../calendar/timeZone.js";
 import { ledgerQuantity } from "./pointsRoster.js";
 
 export const pointsBadgeWindowUnitValidator = v.union(
@@ -86,6 +87,26 @@ function parseDateKey(dateKey: string): { year: number; month: number; day: numb
 function utcMsFromLocalDateKey(dateKey: string, timeZoneOffsetMinutes: number): number {
   const { year, month, day } = parseDateKey(dateKey);
   return Date.UTC(year, month, day) + timeZoneOffsetMinutes * 60_000;
+}
+
+/**
+ * `Date#getTimezoneOffset()` minutes for `pointsBadgeLookbackWindow`:
+ * UTC minus zoned local, matching the points board client offset.
+ */
+export function pointsBadgeTimeZoneOffsetMinutes(timeZone: string, utcMs: number): number {
+  const zone = isValidTimeZone(timeZone) ? timeZone : "UTC";
+  return -getTimeZoneOffsetMs(zone, utcMs) / 60_000;
+}
+
+/** Lookback ending on the zoned calendar day that contains `utcMs`. */
+export function pointsBadgeLookbackForTimeZone(
+  utcMs: number,
+  timeZone: string | undefined,
+  window: PointsBadgeWindow,
+): PointsBadgeLookback {
+  const zone = timeZone && isValidTimeZone(timeZone) ? timeZone : "UTC";
+  const { dateKey } = utcMsToZonedParts(utcMs, zone);
+  return pointsBadgeLookbackWindow(dateKey, pointsBadgeTimeZoneOffsetMinutes(zone, utcMs), window);
 }
 
 /**

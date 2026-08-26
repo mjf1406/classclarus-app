@@ -43,6 +43,7 @@ export function useCreateTask() {
           updatedAt: now,
           completedCount: 0,
           studentCount,
+          completedStudentIds: [],
         };
         if (!old) return [next];
         return [next, ...old];

@@ -122,6 +122,13 @@ const schema = defineSchema({
     minusWindowAmount: v.optional(v.number()),
     minusWindowUnit: v.optional(v.union(v.literal("day"), v.literal("week"), v.literal("month"))),
     /**
+     * Custom teacher notifications when a student's warning/minus count in the
+     * matching lookback window reaches a configured number. Each item is
+     * `{ count, action }` with a text-only action (e.g. "Email parents").
+     */
+    warningAlerts: v.optional(v.array(v.object({ count: v.number(), action: v.string() }))),
+    minusAlerts: v.optional(v.array(v.object({ count: v.number(), action: v.string() }))),
+    /**
      * Optional public points display (`/p/$pointsPublicSlug`). Slug is retained when disabled.
      */
     pointsPublicEnabled: v.optional(v.boolean()),

@@ -53,6 +53,11 @@ function isStudentCompletedInCaches(
   if (detail && isClassTaskDetail(detail)) {
     return detail.completedStudentIds.includes(args.studentUserId);
   }
+  const list = queryClient.getQueryData<TaskList>(tasksListQueryKey(args.classId));
+  const listItem = list?.find((item) => item._id === args.taskId);
+  if (listItem) {
+    return listItem.completedStudentIds?.includes(args.studentUserId) ?? false;
+  }
   if (!assignmentId) {
     return undefined;
   }
@@ -122,10 +127,19 @@ export function useSetTaskCompletion() {
         if (!old) return old;
         return old.map((item) => {
           if (item._id !== args.taskId) return item;
-          const nextCount = args.completed
-            ? Math.min(item.studentCount, item.completedCount + 1)
-            : Math.max(0, item.completedCount - 1);
-          return { ...item, completedCount: nextCount };
+          const currentIds = item.completedStudentIds ?? [];
+          const already = currentIds.includes(args.studentUserId);
+          if (already === args.completed) {
+            return item;
+          }
+          const completedStudentIds = args.completed
+            ? [...currentIds, args.studentUserId]
+            : currentIds.filter((id) => id !== args.studentUserId);
+          return {
+            ...item,
+            completedStudentIds,
+            completedCount: completedStudentIds.length,
+          };
         });
       });
 

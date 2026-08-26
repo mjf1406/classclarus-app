@@ -1,18 +1,19 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import type { ColumnDef } from "@tanstack/react-table";
 import { ArrowLeft, ListTodo, Pencil, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { DataTableSortableHeader } from "@/components/feedback/DataTableSortableHeader";
 import { DeleteNamedCredenza } from "@/components/groups/DeleteNamedCredenza";
 import { GroupTeamFilterButtons } from "@/components/groups/GroupTeamFilterButtons";
-import { RosterColumnVisibilityMenu } from "@/components/roster/RosterColumnVisibilityMenu";
-import { RosterTable } from "@/components/roster/RosterTable";
+import { StudentGridSortMenu } from "@/components/students/StudentGridSortMenu";
+import { TaskCompletionGroupStats } from "@/components/tasks/TaskCompletionGroupStats";
 import { TaskCompletionStatusBadge } from "@/components/tasks/TaskCompletionStatusBadge";
 import { TaskFormCredenza } from "@/components/tasks/TaskFormCredenza";
+import {
+  TASK_STUDENT_GRID_CLASS,
+  TaskStudentCompletionCard,
+} from "@/components/tasks/TaskStudentCompletionCard";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Empty,
   EmptyDescription,
@@ -25,9 +26,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useGroupTeamFilterState } from "@/hooks/groups/useGroupTeamFilterState";
 import { useGroupsBoard } from "@/hooks/groups/useGroupsBoard";
 import { useCan } from "@/hooks/permissions/useCan";
-import { useClassUserSettings } from "@/hooks/roster/useClassUserSettings";
 import { useEnsureStudentRosters } from "@/hooks/roster/useEnsureStudentRosters";
-import { useRosterConsumerColumnVisibility } from "@/hooks/roster/useRosterConsumerColumnVisibility";
 import { useStudentRoster } from "@/hooks/roster/useStudentRoster";
 import { useStudentRosterFilter } from "@/hooks/students/useStudentRosterFilter";
 import { useRemoveTask } from "@/hooks/tasks/useRemoveTask";
@@ -41,22 +40,24 @@ import { collectAllStudents, sortStudents } from "@/lib/groups/groups";
 import { ONE_HOUR } from "@/lib/queryCache";
 import {
   getRosterDisplayName,
-  normalizeColumnOrder,
-  normalizeColumnVisibility,
   resolveRosterNameFormat,
   type StudentRosterEntry,
 } from "@/lib/roster/roster";
 import {
+  computeTaskGroupCompletionStats,
   isClassTaskDetail,
   isPersonalTaskDetail,
   isTaskPastDue,
+  nextTaskStudentSortState,
+  sortTaskStudents,
+  TASK_STUDENT_SORT_KEYS,
+  taskStudentCardNames,
   type TaskDetailClass,
   type TaskDetailPersonal,
+  type TaskStudentSortKey,
 } from "@/lib/tasks/tasks";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
-
-const TASKS_ROSTER_SURFACE = "tasks";
 
 type TaskDetailPageProps = {
   classId: Id<"classes">;
@@ -101,12 +102,14 @@ function TaskDetailBackLink({ classId }: { classId: Id<"classes"> }) {
 function StaffTaskDetailPage({ classId, taskId }: TaskDetailPageProps) {
   const { t } = useTranslation("tasks");
   const { t: tClasses } = useTranslation("classes");
+  const { t: tGroups } = useTranslation("groups");
   const navigate = useNavigate();
   const { can } = useCan();
   const canManage = can("tasks:manage");
   const canComplete = can("tasks:complete");
   const canReadStudents = can("students:read");
   const unnamed = tClasses("unnamedMember");
+  const ungroupedLabel = tGroups("groupsUngroupedTitle");
 
   const { data, isPending, isError, refetch } = useTask(classId, taskId);
   const { data: classDoc } = useAuthedQuery(api.classes.get, { classId }, { gcTime: ONE_HOUR });
@@ -123,7 +126,6 @@ function StaffTaskDetailPage({ classId, taskId }: TaskDetailPageProps) {
     refetch: refetchRoster,
     isAuthLoading,
   } = useStudentRoster(classId);
-  const { data: settings } = useClassUserSettings(classId);
   const groupTeamFilterState = useGroupTeamFilterState(classId);
   const updateTask = useUpdateTask();
   const removeTask = useRemoveTask();
@@ -136,6 +138,8 @@ function StaffTaskDetailPage({ classId, taskId }: TaskDetailPageProps) {
 
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [sortKey, setSortKey] = useState<TaskStudentSortKey>("firstName");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   const nameFormat = useMemo(
     () =>
@@ -144,20 +148,6 @@ function StaffTaskDetailPage({ classId, taskId }: TaskDetailPageProps) {
         rosterNameSpace: classDoc?.rosterNameSpace,
       }),
     [classDoc?.rosterNameOrder, classDoc?.rosterNameSpace],
-  );
-
-  const columnOrder = useMemo(
-    () => normalizeColumnOrder(settings?.studentsColumnOrder),
-    [settings?.studentsColumnOrder],
-  );
-  const baseColumnVisibility = useMemo(
-    () => normalizeColumnVisibility(settings?.studentsColumnVisibility),
-    [settings?.studentsColumnVisibility],
-  );
-  const { columnVisibility, setColumnVisibility } = useRosterConsumerColumnVisibility(
-    classId,
-    TASKS_ROSTER_SURFACE,
-    baseColumnVisibility,
   );
 
   const students = useMemo((): StudentRosterEntry[] => {
@@ -204,56 +194,43 @@ function StaffTaskDetailPage({ classId, taskId }: TaskDetailPageProps) {
     () => new Set(classDetail?.completedStudentIds ?? []),
     [classDetail?.completedStudentIds],
   );
-
-  const completionColumns = useMemo((): ColumnDef<StudentRosterEntry, unknown>[] => {
-    return [
-      {
-        id: "taskCompleted",
-        accessorFn: (student) => completedSet.has(student.userId),
-        header: ({ column }) => (
-          <div className="flex justify-center">
-            <DataTableSortableHeader
-              label={t("columnDone")}
-              sorted={column.getIsSorted()}
-              onSort={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            />
-          </div>
-        ),
-        cell: ({ row }) => {
-          const student = row.original;
-          const completed = completedSet.has(student.userId);
-          const displayName = getRosterDisplayName(student, unnamed, nameFormat);
-          return (
-            <div className="flex justify-center">
-              <Checkbox
-                checked={completed}
-                disabled={!canComplete || setCompletion.isPending}
-                aria-label={t("completeAria", { name: displayName })}
-                onCheckedChange={(value) => {
-                  if (!canComplete) return;
-                  const next = value === true;
-                  if (next === completed) return;
-                  void setCompletion.mutateAsync({
-                    classId,
-                    taskId,
-                    studentUserId: student.userId,
-                    completed: next,
-                  });
-                }}
-              />
-            </div>
-          );
-        },
-        sortingFn: (rowA, rowB) =>
-          Number(completedSet.has(rowA.original.userId)) -
-          Number(completedSet.has(rowB.original.userId)),
-        enableSorting: true,
-      },
-    ];
-  }, [canComplete, classId, completedSet, nameFormat, setCompletion, t, taskId, unnamed]);
+  const sorted = useMemo(
+    () => sortTaskStudents(filtered, sortKey, sortDirection, completedSet),
+    [completedSet, filtered, sortDirection, sortKey],
+  );
+  const includedStudentIds = useMemo(
+    () => new Set(filtered.map((student) => student.userId)),
+    [filtered],
+  );
+  const filteredCompletedCount = useMemo(
+    () => filtered.filter((student) => completedSet.has(student.userId)).length,
+    [completedSet, filtered],
+  );
+  const groupStats = useMemo(() => {
+    if (!groupsBoard) return [];
+    return computeTaskGroupCompletionStats({
+      board: groupsBoard,
+      completedStudentIds: completedSet,
+      includedStudentIds,
+      ungroupedLabel,
+    });
+  }, [completedSet, groupsBoard, includedStudentIds, ungroupedLabel]);
 
   const studentsPending =
     boardPending || (canReadStudents && rosterPending && roster === undefined);
+
+  const sortLabels: Record<TaskStudentSortKey, string> = {
+    firstName: t("sortFirstName"),
+    lastName: t("sortLastName"),
+    rosterNumber: t("sortRosterNumber"),
+    done: t("sortDone"),
+  };
+  const sortLabelsShort: Record<TaskStudentSortKey, string> = {
+    firstName: t("sortFirstNameShort"),
+    lastName: t("sortLastNameShort"),
+    rosterNumber: t("sortRosterNumberShort"),
+    done: t("sortDoneShort"),
+  };
 
   if (isPending || studentsPending) {
     return (
@@ -300,7 +277,34 @@ function StaffTaskDetailPage({ classId, taskId }: TaskDetailPageProps) {
         onDelete={() => setDeleteOpen(true)}
       />
 
-      <GroupTeamFilterButtons classId={classId} />
+      <GroupTeamFilterButtons
+        classId={classId}
+        trailing={
+          <StudentGridSortMenu
+            keys={TASK_STUDENT_SORT_KEYS}
+            sortKey={sortKey}
+            sortDirection={sortDirection}
+            labels={sortLabels}
+            labelsShort={sortLabelsShort}
+            ariaLabel={t("sortMenuAria", {
+              label: sortLabels[sortKey],
+              direction: sortDirection === "asc" ? t("sortDirectionAsc") : t("sortDirectionDesc"),
+            })}
+            onSortChange={(key) => {
+              const state = nextTaskStudentSortState(sortKey, sortDirection, key);
+              setSortKey(state.sortKey);
+              setSortDirection(state.sortDirection);
+            }}
+          />
+        }
+      />
+
+      <TaskCompletionGroupStats
+        className="text-sm text-muted-foreground"
+        completedCount={filteredCompletedCount}
+        studentCount={filtered.length}
+        groupStats={groupStats}
+      />
 
       {filtered.length === 0 ? (
         <Empty card>
@@ -313,21 +317,36 @@ function StaffTaskDetailPage({ classId, taskId }: TaskDetailPageProps) {
           </EmptyHeader>
         </Empty>
       ) : (
-        <div className="flex min-w-0 flex-col gap-3">
-          <div className="flex justify-end">
-            <RosterColumnVisibilityMenu
-              columnOrder={columnOrder}
-              columnVisibility={columnVisibility}
-              onColumnVisibilityChange={setColumnVisibility}
-            />
-          </div>
-          <RosterTable
-            data={filtered}
-            columnOrder={columnOrder}
-            columnVisibility={columnVisibility}
-            extraColumns={completionColumns}
-          />
-        </div>
+        <ul className={TASK_STUDENT_GRID_CLASS}>
+          {sorted.map((student) => {
+            const completed = completedSet.has(student.userId);
+            const names = taskStudentCardNames(student, unnamed);
+            const displayName = getRosterDisplayName(student, unnamed, nameFormat);
+            return (
+              <li key={student.userId}>
+                <TaskStudentCompletionCard
+                  firstName={names.firstName}
+                  lastName={names.lastName}
+                  completed={completed}
+                  disabled={!canComplete}
+                  ariaLabel={t("completeAria", { name: displayName })}
+                  onToggle={() => {
+                    if (!canComplete) return;
+                    void setCompletion.mutateAsync({
+                      classId,
+                      taskId,
+                      studentUserId: student.userId,
+                      completed: !completed,
+                      ...(classDetail.assignmentId
+                        ? { assignmentId: classDetail.assignmentId }
+                        : {}),
+                    });
+                  }}
+                />
+              </li>
+            );
+          })}
+        </ul>
       )}
 
       {canManage ? (
@@ -378,6 +397,13 @@ function StaffTaskHeader({
   onDelete: () => void;
 }) {
   const { t } = useTranslation("tasks");
+  const meta = [
+    task.dueDateKey ? t("dueDateValue", { date: formatLocalizedDueDate(task.dueDateKey) }) : null,
+    task.updatedAt !== task.createdAt
+      ? t("updatedAt", { date: formatLocalizedDateTime(task.updatedAt) })
+      : null,
+  ].filter((part): part is string => Boolean(part));
+
   return (
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div className="flex min-w-0 flex-col gap-2">
@@ -397,18 +423,9 @@ function StaffTaskHeader({
             </Link>
           </p>
         ) : null}
-        <p className="text-sm text-muted-foreground">
-          {task.dueDateKey
-            ? `${t("dueDateValue", { date: formatLocalizedDueDate(task.dueDateKey) })} · `
-            : null}
-          {t("statsCompleted", {
-            completed: task.completedStudentIds.length,
-            total: task.studentCount,
-          })}
-          {task.updatedAt !== task.createdAt
-            ? ` · ${t("updatedAt", { date: formatLocalizedDateTime(task.updatedAt) })}`
-            : null}
-        </p>
+        {meta.length > 0 ? (
+          <p className="text-sm text-muted-foreground">{meta.join(" · ")}</p>
+        ) : null}
       </div>
       {canManage ? (
         <div className="flex flex-wrap gap-2">
