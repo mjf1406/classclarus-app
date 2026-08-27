@@ -27,6 +27,9 @@ export const ACTIVITY_RESOURCE_TYPES = [
   "gradedSubject",
   "randomAssigner",
   "equitableAssigner",
+  "timetableTerm",
+  "timetableSlot",
+  "timetableSubject",
 ] as const;
 export type ActivityResourceType = (typeof ACTIVITY_RESOURCE_TYPES)[number];
 

@@ -1,4 +1,14 @@
-import { Check, Link2, MoreHorizontal, Plus, Trash2 } from "lucide-react";
+import {
+  Check,
+  Link2,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  SquareCheck,
+  SquareX,
+  Trash2,
+  Unlink,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
@@ -9,9 +19,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { FontAwesomeIconFromId } from "@/components/icons/FontAwesomeIconFromId";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   COMPACT_SLOT_MAX_MINUTES,
-  SLOT_MIN_HEIGHT_REM,
   type TimetableLesson,
   type TimetableSlot,
   type TimetableSubject,
@@ -30,6 +40,9 @@ type TimetableSlotCellProps = {
   onLessonClick: (lesson: TimetableLesson) => void;
   onRemoveLesson: (lessonId: TimetableLesson["_id"]) => void;
   onEditSlot?: () => void;
+  onDeleteSlot?: () => void;
+  onLinkSlot?: () => void;
+  onUnlinkSlot?: () => void;
   onToggleWeekDisable?: () => void;
 };
 
@@ -44,31 +57,52 @@ export function TimetableSlotCell({
   onLessonClick,
   onRemoveLesson,
   onEditSlot,
+  onDeleteSlot,
+  onLinkSlot,
+  onUnlinkSlot,
   onToggleWeekDisable,
 }: TimetableSlotCellProps) {
   const { t } = useTranslation("timetable");
   const duration = slotDurationMinutes(slot.startTime, slot.endTime);
   const compact = duration < COMPACT_SLOT_MAX_MINUTES;
   const isDisabled = slot.disabled || isDisabledForWeek;
+  const isLinked = Boolean(slot.linkGroupId);
+  const showActions =
+    canManage && (onEditSlot || onDeleteSlot || onLinkSlot || onUnlinkSlot || onToggleWeekDisable);
 
   return (
     <div
       className={cn(
-        "rounded-md border px-1.5 py-1 shadow-sm transition-colors flex flex-col gap-1 relative group/slot",
+        "group/slot relative flex h-full min-h-0 flex-col gap-1 overflow-hidden rounded-md border px-1.5 py-1 shadow-sm transition-colors",
         isDisabled
-          ? "border-destructive/40 bg-destructive/10 opacity-50"
-          : "border-primary/30 bg-primary/5 hover:bg-primary/10",
+          ? "border-destructive/40 bg-card text-card-foreground opacity-50"
+          : isLinked
+            ? "border-primary/50 bg-card text-card-foreground ring-1 ring-primary/20 hover:bg-accent"
+            : "border-primary/30 bg-card text-card-foreground hover:bg-accent",
       )}
-      style={{ minHeight: `${SLOT_MIN_HEIGHT_REM}rem` }}
     >
       {!compact ? (
-        <div className="text-[10px] font-medium text-muted-foreground px-0.5">
-          {formatTimeString(slot.startTime, timeFormat)} –{" "}
-          {formatTimeString(slot.endTime, timeFormat)}
+        <div className="flex items-center gap-1 px-0.5 text-[10px] font-medium text-muted-foreground">
+          {isLinked ? (
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <span className="inline-flex shrink-0">
+                    <Link2 className="h-3 w-3 text-primary" />
+                  </span>
+                }
+              />
+              <TooltipContent>{t("linkedSlotTooltip")}</TooltipContent>
+            </Tooltip>
+          ) : null}
+          <span>
+            {formatTimeString(slot.startTime, timeFormat)} –{" "}
+            {formatTimeString(slot.endTime, timeFormat)}
+          </span>
         </div>
       ) : null}
 
-      <div className="flex flex-col gap-1 flex-1 min-w-0">
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
         {lessons.map((lesson) => (
           <LessonChip
             key={lesson._id}
@@ -110,7 +144,7 @@ export function TimetableSlotCell({
                 render={
                   <button
                     type="button"
-                    className="text-xs text-muted-foreground hover:text-foreground w-full text-left px-1 py-0.5 rounded border border-dashed border-muted-foreground/30 hover:border-muted-foreground/50 opacity-100 md:opacity-0 md:group-hover/slot:opacity-100"
+                    className="w-full rounded border border-dashed border-muted-foreground/30 px-1 py-0.5 text-left text-xs text-muted-foreground opacity-100 hover:border-muted-foreground/50 hover:text-foreground md:opacity-0 md:group-hover/slot:opacity-100"
                   />
                 }
               >
@@ -128,7 +162,7 @@ export function TimetableSlotCell({
         ) : null}
       </div>
 
-      {canManage && (onEditSlot || onToggleWeekDisable) ? (
+      {showActions ? (
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
@@ -145,11 +179,42 @@ export function TimetableSlotCell({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             {onEditSlot ? (
-              <DropdownMenuItem onClick={onEditSlot}>{t("editSlot")}</DropdownMenuItem>
+              <DropdownMenuItem onClick={onEditSlot}>
+                <Pencil className="h-4 w-4" />
+                {t("editSlot")}
+              </DropdownMenuItem>
+            ) : null}
+            {onLinkSlot ? (
+              <DropdownMenuItem onClick={onLinkSlot}>
+                <Link2 className="h-4 w-4" />
+                {t("linkSlotsAction")}
+              </DropdownMenuItem>
+            ) : null}
+            {onUnlinkSlot && slot.linkGroupId ? (
+              <DropdownMenuItem onClick={onUnlinkSlot}>
+                <Unlink className="h-4 w-4" />
+                {t("unlinkSlotAction")}
+              </DropdownMenuItem>
             ) : null}
             {onToggleWeekDisable ? (
               <DropdownMenuItem onClick={onToggleWeekDisable}>
-                {isDisabledForWeek ? t("enableSlotThisWeek") : t("disableSlotThisWeek")}
+                {isDisabledForWeek ? (
+                  <>
+                    <SquareCheck className="h-4 w-4" />
+                    {t("enableSlotThisWeek")}
+                  </>
+                ) : (
+                  <>
+                    <SquareX className="h-4 w-4" />
+                    {t("disableSlotThisWeek")}
+                  </>
+                )}
+              </DropdownMenuItem>
+            ) : null}
+            {onDeleteSlot ? (
+              <DropdownMenuItem variant="destructive" onClick={onDeleteSlot}>
+                <Trash2 className="h-4 w-4" />
+                {t("deleteSlotAction")}
               </DropdownMenuItem>
             ) : null}
           </DropdownMenuContent>
@@ -161,7 +226,7 @@ export function TimetableSlotCell({
 
 function SubjectLabel({ subject }: { subject: TimetableSubject }) {
   return (
-    <span className="flex items-center gap-2 min-w-0">
+    <span className="flex min-w-0 items-center gap-2">
       {subject.iconName ? (
         <FontAwesomeIconFromId
           id={subject.iconName}
@@ -170,7 +235,7 @@ function SubjectLabel({ subject }: { subject: TimetableSubject }) {
         />
       ) : (
         <span
-          className="size-2 rounded-full shrink-0"
+          className="size-2 shrink-0 rounded-full"
           style={{ backgroundColor: subject.bgColor }}
         />
       )}
@@ -200,8 +265,8 @@ function LessonChip({
       type="button"
       onClick={onClick}
       className={cn(
-        "text-left rounded-md flex items-center gap-1.5 shadow-sm border border-white/20 w-full hover:opacity-90 transition-opacity",
-        compact ? "text-[10px] px-1.5 py-0.5" : "text-xs px-2 py-1.5",
+        "flex w-full items-center gap-1.5 rounded-md border border-white/20 text-left shadow-sm transition-opacity hover:opacity-90",
+        compact ? "px-1.5 py-0.5 text-[10px]" : "px-2 py-1.5 text-xs",
       )}
       style={{ backgroundColor: subject.bgColor, color: subject.textColor }}
     >
@@ -214,7 +279,7 @@ function LessonChip({
       {lesson.complete ? (
         <Check className={cn("shrink-0", compact ? "h-3 w-3" : "h-4 w-4")} />
       ) : null}
-      <span className="font-medium truncate flex-1">{subject.name}</span>
+      <span className="min-w-0 flex-1 truncate font-medium">{subject.name}</span>
       {hasLinks ? (
         <Link2 className={cn("shrink-0 opacity-80", compact ? "h-3 w-3" : "h-3.5 w-3.5")} />
       ) : null}
@@ -222,7 +287,7 @@ function LessonChip({
         <span
           role="button"
           tabIndex={0}
-          className="shrink-0 opacity-0 group-hover/slot:opacity-100 hover:opacity-100 p-0.5"
+          className="shrink-0 p-0.5 opacity-0 hover:opacity-100 group-hover/slot:opacity-100"
           onClick={(e) => {
             e.stopPropagation();
             onRemove();

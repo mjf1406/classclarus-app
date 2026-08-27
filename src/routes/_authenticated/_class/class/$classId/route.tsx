@@ -89,7 +89,7 @@ export const Route = createFileRoute("/_authenticated/_class/class/$classId")({
             </header>
             <SelfHostUpdateBanner />
             <TrialBanner />
-            <div className="flex min-w-0 flex-1 flex-col">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col">
               <ClassContent classPending={isPending || !classDoc} />
             </div>
           </div>

@@ -202,6 +202,8 @@ import type * as lib_seedTestStudents from "../lib/seedTestStudents.js";
 import type * as lib_selfHosted from "../lib/selfHosted.js";
 import type * as lib_studentRosters from "../lib/studentRosters.js";
 import type * as lib_tasksCleanup from "../lib/tasksCleanup.js";
+import type * as lib_timetable_slotLinks from "../lib/timetable/slotLinks.js";
+import type * as lib_timetable_timetableFormSchema from "../lib/timetable/timetableFormSchema.js";
 import type * as lib_timetable_timetableSchema from "../lib/timetable/timetableSchema.js";
 import type * as lib_trial from "../lib/trial.js";
 import type * as lib_uploadPresets from "../lib/uploadPresets.js";
@@ -436,6 +438,8 @@ declare const fullApi: ApiFromModules<{
   "lib/selfHosted": typeof lib_selfHosted;
   "lib/studentRosters": typeof lib_studentRosters;
   "lib/tasksCleanup": typeof lib_tasksCleanup;
+  "lib/timetable/slotLinks": typeof lib_timetable_slotLinks;
+  "lib/timetable/timetableFormSchema": typeof lib_timetable_timetableFormSchema;
   "lib/timetable/timetableSchema": typeof lib_timetable_timetableSchema;
   "lib/trial": typeof lib_trial;
   "lib/uploadPresets": typeof lib_uploadPresets;

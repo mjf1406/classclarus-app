@@ -1,9 +1,10 @@
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
-import { useEffect, useState } from "react";
+import { useForm } from "@tanstack/react-form";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 
 import { FontAwesomeIconPickerLazy } from "@/components/icons/FontAwesomeIconPickerLazy";
-import { iconDefinitionToId } from "@/components/icons/fontawesome-icon-catalog";
+import { iconDefinitionToId, resolveIconId } from "@/components/icons/fontawesome-icon-catalog";
 import { Button } from "@/components/ui/button";
 import {
   Credenza,
@@ -15,9 +16,17 @@ import {
   CredenzaHeader,
   CredenzaTitle,
 } from "@/components/ui/credenza";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useCreateTimetableSubject } from "@/hooks/timetable/useTimetableMutations";
+import {
+  useCreateTimetableSubject,
+  useUpdateTimetableSubject,
+} from "@/hooks/timetable/useTimetableMutations";
+import type { TimetableSubject } from "@/lib/timetable/timetable";
+import {
+  createClientTimetableSubjectFormSchema,
+  type TimetableSubjectFormValues,
+} from "@/lib/timetable/timetableFormSchema";
 import type { Id } from "../../../convex/_generated/dataModel";
 
 type TimetableSubjectFormCredenzaProps = {
@@ -27,7 +36,37 @@ type TimetableSubjectFormCredenzaProps = {
   termId: Id<"timetableTerms">;
   year: number;
   weekNumber: number;
+  subject?: TimetableSubject | null;
 };
+
+function fieldErrorMessage(errors: unknown): string | undefined {
+  if (!Array.isArray(errors) || errors.length === 0) return undefined;
+  const first = errors[0];
+  if (typeof first === "string") return first;
+  if (first && typeof first === "object" && "message" in first) {
+    const message = (first as { message?: unknown }).message;
+    return typeof message === "string" ? message : undefined;
+  }
+  return undefined;
+}
+
+function defaultCreateValues(): TimetableSubjectFormValues {
+  return {
+    name: "",
+    bgColor: "#6366f1",
+    textColor: "#ffffff",
+    iconName: "",
+  };
+}
+
+function valuesFromSubject(subject: TimetableSubject): TimetableSubjectFormValues {
+  return {
+    name: subject.name,
+    bgColor: subject.bgColor,
+    textColor: subject.textColor,
+    iconName: subject.iconName ?? "",
+  };
+}
 
 export function TimetableSubjectFormCredenza({
   open,
@@ -36,87 +75,236 @@ export function TimetableSubjectFormCredenza({
   termId,
   year,
   weekNumber,
+  subject,
 }: TimetableSubjectFormCredenzaProps) {
   const { t } = useTranslation("timetable");
+  const { t: tCommon } = useTranslation("common");
   const createSubject = useCreateTimetableSubject();
-  const [name, setName] = useState("");
-  const [bgColor, setBgColor] = useState("#6366f1");
-  const [textColor, setTextColor] = useState("#ffffff");
-  const [iconName, setIconName] = useState("");
-  const [faIcon, setFaIcon] = useState<IconDefinition | undefined>();
+  const updateSubject = useUpdateTimetableSubject();
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [faIcon, setFaIcon] = useState<IconDefinition | null>(null);
+  const skipNextResetRef = useRef(false);
+  const mode = subject ? "edit" : "create";
+
+  const defaults = useMemo(
+    () => (subject ? valuesFromSubject(subject) : defaultCreateValues()),
+    [subject],
+  );
+  const defaultsRef = useRef(defaults);
+  defaultsRef.current = defaults;
+
+  const schema = useMemo(() => createClientTimetableSubjectFormSchema(t), [t]);
+
+  const form = useForm({
+    defaultValues: defaults,
+    onSubmit: async ({ value }) => {
+      const parsed = schema.safeParse(value);
+      if (!parsed.success) {
+        const issue = parsed.error.issues[0];
+        const message = issue?.message ?? t("saveFailed");
+        const path = issue?.path[0];
+        if (typeof path === "string") {
+          form.setFieldMeta(path as keyof TimetableSubjectFormValues, (prev) => ({
+            ...prev,
+            errorMap: { ...prev.errorMap, onSubmit: message },
+            errors: [message],
+          }));
+        } else {
+          setSubmitError(message);
+        }
+        return;
+      }
+
+      setSubmitError(null);
+      onOpenChange(false);
+      const iconName = parsed.data.iconName?.trim() || undefined;
+      try {
+        if (mode === "edit" && subject) {
+          await updateSubject.mutateAsync({
+            classId,
+            termId,
+            year,
+            weekNumber,
+            subjectId: subject._id,
+            name: parsed.data.name,
+            bgColor: parsed.data.bgColor,
+            textColor: parsed.data.textColor,
+            iconName,
+          });
+        } else {
+          await createSubject.mutateAsync({
+            classId,
+            termId,
+            year,
+            weekNumber,
+            name: parsed.data.name,
+            bgColor: parsed.data.bgColor,
+            textColor: parsed.data.textColor,
+            iconName,
+          });
+        }
+      } catch (error) {
+        skipNextResetRef.current = true;
+        onOpenChange(true);
+        setSubmitError(error instanceof Error ? error.message : t("saveFailed"));
+      }
+    },
+  });
 
   useEffect(() => {
     if (!open) return;
-    setName("");
-    setBgColor("#6366f1");
-    setTextColor("#ffffff");
-    setIconName("");
-    setFaIcon(undefined);
-  }, [open]);
+    if (skipNextResetRef.current) {
+      skipNextResetRef.current = false;
+      return;
+    }
+    form.reset(defaultsRef.current);
+    setSubmitError(null);
+    const icon = defaultsRef.current.iconName;
+    if (icon) {
+      void resolveIconId(icon).then((resolved) => setFaIcon(resolved));
+    } else {
+      setFaIcon(null);
+    }
+  }, [open, defaults, form]);
 
-  const submit = async () => {
-    await createSubject.mutateAsync({
-      classId,
-      termId,
-      year,
-      weekNumber,
-      name,
-      bgColor,
-      textColor,
-      iconName: iconName || undefined,
-    });
-    onOpenChange(false);
+  const pending = createSubject.isPending || updateSubject.isPending;
+
+  const submitOnEnter = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      void form.handleSubmit();
+    }
   };
 
   return (
     <Credenza open={open} onOpenChange={onOpenChange}>
       <CredenzaContent>
         <CredenzaHeader>
-          <CredenzaTitle>{t("createSubjectTitle")}</CredenzaTitle>
-          <CredenzaDescription>{t("createSubjectDescription")}</CredenzaDescription>
+          <CredenzaTitle>{subject ? t("editSubjectTitle") : t("createSubjectTitle")}</CredenzaTitle>
+          <CredenzaDescription>
+            {subject ? t("editSubjectDescription") : t("createSubjectDescription")}
+          </CredenzaDescription>
         </CredenzaHeader>
-        <CredenzaBody className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="subject-name">{t("subjectName")}</Label>
-            <Input id="subject-name" value={name} onChange={(e) => setName(e.target.value)} />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="subject-bg">{t("backgroundColor")}</Label>
-              <Input
-                id="subject-bg"
-                type="color"
-                value={bgColor}
-                onChange={(e) => setBgColor(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="subject-text">{t("textColor")}</Label>
-              <Input
-                id="subject-text"
-                type="color"
-                value={textColor}
-                onChange={(e) => setTextColor(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label>{t("subjectIcon")}</Label>
-            <FontAwesomeIconPickerLazy
-              value={faIcon}
-              onChange={(icon) => {
-                setFaIcon(icon);
-                setIconName(iconDefinitionToId(icon));
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            void form.handleSubmit();
+          }}
+        >
+          <CredenzaBody className="space-y-4">
+            {submitError ? <p className="text-sm text-destructive">{submitError}</p> : null}
+
+            <form.Field name="name">
+              {(field) => {
+                const error = fieldErrorMessage(field.state.meta.errors);
+                return (
+                  <Field data-invalid={error ? true : undefined}>
+                    <FieldLabel htmlFor="subject-name">{t("subjectName")}</FieldLabel>
+                    <Input
+                      id="subject-name"
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(event) => field.handleChange(event.target.value)}
+                      onKeyDown={submitOnEnter}
+                      aria-invalid={error ? true : undefined}
+                    />
+                    {error ? <FieldError>{error}</FieldError> : null}
+                  </Field>
+                );
               }}
-            />
-          </div>
-        </CredenzaBody>
-        <CredenzaFooter>
-          <CredenzaClose render={<Button variant="outline" />}>{t("cancel")}</CredenzaClose>
-          <Button onClick={() => void submit()} disabled={createSubject.isPending}>
-            {t("saveAction")}
-          </Button>
-        </CredenzaFooter>
+            </form.Field>
+
+            <div className="grid grid-cols-2 gap-3">
+              <form.Field name="bgColor">
+                {(field) => {
+                  const error = fieldErrorMessage(field.state.meta.errors);
+                  return (
+                    <Field data-invalid={error ? true : undefined}>
+                      <FieldLabel htmlFor="subject-bg">{t("backgroundColor")}</FieldLabel>
+                      <Input
+                        id="subject-bg"
+                        type="color"
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(event) => field.handleChange(event.target.value)}
+                        aria-invalid={error ? true : undefined}
+                      />
+                      {error ? <FieldError>{error}</FieldError> : null}
+                    </Field>
+                  );
+                }}
+              </form.Field>
+
+              <form.Field name="textColor">
+                {(field) => {
+                  const error = fieldErrorMessage(field.state.meta.errors);
+                  return (
+                    <Field data-invalid={error ? true : undefined}>
+                      <FieldLabel htmlFor="subject-text">{t("textColor")}</FieldLabel>
+                      <Input
+                        id="subject-text"
+                        type="color"
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(event) => field.handleChange(event.target.value)}
+                        aria-invalid={error ? true : undefined}
+                      />
+                      {error ? <FieldError>{error}</FieldError> : null}
+                    </Field>
+                  );
+                }}
+              </form.Field>
+            </div>
+
+            <form.Field name="iconName">
+              {(field) => {
+                const error = fieldErrorMessage(field.state.meta.errors);
+                return (
+                  <Field data-invalid={error ? true : undefined}>
+                    <FieldLabel>
+                      {t("subjectIcon")}
+                      <span className="font-normal text-muted-foreground">
+                        ({tCommon("optional")})
+                      </span>
+                    </FieldLabel>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <FontAwesomeIconPickerLazy
+                        value={faIcon}
+                        onChange={(icon) => {
+                          setFaIcon(icon);
+                          field.handleChange(iconDefinitionToId(icon));
+                        }}
+                        className="w-full max-w-[280px]"
+                      />
+                      {field.state.value ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setFaIcon(null);
+                            field.handleChange("");
+                          }}
+                        >
+                          {t("clearIcon")}
+                        </Button>
+                      ) : null}
+                    </div>
+                    {error ? <FieldError>{error}</FieldError> : null}
+                  </Field>
+                );
+              }}
+            </form.Field>
+          </CredenzaBody>
+          <CredenzaFooter>
+            <CredenzaClose render={<Button type="button" variant="outline" />}>
+              {t("cancel")}
+            </CredenzaClose>
+            <Button type="submit" disabled={pending}>
+              {t("saveAction")}
+            </Button>
+          </CredenzaFooter>
+        </form>
       </CredenzaContent>
     </Credenza>
   );

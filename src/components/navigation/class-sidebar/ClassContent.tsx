@@ -10,5 +10,9 @@ export function ClassContent({ classPending }: { classPending: boolean }) {
     return <PendingComponent inset />;
   }
 
-  return <Outlet />;
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <Outlet />
+    </div>
+  );
 }

@@ -144,3 +144,36 @@ export function sortSlotsByTime<T extends { startTime: string; endTime: string }
 export function weekdayFromDate(date: Date): string {
   return new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(date);
 }
+
+export function getDateForWeekday(dayName: string, weekStart: Date): Date {
+  const index = WEEKDAY_NAMES.indexOf(dayName as (typeof WEEKDAY_NAMES)[number]);
+  const d = new Date(weekStart);
+  if (index >= 0) {
+    d.setDate(d.getDate() + index);
+  }
+  return d;
+}
+
+export function formatWeekdayHeader(dayName: string, weekStart: Date, locale: string): string {
+  const date = getDateForWeekday(dayName, weekStart);
+  const weekday = new Intl.DateTimeFormat(locale, { weekday: "long" }).format(date);
+  const dayNum = date.getDate();
+  return `${weekday} ${dayNum}`;
+}
+
+export function dateOverlapsTerm(date: Date, startDateKey: string, endDateKey: string): boolean {
+  const key = formatLocalDateKey(date);
+  return compareDateKeys(key, startDateKey) >= 0 && compareDateKeys(key, endDateKey) <= 0;
+}
+
+export function getPreviousDayInTerm(date: Date, startDateKey: string): Date | null {
+  const prev = getPreviousDay(date);
+  if (compareDateKeys(formatLocalDateKey(prev), startDateKey) < 0) return null;
+  return prev;
+}
+
+export function getNextDayInTerm(date: Date, endDateKey: string): Date | null {
+  const next = getNextDay(date);
+  if (compareDateKeys(formatLocalDateKey(next), endDateKey) > 0) return null;
+  return next;
+}

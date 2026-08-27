@@ -1209,11 +1209,14 @@ const schema = defineSchema({
     endTime: v.string(),
     /** Global disable for the slot (not week-specific). */
     disabled: v.boolean(),
+    /** Linked slots mirror lesson content for the same week. */
+    linkGroupId: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_termId", ["termId"])
-    .index("by_classId", ["classId"]),
+    .index("by_classId", ["classId"])
+    .index("by_termId_linkGroupId", ["termId", "linkGroupId"]),
   /** Reusable subject catalog (Math, PE, etc.). */
   timetableSubjects: defineTable({
     classId: v.id("classes"),

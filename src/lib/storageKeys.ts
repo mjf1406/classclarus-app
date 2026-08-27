@@ -21,6 +21,8 @@ export const STORAGE_KEYS = {
   pointsCatalogView: appStorageKey("points-catalog-view"),
   /** localStorage: class/admin sidebar expanded vs collapsed. */
   sidebarOpen: appStorageKey("sidebar-open"),
+  /** localStorage: timetable subjects sidebar open vs closed. */
+  timetableSubjectsSidebar: appStorageKey("timetable-subjects-sidebar"),
 } as const;
 
 /** Shared language preference across classclarus.com subdomains (localStorage is origin-scoped). */

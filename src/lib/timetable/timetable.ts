@@ -24,6 +24,7 @@ export type LessonLinkFormValues = {
 export const COMPACT_SLOT_MAX_MINUTES = 20;
 export const SLOT_MIN_HEIGHT_REM = 2.75;
 export const PIXELS_PER_MINUTE = 2;
+export const MIN_PIXELS_PER_MINUTE = 1;
 
 export const EMPTY_NOTES_JSON = JSON.stringify({
   type: "doc",
