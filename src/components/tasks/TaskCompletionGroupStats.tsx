@@ -8,6 +8,7 @@ type TaskCompletionGroupStatsProps = {
   studentCount: number;
   groupStats: TaskGroupCompletionStat[];
   className?: string;
+  allDone?: boolean;
 };
 
 export function TaskCompletionGroupStats({
@@ -15,12 +16,13 @@ export function TaskCompletionGroupStats({
   studentCount,
   groupStats,
   className,
+  allDone = false,
 }: TaskCompletionGroupStatsProps) {
   const { t } = useTranslation("tasks");
 
   return (
     <div className={cn("flex flex-col gap-1", className)}>
-      <p>
+      <p className={cn(allDone && "font-medium text-green-700 dark:text-green-400")}>
         {t("statsCompleted", {
           completed: completedCount,
           total: studentCount,

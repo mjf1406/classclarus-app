@@ -127,6 +127,25 @@ export function getRosterDisplayName(
   );
 }
 
+/** First name for compact square cards; last name only when roster first+last are both set. */
+export function studentCardNames(
+  student: Pick<StudentRosterEntry, "userId" | "firstName" | "lastName" | "name" | "email">,
+  unnamedFallback: string,
+): { firstName: string; lastName?: string } {
+  const first = student.firstName?.trim() ?? "";
+  const last = student.lastName?.trim() ?? "";
+  if (first && last) {
+    return { firstName: first, lastName: last };
+  }
+  if (first) {
+    return { firstName: first };
+  }
+  if (last) {
+    return { firstName: last };
+  }
+  return { firstName: getRosterDisplayName(student, unnamedFallback) };
+}
+
 export function genderLabelKey(gender: GenderOption): `gender_${GenderOption}` {
   return `gender_${gender}`;
 }

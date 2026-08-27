@@ -5,6 +5,7 @@ import {
   groupTasksByAssignment,
   isTaskPastDue,
   nextTaskStudentSortState,
+  partitionTasksByArchive,
   sortTaskStudents,
   sortTasksByProcedureStep,
   taskStudentCardNames,
@@ -65,6 +66,21 @@ describe("completionTone", () => {
 
   test("notDone when incomplete and on time", () => {
     expect(completionTone(false, false)).toBe("notDone");
+  });
+});
+
+describe("partitionTasksByArchive", () => {
+  test("splits active and archived tasks", () => {
+    const active = stubTask({ _id: "t1" as Id<"tasks">, name: "Active" });
+    const archived = stubTask({
+      _id: "t2" as Id<"tasks">,
+      name: "Archived",
+      archivedAt: 10,
+    });
+    expect(partitionTasksByArchive([active, archived])).toEqual({
+      active: [active],
+      archived: [archived],
+    });
   });
 });
 

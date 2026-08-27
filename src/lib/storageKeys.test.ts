@@ -29,6 +29,7 @@ describe("storageKeys", () => {
     );
     expect(STORAGE_KEYS.classesViewMode).toBe(`${APP_CONFIG.slug}-classes-view-mode`);
     expect(STORAGE_KEYS.pointsCatalogView).toBe(`${APP_CONFIG.slug}-points-catalog-view`);
+    expect(STORAGE_KEYS.sidebarOpen).toBe(`${APP_CONFIG.slug}-sidebar-open`);
   });
 
   test("groupTeamFiltersStorageKey scopes per class id", () => {

@@ -19,6 +19,8 @@ export const STORAGE_KEYS = {
   classesViewMode: appStorageKey("classes-view-mode"),
   /** localStorage: points apply catalog list/grid view. */
   pointsCatalogView: appStorageKey("points-catalog-view"),
+  /** localStorage: class/admin sidebar expanded vs collapsed. */
+  sidebarOpen: appStorageKey("sidebar-open"),
 } as const;
 
 /** Shared language preference across classclarus.com subdomains (localStorage is origin-scoped). */

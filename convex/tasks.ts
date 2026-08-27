@@ -31,6 +31,7 @@ const taskBaseFields = {
   createdBy: v.id("users"),
   createdAt: v.number(),
   updatedAt: v.number(),
+  archivedAt: v.optional(v.number()),
 };
 
 const taskValidator = v.object({
@@ -246,6 +247,7 @@ function toPublicTask(
   createdBy: Id<"users">;
   createdAt: number;
   updatedAt: number;
+  archivedAt?: number;
   completedCount: number;
   studentCount: number;
   completedStudentIds: Array<Id<"users">>;
@@ -273,6 +275,7 @@ function toPublicTask(
     createdBy: task.createdBy,
     createdAt: task.createdAt,
     updatedAt: task.updatedAt,
+    ...(task.archivedAt !== undefined ? { archivedAt: task.archivedAt } : {}),
     completedCount: completedStudentIds.length,
     studentCount,
     completedStudentIds,
@@ -306,6 +309,9 @@ export const list = classQuery({
 
     const result = [];
     for (const doc of docs) {
+      if (doc.archivedAt !== undefined && audience.scope === "personal") {
+        continue;
+      }
       // eslint-disable-next-line @convex-dev/no-collect-in-query -- task-scoped completions
       const completions = await ctx.db
         .query("taskCompletions")
@@ -376,6 +382,7 @@ export const get = classQuery({
       createdBy: task.createdBy,
       createdAt: task.createdAt,
       updatedAt: task.updatedAt,
+      ...(task.archivedAt !== undefined ? { archivedAt: task.archivedAt } : {}),
     };
 
     if (audience.scope === "class") {
@@ -484,6 +491,41 @@ export const update = classMutation({
       summary: `Updated task "${name}"`,
       summaryKey: "activitySummary_updatedTask",
       metadata: { name },
+    });
+
+    return null;
+  },
+});
+
+export const setArchived = classMutation({
+  args: {
+    taskId: v.id("tasks"),
+    archived: v.boolean(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await rateLimiter.limit(ctx, "taskSetArchived", { key: ctx.userId, throws: true });
+    await ctx.require("tasks:manage");
+
+    const classId = ctx.classDoc._id;
+    const existing = await requireTaskInClass(ctx, classId, args.taskId);
+    const now = Date.now();
+    await ctx.db.patch("tasks", args.taskId, {
+      archivedAt: args.archived ? now : undefined,
+      updatedAt: now,
+    });
+
+    await recordClassActivity(ctx, {
+      classId,
+      actorUserId: ctx.userId,
+      action: "update",
+      resourceType: "task",
+      resourceId: args.taskId,
+      summary: args.archived
+        ? `Archived task "${existing.name}"`
+        : `Unarchived task "${existing.name}"`,
+      summaryKey: args.archived ? "activitySummary_archivedTask" : "activitySummary_unarchivedTask",
+      metadata: { name: existing.name, archived: String(args.archived) },
     });
 
     return null;

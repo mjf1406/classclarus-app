@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Eye, Pencil, Trash2 } from "lucide-react";
+import { ArchiveIcon, ArchiveRestoreIcon, CheckCircle2, Eye, Pencil, Trash2 } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -10,6 +10,7 @@ import {
   completionTone,
 } from "@/components/tasks/taskCompletionTone";
 import { ActionMenu, type ActionMenuItem } from "@/components/ui/action-menu";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -19,7 +20,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { formatLocalizedDateTime, formatLocalizedDueDate } from "@/i18n/formatDate";
-import { isTaskPastDue, type TaskGroupCompletionStat, type TaskListItem } from "@/lib/tasks/tasks";
+import {
+  isTaskArchived,
+  isTaskPastDue,
+  type TaskGroupCompletionStat,
+  type TaskListItem,
+} from "@/lib/tasks/tasks";
 import { cn } from "@/lib/utils";
 import type { Id } from "../../../convex/_generated/dataModel";
 
@@ -33,6 +39,7 @@ type TaskCardProps = {
   showProcedureStepNumber?: boolean;
   onEdit: (task: TaskListItem) => void;
   onDelete: (task: TaskListItem) => void;
+  onArchiveToggle: (task: TaskListItem) => void;
   /** Staff-only per-group completion rows. Omitted for personal view. */
   groupStats?: TaskGroupCompletionStat[];
 };
@@ -45,10 +52,12 @@ export function TaskCard({
   showProcedureStepNumber = false,
   onEdit,
   onDelete,
+  onArchiveToggle,
   groupStats = [],
 }: TaskCardProps) {
   const { t } = useTranslation("tasks");
   const navigate = useNavigate();
+  const archived = isTaskArchived(task);
 
   const menuItems = useMemo<Array<ActionMenuItem>>(
     () => [
@@ -73,6 +82,14 @@ export function TaskCard({
         onSelect: () => onEdit(task),
       },
       {
+        id: "archive",
+        label: archived ? t("restoreAction") : t("archiveAction"),
+        icon: archived ? <ArchiveRestoreIcon /> : <ArchiveIcon />,
+        permission: "tasks:manage",
+        group: "manage",
+        onSelect: () => onArchiveToggle(task),
+      },
+      {
         id: "delete",
         label: t("deleteAction"),
         icon: <Trash2 />,
@@ -82,14 +99,18 @@ export function TaskCard({
         onSelect: () => onDelete(task),
       },
     ],
-    [classId, navigate, onDelete, onEdit, t, task],
+    [archived, classId, navigate, onArchiveToggle, onDelete, onEdit, t, task],
   );
 
   const description = task.description?.trim() || t("emptyDescriptionPreview");
   const allDone = task.studentCount > 0 && task.completedCount >= task.studentCount;
   const pastDue = isTaskPastDue(task.dueDateKey);
-  const personalTone =
-    personalView && task.studentCount > 0 ? completionTone(allDone, pastDue) : null;
+  const cardTone =
+    personalView && task.studentCount > 0
+      ? completionTone(allDone, pastDue)
+      : allDone
+        ? "done"
+        : null;
   const title =
     showProcedureStepNumber && task.procedureStepNumber !== undefined
       ? t("procedureStepTaskName", { number: task.procedureStepNumber, name: task.name })
@@ -100,19 +121,26 @@ export function TaskCard({
       size="sm"
       className={cn(
         "h-full transition-colors hover:bg-accent/40",
-        personalTone ? TASK_COMPLETION_CARD_RING_CLASS[personalTone] : null,
+        cardTone ? TASK_COMPLETION_CARD_RING_CLASS[cardTone] : null,
+        archived && "opacity-80",
       )}
     >
       <CardHeader className="flex flex-row items-start gap-3">
         <div className="min-w-0 flex-1">
-          <CardTitle className="text-base font-semibold">
+          <CardTitle className="flex items-center gap-2 text-base font-semibold">
             <Link
               to="/class/$classId/tasks/$taskId"
               params={{ classId, taskId: task._id }}
-              className="rounded-sm outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+              className="min-w-0 rounded-sm outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
             >
               {title}
             </Link>
+            {allDone ? (
+              <CheckCircle2
+                className="size-5 shrink-0 text-green-600 dark:text-green-400"
+                aria-hidden
+              />
+            ) : null}
           </CardTitle>
           <CardDescription className="mt-1 line-clamp-2">{description}</CardDescription>
         </div>
@@ -121,6 +149,11 @@ export function TaskCard({
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-2 text-sm text-muted-foreground">
+        {archived ? (
+          <Badge variant="outline" className="w-fit">
+            {t("archivedBadge")}
+          </Badge>
+        ) : null}
         {personalView && task.studentCount > 0 ? (
           <TaskCompletionStatusBadge
             completed={allDone}
@@ -128,18 +161,24 @@ export function TaskCard({
             label={
               task.studentCount <= 1
                 ? undefined
-                : t("statsCompleted", {
-                    completed: task.completedCount,
-                    total: task.studentCount,
-                  })
+                : allDone
+                  ? t("statusAllDone")
+                  : t("statsCompleted", {
+                      completed: task.completedCount,
+                      total: task.studentCount,
+                    })
             }
           />
         ) : (
-          <TaskCompletionGroupStats
-            completedCount={task.completedCount}
-            studentCount={task.studentCount}
-            groupStats={groupStats}
-          />
+          <>
+            {allDone ? <TaskCompletionStatusBadge completed label={t("statusAllDone")} /> : null}
+            <TaskCompletionGroupStats
+              completedCount={task.completedCount}
+              studentCount={task.studentCount}
+              groupStats={groupStats}
+              allDone={allDone}
+            />
+          </>
         )}
         {task.dueDateKey ? (
           <p>{t("dueDateValue", { date: formatLocalizedDueDate(task.dueDateKey) })}</p>

@@ -3,6 +3,7 @@ import {
   BookOpen,
   ChevronRight,
   Calendar,
+  CalendarDays,
   ClipboardCheck,
   Coins,
   Gift,
@@ -73,6 +74,7 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
   const { t: tAnnouncements } = useTranslation("announcements");
   const { t: tAttendance } = useTranslation("attendance");
   const { t: tCalendar } = useTranslation("calendar");
+  const { t: tTimetable } = useTranslation("timetable");
   const { t: tTasks } = useTranslation("tasks");
   const { t: tAssignments } = useTranslation("assignments");
   const { t: tPoints } = useTranslation("points");
@@ -137,6 +139,12 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
       icon: Calendar,
       to: "/class/$classId/calendar",
       permission: "calendar:read",
+    },
+    {
+      title: tTimetable("nav"),
+      icon: CalendarDays,
+      to: "/class/$classId/timetable",
+      permission: "timetable:read",
     },
     ...(catalogsInMainNav
       ? [

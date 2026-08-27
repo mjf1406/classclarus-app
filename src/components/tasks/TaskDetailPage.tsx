@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, ListTodo, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, ArchiveIcon, ArchiveRestoreIcon, ListTodo, Pencil, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -13,6 +13,7 @@ import {
   TASK_STUDENT_GRID_CLASS,
   TaskStudentCompletionCard,
 } from "@/components/tasks/TaskStudentCompletionCard";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -30,6 +31,7 @@ import { useEnsureStudentRosters } from "@/hooks/roster/useEnsureStudentRosters"
 import { useStudentRoster } from "@/hooks/roster/useStudentRoster";
 import { useStudentRosterFilter } from "@/hooks/students/useStudentRosterFilter";
 import { useRemoveTask } from "@/hooks/tasks/useRemoveTask";
+import { useSetTaskArchived } from "@/hooks/tasks/useSetTaskArchived";
 import { useSetTaskCompletion } from "@/hooks/tasks/useSetTaskCompletion";
 import { useTask } from "@/hooks/tasks/useTask";
 import { useUpdateTask } from "@/hooks/tasks/useUpdateTask";
@@ -47,6 +49,7 @@ import {
   computeTaskGroupCompletionStats,
   isClassTaskDetail,
   isPersonalTaskDetail,
+  isTaskArchived,
   isTaskPastDue,
   nextTaskStudentSortState,
   sortTaskStudents,
@@ -129,6 +132,7 @@ function StaffTaskDetailPage({ classId, taskId }: TaskDetailPageProps) {
   const groupTeamFilterState = useGroupTeamFilterState(classId);
   const updateTask = useUpdateTask();
   const removeTask = useRemoveTask();
+  const setArchived = useSetTaskArchived();
   const setCompletion = useSetTaskCompletion();
 
   useEnsureStudentRosters(
@@ -275,6 +279,13 @@ function StaffTaskDetailPage({ classId, taskId }: TaskDetailPageProps) {
         canManage={canManage}
         onEdit={() => setEditOpen(true)}
         onDelete={() => setDeleteOpen(true)}
+        onArchiveToggle={() => {
+          void setArchived.mutateAsync({
+            classId,
+            taskId,
+            archived: classDetail.archivedAt === undefined,
+          });
+        }}
       />
 
       <GroupTeamFilterButtons
@@ -304,6 +315,7 @@ function StaffTaskDetailPage({ classId, taskId }: TaskDetailPageProps) {
         completedCount={filteredCompletedCount}
         studentCount={filtered.length}
         groupStats={groupStats}
+        allDone={filtered.length > 0 && filteredCompletedCount >= filtered.length}
       />
 
       {filtered.length === 0 ? (
@@ -389,14 +401,18 @@ function StaffTaskHeader({
   canManage,
   onEdit,
   onDelete,
+  onArchiveToggle,
 }: {
   classId: Id<"classes">;
   task: TaskDetailClass;
   canManage: boolean;
   onEdit: () => void;
   onDelete: () => void;
+  onArchiveToggle: () => void;
 }) {
   const { t } = useTranslation("tasks");
+  const archived = isTaskArchived(task);
+  const allDone = task.studentCount > 0 && task.completedStudentIds.length >= task.studentCount;
   const meta = [
     task.dueDateKey ? t("dueDateValue", { date: formatLocalizedDueDate(task.dueDateKey) }) : null,
     task.updatedAt !== task.createdAt
@@ -409,6 +425,12 @@ function StaffTaskHeader({
       <div className="flex min-w-0 flex-col gap-2">
         <TaskDetailBackLink classId={classId} />
         <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{task.name}</h1>
+        {archived || allDone ? (
+          <div className="flex flex-wrap items-center gap-2">
+            {archived ? <Badge variant="outline">{t("archivedBadge")}</Badge> : null}
+            {allDone ? <TaskCompletionStatusBadge completed label={t("statusAllDone")} /> : null}
+          </div>
+        ) : null}
         {task.description ? (
           <p className="text-muted-foreground whitespace-pre-wrap">{task.description}</p>
         ) : null}
@@ -432,6 +454,14 @@ function StaffTaskHeader({
           <Button type="button" variant="outline" onClick={onEdit}>
             <Pencil className="size-4" />
             {t("editAction")}
+          </Button>
+          <Button type="button" variant="outline" onClick={onArchiveToggle}>
+            {archived ? (
+              <ArchiveRestoreIcon className="size-4" />
+            ) : (
+              <ArchiveIcon className="size-4" />
+            )}
+            {archived ? t("restoreAction") : t("archiveAction")}
           </Button>
           <Button type="button" variant="destructive" onClick={onDelete}>
             <Trash2 className="size-4" />

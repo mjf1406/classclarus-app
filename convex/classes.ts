@@ -54,6 +54,7 @@ import {
 } from "./lib/studentRosters.js";
 import { resolveUserImageUrl } from "./lib/userImage.js";
 import { deleteCalendarForClass } from "./lib/cleanup/calendarCleanup.js";
+import { deleteTimetableForClass } from "./lib/cleanup/timetableCleanup.js";
 import { normalizeTimeZone } from "./lib/calendar/timeZone.js";
 
 const MIN_YEAR = 1900;
@@ -730,6 +731,7 @@ export const remove = classMutation({
     await deleteClassUserSettingsForClass(ctx, classId);
     await deleteAnnouncementsForClass(ctx, classId);
     await deleteCalendarForClass(ctx, classId);
+    await deleteTimetableForClass(ctx, classId);
     await deleteTasksForClass(ctx, classId);
     await deleteAssignmentsForClass(ctx, classId);
     await deleteExpectationsForClass(ctx, classId);

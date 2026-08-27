@@ -550,6 +550,7 @@ const schema = defineSchema({
     createdBy: v.id("users"),
     createdAt: v.number(),
     updatedAt: v.number(),
+    archivedAt: v.optional(v.number()),
   })
     .index("by_classId", ["classId"])
     .index("by_classId_updatedAt", ["classId", "updatedAt"])
@@ -1177,6 +1178,89 @@ const schema = defineSchema({
     .index("by_classId", ["classId"])
     .index("by_assignerId", ["assignerId"])
     .index("by_assignerId_ranAt", ["assignerId", "ranAt"]),
+  /**
+   * Timetable terms (quarters, semesters, etc.) — each term owns bell slots.
+   */
+  timetableTerms: defineTable({
+    classId: v.id("classes"),
+    name: v.string(),
+    kind: v.union(
+      v.literal("quarter"),
+      v.literal("semester"),
+      v.literal("trimester"),
+      v.literal("year"),
+      v.literal("custom"),
+    ),
+    startDateKey: v.string(),
+    endDateKey: v.string(),
+    days: v.array(v.string()),
+    startTime: v.string(),
+    endTime: v.string(),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_classId", ["classId"]),
+  /** Bell-schedule slots within a term. */
+  timetableSlots: defineTable({
+    classId: v.id("classes"),
+    termId: v.id("timetableTerms"),
+    day: v.string(),
+    startTime: v.string(),
+    endTime: v.string(),
+    /** Global disable for the slot (not week-specific). */
+    disabled: v.boolean(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_termId", ["termId"])
+    .index("by_classId", ["classId"]),
+  /** Reusable subject catalog (Math, PE, etc.). */
+  timetableSubjects: defineTable({
+    classId: v.id("classes"),
+    name: v.string(),
+    bgColor: v.string(),
+    textColor: v.string(),
+    iconName: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_classId", ["classId"]),
+  /** Weekly lesson placement in a slot. */
+  timetableLessons: defineTable({
+    classId: v.id("classes"),
+    termId: v.id("timetableTerms"),
+    slotId: v.id("timetableSlots"),
+    subjectId: v.id("timetableSubjects"),
+    year: v.number(),
+    weekNumber: v.number(),
+    notesJson: v.optional(v.string()),
+    complete: v.boolean(),
+    links: v.array(
+      v.object({
+        key: v.string(),
+        kind: v.union(v.literal("url"), v.literal("assignment"), v.literal("task")),
+        label: v.optional(v.string()),
+        url: v.optional(v.string()),
+        assignmentId: v.optional(v.id("assignments")),
+        taskId: v.optional(v.id("tasks")),
+      }),
+    ),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_termId_year_week", ["termId", "year", "weekNumber"])
+    .index("by_slotId_year_week", ["slotId", "year", "weekNumber"])
+    .index("by_subjectId", ["subjectId"])
+    .index("by_classId", ["classId"]),
+  /** Per-week slot disable overrides. */
+  timetableSlotDisables: defineTable({
+    classId: v.id("classes"),
+    slotId: v.id("timetableSlots"),
+    year: v.number(),
+    weekNumber: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_slotId_year_week", ["slotId", "year", "weekNumber"])
+    .index("by_classId", ["classId"]),
   feedback: defineTable({
     userId: v.id("users"),
     type: v.union(v.literal("bug"), v.literal("feature"), v.literal("concern"), v.literal("other")),

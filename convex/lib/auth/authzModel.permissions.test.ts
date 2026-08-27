@@ -57,6 +57,15 @@ describe("grantable class permissions", () => {
     expect(GRANTABLE_CLASS_PERMISSIONS).toContain("calendar:manage");
   });
 
+  test("timetable manage is teacher+; read is on every class role", () => {
+    expect(permissionsForRole("class_member")).toContain("timetable:read");
+    expect(permissionsForRole("student")).toContain("timetable:read");
+    expect(permissionsForRole("teacher")).toContain("timetable:manage");
+    expect(permissionsForRole("assistant_teacher")).not.toContain("timetable:manage");
+    expect(GRANTABLE_CLASS_PERMISSIONS).toContain("timetable:read");
+    expect(GRANTABLE_CLASS_PERMISSIONS).toContain("timetable:manage");
+  });
+
   test("assigners manage is teacher+; view uses class:read", () => {
     expect(permissionsForRole("teacher")).toContain("assigners:manage");
     expect(permissionsForRole("assistant_teacher")).not.toContain("assigners:manage");

@@ -6,6 +6,7 @@ export type ClassNavTo =
   | "/class/$classId/announcements"
   | "/class/$classId/attendance"
   | "/class/$classId/calendar"
+  | "/class/$classId/timetable"
   | "/class/$classId/tasks"
   | "/class/$classId/assignments"
   | "/class/$classId/points"
@@ -33,6 +34,7 @@ const REST_TO_ROUTE: Record<string, ClassNavTo> = {
   "/announcements": "/class/$classId/announcements",
   "/attendance": "/class/$classId/attendance",
   "/calendar": "/class/$classId/calendar",
+  "/timetable": "/class/$classId/timetable",
   "/tasks": "/class/$classId/tasks",
   "/assignments": "/class/$classId/assignments",
   "/points": "/class/$classId/points",
@@ -69,6 +71,8 @@ export function pathFor(to: ClassNavTo, classId: string): string {
       return `/class/${classId}/attendance`;
     case "/class/$classId/calendar":
       return `/class/${classId}/calendar`;
+    case "/class/$classId/timetable":
+      return `/class/${classId}/timetable`;
     case "/class/$classId/tasks":
       return `/class/${classId}/tasks`;
     case "/class/$classId/assignments":
@@ -120,6 +124,9 @@ export function classRouteFromPathname(pathname: string, classId: string): Class
   }
   if (rest === "/calendar" || rest.startsWith("/calendar/")) {
     return "/class/$classId/calendar";
+  }
+  if (rest === "/timetable" || rest.startsWith("/timetable/")) {
+    return "/class/$classId/timetable";
   }
   if (rest === "/tasks" || rest.startsWith("/tasks/")) {
     return "/class/$classId/tasks";

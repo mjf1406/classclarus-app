@@ -1,95 +1,75 @@
-import { useTranslation } from "react-i18next";
+import { Check, Clock, X } from "lucide-react";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { AttendanceDraftStatus } from "@/lib/attendance/attendance";
-import {
-  DEFAULT_ROSTER_NAME_FORMAT,
-  getRosterDisplayName,
-  type RosterNameFormat,
-  type StudentRosterEntry,
-} from "@/lib/roster/roster";
 import { cn } from "@/lib/utils";
-import { getInitials } from "@/lib/user/userDisplay";
-import { sanitizeAvatarUrl } from "../../../convex/lib/avatarUrl";
+
+/** 3 cols always; 6.5rem cap keeps compact squares on wide viewports. */
+export const ATTENDANCE_STUDENT_GRID_CLASS =
+  "grid w-fit max-w-full gap-1.5 [grid-template-columns:repeat(3,minmax(0,6.5rem))] sm:gap-2";
 
 type AttendanceStudentCardProps = {
-  student: StudentRosterEntry;
+  firstName: string;
+  lastName?: string;
   status: AttendanceDraftStatus;
-  nameFormat?: RosterNameFormat;
+  ariaLabel: string;
   onCycle: () => void;
 };
 
 const STATUS_CARD_CLASS: Record<AttendanceDraftStatus, string> = {
-  unset: "border-border bg-card hover:bg-muted/40",
-  present: "border-emerald-500/50 bg-emerald-500/10 hover:bg-emerald-500/15",
-  absent: "border-destructive/50 bg-destructive/10 hover:bg-destructive/15",
-  late: "border-amber-500/50 bg-amber-500/10 hover:bg-amber-500/15",
+  unset: "bg-card hover:bg-accent/40",
+  present: "border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-600/90",
+  absent: "border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90",
+  late: "border-amber-600 bg-amber-600 text-white hover:bg-amber-600/90",
 };
 
-const STATUS_BADGE_CLASS: Record<AttendanceDraftStatus, string> = {
-  unset: "bg-muted text-muted-foreground",
-  present: "bg-emerald-600 text-white",
-  absent: "bg-destructive text-destructive-foreground",
-  late: "bg-amber-600 text-white",
+const STATUS_LAST_NAME_CLASS: Record<AttendanceDraftStatus, string> = {
+  unset: "text-muted-foreground",
+  present: "text-white/80",
+  absent: "text-destructive-foreground/80",
+  late: "text-white/80",
 };
+
+const STATUS_ICON = {
+  present: Check,
+  absent: X,
+  late: Clock,
+} as const;
 
 export function AttendanceStudentCard({
-  student,
+  firstName,
+  lastName,
   status,
-  nameFormat = DEFAULT_ROSTER_NAME_FORMAT,
+  ariaLabel,
   onCycle,
 }: AttendanceStudentCardProps) {
-  const { t } = useTranslation("attendance");
-  const { t: tClasses } = useTranslation("classes");
-  const displayName = getRosterDisplayName(student, tClasses("unnamedMember"), nameFormat);
-  const initials = getInitials({
-    _id: student.userId,
-    name: displayName,
-    email: student.email,
-  });
-  const safeImage = sanitizeAvatarUrl(student.image);
-  const statusLabel =
-    status === "unset"
-      ? t("statusUnset")
-      : status === "present"
-        ? t("statusPresent")
-        : status === "absent"
-          ? t("statusAbsent")
-          : t("statusLate");
+  const Icon = status === "unset" ? null : STATUS_ICON[status];
 
   return (
     <button
       type="button"
       onClick={onCycle}
-      aria-label={t("cycleStatusAria", { name: displayName, status: statusLabel })}
+      aria-label={ariaLabel}
+      data-status={status}
       className={cn(
-        "flex h-full w-full flex-col gap-3 rounded-2xl border p-4 text-left transition-colors",
+        "relative flex aspect-square w-full flex-col items-center justify-center overflow-hidden rounded-xl border px-1.5 py-2 text-center transition-colors",
         "focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
         STATUS_CARD_CLASS[status],
       )}
     >
-      <div className="flex items-center gap-3">
-        <Avatar size="lg">
-          {safeImage ? <AvatarImage src={safeImage} alt="" /> : null}
-          <AvatarFallback>{initials}</AvatarFallback>
-        </Avatar>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-md bg-muted text-xs font-semibold tabular-nums">
-              {student.rosterNumber}
-            </span>
-            <p className="truncate font-medium">{displayName}</p>
-          </div>
-          <span
-            className={cn(
-              "mt-1 inline-flex rounded-md px-2 py-0.5 text-xs font-medium",
-              STATUS_BADGE_CLASS[status],
-            )}
-          >
-            {statusLabel}
-          </span>
-        </div>
-      </div>
+      {Icon ? <Icon className="absolute top-1 left-1 size-3" strokeWidth={3} aria-hidden /> : null}
+      <span className="line-clamp-2 text-xs leading-tight font-semibold tracking-tight break-words sm:text-sm">
+        {firstName}
+      </span>
+      {lastName ? (
+        <span
+          className={cn(
+            "mt-0.5 line-clamp-1 text-xs leading-tight",
+            STATUS_LAST_NAME_CLASS[status],
+          )}
+        >
+          {lastName}
+        </span>
+      ) : null}
     </button>
   );
 }

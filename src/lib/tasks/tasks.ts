@@ -2,7 +2,7 @@ import type { FunctionReturnType } from "convex/server";
 
 import { isPastDue } from "@/lib/dueDate/dueDateKey";
 import { collectStudentsInGroup, type GroupsBoard } from "@/lib/groups/groups";
-import { getRosterDisplayName, type StudentRosterEntry } from "@/lib/roster/roster";
+import { studentCardNames, type StudentRosterEntry } from "@/lib/roster/roster";
 
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -15,6 +15,25 @@ export type TaskDetailPersonal = Extract<TaskDetail, { scope: "personal" }>;
 
 export function isClassTaskDetail(detail: TaskDetail): detail is TaskDetailClass {
   return detail.scope === "class";
+}
+
+export function isTaskArchived(task: { archivedAt?: number }): boolean {
+  return task.archivedAt !== undefined;
+}
+
+export function partitionTasksByArchive<T extends { archivedAt?: number }>(
+  tasks: readonly T[],
+): { active: T[]; archived: T[] } {
+  const active: T[] = [];
+  const archived: T[] = [];
+  for (const task of tasks) {
+    if (isTaskArchived(task)) {
+      archived.push(task);
+    } else {
+      active.push(task);
+    }
+  }
+  return { active, archived };
 }
 
 export function isPersonalTaskDetail(detail: TaskDetail): detail is TaskDetailPersonal {
@@ -223,23 +242,7 @@ export function computeTaskGroupCompletionStats(args: {
 }
 
 /** First name for the grid card; last name only when roster first+last are both set. */
-export function taskStudentCardNames(
-  student: Pick<StudentRosterEntry, "userId" | "firstName" | "lastName" | "name" | "email">,
-  unnamedFallback: string,
-): { firstName: string; lastName?: string } {
-  const first = student.firstName?.trim() ?? "";
-  const last = student.lastName?.trim() ?? "";
-  if (first && last) {
-    return { firstName: first, lastName: last };
-  }
-  if (first) {
-    return { firstName: first };
-  }
-  if (last) {
-    return { firstName: last };
-  }
-  return { firstName: getRosterDisplayName(student, unnamedFallback) };
-}
+export const taskStudentCardNames = studentCardNames;
 
 export type TaskStudentSortKey = "firstName" | "lastName" | "rosterNumber" | "done";
 export const TASK_STUDENT_SORT_KEYS = [

@@ -109,6 +109,12 @@ export function resolveActivitySummary(event: ActivitySummaryInput): ResolvedSum
   name = matchQuoted(summary, "Unarchived class");
   if (name) return { key: "activitySummary_unarchivedClass", params: { name } };
 
+  name = matchQuoted(summary, "Archived task");
+  if (name) return { key: "activitySummary_archivedTask", params: { name } };
+
+  name = matchQuoted(summary, "Unarchived task");
+  if (name) return { key: "activitySummary_unarchivedTask", params: { name } };
+
   name = matchQuoted(summary, "Set dashboard banner for");
   if (name) return { key: "activitySummary_setDashboardBanner", params: { name } };
 

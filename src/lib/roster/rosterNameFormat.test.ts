@@ -5,6 +5,7 @@ import {
   formatRosterNameParts,
   getRosterDisplayName,
   resolveRosterNameFormat,
+  studentCardNames,
 } from "@/lib/roster/roster";
 import type { Id } from "../../../convex/_generated/dataModel";
 
@@ -60,5 +61,25 @@ describe("getRosterDisplayName", () => {
     expect(
       getRosterDisplayName({ ...student, firstName: undefined, lastName: undefined }, "Unnamed"),
     ).toBe("Account Name");
+  });
+});
+
+describe("studentCardNames", () => {
+  test("uses roster first and last when both are set", () => {
+    expect(
+      studentCardNames(
+        { userId: "u1" as Id<"users">, firstName: "Ada", lastName: "Lovelace", name: "Other" },
+        "Unnamed",
+      ),
+    ).toEqual({ firstName: "Ada", lastName: "Lovelace" });
+  });
+
+  test("falls back to display name when roster names are empty", () => {
+    expect(
+      studentCardNames(
+        { userId: "u1" as Id<"users">, name: "Ada Lovelace", email: "ada@example.com" },
+        "Unnamed",
+      ),
+    ).toEqual({ firstName: "Ada Lovelace" });
   });
 });

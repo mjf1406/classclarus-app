@@ -110,6 +110,7 @@ import type * as lib_cleanup_pointsCleanup from "../lib/cleanup/pointsCleanup.js
 import type * as lib_cleanup_randomAssignersCleanup from "../lib/cleanup/randomAssignersCleanup.js";
 import type * as lib_cleanup_rewardsCleanup from "../lib/cleanup/rewardsCleanup.js";
 import type * as lib_cleanup_tasksCleanup from "../lib/cleanup/tasksCleanup.js";
+import type * as lib_cleanup_timetableCleanup from "../lib/cleanup/timetableCleanup.js";
 import type * as lib_customFunctions from "../lib/customFunctions.js";
 import type * as lib_dueDateKey from "../lib/dueDateKey.js";
 import type * as lib_entitlement from "../lib/entitlement.js";
@@ -201,6 +202,7 @@ import type * as lib_seedTestStudents from "../lib/seedTestStudents.js";
 import type * as lib_selfHosted from "../lib/selfHosted.js";
 import type * as lib_studentRosters from "../lib/studentRosters.js";
 import type * as lib_tasksCleanup from "../lib/tasksCleanup.js";
+import type * as lib_timetable_timetableSchema from "../lib/timetable/timetableSchema.js";
 import type * as lib_trial from "../lib/trial.js";
 import type * as lib_uploadPresets from "../lib/uploadPresets.js";
 import type * as lib_usageTracking from "../lib/usageTracking.js";
@@ -231,6 +233,7 @@ import type * as seatLayoutGenderParityBackfill from "../seatLayoutGenderParityB
 import type * as seatLayouts from "../seatLayouts.js";
 import type * as studentRosters from "../studentRosters.js";
 import type * as tasks from "../tasks.js";
+import type * as timetable from "../timetable.js";
 import type * as trial from "../trial.js";
 import type * as trialBackfill from "../trialBackfill.js";
 import type * as usage from "../usage.js";
@@ -341,6 +344,7 @@ declare const fullApi: ApiFromModules<{
   "lib/cleanup/randomAssignersCleanup": typeof lib_cleanup_randomAssignersCleanup;
   "lib/cleanup/rewardsCleanup": typeof lib_cleanup_rewardsCleanup;
   "lib/cleanup/tasksCleanup": typeof lib_cleanup_tasksCleanup;
+  "lib/cleanup/timetableCleanup": typeof lib_cleanup_timetableCleanup;
   "lib/customFunctions": typeof lib_customFunctions;
   "lib/dueDateKey": typeof lib_dueDateKey;
   "lib/entitlement": typeof lib_entitlement;
@@ -432,6 +436,7 @@ declare const fullApi: ApiFromModules<{
   "lib/selfHosted": typeof lib_selfHosted;
   "lib/studentRosters": typeof lib_studentRosters;
   "lib/tasksCleanup": typeof lib_tasksCleanup;
+  "lib/timetable/timetableSchema": typeof lib_timetable_timetableSchema;
   "lib/trial": typeof lib_trial;
   "lib/uploadPresets": typeof lib_uploadPresets;
   "lib/usageTracking": typeof lib_usageTracking;
@@ -462,6 +467,7 @@ declare const fullApi: ApiFromModules<{
   seatLayouts: typeof seatLayouts;
   studentRosters: typeof studentRosters;
   tasks: typeof tasks;
+  timetable: typeof timetable;
   trial: typeof trial;
   trialBackfill: typeof trialBackfill;
   usage: typeof usage;

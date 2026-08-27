@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ChevronRight, ClipboardList, FolderOpen, ListTodo, Plus } from "lucide-react";
+import { ChevronRight, ClipboardList, ListTodo, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -20,18 +20,21 @@ import {
 import { ErrorState } from "@/components/ui/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGroupsBoard } from "@/hooks/groups/useGroupsBoard";
+import { useCan } from "@/hooks/permissions/useCan";
 import { useCreateTask } from "@/hooks/tasks/useCreateTask";
 import { useRemoveTask } from "@/hooks/tasks/useRemoveTask";
+import { useSetTaskArchived } from "@/hooks/tasks/useSetTaskArchived";
 import { useTasks } from "@/hooks/tasks/useTasks";
 import { useUpdateTask } from "@/hooks/tasks/useUpdateTask";
-import { useCan } from "@/hooks/permissions/useCan";
 import {
   computeTaskGroupCompletionStats,
   filterTasksByName,
   formatTaskAssignmentFolderMeta,
   groupTasksByAssignment,
   nextTaskSortState,
+  partitionTasksByArchive,
   sortTasks,
+  type TaskAssignmentGroup,
   type TaskGroupCompletionStat,
   type TaskListItem,
   type TaskSortDirection,
@@ -56,10 +59,12 @@ export function TasksPage({ classId }: TasksPageProps) {
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
   const removeTask = useRemoveTask();
+  const setArchived = useSetTaskArchived();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [sortKey, setSortKey] = useState<TaskSortKey>("updated");
   const [sortDirection, setSortDirection] = useState<TaskSortDirection>("desc");
+  const [showArchived, setShowArchived] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<TaskListItem | null>(null);
   const [deleting, setDeleting] = useState<TaskListItem | null>(null);
@@ -67,15 +72,22 @@ export function TasksPage({ classId }: TasksPageProps) {
     () => new Set<Id<"assignments">>(),
   );
 
-  const filteredSorted = useMemo(() => {
+  const { active, archived } = useMemo(() => {
     const filtered = filterTasksByName(data ?? [], searchQuery);
-    return sortTasks(filtered, sortKey, sortDirection);
+    const partitioned = partitionTasksByArchive(filtered);
+    return {
+      active: sortTasks(partitioned.active, sortKey, sortDirection),
+      archived: sortTasks(partitioned.archived, sortKey, sortDirection),
+    };
   }, [data, searchQuery, sortDirection, sortKey]);
 
-  const { groups, ungrouped } = useMemo(
-    () => groupTasksByAssignment(filteredSorted),
-    [filteredSorted],
-  );
+  const activeGrouped = useMemo(() => groupTasksByAssignment(active), [active]);
+  const archivedGrouped = useMemo(() => groupTasksByAssignment(archived), [archived]);
+
+  const resultCount = showArchived ? active.length + archived.length : active.length;
+  const hasCatalog = (data?.length ?? 0) > 0;
+  const hasActiveSearch = searchQuery.trim().length > 0;
+  const hasVisibleTasks = active.length > 0 || (showArchived && archived.length > 0);
 
   const groupStatsByTaskId = useMemo(() => {
     const empty = new Map<Id<"tasks">, TaskGroupCompletionStat[]>();
@@ -95,20 +107,30 @@ export function TasksPage({ classId }: TasksPageProps) {
     );
   }, [data, groupsBoard, personalView, tGroups]);
 
+  const handleArchiveToggle = (task: TaskListItem) => {
+    void setArchived.mutateAsync({
+      classId,
+      taskId: task._id,
+      archived: task.archivedAt === undefined,
+    });
+  };
+
   return (
     <div className="flex w-full flex-col gap-4 px-4 py-8 sm:px-8">
       <TasksToolbar
         sortKey={sortKey}
         sortDirection={sortDirection}
         searchQuery={searchQuery}
-        resultCount={filteredSorted.length}
+        resultCount={resultCount}
         canCreate={canManage}
+        showArchived={showArchived}
         onSearchChange={setSearchQuery}
         onSortChange={(key) => {
           const next = nextTaskSortState(sortKey, sortDirection, key);
           setSortKey(next.sortKey);
           setSortDirection(next.sortDirection);
         }}
+        onToggleArchived={canManage ? () => setShowArchived((value) => !value) : undefined}
         onCreate={() => setCreateOpen(true)}
       />
 
@@ -128,7 +150,7 @@ export function TasksPage({ classId }: TasksPageProps) {
         />
       ) : null}
 
-      {!isPending && !isError && data && data.length === 0 ? (
+      {!isPending && !isError && !hasCatalog ? (
         <Empty card>
           <EmptyHeader>
             <EmptyMedia variant="icon">
@@ -150,7 +172,7 @@ export function TasksPage({ classId }: TasksPageProps) {
         </Empty>
       ) : null}
 
-      {!isPending && !isError && data && data.length > 0 && filteredSorted.length === 0 ? (
+      {!isPending && !isError && hasCatalog && hasActiveSearch && !hasVisibleTasks ? (
         <Empty card>
           <EmptyHeader>
             <EmptyMedia variant="icon">
@@ -162,110 +184,41 @@ export function TasksPage({ classId }: TasksPageProps) {
         </Empty>
       ) : null}
 
-      {!isPending && !isError && filteredSorted.length > 0 ? (
-        <div className="flex flex-col gap-4">
-          {groups.map((group) => {
-            const assignmentId = group.assignmentId;
-            const open = !collapsedAssignmentIds.has(assignmentId);
-            const folderMeta = formatTaskAssignmentFolderMeta(group);
-            return (
-              <Collapsible
-                key={assignmentId}
-                open={open}
-                onOpenChange={(nextOpen) => {
-                  setCollapsedAssignmentIds((prev) => {
-                    const next = new Set(prev);
-                    if (nextOpen) next.delete(assignmentId);
-                    else next.add(assignmentId);
-                    return next;
-                  });
-                }}
-                className="rounded-2xl border border-border"
-              >
-                <div className="flex items-center gap-1 px-2 py-1.5">
-                  <CollapsibleTrigger className="flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-2 text-left hover:bg-muted/60">
-                    <ChevronRight
-                      className={cn(
-                        "size-4 shrink-0 text-muted-foreground transition-transform",
-                        open && "rotate-90",
-                      )}
-                      aria-hidden
-                    />
-                    <FolderOpen className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-medium">
-                        {group.assignmentName}
-                      </span>
-                      {folderMeta ? (
-                        <span className="block truncate text-xs text-muted-foreground">
-                          {folderMeta}
-                        </span>
-                      ) : null}
-                    </span>
-                    <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                      {t("assignmentGroupCount", { count: group.tasks.length })}
-                    </span>
-                  </CollapsibleTrigger>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    className="shrink-0"
-                    aria-label={t("linkedAssignment", { name: group.assignmentName })}
-                    render={
-                      <Link
-                        to="/class/$classId/assignments/$assignmentId"
-                        params={{ classId, assignmentId }}
-                      />
-                    }
-                  >
-                    <ClipboardList className="size-4" />
-                  </Button>
-                </div>
-                <CollapsibleContent className="border-t border-border px-3 py-3">
-                  <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {group.tasks.map((task) => (
-                      <li key={task._id}>
-                        <TaskCard
-                          classId={classId}
-                          task={task}
-                          personalView={personalView}
-                          hideAssignmentLink
-                          showProcedureStepNumber
-                          groupStats={groupStatsByTaskId.get(task._id)}
-                          onEdit={setEditing}
-                          onDelete={setDeleting}
-                        />
-                      </li>
-                    ))}
-                  </ul>
-                </CollapsibleContent>
-              </Collapsible>
-            );
-          })}
-
-          {ungrouped.length > 0 ? (
-            <div className="flex flex-col gap-3">
-              {groups.length > 0 ? (
-                <h2 className="text-sm font-medium text-muted-foreground">{t("ungroupedTasks")}</h2>
-              ) : null}
-              <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {ungrouped.map((task) => (
-                  <li key={task._id}>
-                    <TaskCard
-                      classId={classId}
-                      task={task}
-                      personalView={personalView}
-                      groupStats={groupStatsByTaskId.get(task._id)}
-                      onEdit={setEditing}
-                      onDelete={setDeleting}
-                    />
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
+      {showArchived && hasCatalog ? (
+        <div className="flex flex-col gap-3">
+          <h2 className="text-sm font-medium text-muted-foreground">{t("archivedSection")}</h2>
+          {archived.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t("archivedEmpty")}</p>
+          ) : (
+            <TaskGroupedList
+              classId={classId}
+              groups={archivedGrouped.groups}
+              ungrouped={archivedGrouped.ungrouped}
+              personalView={personalView}
+              groupStatsByTaskId={groupStatsByTaskId}
+              collapsedAssignmentIds={collapsedAssignmentIds}
+              onCollapsedChange={setCollapsedAssignmentIds}
+              onEdit={setEditing}
+              onDelete={setDeleting}
+              onArchiveToggle={handleArchiveToggle}
+            />
+          )}
         </div>
+      ) : null}
+
+      {!isPending && !isError && active.length > 0 ? (
+        <TaskGroupedList
+          classId={classId}
+          groups={activeGrouped.groups}
+          ungrouped={activeGrouped.ungrouped}
+          personalView={personalView}
+          groupStatsByTaskId={groupStatsByTaskId}
+          collapsedAssignmentIds={collapsedAssignmentIds}
+          onCollapsedChange={setCollapsedAssignmentIds}
+          onEdit={setEditing}
+          onDelete={setDeleting}
+          onArchiveToggle={handleArchiveToggle}
+        />
       ) : null}
 
       {canManage ? (
@@ -320,6 +273,144 @@ export function TasksPage({ classId }: TasksPageProps) {
             }}
           />
         </>
+      ) : null}
+    </div>
+  );
+}
+
+type TaskGroupedListProps = {
+  classId: Id<"classes">;
+  groups: TaskAssignmentGroup[];
+  ungrouped: TaskListItem[];
+  personalView: boolean;
+  groupStatsByTaskId: Map<Id<"tasks">, TaskGroupCompletionStat[]>;
+  collapsedAssignmentIds: Set<Id<"assignments">>;
+  onCollapsedChange: (next: Set<Id<"assignments">>) => void;
+  onEdit: (task: TaskListItem) => void;
+  onDelete: (task: TaskListItem) => void;
+  onArchiveToggle: (task: TaskListItem) => void;
+};
+
+function TaskGroupedList({
+  classId,
+  groups,
+  ungrouped,
+  personalView,
+  groupStatsByTaskId,
+  collapsedAssignmentIds,
+  onCollapsedChange,
+  onEdit,
+  onDelete,
+  onArchiveToggle,
+}: TaskGroupedListProps) {
+  const { t } = useTranslation("tasks");
+
+  return (
+    <div className="flex flex-col gap-4">
+      {groups.map((group) => {
+        const assignmentId = group.assignmentId;
+        const open = !collapsedAssignmentIds.has(assignmentId);
+        const folderMeta = formatTaskAssignmentFolderMeta(group);
+        return (
+          <Collapsible
+            key={assignmentId}
+            open={open}
+            onOpenChange={(nextOpen) => {
+              onCollapsedChange(
+                (() => {
+                  const next = new Set(collapsedAssignmentIds);
+                  if (nextOpen) next.delete(assignmentId);
+                  else next.add(assignmentId);
+                  return next;
+                })(),
+              );
+            }}
+            className="rounded-2xl border border-border"
+          >
+            <div className="flex items-center gap-1 px-2 py-1.5">
+              <CollapsibleTrigger className="flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-2 text-left hover:bg-muted/60">
+                <ChevronRight
+                  className={cn(
+                    "size-4 shrink-0 text-muted-foreground transition-transform",
+                    open && "rotate-90",
+                  )}
+                  aria-hidden
+                />
+                <ClipboardList className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-medium">
+                    {t("linkedAssignment", { name: group.assignmentName })}
+                  </span>
+                  {folderMeta ? (
+                    <span className="block truncate text-xs text-muted-foreground">
+                      {folderMeta}
+                    </span>
+                  ) : null}
+                </span>
+                <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                  {t("assignmentGroupCount", { count: group.tasks.length })}
+                </span>
+              </CollapsibleTrigger>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                className="shrink-0"
+                aria-label={t("linkedAssignment", { name: group.assignmentName })}
+                render={
+                  <Link
+                    to="/class/$classId/assignments/$assignmentId"
+                    params={{ classId, assignmentId }}
+                  />
+                }
+              >
+                <ClipboardList className="size-4" />
+              </Button>
+            </div>
+            <CollapsibleContent className="border-t border-border px-3 py-3">
+              <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {group.tasks.map((task) => (
+                  <li key={task._id}>
+                    <TaskCard
+                      classId={classId}
+                      task={task}
+                      personalView={personalView}
+                      hideAssignmentLink
+                      showProcedureStepNumber
+                      groupStats={groupStatsByTaskId.get(task._id)}
+                      onEdit={onEdit}
+                      onDelete={onDelete}
+                      onArchiveToggle={onArchiveToggle}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </CollapsibleContent>
+          </Collapsible>
+        );
+      })}
+
+      {ungrouped.length > 0 ? (
+        <div className="flex flex-col gap-3">
+          {groups.length > 0 ? (
+            <h2 className="text-sm font-medium text-muted-foreground">{t("ungroupedTasks")}</h2>
+          ) : null}
+          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {ungrouped.map((task) => (
+              <li key={task._id}>
+                <TaskCard
+                  classId={classId}
+                  task={task}
+                  personalView={personalView}
+                  groupStats={groupStatsByTaskId.get(task._id)}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                  onArchiveToggle={onArchiveToggle}
+                />
+              </li>
+            ))}
+          </ul>
+        </div>
       ) : null}
     </div>
   );

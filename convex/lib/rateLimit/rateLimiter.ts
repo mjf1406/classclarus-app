@@ -102,6 +102,7 @@ const rateLimits = {
   pushUnsubscribe: { kind: "token bucket" as const, rate: 30, period: HOUR, capacity: 10 },
   taskCreate: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 20 },
   taskUpdate: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 30 },
+  taskSetArchived: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 30 },
   taskRemove: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 20 },
   taskSetCompletion: { kind: "token bucket" as const, rate: 240, period: HOUR, capacity: 60 },
   assignmentCreate: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 20 },

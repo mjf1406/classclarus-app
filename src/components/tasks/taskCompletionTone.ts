@@ -7,9 +7,9 @@ export const TASK_COMPLETION_BADGE_CLASS: Record<TaskCompletionTone, string> = {
 };
 
 export const TASK_COMPLETION_CARD_RING_CLASS: Record<TaskCompletionTone, string> = {
-  done: "ring-green-600 dark:ring-green-400",
-  notDone: "ring-destructive",
-  late: "ring-amber-600 dark:ring-amber-400",
+  done: "ring-2 ring-green-600 bg-green-50/80 hover:bg-green-100/80 dark:ring-green-400 dark:bg-green-950/30 dark:hover:bg-green-950/45",
+  notDone: "ring-2 ring-destructive",
+  late: "ring-2 ring-amber-600 dark:ring-amber-400",
 };
 
 export function completionTone(completed: boolean, pastDue = false): TaskCompletionTone {

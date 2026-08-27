@@ -1,3 +1,4 @@
+import { CheckCircle2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { TASK_COMPLETION_BADGE_CLASS, completionTone } from "@/components/tasks/taskCompletionTone";
@@ -31,7 +32,8 @@ export function TaskCompletionStatusBadge({
           {t("statusLate")}
         </Badge>
       ) : null}
-      <Badge variant="outline" className={TASK_COMPLETION_BADGE_CLASS[tone]}>
+      <Badge variant="outline" className={cn("gap-1", TASK_COMPLETION_BADGE_CLASS[tone])}>
+        {completed ? <CheckCircle2 className="size-3.5" aria-hidden /> : null}
         {completionLabel}
       </Badge>
     </span>

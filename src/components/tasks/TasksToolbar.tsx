@@ -1,4 +1,4 @@
-import { PlusIcon, SearchIcon, XIcon } from "lucide-react";
+import { ArchiveIcon, ArchiveXIcon, PlusIcon, SearchIcon, XIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
@@ -12,14 +12,18 @@ import {
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { TaskSortDirection, TaskSortKey } from "@/lib/tasks/tasks";
 
+type ArchiveVisibility = "hide" | "show";
+
 type TasksToolbarProps = {
   sortKey: TaskSortKey;
   sortDirection: TaskSortDirection;
   searchQuery: string;
   resultCount: number;
   canCreate: boolean;
+  showArchived?: boolean;
   onSearchChange: (value: string) => void;
   onSortChange: (key: TaskSortKey) => void;
+  onToggleArchived?: () => void;
   onCreate: () => void;
 };
 
@@ -43,8 +47,10 @@ export function TasksToolbar({
   searchQuery,
   resultCount,
   canCreate,
+  showArchived = false,
   onSearchChange,
   onSortChange,
+  onToggleArchived,
   onCreate,
 }: TasksToolbarProps) {
   const { t } = useTranslation("tasks");
@@ -114,6 +120,25 @@ export function TasksToolbar({
             </ToggleGroupItem>
           ))}
         </ToggleGroup>
+        {onToggleArchived ? (
+          <ToggleGroup
+            variant="outline"
+            spacing={0}
+            value={[showArchived ? "show" : "hide"]}
+            onValueChange={(values) => {
+              const next = values[0] as ArchiveVisibility | undefined;
+              if (!next) return;
+              if ((next === "show") !== showArchived) onToggleArchived();
+            }}
+          >
+            <ToggleGroupItem value="hide" aria-label={t("hideArchived")}>
+              <ArchiveXIcon />
+            </ToggleGroupItem>
+            <ToggleGroupItem value="show" aria-label={t("showArchived")}>
+              <ArchiveIcon />
+            </ToggleGroupItem>
+          </ToggleGroup>
+        ) : null}
       </div>
 
       {canCreate ? (

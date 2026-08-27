@@ -2,7 +2,10 @@ import { ClipboardCheck, UsersIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { AttendanceStudentCard } from "@/components/attendance/AttendanceStudentCard";
+import {
+  ATTENDANCE_STUDENT_GRID_CLASS,
+  AttendanceStudentCard,
+} from "@/components/attendance/AttendanceStudentCard";
 import { PersonalAttendancePage } from "@/components/attendance/PersonalAttendancePage";
 import { GroupTeamFilterButtons } from "@/components/groups/GroupTeamFilterButtons";
 import PendingComponent from "@/components/loading/PendingComponent";
@@ -35,11 +38,14 @@ import {
 import { localDateKey } from "@/lib/attendance/dateKey";
 import { buildMembershipIndex } from "@/lib/groups/groupTeamFilters";
 import { ONE_HOUR } from "@/lib/queryCache";
-import { resolveRosterNameFormat, type StudentRosterEntry } from "@/lib/roster/roster";
+import {
+  getRosterDisplayName,
+  resolveRosterNameFormat,
+  studentCardNames,
+  type StudentRosterEntry,
+} from "@/lib/roster/roster";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
-
-const GRID_CLASS = "grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4";
 
 type AttendancePageProps = {
   classId: Id<"classes">;
@@ -60,6 +66,8 @@ export function AttendancePage({ classId }: AttendancePageProps) {
 
 function StaffAttendancePage({ classId }: AttendancePageProps) {
   const { t } = useTranslation("attendance");
+  const { t: tClasses } = useTranslation("classes");
+  const unnamed = tClasses("unnamedMember");
   const dateKey = useMemo(() => localDateKey(), []);
   const { data: classDoc } = useAuthedQuery(api.classes.get, { classId }, { gcTime: ONE_HOUR });
   const {
@@ -183,9 +191,9 @@ function StaffAttendancePage({ classId }: AttendancePageProps) {
       <GroupTeamFilterButtons classId={classId} />
 
       {isPending ? (
-        <div className={GRID_CLASS}>
+        <div className={ATTENDANCE_STUDENT_GRID_CLASS}>
           {Array.from({ length: 8 }, (_, index) => (
-            <Skeleton key={index} className="h-28 w-full rounded-2xl" />
+            <Skeleton key={index} className="aspect-square w-full rounded-xl" />
           ))}
         </div>
       ) : null}
@@ -211,17 +219,32 @@ function StaffAttendancePage({ classId }: AttendancePageProps) {
       ) : null}
 
       {!isPending && !isError && filtered.length > 0 ? (
-        <div className={GRID_CLASS}>
-          {filtered.map((student) => (
-            <AttendanceStudentCard
-              key={student.userId}
-              student={student}
-              status={draft[student.userId] ?? "present"}
-              nameFormat={nameFormat}
-              onCycle={() => handleCycle(student)}
-            />
-          ))}
-        </div>
+        <ul className={ATTENDANCE_STUDENT_GRID_CLASS}>
+          {filtered.map((student) => {
+            const status = draft[student.userId] ?? "present";
+            const names = studentCardNames(student, unnamed);
+            const displayName = getRosterDisplayName(student, unnamed, nameFormat);
+            const statusLabel =
+              status === "present"
+                ? t("statusPresent")
+                : status === "absent"
+                  ? t("statusAbsent")
+                  : status === "late"
+                    ? t("statusLate")
+                    : t("statusUnset");
+            return (
+              <li key={student.userId}>
+                <AttendanceStudentCard
+                  firstName={names.firstName}
+                  lastName={names.lastName}
+                  status={status}
+                  ariaLabel={t("cycleStatusAria", { name: displayName, status: statusLabel })}
+                  onCycle={() => handleCycle(student)}
+                />
+              </li>
+            );
+          })}
+        </ul>
       ) : null}
     </div>
   );
