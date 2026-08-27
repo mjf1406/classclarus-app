@@ -154,11 +154,49 @@ export function getDateForWeekday(dayName: string, weekStart: Date): Date {
   return d;
 }
 
+/** 2024-01-01 is a Monday — matches `WEEKDAY_NAMES` order. */
+export function formatWeekdayName(dayName: string, locale: string): string {
+  const index = WEEKDAY_NAMES.indexOf(dayName as (typeof WEEKDAY_NAMES)[number]);
+  if (index < 0) return dayName;
+  return new Intl.DateTimeFormat(locale, { weekday: "long" }).format(new Date(2024, 0, 1 + index));
+}
+
+function simplifiedChineseDayMarker(locale: string): string | undefined {
+  const lower = locale.toLowerCase().replaceAll("_", "-");
+  if (
+    lower.startsWith("zh-hant") ||
+    lower.startsWith("zh-tw") ||
+    lower.startsWith("zh-hk") ||
+    lower.startsWith("zh-mo")
+  ) {
+    return undefined;
+  }
+  if (
+    lower === "zh" ||
+    lower.startsWith("zh-hans") ||
+    lower.startsWith("zh-cn") ||
+    lower.startsWith("zh-sg")
+  ) {
+    return "号";
+  }
+  return undefined;
+}
+
+/** Day of month with locale markers, e.g. "24", "24日", "24일", "24号". */
+export function formatDayOfMonth(date: Date, locale: string): string {
+  const parts = new Intl.DateTimeFormat(locale, { day: "numeric" }).formatToParts(date);
+  const marker = simplifiedChineseDayMarker(locale);
+  if (marker) {
+    const day = parts.find((part) => part.type === "day")?.value ?? String(date.getDate());
+    return `${day}${marker}`;
+  }
+  return parts.map((part) => part.value).join("");
+}
+
 export function formatWeekdayHeader(dayName: string, weekStart: Date, locale: string): string {
   const date = getDateForWeekday(dayName, weekStart);
   const weekday = new Intl.DateTimeFormat(locale, { weekday: "long" }).format(date);
-  const dayNum = date.getDate();
-  return `${weekday} ${dayNum}`;
+  return `${weekday} ${formatDayOfMonth(date, locale)}`;
 }
 
 export function dateOverlapsTerm(date: Date, startDateKey: string, endDateKey: string): boolean {

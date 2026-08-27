@@ -18,6 +18,7 @@ import {
   formatDayDate,
   formatTimeString,
   formatWeekdayHeader,
+  formatWeekdayName,
   timeToMinutes,
   weekdayFromDate,
 } from "@/lib/timetable/utils";
@@ -174,7 +175,7 @@ export function TimetableTimelineGrid({
                 ? formatWeekdayHeader(day, weekStart, locale)
                 : currentDate
                   ? formatDayDate(currentDate, locale)
-                  : day}
+                  : formatWeekdayName(day, locale)}
             </div>
           ))}
         </div>

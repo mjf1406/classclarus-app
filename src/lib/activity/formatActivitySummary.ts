@@ -1,6 +1,8 @@
 import type { TFunction } from "i18next";
 
-import { getLanguageOption, isAppLanguage } from "@/lib/languages";
+import i18n from "@/i18n";
+import { getLanguageOption, isAppLanguage, toIntlLocale } from "@/lib/languages";
+import { formatWeekdayName } from "@/lib/timetable/utils";
 
 export type ActivitySummaryInput = {
   summary: string;
@@ -66,6 +68,9 @@ function prepareParams(
   }
   if (params.createdCount !== undefined && params.count === undefined) {
     params.count = params.createdCount;
+  }
+  if (params.day) {
+    params.day = formatWeekdayName(params.day, toIntlLocale(i18n.language));
   }
 
   return params;

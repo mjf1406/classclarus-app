@@ -30,7 +30,8 @@ import {
   type TimetableTermFormValues,
 } from "@/lib/timetable/timetableFormSchema";
 import { type TimetableTerm, type TimetableTermKind } from "@/lib/timetable/timetable";
-import { WEEKDAY_NAMES } from "@/lib/timetable/utils";
+import { toIntlLocale } from "@/lib/languages";
+import { WEEKDAY_NAMES, formatWeekdayName } from "@/lib/timetable/utils";
 import type { Id } from "../../../convex/_generated/dataModel";
 
 type TimetableTermFormCredenzaProps = {
@@ -93,7 +94,8 @@ export function TimetableTermFormCredenza({
   weekNumber,
   onCreated,
 }: TimetableTermFormCredenzaProps) {
-  const { t } = useTranslation("timetable");
+  const { t, i18n } = useTranslation("timetable");
+  const locale = toIntlLocale(i18n.language);
   const createTerm = useCreateTimetableTerm();
   const updateTerm = useUpdateTimetableTerm();
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -314,7 +316,7 @@ export function TimetableTermFormCredenza({
                             field.handleChange(next);
                           }}
                         />
-                        {day}
+                        {formatWeekdayName(day, locale)}
                       </label>
                     ))}
                   </div>

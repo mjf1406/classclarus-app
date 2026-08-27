@@ -18,7 +18,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useSyncSlotLinks } from "@/hooks/timetable/useTimetableMutations";
 import { createClientTimetableLinkSlotsFormSchema } from "@/lib/timetable/timetableFormSchema";
 import type { TimetableSlot, TimetableTerm } from "@/lib/timetable/timetable";
-import { formatTimeString, timeToMinutes } from "@/lib/timetable/utils";
+import { toIntlLocale } from "@/lib/languages";
+import { formatTimeString, formatWeekdayName, timeToMinutes } from "@/lib/timetable/utils";
 import type { Id } from "../../../convex/_generated/dataModel";
 
 type TimetableLinkSlotsCredenzaProps = {
@@ -44,7 +45,8 @@ export function TimetableLinkSlotsCredenza({
   weekNumber,
   timeFormat = "24",
 }: TimetableLinkSlotsCredenzaProps) {
-  const { t } = useTranslation("timetable");
+  const { t, i18n } = useTranslation("timetable");
+  const locale = toIntlLocale(i18n.language);
   const syncLinks = useSyncSlotLinks();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const schema = useMemo(() => createClientTimetableLinkSlotsFormSchema(), []);
@@ -119,7 +121,7 @@ export function TimetableLinkSlotsCredenza({
           <CredenzaTitle>{t("linkSlotsTitle")}</CredenzaTitle>
           <CredenzaDescription>
             {t("linkSlotsDescription", {
-              day: sourceSlot.day,
+              day: formatWeekdayName(sourceSlot.day, locale),
               start: formatTimeString(sourceSlot.startTime, timeFormat),
               end: formatTimeString(sourceSlot.endTime, timeFormat),
             })}
@@ -136,7 +138,7 @@ export function TimetableLinkSlotsCredenza({
               <div className="space-y-4">
                 {groupedSlots.map(({ day, slots }) => (
                   <div key={day} className="space-y-2">
-                    <div className="text-sm font-medium">{day}</div>
+                    <div className="text-sm font-medium">{formatWeekdayName(day, locale)}</div>
                     <div className="space-y-2">
                       {slots.map((slot) => (
                         <form.Field key={slot._id} name="selectedSlotIds">

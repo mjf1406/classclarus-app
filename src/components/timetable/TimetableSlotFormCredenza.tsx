@@ -30,7 +30,9 @@ import {
   createClientTimetableSlotFormSchema,
   type TimetableSlotFormValues,
 } from "@/lib/timetable/timetableFormSchema";
+import { toIntlLocale } from "@/lib/languages";
 import type { TimetableSlot, TimetableTerm } from "@/lib/timetable/timetable";
+import { formatWeekdayName } from "@/lib/timetable/utils";
 import type { Id } from "../../../convex/_generated/dataModel";
 
 type TimetableSlotFormCredenzaProps = {
@@ -81,7 +83,8 @@ export function TimetableSlotFormCredenza({
   weekNumber,
   slot,
 }: TimetableSlotFormCredenzaProps) {
-  const { t } = useTranslation("timetable");
+  const { t, i18n } = useTranslation("timetable");
+  const locale = toIntlLocale(i18n.language);
   const createSlot = useCreateTimetableSlot();
   const updateSlot = useUpdateTimetableSlot();
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -196,7 +199,7 @@ export function TimetableSlotFormCredenza({
                     <SelectContent>
                       {term.days.map((d: string) => (
                         <SelectItem key={d} value={d}>
-                          {d}
+                          {formatWeekdayName(d, locale)}
                         </SelectItem>
                       ))}
                     </SelectContent>

@@ -53,6 +53,7 @@ import {
   clampWeekStartToTerm,
   formatDayDate,
   formatWeekRange,
+  formatWeekdayName,
   getNextDayInTerm,
   getNextWeek,
   getPreviousDayInTerm,
@@ -255,7 +256,7 @@ export function TimetablePage({ classId }: TimetablePageProps) {
 
   if (termsPending) {
     return (
-      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden px-4 pt-6 pb-4 sm:px-8 sm:pt-8">
+      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden px-2 pt-3 pb-2 sm:px-4 sm:pt-4">
         <Skeleton className="h-10 w-full" />
         <Skeleton className="h-[480px] w-full" />
       </div>
@@ -264,7 +265,7 @@ export function TimetablePage({ classId }: TimetablePageProps) {
 
   if (termsError) {
     return (
-      <div className="px-4 pt-6 pb-4 sm:px-8 sm:pt-8">
+      <div className="px-2 pt-3 pb-2 sm:px-4 sm:pt-4">
         <ErrorState title={t("loadFailed")} onRetry={() => void refetchTerms()} />
       </div>
     );
@@ -272,7 +273,7 @@ export function TimetablePage({ classId }: TimetablePageProps) {
 
   if (!terms?.length) {
     return (
-      <div className="px-4 pt-6 pb-4 sm:px-8 sm:pt-8">
+      <div className="px-2 pt-3 pb-2 sm:px-4 sm:pt-4">
         <Empty className="border">
           <EmptyHeader>
             <EmptyTitle>{t("emptyTermsTitle")}</EmptyTitle>
@@ -299,7 +300,7 @@ export function TimetablePage({ classId }: TimetablePageProps) {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden px-4 pt-6 pb-4 sm:px-8 sm:pt-8">
+    <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden px-2 pt-3 pb-2 sm:px-4 sm:pt-4">
       <div className="flex shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-3">
         <div className="flex flex-wrap items-center gap-2">
           <Select
@@ -363,7 +364,7 @@ export function TimetablePage({ classId }: TimetablePageProps) {
         </div>
       </div>
 
-      <div className="flex min-h-0 min-w-0 flex-1 gap-4">
+      <div className="flex min-h-0 min-w-0 flex-1 gap-3">
         <div className="min-h-0 min-w-0 flex-1 overflow-hidden rounded-lg border">
           {bundlePending ? <Skeleton className="h-[480px] w-full" /> : null}
           {bundleError ? (
@@ -524,7 +525,7 @@ export function TimetablePage({ classId }: TimetablePageProps) {
               if (!open) setDeletingSlot(null);
             }}
             title={t("deleteSlotTitle", {
-              day: deletingSlot?.day ?? "",
+              day: deletingSlot ? formatWeekdayName(deletingSlot.day, locale) : "",
               start: deletingSlot?.startTime ?? "",
               end: deletingSlot?.endTime ?? "",
             })}

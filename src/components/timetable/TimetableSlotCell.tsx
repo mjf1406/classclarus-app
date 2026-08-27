@@ -257,6 +257,7 @@ function LessonChip({
   onClick: () => void;
   onRemove: () => void;
 }) {
+  const { t } = useTranslation("timetable");
   const subject = lesson.subject;
   const hasLinks = lesson.links.length > 0;
 
@@ -288,6 +289,7 @@ function LessonChip({
           role="button"
           tabIndex={0}
           className="shrink-0 p-0.5 opacity-0 hover:opacity-100 group-hover/slot:opacity-100"
+          aria-label={t("deleteAction")}
           onClick={(e) => {
             e.stopPropagation();
             onRemove();
