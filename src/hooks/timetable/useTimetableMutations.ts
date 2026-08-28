@@ -61,6 +61,7 @@ export function useAddLessonToSlot() {
           weekNumber: args.weekNumber,
           complete: false,
           links: [],
+          notesJson: subject.defaultNotesJson,
           createdAt: now,
           updatedAt: now,
           subject,
@@ -72,6 +73,7 @@ export function useAddLessonToSlot() {
           subjectId: args.subjectId,
           complete: false,
           links: [],
+          notesJson: subject.defaultNotesJson,
         });
       });
     },
@@ -264,6 +266,7 @@ export function useCreateTimetableSubject() {
     bgColor: string;
     textColor: string;
     iconName?: string;
+    defaultNotesJson?: string;
   };
 
   return useOptimisticMutation({
@@ -274,6 +277,7 @@ export function useCreateTimetableSubject() {
         bgColor: args.bgColor,
         textColor: args.textColor,
         iconName: args.iconName,
+        defaultNotesJson: args.defaultNotesJson,
       }),
     queryKeys: (args: Args) => weekKeys(args.classId, args.termId, args.year, args.weekNumber),
     applyOptimisticUpdate: (queryClient, args: Args) => {
@@ -298,6 +302,7 @@ export function useCreateTimetableSubject() {
               bgColor: args.bgColor,
               textColor: args.textColor,
               iconName: args.iconName,
+              defaultNotesJson: args.defaultNotesJson,
               createdAt: now,
               updatedAt: now,
             },
@@ -329,6 +334,7 @@ export function useUpdateTimetableSubject() {
     bgColor: string;
     textColor: string;
     iconName?: string;
+    defaultNotesJson?: string;
   };
 
   return useOptimisticMutation({
@@ -340,6 +346,7 @@ export function useUpdateTimetableSubject() {
         bgColor: args.bgColor,
         textColor: args.textColor,
         iconName: args.iconName,
+        defaultNotesJson: args.defaultNotesJson,
       }),
     queryKeys: (args: Args) => weekKeys(args.classId, args.termId, args.year, args.weekNumber),
     applyOptimisticUpdate: (queryClient, args: Args) => {
@@ -357,6 +364,7 @@ export function useUpdateTimetableSubject() {
           bgColor: args.bgColor,
           textColor: args.textColor,
           iconName: args.iconName,
+          defaultNotesJson: args.defaultNotesJson,
           updatedAt: now,
         };
         return {
@@ -852,6 +860,42 @@ export function useRemoveTimetableTerm() {
     onError: (error) => {
       toast.add({
         title: messageFromError(error, t("saveFailed"), tCommon("rateLimited")),
+        type: "error",
+      });
+    },
+  });
+}
+
+export function useImportTimetableFromClass() {
+  const { t } = useTranslation("timetable");
+  const { t: tCommon } = useTranslation("common");
+  const mutationFn = useConvexMutation(api.timetable.importFromClass);
+
+  type Args = {
+    classId: Id<"classes">;
+    termId: Id<"timetableTerms">;
+    year: number;
+    weekNumber: number;
+    sourceClassId: Id<"classes">;
+    sourceTermId?: Id<"timetableTerms">;
+    importSubjects: boolean;
+    importSlots: boolean;
+  };
+
+  return useOptimisticMutation({
+    mutationFn: (args: Args) =>
+      mutationFn({
+        classId: args.classId,
+        sourceClassId: args.sourceClassId,
+        targetTermId: args.termId,
+        sourceTermId: args.sourceTermId,
+        importSubjects: args.importSubjects,
+        importSlots: args.importSlots,
+      }),
+    queryKeys: (args: Args) => weekKeys(args.classId, args.termId, args.year, args.weekNumber),
+    onError: (error) => {
+      toast.add({
+        title: messageFromError(error, t("importFailed"), tCommon("rateLimited")),
         type: "error",
       });
     },

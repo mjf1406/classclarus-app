@@ -2,12 +2,13 @@ import { compareDateKeys } from "../../../convex/lib/calendar/dateKey";
 import {
   formatLocalDateKey,
   getIsoWeekYearAndNumber,
+  isEmptyNotesJson,
   parseDateKeyLocal,
   timeToMinutes,
   WEEKDAY_NAMES,
 } from "../../../convex/lib/timetable/timetableSchema";
 
-export { timeToMinutes, WEEKDAY_NAMES };
+export { timeToMinutes, WEEKDAY_NAMES, isEmptyNotesJson };
 
 export function minutesToTime(minutes: number): string {
   const hours = Math.floor(minutes / 60);

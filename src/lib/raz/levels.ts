@@ -22,7 +22,17 @@ export function isRazLevel(value: string): value is RazLevel {
   return RAZ_LEVEL_SET.has(value);
 }
 
-export type RazManualStatus = "rti" | "pending";
+export type RazManualStatus = "rti" | "pending" | "ineligible";
+
+export const RAZ_MANUAL_STATUSES = [
+  "rti",
+  "pending",
+  "ineligible",
+] as const satisfies readonly RazManualStatus[];
+
+export function isRazManualStatus(value: string): value is RazManualStatus {
+  return (RAZ_MANUAL_STATUSES as readonly string[]).includes(value);
+}
 
 export type RazInitialLevelEntry = {
   studentUserId: string;

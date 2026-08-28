@@ -1,9 +1,10 @@
-import { ChevronLeft, ChevronRight, Pencil, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Import, Pencil, Plus } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getRouteApi } from "@tanstack/react-router";
 
 import { DeleteNamedCredenza } from "@/components/groups/DeleteNamedCredenza";
+import { TimetableImportCredenza } from "@/components/timetable/TimetableImportCredenza";
 import { TimetableLessonSheet } from "@/components/timetable/TimetableLessonSheet";
 import { TimetableLinkSlotsCredenza } from "@/components/timetable/TimetableLinkSlotsCredenza";
 import { TimetableSlotFormCredenza } from "@/components/timetable/TimetableSlotFormCredenza";
@@ -29,6 +30,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   useAddLessonToSlot,
+  useImportTimetableFromClass,
   useRemoveLesson,
   useRemoveTimetableSlot,
   useRemoveTimetableSubject,
@@ -62,6 +64,7 @@ import {
   getYearAndWeekNumber,
   weekOverlapsTerm,
 } from "@/lib/timetable/utils";
+import { isOptimisticId } from "@/lib/optimistic";
 import { toIntlLocale } from "@/lib/languages";
 import type { Id } from "../../../convex/_generated/dataModel";
 
@@ -100,6 +103,7 @@ export function TimetablePage({ classId }: TimetablePageProps) {
   const [deletingSlot, setDeletingSlot] = useState<TimetableSlot | null>(null);
   const [activeLesson, setActiveLesson] = useState<TimetableLesson | null>(null);
   const [lessonSheetOpen, setLessonSheetOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   const selectedTerm = useMemo(
     () => terms?.find((term: TimetableTerm) => term._id === selectedTermId) ?? terms?.[0],
@@ -107,8 +111,10 @@ export function TimetablePage({ classId }: TimetablePageProps) {
   );
 
   useEffect(() => {
-    if (terms?.length && !selectedTermId) {
-      setSelectedTermId(terms[0]?._id);
+    const firstRealId = terms?.find((term) => !isOptimisticId(term._id))?._id;
+    if (!firstRealId) return;
+    if (!selectedTermId || isOptimisticId(selectedTermId)) {
+      setSelectedTermId(firstRealId);
     }
   }, [terms, selectedTermId]);
 
@@ -147,12 +153,17 @@ export function TimetablePage({ classId }: TimetablePageProps) {
     refetch: refetchBundle,
   } = useTimetableWeekBundle(classId, selectedTerm?._id, year, weekNumber);
 
+  const termReady = selectedTerm !== undefined && !isOptimisticId(selectedTerm._id);
+  const showBundlePending = !bundle && (bundlePending || (Boolean(selectedTerm) && !termReady));
+  const showBundleError = Boolean(bundleError && termReady);
+
   const addLesson = useAddLessonToSlot();
   const removeLesson = useRemoveLesson();
   const toggleDisable = useToggleSlotDisabledForWeek();
   const removeSubject = useRemoveTimetableSubject();
   const removeSlot = useRemoveTimetableSlot();
   const unlinkSlot = useUnlinkSlot();
+  const importTimetable = useImportTimetableFromClass();
 
   const days = selectedTerm?.days ?? [];
 
@@ -214,6 +225,14 @@ export function TimetablePage({ classId }: TimetablePageProps) {
           setEditingSlot(null);
           setSlotFormOpen(true);
         },
+      },
+      {
+        id: "import",
+        label: t("importAction"),
+        icon: <Import />,
+        permission: "timetable:manage",
+        group: "manage",
+        onSelect: () => setImportOpen(true),
       },
     ],
     [t],
@@ -366,8 +385,8 @@ export function TimetablePage({ classId }: TimetablePageProps) {
 
       <div className="flex min-h-0 min-w-0 flex-1 gap-3">
         <div className="min-h-0 min-w-0 flex-1 overflow-hidden rounded-lg border">
-          {bundlePending ? <Skeleton className="h-[480px] w-full" /> : null}
-          {bundleError ? (
+          {showBundlePending ? <Skeleton className="h-[480px] w-full" /> : null}
+          {showBundleError ? (
             <ErrorState title={t("loadFailed")} onRetry={() => void refetchBundle()} />
           ) : null}
           {bundle && selectedTerm ? (
@@ -552,6 +571,23 @@ export function TimetablePage({ classId }: TimetablePageProps) {
             weekNumber={weekNumber}
             lesson={activeLesson}
             canManage={canManage}
+          />
+          <TimetableImportCredenza
+            open={importOpen}
+            onOpenChange={setImportOpen}
+            targetClassId={classId}
+            onSubmit={async ({ sourceClassId, sourceTermId, importSubjects, importSlots }) => {
+              await importTimetable.mutateAsync({
+                classId,
+                termId: selectedTerm._id,
+                year,
+                weekNumber,
+                sourceClassId,
+                sourceTermId,
+                importSubjects,
+                importSlots,
+              });
+            }}
           />
         </>
       ) : null}

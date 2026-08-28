@@ -35,6 +35,7 @@ import {
   type TimetableLesson,
   type TimetableLessonLink,
 } from "@/lib/timetable/timetable";
+import { isEmptyNotesJson } from "@/lib/timetable/utils";
 import { randomClientId } from "@/lib/optimistic";
 import type { Id } from "../../../convex/_generated/dataModel";
 
@@ -75,7 +76,11 @@ export function TimetableLessonSheet({
 
   useEffect(() => {
     if (!lesson) return;
-    setNotesJson(lesson.notesJson ?? EMPTY_NOTES_JSON);
+    setNotesJson(
+      isEmptyNotesJson(lesson.notesJson)
+        ? (lesson.subject.defaultNotesJson ?? EMPTY_NOTES_JSON)
+        : (lesson.notesJson ?? EMPTY_NOTES_JSON),
+    );
     setComplete(lesson.complete);
     setLinks(lesson.links.map((l: TimetableLessonLink) => ({ ...l })));
   }, [lesson]);
@@ -156,7 +161,11 @@ export function TimetableLessonSheet({
         <CredenzaBody className="space-y-4">
           {canManage ? (
             <>
-              <AssignmentInstructionsEditor value={notesJson} onChange={setNotesJson} />
+              <AssignmentInstructionsEditor
+                value={notesJson}
+                onChange={setNotesJson}
+                onSubmit={() => void save()}
+              />
               <div className="flex items-center gap-2">
                 <Checkbox
                   id="lesson-complete"

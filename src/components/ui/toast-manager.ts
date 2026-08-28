@@ -6,8 +6,15 @@ export type ToastExtraAction = {
   onClick: () => void;
 };
 
+export type ToastClassDeletionPayload = {
+  progress: number;
+  pending: boolean;
+  label: string;
+};
+
 export type ToastData = {
   extraActions?: Array<ToastExtraAction>;
+  classDeletion?: ToastClassDeletionPayload;
 };
 
 const createToastManager = ToastPrimitive.createToastManager;

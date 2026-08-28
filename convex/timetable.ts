@@ -10,12 +10,12 @@ import {
   normalizeDays,
   normalizeHexColor,
   normalizeLessonLinks,
+  normalizeOptionalNotesJson,
   normalizeSlotTimes,
   normalizeSubjectName,
   normalizeTermName,
   normalizeTimeRange,
   termKindValidator,
-  MAX_NOTES_JSON_LENGTH,
   type LessonLinkInput,
 } from "./lib/timetable/timetableSchema.js";
 import {
@@ -32,6 +32,10 @@ import {
   type MirrorLessonOp,
   type SlotLinkLike,
 } from "./lib/timetable/slotLinks.js";
+import { planImportedSlots, planImportedSubjects } from "./lib/timetable/importFromClass.js";
+import { rateLimiter } from "./lib/rateLimiter.js";
+import { authz } from "./authz.js";
+import { classScope } from "./lib/auth/authzModel.js";
 
 const termValidator = v.object({
   _id: v.id("timetableTerms"),
@@ -71,6 +75,7 @@ const subjectValidator = v.object({
   bgColor: v.string(),
   textColor: v.string(),
   iconName: v.optional(v.string()),
+  defaultNotesJson: v.optional(v.string()),
   createdAt: v.number(),
   updatedAt: v.number(),
 });
@@ -648,6 +653,7 @@ export const createSubject = classMutation({
     bgColor: v.string(),
     textColor: v.string(),
     iconName: v.optional(v.string()),
+    defaultNotesJson: v.optional(v.string()),
   },
   returns: v.id("timetableSubjects"),
   handler: async (ctx, args) => {
@@ -657,6 +663,7 @@ export const createSubject = classMutation({
       throw new Error(parsed.error.issues[0]?.message ?? "Invalid input");
     }
     const name = normalizeSubjectName(parsed.data.name);
+    const defaultNotesJson = normalizeOptionalNotesJson(parsed.data.defaultNotesJson);
     const now = Date.now();
     const subjectId = await ctx.db.insert("timetableSubjects", {
       classId: ctx.classDoc._id,
@@ -664,6 +671,7 @@ export const createSubject = classMutation({
       bgColor: normalizeHexColor(parsed.data.bgColor, "#6366f1"),
       textColor: normalizeHexColor(parsed.data.textColor, "#ffffff"),
       iconName: parsed.data.iconName?.trim() || undefined,
+      ...(defaultNotesJson ? { defaultNotesJson } : {}),
       createdAt: now,
       updatedAt: now,
     });
@@ -688,6 +696,7 @@ export const updateSubject = classMutation({
     bgColor: v.string(),
     textColor: v.string(),
     iconName: v.optional(v.string()),
+    defaultNotesJson: v.optional(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -698,16 +707,19 @@ export const updateSubject = classMutation({
       bgColor: args.bgColor,
       textColor: args.textColor,
       iconName: args.iconName,
+      defaultNotesJson: args.defaultNotesJson,
     });
     if (!parsed.success) {
       throw new Error(parsed.error.issues[0]?.message ?? "Invalid input");
     }
     const name = normalizeSubjectName(parsed.data.name);
+    const defaultNotesJson = normalizeOptionalNotesJson(parsed.data.defaultNotesJson);
     await ctx.db.patch("timetableSubjects", args.subjectId, {
       name,
       bgColor: normalizeHexColor(parsed.data.bgColor, "#6366f1"),
       textColor: normalizeHexColor(parsed.data.textColor, "#ffffff"),
       iconName: parsed.data.iconName?.trim() || undefined,
+      defaultNotesJson,
       updatedAt: Date.now(),
     });
     await recordClassActivity(ctx, {
@@ -774,10 +786,7 @@ export const upsertLesson = classMutation({
     if (slot.termId !== args.termId) throw new Error("Slot does not belong to this term");
     await assertSubjectBelongsToClass(ctx, ctx.classDoc._id, args.subjectId);
 
-    const notesJson = args.notesJson?.trim();
-    if (notesJson && notesJson.length > MAX_NOTES_JSON_LENGTH) {
-      throw new Error(`Notes must be at most ${MAX_NOTES_JSON_LENGTH} characters`);
-    }
+    const notesJson = normalizeOptionalNotesJson(args.notesJson);
     const links = await normalizeLessonLinks(
       ctx,
       ctx.classDoc._id,
@@ -852,7 +861,7 @@ export const addLessonToSlot = classMutation({
     await assertTermBelongsToClass(ctx, ctx.classDoc._id, args.termId);
     const slot = await assertSlotBelongsToClass(ctx, ctx.classDoc._id, args.slotId);
     if (slot.termId !== args.termId) throw new Error("Slot does not belong to this term");
-    await assertSubjectBelongsToClass(ctx, ctx.classDoc._id, args.subjectId);
+    const subject = await assertSubjectBelongsToClass(ctx, ctx.classDoc._id, args.subjectId);
 
     // eslint-disable-next-line @convex-dev/no-collect-in-query -- slot-week lessons are few
     const existingRows = await ctx.db
@@ -864,6 +873,7 @@ export const addLessonToSlot = classMutation({
     const existing = existingRows.find((row) => row.subjectId === args.subjectId);
     if (existing) return existing._id;
 
+    const notesJson = normalizeOptionalNotesJson(subject.defaultNotesJson);
     const now = Date.now();
     const lessonId = await ctx.db.insert("timetableLessons", {
       classId: ctx.classDoc._id,
@@ -872,6 +882,7 @@ export const addLessonToSlot = classMutation({
       subjectId: args.subjectId,
       year: args.year,
       weekNumber: args.weekNumber,
+      ...(notesJson ? { notesJson } : {}),
       complete: false,
       links: [],
       createdAt: now,
@@ -881,6 +892,7 @@ export const addLessonToSlot = classMutation({
       type: "add",
       sourceSlotId: args.slotId,
       subjectId: args.subjectId,
+      notesJson,
       complete: false,
       links: [],
     });
@@ -1073,5 +1085,158 @@ export const unlinkSlot = classMutation({
       metadata: { day: slot.day },
     });
     return null;
+  },
+});
+
+export const importFromClass = classMutation({
+  args: {
+    sourceClassId: v.id("classes"),
+    targetTermId: v.id("timetableTerms"),
+    sourceTermId: v.optional(v.id("timetableTerms")),
+    importSubjects: v.boolean(),
+    importSlots: v.boolean(),
+  },
+  returns: v.object({
+    subjectCount: v.number(),
+    slotCount: v.number(),
+  }),
+  handler: async (ctx, args) => {
+    await rateLimiter.limit(ctx, "timetableImport", { key: ctx.userId, throws: true });
+    await ctx.require("timetable:manage");
+
+    const targetClassId = ctx.classDoc._id;
+    if (args.sourceClassId === targetClassId) {
+      throw new Error("Choose a different class to import from");
+    }
+    if (!args.importSubjects && !args.importSlots) {
+      throw new Error("Choose subjects, slots, or both");
+    }
+    if (args.importSlots && !args.sourceTermId) {
+      throw new Error("Select a term to copy slots from");
+    }
+
+    const targetTerm = await assertTermBelongsToClass(ctx, targetClassId, args.targetTermId);
+
+    const sourceClass = await ctx.db.get("classes", args.sourceClassId);
+    if (!sourceClass || sourceClass.archivedAt !== undefined) {
+      throw new ConvexError({
+        code: "CLASS_UNAVAILABLE",
+        message: "Class not found or access denied",
+      });
+    }
+
+    const canManageSource = await authz.can(
+      ctx,
+      ctx.userId,
+      "timetable:manage",
+      classScope(args.sourceClassId),
+    );
+    if (!canManageSource) {
+      throw new ConvexError({
+        code: "CLASS_UNAVAILABLE",
+        message: "Class not found or access denied",
+      });
+    }
+
+    const now = Date.now();
+    let subjectCount = 0;
+    let slotCount = 0;
+
+    if (args.importSubjects) {
+      // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded import source
+      const sourceSubjects = await ctx.db
+        .query("timetableSubjects")
+        .withIndex("by_classId", (q) => q.eq("classId", args.sourceClassId))
+        .collect();
+      // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded import target
+      const existingSubjects = await ctx.db
+        .query("timetableSubjects")
+        .withIndex("by_classId", (q) => q.eq("classId", targetClassId))
+        .collect();
+      const planned = planImportedSubjects(
+        sourceSubjects.map((subject) => ({
+          name: subject.name,
+          bgColor: subject.bgColor,
+          textColor: subject.textColor,
+          iconName: subject.iconName,
+          defaultNotesJson: subject.defaultNotesJson,
+        })),
+        existingSubjects.map((subject) => subject.name),
+      );
+      for (const subject of planned) {
+        const defaultNotesJson = normalizeOptionalNotesJson(subject.defaultNotesJson);
+        await ctx.db.insert("timetableSubjects", {
+          classId: targetClassId,
+          name: normalizeSubjectName(subject.name),
+          bgColor: normalizeHexColor(subject.bgColor, "#6366f1"),
+          textColor: normalizeHexColor(subject.textColor, "#ffffff"),
+          iconName: subject.iconName?.trim() || undefined,
+          ...(defaultNotesJson ? { defaultNotesJson } : {}),
+          createdAt: now,
+          updatedAt: now,
+        });
+        subjectCount += 1;
+      }
+    }
+
+    if (args.importSlots && args.sourceTermId) {
+      const sourceTerm = await ctx.db.get("timetableTerms", args.sourceTermId);
+      if (!sourceTerm || sourceTerm.classId !== args.sourceClassId) {
+        throw new ConvexError({ message: "Term not found" });
+      }
+      // eslint-disable-next-line @convex-dev/no-collect-in-query -- term-bounded import source
+      const sourceSlots = await ctx.db
+        .query("timetableSlots")
+        .withIndex("by_termId", (q) => q.eq("termId", sourceTerm._id))
+        .collect();
+      // eslint-disable-next-line @convex-dev/no-collect-in-query -- term-bounded import target
+      const existingSlots = await ctx.db
+        .query("timetableSlots")
+        .withIndex("by_termId", (q) => q.eq("termId", targetTerm._id))
+        .collect();
+      const planned = planImportedSlots(
+        sourceSlots.map((slot) => ({
+          day: slot.day,
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+          disabled: slot.disabled,
+          linkGroupId: slot.linkGroupId,
+        })),
+        existingSlots,
+        new Set(targetTerm.days),
+      );
+      for (const slot of planned) {
+        await ctx.db.insert("timetableSlots", {
+          classId: targetClassId,
+          termId: targetTerm._id,
+          day: slot.day,
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+          disabled: slot.disabled,
+          ...(slot.linkGroupId ? { linkGroupId: slot.linkGroupId } : {}),
+          createdAt: now,
+          updatedAt: now,
+        });
+        slotCount += 1;
+      }
+    }
+
+    await recordClassActivity(ctx, {
+      classId: targetClassId,
+      actorUserId: ctx.userId,
+      action: "write",
+      resourceType: "timetableTerm",
+      resourceId: targetTerm._id,
+      summary: `Imported timetable from "${sourceClass.name}"`,
+      summaryKey: "activitySummary_importedTimetable",
+      metadata: {
+        name: sourceClass.name,
+        subjectCount: String(subjectCount),
+        slotCount: String(slotCount),
+        count: String(subjectCount + slotCount),
+      },
+    });
+
+    return { subjectCount, slotCount };
   },
 });

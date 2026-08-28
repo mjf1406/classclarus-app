@@ -12,12 +12,14 @@ import { assertEntitled } from "../billing/entitlement.js";
 
 type AuthedCtx = (QueryCtx | MutationCtx) & { userId: Id<"users"> };
 
+type ClassContextMode = "query" | "mutation";
+
 /**
  * Load a class and inject scope + can/require helpers.
  * Requires `class:read` so non-members get the same CLASS_UNAVAILABLE denial
  * for both real and fabricated class IDs (no existence oracle).
  */
-async function loadClassContext(ctx: AuthedCtx, classId: Id<"classes">) {
+async function loadClassContext(ctx: AuthedCtx, classId: Id<"classes">, mode: ClassContextMode) {
   const classDoc = await ctx.db.get("classes", classId);
   if (!classDoc) {
     throw new ConvexError({
@@ -25,6 +27,14 @@ async function loadClassContext(ctx: AuthedCtx, classId: Id<"classes">) {
       message: "Class not found or access denied",
     });
   }
+
+  if (mode === "mutation" && classDoc.deletingAt !== undefined) {
+    throw new ConvexError({
+      code: "CLASS_DELETING",
+      message: "This class is being deleted",
+    });
+  }
+
   const scope = classScope(classId);
 
   const requirePermission = async (permission: ClassPermission) => {
@@ -122,7 +132,7 @@ export const classMutation = customMutation(mutation, {
   args: { classId: v.id("classes") },
   input: async (ctx, args) => {
     const userId = await requireAuthUserId(ctx);
-    const classCtx = await loadClassContext({ ...ctx, userId }, args.classId);
+    const classCtx = await loadClassContext({ ...ctx, userId }, args.classId, "mutation");
     return {
       ctx: {
         userId,
@@ -142,7 +152,7 @@ export const entitledClassMutation = customMutation(mutation, {
   input: async (ctx, args) => {
     const userId = await requireAuthUserId(ctx);
     await assertEntitled(ctx, userId);
-    const classCtx = await loadClassContext({ ...ctx, userId }, args.classId);
+    const classCtx = await loadClassContext({ ...ctx, userId }, args.classId, "mutation");
     return {
       ctx: {
         userId,
@@ -161,7 +171,7 @@ export const classQuery = customQuery(query, {
   args: { classId: v.id("classes") },
   input: async (ctx, args) => {
     const userId = await requireAuthUserId(ctx);
-    const classCtx = await loadClassContext({ ...ctx, userId }, args.classId);
+    const classCtx = await loadClassContext({ ...ctx, userId }, args.classId, "query");
     return {
       ctx: {
         userId,
@@ -181,7 +191,7 @@ export const entitledClassQuery = customQuery(query, {
   input: async (ctx, args) => {
     const userId = await requireAuthUserId(ctx);
     await assertEntitled(ctx, userId);
-    const classCtx = await loadClassContext({ ...ctx, userId }, args.classId);
+    const classCtx = await loadClassContext({ ...ctx, userId }, args.classId, "query");
     return {
       ctx: {
         userId,

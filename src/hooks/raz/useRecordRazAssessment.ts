@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { shouldAutoSetRazRti } from "../../../convex/lib/razAutoRti";
+import { resolveRazAutoManualStatus } from "../../../convex/lib/razAutoRti";
 import { toast } from "@/components/ui/toast-manager";
 import { razAssessmentsQueryKey } from "@/hooks/raz/useRazAssessments";
 import { razInitialLevelsQueryKey } from "@/hooks/raz/useRazInitialLevels";
@@ -48,24 +48,34 @@ export function useRecordRazAssessment() {
       razAssessmentsQueryKey(args.classId),
     ],
     applyOptimisticUpdate: (queryClient, args) => {
+      const assessmentsKey = razAssessmentsQueryKey(args.classId);
+      const priorAssessments =
+        queryClient
+          .getQueryData<RazAssessmentEntry[]>(assessmentsKey)
+          ?.filter((row) => row.studentUserId === args.studentUserId) ?? [];
+
       const levelsKey = razInitialLevelsQueryKey(args.classId);
       queryClient.setQueryData<RazInitialLevelEntry[]>(levelsKey, (old) => {
         if (!old) return old;
         return old.map((row) => {
           if (row.studentUserId !== args.studentUserId) return row;
-          const autoRti = shouldAutoSetRazRti(args.result, row.lastAssessmentResult);
+          const autoStatus = resolveRazAutoManualStatus({
+            level: args.level,
+            result: args.result,
+            previousResult: row.lastAssessmentResult,
+            priorAssessments,
+          });
           return {
             ...row,
             currentLevel: args.level,
             lastAssessedAt: args.assessedAt,
             lastAssessmentResult: args.result,
             scheduleAnchorAt: args.assessedAt,
-            manualStatus: autoRti ? "rti" : null,
+            manualStatus: autoStatus ?? row.manualStatus,
           };
         });
       });
 
-      const assessmentsKey = razAssessmentsQueryKey(args.classId);
       const optimistic: RazAssessmentEntry = {
         _id: `optimistic-${args.studentUserId}-${args.assessedAt}`,
         studentUserId: args.studentUserId,

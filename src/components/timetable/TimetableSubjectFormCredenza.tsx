@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 
 import { FontAwesomeIconPickerLazy } from "@/components/icons/FontAwesomeIconPickerLazy";
 import { iconDefinitionToId, resolveIconId } from "@/components/icons/fontawesome-icon-catalog";
+import { AssignmentInstructionsEditor } from "@/components/assignments/AssignmentInstructionsEditor";
 import { Button } from "@/components/ui/button";
 import {
   Credenza,
@@ -16,13 +17,14 @@ import {
   CredenzaHeader,
   CredenzaTitle,
 } from "@/components/ui/credenza";
-import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
   useCreateTimetableSubject,
   useUpdateTimetableSubject,
 } from "@/hooks/timetable/useTimetableMutations";
 import type { TimetableSubject } from "@/lib/timetable/timetable";
+import { EMPTY_NOTES_JSON } from "@/lib/timetable/timetable";
 import {
   createClientTimetableSubjectFormSchema,
   type TimetableSubjectFormValues,
@@ -56,6 +58,7 @@ function defaultCreateValues(): TimetableSubjectFormValues {
     bgColor: "#6366f1",
     textColor: "#ffffff",
     iconName: "",
+    defaultNotesJson: EMPTY_NOTES_JSON,
   };
 }
 
@@ -65,6 +68,7 @@ function valuesFromSubject(subject: TimetableSubject): TimetableSubjectFormValue
     bgColor: subject.bgColor,
     textColor: subject.textColor,
     iconName: subject.iconName ?? "",
+    defaultNotesJson: subject.defaultNotesJson ?? EMPTY_NOTES_JSON,
   };
 }
 
@@ -130,6 +134,7 @@ export function TimetableSubjectFormCredenza({
             bgColor: parsed.data.bgColor,
             textColor: parsed.data.textColor,
             iconName,
+            defaultNotesJson: parsed.data.defaultNotesJson,
           });
         } else {
           await createSubject.mutateAsync({
@@ -141,6 +146,7 @@ export function TimetableSubjectFormCredenza({
             bgColor: parsed.data.bgColor,
             textColor: parsed.data.textColor,
             iconName,
+            defaultNotesJson: parsed.data.defaultNotesJson,
           });
         }
       } catch (error) {
@@ -294,6 +300,22 @@ export function TimetableSubjectFormCredenza({
                   </Field>
                 );
               }}
+            </form.Field>
+
+            <form.Field name="defaultNotesJson">
+              {(field) => (
+                <Field>
+                  <FieldLabel>{t("defaultNotes")}</FieldLabel>
+                  <FieldDescription>{t("defaultNotesDescription")}</FieldDescription>
+                  <AssignmentInstructionsEditor
+                    value={field.state.value ?? EMPTY_NOTES_JSON}
+                    onChange={(next) => field.handleChange(next)}
+                    onSubmit={() => void form.handleSubmit()}
+                    placeholder={t("defaultNotesPlaceholder")}
+                    className="min-h-40"
+                  />
+                </Field>
+              )}
             </form.Field>
           </CredenzaBody>
           <CredenzaFooter>

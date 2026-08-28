@@ -5,7 +5,11 @@ import {
   convertMarkdownLinksInDoc,
   normalizeMarkdownHref,
 } from "@/lib/announcements/markdownLinks";
-import { parseAnnouncementBodyJson } from "@/lib/announcements/tiptapExtensions";
+import {
+  handleNotesSubmitKeyDown,
+  isSubmitOnModEnter,
+  parseAnnouncementBodyJson,
+} from "@/lib/announcements/tiptapExtensions";
 
 function paragraphDoc(text: string, marks?: JSONContent["marks"]): JSONContent {
   return {
@@ -120,5 +124,67 @@ describe("parseAnnouncementBodyJson", () => {
     const nodes = paragraphContent(doc);
     expect(nodes.map((node) => node.text)).toEqual(["Open ", "the portal", "."]);
     expect(linkHref(nodes[1])).toBe("https://school.example/home");
+  });
+});
+
+describe("isSubmitOnModEnter", () => {
+  test("matches Ctrl+Enter and Cmd+Enter", () => {
+    expect(isSubmitOnModEnter({ key: "Enter", ctrlKey: true, metaKey: false })).toBe(true);
+    expect(isSubmitOnModEnter({ key: "Enter", ctrlKey: false, metaKey: true })).toBe(true);
+  });
+
+  test("ignores Enter without a modifier and other keys", () => {
+    expect(isSubmitOnModEnter({ key: "Enter", ctrlKey: false, metaKey: false })).toBe(false);
+    expect(isSubmitOnModEnter({ key: "s", ctrlKey: true, metaKey: false })).toBe(false);
+  });
+});
+
+describe("handleNotesSubmitKeyDown", () => {
+  test("submits on Ctrl+Enter and stops the event", () => {
+    let submitted = 0;
+    let prevented = false;
+    let stopped = false;
+    const handled = handleNotesSubmitKeyDown(
+      {
+        key: "Enter",
+        ctrlKey: true,
+        metaKey: false,
+        preventDefault: () => {
+          prevented = true;
+        },
+        stopPropagation: () => {
+          stopped = true;
+        },
+      },
+      () => {
+        submitted += 1;
+      },
+    );
+    expect(handled).toBe(true);
+    expect(submitted).toBe(1);
+    expect(prevented).toBe(true);
+    expect(stopped).toBe(true);
+  });
+
+  test("does not submit when disabled or when onSubmit is missing", () => {
+    let submitted = 0;
+    const event = {
+      key: "Enter",
+      ctrlKey: true,
+      metaKey: false,
+      preventDefault: () => undefined,
+      stopPropagation: () => undefined,
+    };
+    expect(
+      handleNotesSubmitKeyDown(
+        event,
+        () => {
+          submitted += 1;
+        },
+        true,
+      ),
+    ).toBe(false);
+    expect(handleNotesSubmitKeyDown(event, undefined)).toBe(false);
+    expect(submitted).toBe(0);
   });
 });

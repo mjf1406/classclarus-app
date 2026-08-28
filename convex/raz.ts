@@ -8,7 +8,7 @@ import { classScope } from "./lib/authzModel.js";
 import { recordClassActivity } from "./lib/classActivity.js";
 import { classMutation, classQuery } from "./lib/customFunctions.js";
 import { assertPersonalStudentAccess, resolvePersonalStudentIds } from "./lib/guardianLinks.js";
-import { shouldAutoSetRazRti } from "./lib/razAutoRti.js";
+import { resolveRazAutoManualStatus } from "./lib/razAutoRti.js";
 import { isRazLevel } from "./lib/razLevels.js";
 import { rateLimiter } from "./lib/rateLimiter.js";
 import { resolveUserImageUrl } from "./lib/userImage.js";
@@ -19,7 +19,11 @@ const razResultValidator = v.union(
   v.literal("level_down"),
 );
 
-const razManualStatusValidator = v.union(v.literal("rti"), v.literal("pending"));
+const razManualStatusValidator = v.union(
+  v.literal("rti"),
+  v.literal("pending"),
+  v.literal("ineligible"),
+);
 
 const levelEntryValidator = v.object({
   studentUserId: v.id("users"),
@@ -235,7 +239,7 @@ export const forAudience = classQuery({
       lastAssessedAt: number | null;
       lastAssessmentResult: "level_up" | "stay" | "level_down" | null;
       scheduleAnchorAt: number | null;
-      manualStatus: "rti" | "pending" | null;
+      manualStatus: "rti" | "pending" | "ineligible" | null;
       assessmentCount: number;
       levelUpPct: number;
       stayPct: number;
@@ -470,7 +474,12 @@ export const recordAssessment = classMutation({
       }
     }
 
-    const autoRti = shouldAutoSetRazRti(args.result, previousResult);
+    const autoStatus = resolveRazAutoManualStatus({
+      level: args.level,
+      result: args.result,
+      previousResult,
+      priorAssessments,
+    });
 
     const now = Date.now();
     const assessmentId = await ctx.db.insert("razAssessments", {
@@ -489,7 +498,7 @@ export const recordAssessment = classMutation({
 
     await ctx.db.patch("razStudentLevels", levelRow._id, {
       currentLevel: args.level,
-      manualStatus: autoRti ? "rti" : undefined,
+      ...(autoStatus !== null ? { manualStatus: autoStatus } : {}),
       updatedAt: now,
       updatedBy: ctx.userId,
     });
@@ -515,7 +524,8 @@ export const recordAssessment = classMutation({
         targetUserId: args.studentUserId,
         readAccuracy: String(args.readAccuracy),
         respondScore: String(args.respondScore),
-        ...(autoRti ? { autoRti: "true" } : {}),
+        ...(autoStatus === "rti" ? { autoRti: "true" } : {}),
+        ...(autoStatus === "ineligible" ? { autoIneligible: "true" } : {}),
       },
     });
 
@@ -524,7 +534,7 @@ export const recordAssessment = classMutation({
 });
 
 /**
- * Set or clear a student's manual RAZ status override (RTI / pending).
+ * Set or clear a student's manual RAZ status override (RTI / pending / ineligible).
  * Requires raz:manage. Pass null to clear and use schedule-derived status.
  */
 export const setManualStatus = classMutation({
@@ -560,7 +570,13 @@ export const setManualStatus = classMutation({
     });
 
     const statusLabel =
-      args.manualStatus === "rti" ? "RTI" : args.manualStatus === "pending" ? "Pending" : "Auto";
+      args.manualStatus === "rti"
+        ? "RTI"
+        : args.manualStatus === "pending"
+          ? "Pending"
+          : args.manualStatus === "ineligible"
+            ? "Ineligible"
+            : "Auto";
 
     await recordClassActivity(ctx, {
       classId,

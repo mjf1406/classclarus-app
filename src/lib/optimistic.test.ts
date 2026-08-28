@@ -1,12 +1,20 @@
 import { describe, expect, test } from "vite-plus/test";
 
 import {
+  isOptimisticId,
   patchDoc,
   polyfillCryptoRandomUUID,
   randomClientId,
   removeById,
   upsertById,
 } from "./optimistic";
+
+describe("isOptimisticId", () => {
+  test("detects client placeholder ids", () => {
+    expect(isOptimisticId("optimistic:e34d69fe-727c-4c69-88cb-c29fb823397e")).toBe(true);
+    expect(isOptimisticId("k5760dnm43rwxxy6gseazphqts8bek0s")).toBe(false);
+  });
+});
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 

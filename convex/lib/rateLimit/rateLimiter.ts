@@ -163,6 +163,7 @@ const rateLimits = {
   rewardUpdate: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 30 },
   rewardRemove: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 20 },
   rewardImport: { kind: "token bucket" as const, rate: 20, period: HOUR, capacity: 5 },
+  timetableImport: { kind: "token bucket" as const, rate: 20, period: HOUR, capacity: 5 },
   pointsApplyBehaviors: { kind: "token bucket" as const, rate: 240, period: HOUR, capacity: 60 },
   pointsRedeemRewards: { kind: "token bucket" as const, rate: 240, period: HOUR, capacity: 60 },
   pointsUndoLastAction: { kind: "token bucket" as const, rate: 240, period: HOUR, capacity: 60 },

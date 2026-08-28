@@ -2,6 +2,8 @@ import { z } from "zod";
 
 import type { Id } from "../../../convex/_generated/dataModel";
 
+export { isOptimisticId } from "@/lib/optimistic";
+
 export const groupFormSchema = z.object({
   name: z.string().trim().min(1).max(100),
   description: z.string().trim().max(500).optional(),
@@ -19,7 +21,3 @@ export type AlsoCreateInGroupOption = {
   value: Id<"groups">;
   label: string;
 };
-
-export function isOptimisticId(id: string): boolean {
-  return id.startsWith("optimistic:");
-}

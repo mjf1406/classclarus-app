@@ -9,7 +9,7 @@ import {
   ListOrdered,
   Underline as UnderlineIcon,
 } from "lucide-react";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import { announcementBodyClassName } from "@/components/announcements/announcementBodyStyles";
@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import {
   createAnnouncementExtensions,
   EMPTY_ANNOUNCEMENT_BODY_JSON,
+  handleNotesSubmitKeyDown,
   parseAnnouncementBodyJson,
 } from "@/lib/announcements/tiptapExtensions";
 import { cn } from "@/lib/utils";
@@ -28,6 +29,7 @@ type AnnouncementEditorProps = {
   disabled?: boolean;
   className?: string;
   placeholder?: string;
+  onSubmit?: () => void;
 };
 
 export function AnnouncementEditor({
@@ -36,8 +38,13 @@ export function AnnouncementEditor({
   disabled = false,
   className,
   placeholder,
+  onSubmit,
 }: AnnouncementEditorProps) {
   const { t } = useTranslation("announcements");
+  const onSubmitRef = useRef(onSubmit);
+  onSubmitRef.current = onSubmit;
+  const disabledRef = useRef(disabled);
+  disabledRef.current = disabled;
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -102,6 +109,9 @@ export function AnnouncementEditor({
         disabled && "opacity-60",
         className,
       )}
+      onKeyDownCapture={(event) => {
+        handleNotesSubmitKeyDown(event, onSubmitRef.current, disabledRef.current);
+      }}
     >
       <div className="flex flex-wrap items-center gap-0.5 border-b border-border px-1 py-1">
         <ToolbarButton

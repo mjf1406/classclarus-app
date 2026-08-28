@@ -9,6 +9,7 @@ import { ThemeProvider } from "@/components/theme/theme-provider";
 import { ConvexAuthProvider } from "@convex-dev/auth/react";
 import PendingComponent from "@/components/loading/PendingComponent";
 import { InnerRouterProvider } from "@/components/routing/InnerRouterProvider";
+import { ClassDeletionToastTracker } from "@/components/classes/ClassDeletionToastTracker";
 import i18n, { ensureLocaleLoaded, getInitialLanguage } from "@/i18n";
 import { LanguageProvider } from "@/i18n/LanguageProvider";
 import { polyfillCryptoRandomUUID } from "@/lib/optimistic";
@@ -79,6 +80,7 @@ async function bootstrap() {
                     <InnerRouterProvider router={router} />
                   </TooltipProvider>
                   <Toaster />
+                  <ClassDeletionToastTracker />
                 </div>
               </ThemeProvider>
             </LanguageProvider>

@@ -9,11 +9,16 @@ export type PointsBoard = FunctionReturnType<typeof api.points.board>;
 export type PointsSortKey = "firstName" | "lastName" | "rosterNumber" | "points";
 export type PointsSortDirection = "asc" | "desc";
 
-export type PointsApplyTab = "award" | "remove" | "redeem";
+export type PointsCatalogTab = "award" | "remove" | "redeem";
+export type PointsApplyTab = PointsCatalogTab | "tasks";
+
+export function isPointsCatalogTab(tab: PointsApplyTab): tab is PointsCatalogTab {
+  return tab !== "tasks";
+}
 
 /** Award/remove keep stored signs; redeem costs are stored positive but deduct points. */
 export function formatApplyCatalogPoints(
-  tab: PointsApplyTab,
+  tab: PointsCatalogTab,
   points: number,
   language: string,
 ): string {

@@ -50,6 +50,7 @@ const STATUS_I18N_KEY = {
   due_now: "statusDueNow",
   coming_soon: "statusComingSoon",
   up_to_date: "statusUpToDate",
+  ineligible: "statusIneligible",
 } as const;
 
 const RESULT_I18N_KEY = {
@@ -96,6 +97,7 @@ function statusBadgeVariant(
     case "coming_soon":
       return "secondary";
     case "up_to_date":
+    case "ineligible":
       return "outline";
   }
 }
@@ -173,7 +175,9 @@ function PersonalRazSummaryCard({ student, nameFormat, language }: SummaryCardPr
   const avatarSrc = sanitizeAvatarUrl(student.image);
 
   const schedule =
-    student.currentLevel != null && student.scheduleAnchorAt != null
+    student.currentLevel != null &&
+    student.scheduleAnchorAt != null &&
+    student.manualStatus !== "ineligible"
       ? getRazAssessmentSchedule(
           student.currentLevel,
           student.scheduleAnchorAt,
@@ -246,7 +250,9 @@ function PersonalRazSummaryCard({ student, nameFormat, language }: SummaryCardPr
         <div className="col-span-2 flex flex-col gap-0.5 sm:col-span-1">
           <dt className="text-muted-foreground">{t("columnNextDue")}</dt>
           <dd className="flex flex-col gap-0.5">
-            {dueRelative != null && schedule != null ? (
+            {student.manualStatus === "ineligible" ? (
+              <span className="font-medium text-muted-foreground">{t("dueIneligible")}</span>
+            ) : dueRelative != null && schedule != null ? (
               <>
                 <span className="font-medium">{dueRelative}</span>
                 <span className="text-muted-foreground text-xs tabular-nums">

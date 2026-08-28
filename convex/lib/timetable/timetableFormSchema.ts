@@ -99,6 +99,7 @@ export function createTimetableSubjectFormSchema(messages: TimetableSubjectFormM
     bgColor: hexColorSchema(messages.colorRequired),
     textColor: hexColorSchema(messages.colorRequired),
     iconName: z.string().optional(),
+    defaultNotesJson: z.string().optional(),
   });
 }
 

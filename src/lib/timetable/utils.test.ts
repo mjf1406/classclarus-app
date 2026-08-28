@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vite-plus/test";
 
-import { formatWeekdayHeader, formatWeekdayName } from "@/lib/timetable/utils";
+import { formatWeekdayHeader, formatWeekdayName, isEmptyNotesJson } from "@/lib/timetable/utils";
 
 describe("formatWeekdayName", () => {
   test("returns the English weekday name for en-US", () => {
@@ -40,5 +40,26 @@ describe("formatWeekdayHeader", () => {
 
   test("Traditional Chinese uses 日", () => {
     expect(formatWeekdayHeader("Monday", weekStart, "zh-Hant")).toBe("星期一 24日");
+  });
+});
+
+describe("isEmptyNotesJson", () => {
+  test("treats missing, blank, and empty docs as empty", () => {
+    expect(isEmptyNotesJson(undefined)).toBe(true);
+    expect(isEmptyNotesJson("")).toBe(true);
+    expect(
+      isEmptyNotesJson(JSON.stringify({ type: "doc", content: [{ type: "paragraph" }] })),
+    ).toBe(true);
+  });
+
+  test("treats docs with text as not empty", () => {
+    expect(
+      isEmptyNotesJson(
+        JSON.stringify({
+          type: "doc",
+          content: [{ type: "paragraph", content: [{ type: "text", text: "Hello" }] }],
+        }),
+      ),
+    ).toBe(false);
   });
 });

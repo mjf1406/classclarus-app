@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef, useState } from "react";
 import {
   Check,
   Link2,
@@ -82,24 +83,12 @@ export function TimetableSlotCell({
       )}
     >
       {!compact ? (
-        <div className="flex items-center gap-1 px-0.5 text-[10px] font-medium text-muted-foreground">
-          {isLinked ? (
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <span className="inline-flex shrink-0">
-                    <Link2 className="h-3 w-3 text-primary" />
-                  </span>
-                }
-              />
-              <TooltipContent>{t("linkedSlotTooltip")}</TooltipContent>
-            </Tooltip>
-          ) : null}
-          <span>
-            {formatTimeString(slot.startTime, timeFormat)} –{" "}
-            {formatTimeString(slot.endTime, timeFormat)}
-          </span>
-        </div>
+        <SlotTimeLabel
+          startTime={slot.startTime}
+          endTime={slot.endTime}
+          timeFormat={timeFormat}
+          isLinked={isLinked}
+        />
       ) : null}
 
       <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -305,5 +294,80 @@ function LessonChip({
         </span>
       ) : null}
     </button>
+  );
+}
+
+function SlotTimeLabel({
+  startTime,
+  endTime,
+  timeFormat,
+  isLinked,
+}: {
+  startTime: string;
+  endTime: string;
+  timeFormat: "12" | "24";
+  isLinked: boolean;
+}) {
+  const { t } = useTranslation("timetable");
+  const rowRef = useRef<HTMLDivElement>(null);
+  const timesRef = useRef<HTMLSpanElement>(null);
+  const measureRef = useRef<HTMLSpanElement>(null);
+  const [showDuration, setShowDuration] = useState(false);
+  const durationMinutes = slotDurationMinutes(startTime, endTime);
+  const durationLabel = t("slotDurationMins", { count: durationMinutes });
+
+  useLayoutEffect(() => {
+    const row = rowRef.current;
+    if (!row) return;
+
+    const update = () => {
+      const times = timesRef.current;
+      const measure = measureRef.current;
+      if (!times || !measure) {
+        setShowDuration(false);
+        return;
+      }
+      const styles = getComputedStyle(row);
+      const gap = Number.parseFloat(styles.columnGap || styles.gap || "0") || 0;
+      const iconWidth = isLinked ? 12 + gap : 0;
+      const used = iconWidth + times.offsetWidth + gap;
+      setShowDuration(row.clientWidth >= used + measure.offsetWidth);
+    };
+
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(row);
+    return () => observer.disconnect();
+  }, [durationLabel, isLinked, startTime, endTime, timeFormat]);
+
+  return (
+    <div
+      ref={rowRef}
+      className="relative flex min-w-0 items-center gap-1 overflow-hidden px-0.5 text-[10px] font-medium text-muted-foreground"
+    >
+      {isLinked ? (
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <span className="inline-flex shrink-0">
+                <Link2 className="h-3 w-3 text-primary" />
+              </span>
+            }
+          />
+          <TooltipContent>{t("linkedSlotTooltip")}</TooltipContent>
+        </Tooltip>
+      ) : null}
+      <span ref={timesRef} className="shrink-0 whitespace-nowrap">
+        {formatTimeString(startTime, timeFormat)} – {formatTimeString(endTime, timeFormat)}
+      </span>
+      {showDuration ? <span className="shrink-0 whitespace-nowrap">{durationLabel}</span> : null}
+      <span
+        ref={measureRef}
+        className="pointer-events-none invisible absolute whitespace-nowrap"
+        aria-hidden
+      >
+        {durationLabel}
+      </span>
+    </div>
   );
 }

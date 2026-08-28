@@ -8,6 +8,7 @@ import {
   GiftIcon,
   LayoutGridIcon,
   ListIcon,
+  ListTodo,
   LockIcon,
   LockOpenIcon,
   SearchIcon,
@@ -19,6 +20,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { FontAwesomeIconFromId } from "@/components/icons/FontAwesomeIconFromId";
+import { PointsApplyTasksPanel } from "@/components/points/PointsApplyTasksPanel";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -47,6 +49,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useCan } from "@/hooks/permissions/useCan";
 import { usePointsCatalogSearch } from "@/hooks/points/usePointsCatalogSearch";
 import { useLocalStorageValue } from "@/hooks/useLocalStorageValue";
 import type { BehaviorListItem } from "@/lib/behaviors/behaviors";
@@ -58,10 +61,12 @@ import type {
 } from "@/lib/points/points";
 import {
   formatApplyCatalogPoints,
+  isPointsCatalogTab,
   isPointsCatalogView,
   MAX_APPLICATION_NOTE_LENGTH,
   partitionPointsCatalogByFolder,
 } from "@/lib/points/points";
+import type { TaskListItem } from "@/lib/tasks/tasks";
 import { STORAGE_KEYS } from "@/lib/storageKeys";
 import { formatPurchaseLimitSummary, type PurchaseLimitPeriod } from "@/lib/rewards/purchaseLimit";
 import {
@@ -78,8 +83,9 @@ import {
 import { cn } from "@/lib/utils";
 import type { Id } from "../../../convex/_generated/dataModel";
 
-/** Fixed note + catalog panel — catalog flex-fills so tabs never shift height. */
-const CATALOG_PANEL_CLASS = "flex h-80 flex-col gap-3";
+/** Toolbar + catalog share a fixed height so the tasks tab does not shrink the dialog. */
+const TAB_BODY_CLASS = "mt-3 flex h-[26rem] min-h-0 flex-col";
+const CATALOG_PANEL_CLASS = "flex min-h-0 flex-1 flex-col gap-3";
 const CATALOG_SCROLL_CLASS = "min-h-0 flex-1 overflow-y-auto rounded-xl border p-2";
 
 /** Same column count on mobile and desktop (matches points student cards). */
@@ -318,6 +324,7 @@ type PointsApplyCredenzaProps = {
   nameFormat: RosterNameFormat;
   behaviors: BehaviorListItem[];
   rewards: RewardListItem[];
+  tasks: TaskListItem[];
   behaviorFolders: PointsCatalogFolder[];
   rewardFolders: PointsCatalogFolder[];
   purchaseLimitStatuses: ReadonlyArray<RewardPurchaseLimitStatus>;
@@ -331,6 +338,7 @@ type PointsApplyCredenzaProps = {
     items: Array<{ rewardId: Id<"rewards">; quantity: number; points: number }>;
     allowOverride: boolean;
   }) => Promise<void>;
+  onToggleTaskCompletion: (args: { taskId: Id<"tasks">; completed: boolean }) => Promise<void>;
 };
 
 function studentMeta(
@@ -358,17 +366,21 @@ export function PointsApplyCredenza({
   nameFormat,
   behaviors,
   rewards,
+  tasks,
   behaviorFolders,
   rewardFolders,
   purchaseLimitStatuses,
   purchaseLimitsPending,
   onApplyBehaviors,
   onRedeemRewards,
+  onToggleTaskCompletion,
 }: PointsApplyCredenzaProps) {
   const { t, i18n } = useTranslation("points");
   const { t: tClasses } = useTranslation("classes");
   const { t: tCommon } = useTranslation("common");
   const { t: tRewards } = useTranslation("rewards");
+  const { can } = useCan();
+  const canCompleteTasks = can("tasks:complete");
   const [tab, setTab] = useState<PointsApplyTab>("award");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [quantity, setQuantity] = useState(1);
@@ -405,10 +417,14 @@ export function PointsApplyCredenza({
     [behaviors],
   );
 
+  const isTasksTab = tab === "tasks";
+  const catalogTab = isPointsCatalogTab(tab) ? tab : "award";
+
   const panelCatalog = useMemo((): CatalogItem[] => {
     if (tab === "award") return awardBehaviors;
     if (tab === "remove") return removeBehaviors;
-    return rewards;
+    if (tab === "redeem") return rewards;
+    return [];
   }, [tab, awardBehaviors, removeBehaviors, rewards]);
 
   const folders = tab === "redeem" ? rewardFolders : behaviorFolders;
@@ -559,7 +575,7 @@ export function PointsApplyCredenza({
               item={item}
               checked={selectedIds.has(item._id)}
               constraint={itemConstraint(item)}
-              pointsLabel={formatApplyCatalogPoints(tab, item.points, i18n.language)}
+              pointsLabel={formatApplyCatalogPoints(catalogTab, item.points, i18n.language)}
               view="grid"
               onToggle={toggleId}
             />
@@ -576,7 +592,7 @@ export function PointsApplyCredenza({
             item={item}
             checked={selectedIds.has(item._id)}
             constraint={itemConstraint(item)}
-            pointsLabel={formatApplyCatalogPoints(tab, item.points, i18n.language)}
+            pointsLabel={formatApplyCatalogPoints(catalogTab, item.points, i18n.language)}
             view="list"
             onToggle={toggleId}
           />
@@ -586,7 +602,7 @@ export function PointsApplyCredenza({
   };
 
   const submit = async () => {
-    if (isSubmitting || selectedIds.size === 0 || students.length === 0) return;
+    if (isSubmitting || selectedIds.size === 0 || students.length === 0 || isTasksTab) return;
     setIsSubmitting(true);
     onOpenChange(false);
     try {
@@ -610,7 +626,7 @@ export function PointsApplyCredenza({
           }));
         const trimmedNote = note.trim();
         await onApplyBehaviors({
-          mode: tab,
+          mode: tab === "remove" ? "remove" : "award",
           items,
           ...(tab === "remove" && trimmedNote.length > 0 ? { note: trimmedNote } : {}),
         });
@@ -684,169 +700,203 @@ export function PointsApplyCredenza({
             className="min-h-0 flex-1"
           >
             <TabsList className="w-full">
-              <TabsTrigger value="award">{t("tabAward")}</TabsTrigger>
-              <TabsTrigger value="remove">{t("tabRemove")}</TabsTrigger>
-              <TabsTrigger value="redeem">{t("tabRedeem")}</TabsTrigger>
+              <TabsTrigger value="award">
+                <CoinsIcon data-icon="inline-start" aria-hidden />
+                {t("tabAward")}
+              </TabsTrigger>
+              <TabsTrigger value="remove">
+                <CoinsIcon data-icon="inline-start" aria-hidden />
+                {t("tabRemove")}
+              </TabsTrigger>
+              <TabsTrigger value="redeem">
+                <CoinsIcon data-icon="inline-start" aria-hidden />
+                {t("tabRedeem")}
+              </TabsTrigger>
+              <TabsTrigger value="tasks">
+                <ListTodo data-icon="inline-start" aria-hidden />
+                {t("tabTasks")}
+              </TabsTrigger>
             </TabsList>
 
-            <div className="mt-3 mb-3 flex flex-wrap items-center gap-x-4 gap-y-2">
-              <Field orientation="horizontal" className="w-auto">
-                <FieldLabel htmlFor="points-qty" className="sr-only">
-                  {t("quantityLabel")}
-                </FieldLabel>
-                <NumberInput
-                  id="points-qty"
-                  prefix="×"
-                  min={1}
-                  max={999}
-                  value={quantity}
-                  onValueChange={setQuantity}
-                />
-              </Field>
-              {tab === "redeem" ? (
-                <div className="inline-flex shrink-0 items-center gap-1">
-                  <IconSwitch
-                    id="points-allow-overrides"
-                    checked={allowOverrides}
-                    onCheckedChange={setAllowOverrides}
-                    aria-label={t("allowOverridesLabel")}
-                    checkedIcon={<LockOpenIcon aria-hidden="true" />}
-                    uncheckedIcon={<LockIcon aria-hidden="true" />}
-                  />
-                  <HelpTip
-                    title={t("allowOverridesLabel")}
-                    description={t("allowOverridesDescription")}
-                    ariaLabel={t("allowOverridesHelpAria")}
-                  />
-                </div>
-              ) : null}
-            </div>
-
-            <div className="mb-3 flex items-center gap-2">
-              <InputGroup className="min-w-0 flex-1">
-                <InputGroupInput
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder={t("searchPlaceholder")}
-                  aria-label={t("searchLabel")}
-                  autoComplete="off"
-                  spellCheck={false}
-                />
-                <InputGroupAddon>
-                  <SearchIcon aria-hidden="true" />
-                </InputGroupAddon>
-                <InputGroupAddon align="inline-end">
-                  <InputGroupText>
-                    {t("searchResults", { count: filteredCatalog.length })}
-                  </InputGroupText>
-                  {searchQuery ? (
-                    <InputGroupButton
-                      size="icon-xs"
-                      aria-label={t("searchClear")}
-                      onClick={() => setSearchQuery("")}
-                    >
-                      <XIcon />
-                    </InputGroupButton>
-                  ) : null}
-                </InputGroupAddon>
-              </InputGroup>
-              <ToggleGroup
-                variant="outline"
-                spacing={0}
-                value={[catalogView]}
-                onValueChange={(value) => {
-                  const next = value[0] as PointsCatalogView | undefined;
-                  if (next === "list" || next === "grid") setCatalogView(next);
-                }}
-                className="shrink-0"
-              >
-                <ToggleGroupItem value="grid" aria-label={t("viewGrid")}>
-                  <LayoutGridIcon />
-                </ToggleGroupItem>
-                <ToggleGroupItem value="list" aria-label={t("viewList")}>
-                  <ListIcon />
-                </ToggleGroupItem>
-              </ToggleGroup>
-            </div>
-
-            {/* Fixed-height panel: catalog flex-fills leftover space when note is hidden. */}
-            <div className={CATALOG_PANEL_CLASS}>
-              {tab === "remove" ? (
-                <Field className="shrink-0">
-                  <FieldLabel htmlFor="points-remove-note">
-                    {t("removeNoteLabel")}
-                    <span className="font-normal text-muted-foreground">
-                      ({tCommon("optional")})
-                    </span>
-                  </FieldLabel>
-                  <Textarea
-                    id="points-remove-note"
-                    value={note}
-                    onChange={(event) => setNote(event.target.value)}
-                    placeholder={t("removeNotePlaceholder")}
-                    rows={2}
-                    maxLength={MAX_APPLICATION_NOTE_LENGTH}
-                  />
-                </Field>
-              ) : null}
-              <div className={CATALOG_SCROLL_CLASS}>
-                {catalogIsEmpty ? (
-                  <p className="p-3 text-sm text-muted-foreground">{t("catalogEmpty")}</p>
-                ) : noMatches ? (
-                  <p className="p-3 text-sm text-muted-foreground">{t("catalogNoMatches")}</p>
-                ) : (
-                  <div className="space-y-2">
-                    {foldersWithItems.map(({ folder, items }) => {
-                      const open = openFolderIds.has(folder._id);
-                      return (
-                        <Collapsible
-                          key={folder._id}
-                          open={open}
-                          onOpenChange={(nextOpen) => {
-                            setOpenFolderIds((prev) => {
-                              const next = new Set(prev);
-                              if (nextOpen) next.add(folder._id);
-                              else next.delete(folder._id);
-                              return next;
-                            });
-                          }}
-                        >
-                          <CollapsibleTrigger className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm font-medium hover:bg-muted/60">
-                            <ChevronRightIcon
-                              className={cn(
-                                "size-4 shrink-0 text-muted-foreground transition-transform",
-                                open && "rotate-90",
-                              )}
-                              aria-hidden
-                            />
-                            {folder.icon ? (
-                              <FontAwesomeIconFromId id={folder.icon} className="size-4 shrink-0" />
-                            ) : (
-                              <FolderIcon className="size-4 shrink-0 text-muted-foreground" />
-                            )}
-                            <span className="min-w-0 flex-1 truncate">{folder.name}</span>
-                            <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                              {t("folderItemCount", { count: items.length })}
-                            </span>
-                          </CollapsibleTrigger>
-                          <CollapsibleContent className="pt-1 pl-2">
-                            {renderItems(items)}
-                          </CollapsibleContent>
-                        </Collapsible>
-                      );
-                    })}
-
-                    {unfiledItems.length > 0 ? (
-                      <div className="space-y-1">
-                        {foldersWithItems.length > 0 ? (
-                          <p className="px-2 pt-1 text-xs font-medium text-muted-foreground">
-                            {t("unfiledTitle")}
-                          </p>
-                        ) : null}
-                        {renderItems(unfiledItems)}
+            <div className={TAB_BODY_CLASS}>
+              {isTasksTab ? null : (
+                <>
+                  <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+                    <Field orientation="horizontal" className="w-auto">
+                      <FieldLabel htmlFor="points-qty" className="sr-only">
+                        {t("quantityLabel")}
+                      </FieldLabel>
+                      <NumberInput
+                        id="points-qty"
+                        prefix="×"
+                        min={1}
+                        max={999}
+                        value={quantity}
+                        onValueChange={setQuantity}
+                      />
+                    </Field>
+                    {tab === "redeem" ? (
+                      <div className="inline-flex shrink-0 items-center gap-1">
+                        <IconSwitch
+                          id="points-allow-overrides"
+                          checked={allowOverrides}
+                          onCheckedChange={setAllowOverrides}
+                          aria-label={t("allowOverridesLabel")}
+                          checkedIcon={<LockOpenIcon aria-hidden="true" />}
+                          uncheckedIcon={<LockIcon aria-hidden="true" />}
+                        />
+                        <HelpTip
+                          title={t("allowOverridesLabel")}
+                          description={t("allowOverridesDescription")}
+                          ariaLabel={t("allowOverridesHelpAria")}
+                        />
                       </div>
                     ) : null}
                   </div>
+
+                  <div className="mb-3 flex items-center gap-2">
+                    <InputGroup className="min-w-0 flex-1">
+                      <InputGroupInput
+                        value={searchQuery}
+                        onChange={(event) => setSearchQuery(event.target.value)}
+                        placeholder={t("searchPlaceholder")}
+                        aria-label={t("searchLabel")}
+                        autoComplete="off"
+                        spellCheck={false}
+                      />
+                      <InputGroupAddon>
+                        <SearchIcon aria-hidden="true" />
+                      </InputGroupAddon>
+                      <InputGroupAddon align="inline-end">
+                        <InputGroupText>
+                          {t("searchResults", { count: filteredCatalog.length })}
+                        </InputGroupText>
+                        {searchQuery ? (
+                          <InputGroupButton
+                            size="icon-xs"
+                            aria-label={t("searchClear")}
+                            onClick={() => setSearchQuery("")}
+                          >
+                            <XIcon />
+                          </InputGroupButton>
+                        ) : null}
+                      </InputGroupAddon>
+                    </InputGroup>
+                    <ToggleGroup
+                      variant="outline"
+                      spacing={0}
+                      value={[catalogView]}
+                      onValueChange={(value) => {
+                        const next = value[0] as PointsCatalogView | undefined;
+                        if (next === "list" || next === "grid") setCatalogView(next);
+                      }}
+                      className="shrink-0"
+                    >
+                      <ToggleGroupItem value="grid" aria-label={t("viewGrid")}>
+                        <LayoutGridIcon />
+                      </ToggleGroupItem>
+                      <ToggleGroupItem value="list" aria-label={t("viewList")}>
+                        <ListIcon />
+                      </ToggleGroupItem>
+                    </ToggleGroup>
+                  </div>
+                </>
+              )}
+
+              <div className={CATALOG_PANEL_CLASS}>
+                {isTasksTab ? (
+                  <PointsApplyTasksPanel
+                    tasks={tasks}
+                    studentUserIds={studentUserIds}
+                    canComplete={canCompleteTasks}
+                    onToggle={(task, completed) => {
+                      void onToggleTaskCompletion({ taskId: task._id, completed });
+                    }}
+                  />
+                ) : (
+                  <>
+                    {tab === "remove" ? (
+                      <Field className="shrink-0">
+                        <FieldLabel htmlFor="points-remove-note">
+                          {t("removeNoteLabel")}
+                          <span className="font-normal text-muted-foreground">
+                            ({tCommon("optional")})
+                          </span>
+                        </FieldLabel>
+                        <Textarea
+                          id="points-remove-note"
+                          value={note}
+                          onChange={(event) => setNote(event.target.value)}
+                          placeholder={t("removeNotePlaceholder")}
+                          rows={2}
+                          maxLength={MAX_APPLICATION_NOTE_LENGTH}
+                        />
+                      </Field>
+                    ) : null}
+                    <div className={CATALOG_SCROLL_CLASS}>
+                      {catalogIsEmpty ? (
+                        <p className="p-3 text-sm text-muted-foreground">{t("catalogEmpty")}</p>
+                      ) : noMatches ? (
+                        <p className="p-3 text-sm text-muted-foreground">{t("catalogNoMatches")}</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {foldersWithItems.map(({ folder, items }) => {
+                            const open = openFolderIds.has(folder._id);
+                            return (
+                              <Collapsible
+                                key={folder._id}
+                                open={open}
+                                onOpenChange={(nextOpen) => {
+                                  setOpenFolderIds((prev) => {
+                                    const next = new Set(prev);
+                                    if (nextOpen) next.add(folder._id);
+                                    else next.delete(folder._id);
+                                    return next;
+                                  });
+                                }}
+                              >
+                                <CollapsibleTrigger className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm font-medium hover:bg-muted/60">
+                                  <ChevronRightIcon
+                                    className={cn(
+                                      "size-4 shrink-0 text-muted-foreground transition-transform",
+                                      open && "rotate-90",
+                                    )}
+                                    aria-hidden
+                                  />
+                                  {folder.icon ? (
+                                    <FontAwesomeIconFromId
+                                      id={folder.icon}
+                                      className="size-4 shrink-0"
+                                    />
+                                  ) : (
+                                    <FolderIcon className="size-4 shrink-0 text-muted-foreground" />
+                                  )}
+                                  <span className="min-w-0 flex-1 truncate">{folder.name}</span>
+                                  <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                                    {t("folderItemCount", { count: items.length })}
+                                  </span>
+                                </CollapsibleTrigger>
+                                <CollapsibleContent className="pt-1 pl-2">
+                                  {renderItems(items)}
+                                </CollapsibleContent>
+                              </Collapsible>
+                            );
+                          })}
+
+                          {unfiledItems.length > 0 ? (
+                            <div className="space-y-1">
+                              {foldersWithItems.length > 0 ? (
+                                <p className="px-2 pt-1 text-xs font-medium text-muted-foreground">
+                                  {t("unfiledTitle")}
+                                </p>
+                              ) : null}
+                              {renderItems(unfiledItems)}
+                            </div>
+                          ) : null}
+                        </div>
+                      )}
+                    </div>
+                  </>
                 )}
               </div>
             </div>
@@ -857,17 +907,21 @@ export function PointsApplyCredenza({
           <CredenzaClose render={<Button type="button" variant="outline" />}>
             {t("cancel")}
           </CredenzaClose>
-          <Button
-            type="button"
-            disabled={
-              isSubmitting || selectedIds.size === 0 || (tab === "redeem" && purchaseLimitsPending)
-            }
-            onClick={() => {
-              void submit();
-            }}
-          >
-            {t("applyAction")}
-          </Button>
+          {isTasksTab ? null : (
+            <Button
+              type="button"
+              disabled={
+                isSubmitting ||
+                selectedIds.size === 0 ||
+                (tab === "redeem" && purchaseLimitsPending)
+              }
+              onClick={() => {
+                void submit();
+              }}
+            >
+              {t("applyAction")}
+            </Button>
+          )}
         </CredenzaFooter>
       </CredenzaContent>
     </Credenza>

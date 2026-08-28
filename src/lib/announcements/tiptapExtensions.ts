@@ -42,6 +42,33 @@ export function createAnnouncementExtensions(options?: {
   ];
 }
 
+/** Ctrl/Cmd+Enter in a TipTap editor should submit the surrounding form, not insert a break. */
+export function isSubmitOnModEnter(event: {
+  key: string;
+  ctrlKey: boolean;
+  metaKey: boolean;
+}): boolean {
+  return event.key === "Enter" && (event.ctrlKey || event.metaKey);
+}
+
+export function handleNotesSubmitKeyDown(
+  event: {
+    key: string;
+    ctrlKey: boolean;
+    metaKey: boolean;
+    preventDefault: () => void;
+    stopPropagation: () => void;
+  },
+  onSubmit: (() => void) | undefined,
+  disabled = false,
+): boolean {
+  if (disabled || !onSubmit || !isSubmitOnModEnter(event)) return false;
+  event.preventDefault();
+  event.stopPropagation();
+  onSubmit();
+  return true;
+}
+
 export function parseAnnouncementBodyJson(bodyJson: string): JSONContent {
   try {
     const parsed: unknown = JSON.parse(bodyJson);

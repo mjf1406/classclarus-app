@@ -38,6 +38,8 @@ import { useRewardFolders } from "@/hooks/rewardFolders/useRewardFolders";
 import { useRewards } from "@/hooks/rewards/useRewards";
 import { useEnsureStudentRosters } from "@/hooks/roster/useEnsureStudentRosters";
 import { useStudentRosterFilter } from "@/hooks/students/useStudentRosterFilter";
+import { useSetTaskCompletion } from "@/hooks/tasks/useSetTaskCompletion";
+import { useTasks } from "@/hooks/tasks/useTasks";
 import { useAuthedQuery } from "@/hooks/useAuthedQuery";
 import { localDateKey } from "@/lib/attendance/dateKey";
 import { buildMembershipIndex } from "@/lib/groups/groupTeamFilters";
@@ -89,6 +91,7 @@ function StaffPointsPage({ classId }: PointsPageProps) {
   const { data: groupsBoard } = useGroupsBoard(classId);
   const { data: behaviors } = useBehaviors(classId);
   const { data: rewards } = useRewards(classId);
+  const { data: tasks } = useTasks(classId);
   const { data: behaviorFolders } = useBehaviorFolders(classId);
   const { data: rewardFolders } = useRewardFolders(classId);
   const groupTeamFilterState = useGroupTeamFilterState(classId);
@@ -98,6 +101,7 @@ function StaffPointsPage({ classId }: PointsPageProps) {
 
   const applyBehaviors = useApplyBehaviors();
   const redeemRewards = useRedeemRewards();
+  const setTaskCompletion = useSetTaskCompletion();
   const undoPoints = useUndoLastPointsAction();
   const giveWarning = useGiveWarning();
   const undoWarning = useUndoLastWarning();
@@ -374,6 +378,7 @@ function StaffPointsPage({ classId }: PointsPageProps) {
         nameFormat={nameFormat}
         behaviors={behaviors ?? []}
         rewards={rewards ?? []}
+        tasks={tasks ?? []}
         behaviorFolders={behaviorFolders ?? []}
         rewardFolders={rewardFolders ?? []}
         purchaseLimitStatuses={purchaseLimits.data ?? []}
@@ -405,6 +410,16 @@ function StaffPointsPage({ classId }: PointsPageProps) {
           clearSelection();
           setSelectMode(false);
           await redeemPromise;
+        }}
+        onToggleTaskCompletion={async ({ taskId, completed }) => {
+          for (const student of applyTargets) {
+            await setTaskCompletion.mutateAsync({
+              classId,
+              taskId,
+              studentUserId: student.userId,
+              completed,
+            });
+          }
         }}
       />
     </div>

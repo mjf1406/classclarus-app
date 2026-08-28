@@ -65,6 +65,35 @@ export function normalizeSubjectName(name: string): string {
   return trimmed;
 }
 
+export function isEmptyNotesJson(value: string | undefined): boolean {
+  if (!value || !value.trim()) return true;
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (!parsed || typeof parsed !== "object") return false;
+    const doc = parsed as { type?: unknown; content?: unknown };
+    if (doc.type !== "doc" || !Array.isArray(doc.content)) return false;
+    if (doc.content.length === 0) return true;
+    if (doc.content.length > 1) return false;
+    const first = doc.content[0];
+    if (!first || typeof first !== "object") return false;
+    const node = first as { type?: unknown; content?: unknown };
+    if (node.type !== "paragraph") return false;
+    if (node.content === undefined) return true;
+    return Array.isArray(node.content) && node.content.length === 0;
+  } catch {
+    return false;
+  }
+}
+
+export function normalizeOptionalNotesJson(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  if (!trimmed || isEmptyNotesJson(trimmed)) return undefined;
+  if (trimmed.length > MAX_NOTES_JSON_LENGTH) {
+    throw new Error(`Notes must be at most ${MAX_NOTES_JSON_LENGTH} characters`);
+  }
+  return trimmed;
+}
+
 export function normalizeHexColor(value: string, fallback: string): string {
   const trimmed = value.trim();
   if (/^#[0-9A-Fa-f]{6}$/.test(trimmed)) return trimmed;

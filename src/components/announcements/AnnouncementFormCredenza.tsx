@@ -197,7 +197,11 @@ export function AnnouncementFormCredenza({
                 {(field) => (
                   <Field>
                     <FieldLabel>{t("bodyLabel")}</FieldLabel>
-                    <AnnouncementEditor value={field.state.value} onChange={field.handleChange} />
+                    <AnnouncementEditor
+                      value={field.state.value}
+                      onChange={field.handleChange}
+                      onSubmit={() => void form.handleSubmit()}
+                    />
                     <FieldDescription>{t("bodyLinkHint")}</FieldDescription>
                   </Field>
                 )}

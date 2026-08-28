@@ -6,6 +6,7 @@ import {
   applyRewardRedemptionsToBoard,
   comparePointsStudents,
   formatApplyCatalogPoints,
+  isPointsCatalogTab,
   nextPointsSortState,
   partitionPointsCatalogByFolder,
   sortPointsStudents,
@@ -93,6 +94,15 @@ describe("formatApplyCatalogPoints", () => {
   test("shows redeem costs as negative", () => {
     expect(formatApplyCatalogPoints("redeem", 5, "en")).toBe("-5");
     expect(formatApplyCatalogPoints("redeem", 0, "en")).toBe("0");
+  });
+});
+
+describe("isPointsCatalogTab", () => {
+  test("treats award, remove, and redeem as catalog tabs", () => {
+    expect(isPointsCatalogTab("award")).toBe(true);
+    expect(isPointsCatalogTab("remove")).toBe(true);
+    expect(isPointsCatalogTab("redeem")).toBe(true);
+    expect(isPointsCatalogTab("tasks")).toBe(false);
   });
 });
 

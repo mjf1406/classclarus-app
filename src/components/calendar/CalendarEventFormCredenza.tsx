@@ -309,6 +309,7 @@ export function CalendarEventFormCredenza({
                       <AnnouncementEditor
                         value={field.state.value}
                         onChange={field.handleChange}
+                        onSubmit={() => void form.handleSubmit()}
                         placeholder={t("descriptionPlaceholder")}
                       />
                       <FieldDescription>{t("bodyLinkHint")}</FieldDescription>

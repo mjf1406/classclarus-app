@@ -36,6 +36,42 @@ export function partitionTasksByArchive<T extends { archivedAt?: number }>(
   return { active, archived };
 }
 
+export function countTaskCompletionsForStudents(
+  task: { completedStudentIds?: readonly string[] },
+  studentUserIds: readonly string[],
+): number {
+  if (studentUserIds.length === 0) return 0;
+  const completed = new Set(task.completedStudentIds ?? []);
+  return studentUserIds.filter((id) => completed.has(id)).length;
+}
+
+export function areAllStudentsCompleteOnTask(
+  task: { completedStudentIds?: readonly string[] },
+  studentUserIds: readonly string[],
+): boolean {
+  return (
+    studentUserIds.length > 0 &&
+    countTaskCompletionsForStudents(task, studentUserIds) === studentUserIds.length
+  );
+}
+
+/** Active (non-archived) tasks split by whether every selected student is complete. */
+export function partitionActiveTasksByStudentCompletion<
+  T extends { archivedAt?: number; completedStudentIds?: readonly string[] },
+>(tasks: readonly T[], studentUserIds: readonly string[]): { incomplete: T[]; completed: T[] } {
+  const incomplete: T[] = [];
+  const completed: T[] = [];
+  for (const task of tasks) {
+    if (isTaskArchived(task)) continue;
+    if (areAllStudentsCompleteOnTask(task, studentUserIds)) {
+      completed.push(task);
+    } else {
+      incomplete.push(task);
+    }
+  }
+  return { incomplete, completed };
+}
+
 export function isPersonalTaskDetail(detail: TaskDetail): detail is TaskDetailPersonal {
   return detail.scope === "personal";
 }
@@ -180,6 +216,21 @@ export function groupTasksByAssignment(tasks: readonly TaskListItem[]): {
     );
 
   return { groups, ungrouped };
+}
+
+/** Split assignment folders by whether every selected student is complete on every task. */
+export function partitionAssignmentGroupsByCompletion(
+  groups: readonly TaskAssignmentGroup[],
+  studentUserIds: readonly string[],
+): { incompleteGroups: TaskAssignmentGroup[]; completedGroups: TaskAssignmentGroup[] } {
+  const incompleteGroups: TaskAssignmentGroup[] = [];
+  const completedGroups: TaskAssignmentGroup[] = [];
+  for (const group of groups) {
+    const { incomplete } = partitionActiveTasksByStudentCompletion(group.tasks, studentUserIds);
+    if (incomplete.length > 0) incompleteGroups.push(group);
+    else completedGroups.push(group);
+  }
+  return { incompleteGroups, completedGroups };
 }
 
 export type TaskGroupCompletionStat = {

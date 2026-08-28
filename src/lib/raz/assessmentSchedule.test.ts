@@ -101,6 +101,20 @@ describe("getRazDisplayStatus", () => {
     ).toEqual(["pending"]);
   });
 
+  test("manual ineligible wins over schedule (no auto-scheduling)", () => {
+    const anchor = new Date(2026, 0, 1).getTime();
+    const now = new Date(2026, 1, 5).getTime();
+    expect(
+      getRazDisplayStatuses({
+        level: "Z2",
+        scheduleAnchorAt: anchor,
+        lastAssessedAt: anchor,
+        manualStatus: "ineligible",
+        nowMs: now,
+      }),
+    ).toEqual(["ineligible"]);
+  });
+
   test("falls back to schedule when manual cleared", () => {
     const anchor = new Date(2026, 0, 1).getTime();
     const now = new Date(2026, 0, 20).getTime();
@@ -163,6 +177,16 @@ describe("getRazStatusExplanationReason", () => {
         scheduleStatus: "up_to_date",
       }),
     ).toBe("rti");
+  });
+
+  test("ineligible explanation wins over schedule", () => {
+    expect(
+      getRazStatusExplanationReason({
+        manualStatus: "ineligible",
+        lastAssessedAt: 1,
+        scheduleStatus: "overdue",
+      }),
+    ).toBe("ineligible");
   });
 
   test("distinguishes never-assessed overdue from window overdue", () => {

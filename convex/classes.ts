@@ -2,16 +2,10 @@ import { v } from "convex/values";
 
 import { authz } from "./authz.js";
 import { APP_CONFIG } from "./appConfig.js";
-import { components, internal } from "./_generated/api.js";
+import { components } from "./_generated/api.js";
 import type { Doc, Id } from "./_generated/dataModel.js";
 import type { MutationCtx } from "./_generated/server.js";
-import {
-  CLASS_ROLES,
-  classScope,
-  isClassRole,
-  pickHighestClassRole,
-  type ClassRole,
-} from "./lib/authzModel.js";
+import { classScope, isClassRole, pickHighestClassRole, type ClassRole } from "./lib/authzModel.js";
 import { recordClassActivity } from "./lib/classActivity.js";
 import {
   classReadDeniedByOverrides,
@@ -20,22 +14,7 @@ import {
 } from "./lib/classPermissionOverrides.js";
 import { authedQuery, classMutation, classQuery, entitledMutation } from "./lib/customFunctions.js";
 import { rateLimiter } from "./lib/rateLimiter.js";
-import { clearLinksForClass } from "./lib/guardianLinks.js";
-import { deleteFilesForClass } from "./lib/filesCleanup.js";
-import { deleteAnnouncementsForClass } from "./lib/announcementsCleanup.js";
-import { deleteAttendanceForClass } from "./lib/attendanceCleanup.js";
-import { deleteGroupsForClass } from "./lib/groupsCleanup.js";
-import { deleteTasksForClass } from "./lib/tasksCleanup.js";
-import { deleteAssignmentsForClass } from "./lib/assignmentsCleanup.js";
-import { deleteExpectationsForClass } from "./lib/expectationsCleanup.js";
-import { deleteGradeScalesForClass } from "./lib/gradeScalesCleanup.js";
-import { deleteGradedSubjectsForClass } from "./lib/gradedSubjectsCleanup.js";
-import { deleteRandomAssignersForClass } from "./lib/randomAssignersCleanup.js";
-import { deleteEquitableAssignersForClass } from "./lib/equitableAssignersCleanup.js";
-import { deleteBehaviorsForClass } from "./lib/behaviorsCleanup.js";
-import { deleteRewardsForClass } from "./lib/rewardsCleanup.js";
-import { deleteWarningEventsForClass } from "./lib/pointsCleanup.js";
-import { deleteJoinCodesForClass } from "./lib/joinCodesCleanup.js";
+import { startClassDeletionJob } from "./classDeletion.js";
 import { languageValidator, type LanguageCode } from "./lib/languages.js";
 import {
   normalizePointsBadgeAlerts,
@@ -48,13 +27,7 @@ import {
   resolvePointsBadgeWindow,
   type PointsBadgeWindowUnit,
 } from "./lib/pointsBadgeWindow.js";
-import {
-  deleteClassUserSettingsForClass,
-  deleteStudentRostersForClass,
-} from "./lib/studentRosters.js";
 import { resolveUserImageUrl } from "./lib/userImage.js";
-import { deleteCalendarForClass } from "./lib/cleanup/calendarCleanup.js";
-import { deleteTimetableForClass } from "./lib/cleanup/timetableCleanup.js";
 import { normalizeTimeZone } from "./lib/calendar/timeZone.js";
 
 const MIN_YEAR = 1900;
@@ -236,27 +209,8 @@ function deleteConfirmationPhrase(name: string): string {
   return `delete ${name}`;
 }
 
-async function revokeAllClassMembership(ctx: MutationCtx, classId: Id<"classes">): Promise<void> {
-  const scope = classScope(classId);
-  const userIds = new Set<string>();
-  for (const role of CLASS_ROLES) {
-    const users = await ctx.runQuery(components.authz.queries.getUsersWithRole, {
-      tenantId: APP_CONFIG.authzTenantId,
-      role,
-      scope,
-    });
-    for (const user of users) {
-      userIds.add(user.userId);
-    }
-  }
-  for (const userId of userIds) {
-    await authz.offboardUser(ctx, userId, {
-      scope,
-      removeOverrides: true,
-      removeRelationships: true,
-      removeAttributes: false,
-    });
-  }
+function isClassVisible(classDoc: Doc<"classes">): boolean {
+  return classDoc.deletingAt === undefined;
 }
 
 export const listMine = authedQuery({
@@ -291,7 +245,7 @@ export const listMine = authedQuery({
       if (!role) continue;
 
       const classDoc = await ctx.db.get("classes", classId as Id<"classes">);
-      if (!classDoc) continue;
+      if (!classDoc || !isClassVisible(classDoc)) continue;
 
       results.push({ ...withClassDefaults(classDoc), role });
     }
@@ -314,7 +268,7 @@ export const listOwned = authedQuery({
       .query("classes")
       .withIndex("by_owner", (q) => q.eq("ownerId", ctx.userId))
       .collect();
-    return owned.map(withClassDefaults);
+    return owned.filter(isClassVisible).map(withClassDefaults);
   },
 });
 
@@ -323,7 +277,7 @@ export const get = authedQuery({
   returns: v.union(classValidator, v.null()),
   handler: async (ctx, args) => {
     const classDoc = await ctx.db.get("classes", args.classId);
-    if (!classDoc) {
+    if (!classDoc || !isClassVisible(classDoc)) {
       return null;
     }
     const canRead = await authz.can(ctx, ctx.userId, "class:read", classScope(args.classId));
@@ -713,7 +667,7 @@ export const remove = classMutation({
   args: {
     confirmation: v.string(),
   },
-  returns: v.null(),
+  returns: v.id("classDeletionJobs"),
   handler: async (ctx, args) => {
     await rateLimiter.limit(ctx, "classDelete", { key: ctx.userId, throws: true });
     await ctx.require("class:delete");
@@ -721,32 +675,12 @@ export const remove = classMutation({
     if (args.confirmation !== expected) {
       throw new Error(`Type "${expected}" to confirm deletion`);
     }
-    const classId = ctx.classDoc._id;
-    await revokeAllClassMembership(ctx, classId);
-    await deleteJoinCodesForClass(ctx, classId);
-    await clearLinksForClass(ctx, classId);
-    await deleteGroupsForClass(ctx, classId);
-    await deleteAttendanceForClass(ctx, classId);
-    await deleteStudentRostersForClass(ctx, classId);
-    await deleteClassUserSettingsForClass(ctx, classId);
-    await deleteAnnouncementsForClass(ctx, classId);
-    await deleteCalendarForClass(ctx, classId);
-    await deleteTimetableForClass(ctx, classId);
-    await deleteTasksForClass(ctx, classId);
-    await deleteAssignmentsForClass(ctx, classId);
-    await deleteExpectationsForClass(ctx, classId);
-    await deleteGradedSubjectsForClass(ctx, classId);
-    await deleteRandomAssignersForClass(ctx, classId);
-    await deleteEquitableAssignersForClass(ctx, classId);
-    await deleteGradeScalesForClass(ctx, classId);
-    await deleteBehaviorsForClass(ctx, classId);
-    await deleteRewardsForClass(ctx, classId);
-    await deleteWarningEventsForClass(ctx, classId);
-    await deleteFilesForClass(ctx, classId);
-    // Purge activity without keeping a delete row (class is gone).
-    await ctx.scheduler.runAfter(0, internal.activity.purgeForClass, { classId });
-    await ctx.db.delete("classes", classId);
-    return null;
+
+    return await startClassDeletionJob(ctx, {
+      classId: ctx.classDoc._id,
+      requesterUserId: ctx.userId,
+      className: ctx.classDoc.name,
+    });
   },
 });
 

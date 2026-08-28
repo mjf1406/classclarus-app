@@ -16,6 +16,7 @@ export const RAZ_DISPLAY_STATUSES = [
   "due_now",
   "coming_soon",
   "up_to_date",
+  "ineligible",
 ] as const satisfies readonly RazDisplayStatus[];
 
 export type RazAssessmentSchedule = {
@@ -139,7 +140,8 @@ export type GetRazDisplayStatusArgs = {
 };
 
 /**
- * Display statuses with manual overrides first (RTI → pending), then schedule.
+ * Display statuses with manual overrides first (RTI → pending → ineligible),
+ * then schedule.
  *
  * RTI is the only case that returns two statuses: `["rti", "overdue"]`
  * (immediate retest). All other cases return a single status.
@@ -153,6 +155,9 @@ export function getRazDisplayStatuses({
 }: GetRazDisplayStatusArgs): RazDisplayStatus[] {
   if (manualStatus === "pending") {
     return ["pending"];
+  }
+  if (manualStatus === "ineligible") {
+    return ["ineligible"];
   }
   if (manualStatus === "rti") {
     return ["rti", "overdue"];
@@ -172,6 +177,7 @@ export function getRazDisplayStatus(args: GetRazDisplayStatusArgs): RazDisplaySt
 export type RazStatusExplanationReason =
   | "rti"
   | "pending"
+  | "ineligible"
   | "overdue_never_assessed"
   | "overdue_window"
   | "due_now"
@@ -192,6 +198,7 @@ export function getRazStatusExplanationReason({
 }): RazStatusExplanationReason | null {
   if (manualStatus === "rti") return "rti";
   if (manualStatus === "pending") return "pending";
+  if (manualStatus === "ineligible") return "ineligible";
   if (scheduleStatus == null) return null;
   if (scheduleStatus === "overdue") {
     return lastAssessedAt == null ? "overdue_never_assessed" : "overdue_window";

@@ -34,6 +34,10 @@ export function randomClientId(): string {
   return uuidV4FromGetRandomValues();
 }
 
+export function isOptimisticId(id: string): boolean {
+  return id.startsWith("optimistic:");
+}
+
 export function patchDoc<TDoc>(oldDoc: TDoc | null, patch: (doc: TDoc) => TDoc): TDoc | null {
   if (!oldDoc) {
     return oldDoc;

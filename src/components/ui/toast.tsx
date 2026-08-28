@@ -3,6 +3,7 @@ import { Toast as ToastPrimitive } from "@base-ui/react/toast";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { ProgressButton } from "@/components/ui/progress-button";
 import { toast, useToastManager, type ToastData } from "@/components/ui/toast-manager";
 import {
   XIcon,
@@ -191,15 +192,30 @@ function ToastList() {
 
   return toasts.map((toastItem) => {
     const extraActions = toastItem.data?.extraActions ?? [];
+    const classDeletion = toastItem.data?.classDeletion;
     return (
       <Toast key={toastItem.id} toast={toastItem}>
-        <ToastContent className={extraActions.length > 0 ? "items-start" : undefined}>
+        <ToastContent
+          className={extraActions.length > 0 || classDeletion ? "items-start" : undefined}
+        >
           <ToastIcon type={toastItem.type} />
           <div className="flex min-w-0 flex-1 flex-col gap-2">
             <div className="flex min-w-0 flex-col gap-1">
               <ToastTitle />
               <ToastDescription />
             </div>
+            {classDeletion ? (
+              <ProgressButton
+                pending={classDeletion.pending}
+                progress={classDeletion.progress}
+                variant="destructive"
+                size="sm"
+                className="w-full bg-destructive text-white hover:bg-destructive/90 dark:bg-destructive dark:hover:bg-destructive/90"
+                disabled
+              >
+                {classDeletion.label}
+              </ProgressButton>
+            ) : null}
             {extraActions.length > 0 ? (
               <div className="flex flex-wrap gap-1">
                 {extraActions.map((action, index) => (

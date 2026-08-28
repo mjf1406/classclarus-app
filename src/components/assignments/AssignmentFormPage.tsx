@@ -1082,6 +1082,7 @@ export function AssignmentFormPage({ classId, mode, initial }: AssignmentFormPag
                 <AssignmentInstructionsEditor
                   value={field.state.value}
                   onChange={field.handleChange}
+                  onSubmit={() => void form.handleSubmit()}
                 />
                 <p className="text-sm text-muted-foreground">{t("bodyLinkHint")}</p>
               </div>

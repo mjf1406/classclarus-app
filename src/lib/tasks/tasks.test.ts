@@ -5,10 +5,13 @@ import {
   groupTasksByAssignment,
   isTaskPastDue,
   nextTaskStudentSortState,
+  partitionActiveTasksByStudentCompletion,
+  partitionAssignmentGroupsByCompletion,
   partitionTasksByArchive,
   sortTaskStudents,
   sortTasksByProcedureStep,
   taskStudentCardNames,
+  type TaskAssignmentGroup,
   type TaskListItem,
 } from "@/lib/tasks/tasks";
 import { completionTone } from "@/components/tasks/taskCompletionTone";
@@ -84,6 +87,50 @@ describe("partitionTasksByArchive", () => {
   });
 });
 
+describe("partitionActiveTasksByStudentCompletion", () => {
+  const studentA = "a" as Id<"users">;
+  const studentB = "b" as Id<"users">;
+
+  test("never includes archived tasks", () => {
+    const archivedIncomplete = stubTask({
+      _id: "t-arch" as Id<"tasks">,
+      name: "Archived",
+      archivedAt: 10,
+      completedStudentIds: [],
+    });
+    const archivedComplete = stubTask({
+      _id: "t-arch-done" as Id<"tasks">,
+      name: "Archived done",
+      archivedAt: 11,
+      completedStudentIds: [studentA],
+    });
+    const result = partitionActiveTasksByStudentCompletion(
+      [archivedIncomplete, archivedComplete],
+      [studentA],
+    );
+    expect(result).toEqual({ incomplete: [], completed: [] });
+  });
+
+  test("splits incomplete and completed for selected students", () => {
+    const incomplete = stubTask({
+      _id: "t1" as Id<"tasks">,
+      name: "Open",
+      completedStudentIds: [studentA],
+    });
+    const complete = stubTask({
+      _id: "t2" as Id<"tasks">,
+      name: "Done",
+      completedStudentIds: [studentA, studentB],
+    });
+    const result = partitionActiveTasksByStudentCompletion(
+      [incomplete, complete],
+      [studentA, studentB],
+    );
+    expect(result.incomplete.map((task) => task._id)).toEqual(["t1"]);
+    expect(result.completed.map((task) => task._id)).toEqual(["t2"]);
+  });
+});
+
 describe("sortTasksByProcedureStep", () => {
   test("orders by procedure step number ascending", () => {
     const sorted = sortTasksByProcedureStep([
@@ -128,6 +175,51 @@ describe("groupTasksByAssignment", () => {
     ]);
     expect(groups).toHaveLength(1);
     expect(groups[0]?.tasks.map((task) => task.name)).toEqual(["Step one", "Step two"]);
+  });
+});
+
+describe("partitionAssignmentGroupsByCompletion", () => {
+  const studentA = "a" as Id<"users">;
+  const assignmentId = "a1" as Id<"assignments">;
+
+  test("moves a folder to completed only when every task is done", () => {
+    const lab: TaskAssignmentGroup = {
+      assignmentId,
+      assignmentName: "Lab",
+      tasks: [
+        stubTask({
+          _id: "t1" as Id<"tasks">,
+          name: "Step one",
+          assignmentId,
+          assignmentName: "Lab",
+          completedStudentIds: [studentA],
+        }),
+        stubTask({
+          _id: "t2" as Id<"tasks">,
+          name: "Step two",
+          assignmentId,
+          assignmentName: "Lab",
+          completedStudentIds: [],
+        }),
+      ],
+    };
+    const quiz: TaskAssignmentGroup = {
+      assignmentId: "a2" as Id<"assignments">,
+      assignmentName: "Quiz",
+      tasks: [
+        stubTask({
+          _id: "t3" as Id<"tasks">,
+          name: "Submit",
+          assignmentId: "a2" as Id<"assignments">,
+          assignmentName: "Quiz",
+          completedStudentIds: [studentA],
+        }),
+      ],
+    };
+
+    const result = partitionAssignmentGroupsByCompletion([lab, quiz], [studentA]);
+    expect(result.incompleteGroups.map((group) => group.assignmentName)).toEqual(["Lab"]);
+    expect(result.completedGroups.map((group) => group.assignmentName)).toEqual(["Quiz"]);
   });
 });
 

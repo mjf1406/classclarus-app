@@ -133,11 +133,37 @@ const schema = defineSchema({
      */
     pointsPublicEnabled: v.optional(v.boolean()),
     pointsPublicSlug: v.optional(v.string()),
+    /** Set while a tracked deletion job is in progress. */
+    deletingAt: v.optional(v.number()),
+    deletionJobId: v.optional(v.id("classDeletionJobs")),
     updatedAt: v.number(),
     archivedAt: v.optional(v.number()),
   })
     .index("by_owner", ["ownerId"])
     .index("by_pointsPublicSlug", ["pointsPublicSlug"]),
+  /** Tracks staged class deletion progress for the owner UI. */
+  classDeletionJobs: defineTable({
+    classId: v.id("classes"),
+    requesterUserId: v.id("users"),
+    className: v.string(),
+    status: v.union(
+      v.literal("queued"),
+      v.literal("running"),
+      v.literal("completed"),
+      v.literal("failed"),
+    ),
+    currentStage: v.string(),
+    completedStageCount: v.number(),
+    totalStageCount: v.number(),
+    errorMessage: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    completedAt: v.optional(v.number()),
+  })
+    .index("by_classId", ["classId"])
+    .index("by_requesterUserId", ["requesterUserId"])
+    .index("by_requesterUserId_status", ["requesterUserId", "status"])
+    .index("by_classId_status", ["classId", "status"]),
   joinCodes: defineTable({
     code: v.string(),
     classId: v.id("classes"),
@@ -425,6 +451,7 @@ const schema = defineSchema({
     count: v.number(),
     updatedAt: v.number(),
   })
+    .index("by_classId", ["classId"])
     .index("by_chart_student", ["chartId", "studentUserId"])
     .index("by_chart_student_dimension", ["chartId", "studentUserId", "dimension"])
     .index("by_chart_student_dimension_key", ["chartId", "studentUserId", "dimension", "key"]),
@@ -448,6 +475,7 @@ const schema = defineSchema({
     count: v.number(),
     updatedAt: v.number(),
   })
+    .index("by_classId", ["classId"])
     .index("by_layout", ["layoutId"])
     .index("by_layout_dimension", ["layoutId", "dimension"])
     .index("by_layout_student", ["layoutId", "studentUserId"])
@@ -926,6 +954,7 @@ const schema = defineSchema({
     .index("by_userId_notificationId", ["userId", "notificationId"])
     .index("by_userId_createdAt", ["userId", "createdAt"])
     .index("by_userId_statusKey_createdAt", ["userId", "statusKey", "createdAt"])
+    .index("by_classId", ["classId"])
     .index("by_eventId", ["eventId"])
     .searchIndex("search_text", {
       searchField: "searchText",
@@ -1010,7 +1039,9 @@ const schema = defineSchema({
     initialLevel: v.string(),
     currentLevel: v.optional(v.string()),
     /** Teacher override; when set, takes priority over schedule-derived status. */
-    manualStatus: v.optional(v.union(v.literal("rti"), v.literal("pending"))),
+    manualStatus: v.optional(
+      v.union(v.literal("rti"), v.literal("pending"), v.literal("ineligible")),
+    ),
     updatedAt: v.number(),
     updatedBy: v.id("users"),
   })
@@ -1224,6 +1255,8 @@ const schema = defineSchema({
     bgColor: v.string(),
     textColor: v.string(),
     iconName: v.optional(v.string()),
+    /** TipTap JSON copied into a lesson when the subject is added to a slot. */
+    defaultNotesJson: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_classId", ["classId"]),

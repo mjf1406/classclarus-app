@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { DataTableSortableHeader } from "@/components/feedback/DataTableSortableHeader";
+import { GroupTeamFilterButtons } from "@/components/groups/GroupTeamFilterButtons";
 import PendingComponent from "@/components/loading/PendingComponent";
 import { PersonalRazPage } from "@/components/raz/PersonalRazPage";
 import { RazAssessmentHistoryTable } from "@/components/raz/RazAssessmentHistoryTable";
@@ -51,7 +52,8 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useMemberSearch } from "@/hooks/members/useMemberSearch";
+import { useGroupTeamFilterState } from "@/hooks/groups/useGroupTeamFilterState";
+import { useGroupsBoard } from "@/hooks/groups/useGroupsBoard";
 import { useCan } from "@/hooks/permissions/useCan";
 import { useRazAssessments } from "@/hooks/raz/useRazAssessments";
 import { useRazInitialLevels } from "@/hooks/raz/useRazInitialLevels";
@@ -61,7 +63,9 @@ import { useClassUserSettings } from "@/hooks/roster/useClassUserSettings";
 import { useEnsureStudentRosters } from "@/hooks/roster/useEnsureStudentRosters";
 import { useRosterConsumerColumnVisibility } from "@/hooks/roster/useRosterConsumerColumnVisibility";
 import { useStudentRoster } from "@/hooks/roster/useStudentRoster";
+import { useStudentRosterFilter } from "@/hooks/students/useStudentRosterFilter";
 import { useAuthedQuery } from "@/hooks/useAuthedQuery";
+import { buildMembershipIndex, hasGroupTeamMembershipFilters } from "@/lib/groups/groupTeamFilters";
 import { toIntlLocale } from "@/lib/languages";
 import { ONE_HOUR } from "@/lib/queryCache";
 import {
@@ -72,7 +76,7 @@ import {
   type RazDisplayStatus,
   type RazStatusExplanationReason,
 } from "@/lib/raz/assessmentSchedule";
-import type { RazManualStatus } from "@/lib/raz/levels";
+import { isRazManualStatus, type RazManualStatus } from "@/lib/raz/levels";
 import {
   getRosterDisplayName,
   normalizeColumnOrder,
@@ -95,6 +99,7 @@ const STATUS_SORT_ORDER: Record<RazDisplayStatus, number> = {
   due_now: 3,
   coming_soon: 4,
   up_to_date: 5,
+  ineligible: 6,
 };
 
 const STATUS_I18N_KEY = {
@@ -104,11 +109,13 @@ const STATUS_I18N_KEY = {
   due_now: "statusDueNow",
   coming_soon: "statusComingSoon",
   up_to_date: "statusUpToDate",
+  ineligible: "statusIneligible",
 } as const;
 
 const STATUS_WHY_I18N_KEY = {
   rti: "statusWhy_rti",
   pending: "statusWhy_pending",
+  ineligible: "statusWhy_ineligible",
   overdue_never_assessed: "statusWhy_overdue_never_assessed",
   overdue_window: "statusWhy_overdue_window",
   due_now: "statusWhy_due_now",
@@ -156,6 +163,7 @@ function statusBadgeVariant(
     case "coming_soon":
       return "secondary";
     case "up_to_date":
+    case "ineligible":
       return "outline";
   }
 }
@@ -207,6 +215,8 @@ function StaffRazPage({ classId }: RazPageProps) {
   } = useStudentRoster(classId);
   const { data: settings } = useClassUserSettings(classId);
   const { data: classDoc } = useAuthedQuery(api.classes.get, { classId }, { gcTime: ONE_HOUR });
+  const { data: groupsBoard } = useGroupsBoard(classId);
+  const groupTeamFilterState = useGroupTeamFilterState(classId);
   const recordAssessment = useRecordRazAssessment();
   const setManualStatus = useSetRazManualStatus();
 
@@ -216,10 +226,32 @@ function StaffRazPage({ classId }: RazPageProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [levelsHidden, setLevelsHidden] = useState(false);
   const [selectedStatuses, setSelectedStatuses] = useState<RazDisplayStatus[]>([]);
-  const { filtered: nameFiltered } = useMemberSearch({ members: roster, query: searchQuery });
 
   const nameFormat = resolveRosterNameFormat(classDoc ?? {});
   const unnamed = tClasses("unnamedMember");
+
+  const membershipByUserId = useMemo(
+    () => (groupsBoard ? buildMembershipIndex(groupsBoard) : {}),
+    [groupsBoard],
+  );
+  const filterState = useMemo(
+    () => ({
+      groupIds: groupTeamFilterState.groupIds,
+      teamIds: groupTeamFilterState.teamIds,
+      includeUngrouped: groupTeamFilterState.includeUngrouped,
+    }),
+    [
+      groupTeamFilterState.groupIds,
+      groupTeamFilterState.teamIds,
+      groupTeamFilterState.includeUngrouped,
+    ],
+  );
+  const { filtered: rosterFiltered } = useStudentRosterFilter({
+    members: roster,
+    query: searchQuery,
+    membershipByUserId,
+    filterState,
+  });
 
   const levelByStudent = useMemo(() => {
     const map = new Map<string, RazLevelRow>();
@@ -264,13 +296,13 @@ function StaffRazPage({ classId }: RazPageProps) {
   }, [levelByStudent]);
 
   const filtered = useMemo(() => {
-    if (selectedStatuses.length === 0) return nameFiltered;
+    if (selectedStatuses.length === 0) return rosterFiltered;
     const selected = new Set(selectedStatuses);
-    return nameFiltered.filter((student) => {
+    return rosterFiltered.filter((student) => {
       const statuses = statusByStudent.get(student.userId);
       return statuses != null && statuses.some((status) => selected.has(status));
     });
-  }, [nameFiltered, selectedStatuses, statusByStudent]);
+  }, [rosterFiltered, selectedStatuses, statusByStudent]);
 
   const { total, remaining, setCount } = useMemo(() => {
     if (!canReadStudents || !roster) {
@@ -393,8 +425,9 @@ function StaffRazPage({ classId }: RazPageProps) {
                 value={selectValue}
                 onValueChange={(next) => {
                   if (next == null) return;
-                  const manualStatus: RazManualStatus | null =
-                    next === "rti" || next === "pending" ? next : null;
+                  const manualStatus: RazManualStatus | null = isRazManualStatus(next)
+                    ? next
+                    : null;
                   void setManualStatus.mutateAsync({
                     classId,
                     studentUserId: row.original.userId,
@@ -413,6 +446,7 @@ function StaffRazPage({ classId }: RazPageProps) {
                     <SelectItem value="auto">{t("statusAuto")}</SelectItem>
                     <SelectItem value="rti">{t("statusRti")}</SelectItem>
                     <SelectItem value="pending">{t("statusPending")}</SelectItem>
+                    <SelectItem value="ineligible">{t("statusIneligible")}</SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
@@ -431,7 +465,7 @@ function StaffRazPage({ classId }: RazPageProps) {
         id: "razNextDue",
         accessorFn: (student) => {
           const level = levelByStudent.get(student.userId);
-          if (!level) return Number.POSITIVE_INFINITY;
+          if (!level || level.manualStatus === "ineligible") return Number.POSITIVE_INFINITY;
           const schedule = getRazAssessmentSchedule(
             level.currentLevel,
             level.scheduleAnchorAt,
@@ -452,6 +486,9 @@ function StaffRazPage({ classId }: RazPageProps) {
           const level = levelByStudent.get(row.original.userId);
           if (!level) {
             return <span className="text-muted-foreground">—</span>;
+          }
+          if (level.manualStatus === "ineligible") {
+            return <span className="text-muted-foreground">{t("dueIneligible")}</span>;
           }
           const schedule = getRazAssessmentSchedule(
             level.currentLevel,
@@ -494,7 +531,7 @@ function StaffRazPage({ classId }: RazPageProps) {
           const levelA = levelByStudent.get(rowA.original.userId);
           const levelB = levelByStudent.get(rowB.original.userId);
           const a =
-            levelA == null
+            levelA == null || levelA.manualStatus === "ineligible"
               ? Number.POSITIVE_INFINITY
               : (getRazAssessmentSchedule(
                   levelA.currentLevel,
@@ -504,7 +541,7 @@ function StaffRazPage({ classId }: RazPageProps) {
                   { forceOverdue: levelA.manualStatus === "rti" },
                 )?.daysUntilDue ?? Number.POSITIVE_INFINITY);
           const b =
-            levelB == null
+            levelB == null || levelB.manualStatus === "ineligible"
               ? Number.POSITIVE_INFINITY
               : (getRazAssessmentSchedule(
                   levelB.currentLevel,
@@ -576,7 +613,9 @@ function StaffRazPage({ classId }: RazPageProps) {
     canReadStudents &&
     students.length > 0 &&
     filtered.length === 0 &&
-    (searchQuery.trim().length > 0 || selectedStatuses.length > 0);
+    (searchQuery.trim().length > 0 ||
+      selectedStatuses.length > 0 ||
+      hasGroupTeamMembershipFilters(filterState));
 
   if (loading) {
     return (
@@ -649,6 +688,7 @@ function StaffRazPage({ classId }: RazPageProps) {
         </Empty>
       ) : (
         <div className="flex min-w-0 flex-col gap-3">
+          <GroupTeamFilterButtons classId={classId} />
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             {showSearch ? (
               <InputGroup className="max-w-md">
@@ -706,6 +746,7 @@ function StaffRazPage({ classId }: RazPageProps) {
           <ToggleGroup
             variant="outline"
             spacing={0}
+            multiple
             value={selectedStatuses}
             onValueChange={(values) => {
               setSelectedStatuses(values.filter(isRazDisplayStatus));

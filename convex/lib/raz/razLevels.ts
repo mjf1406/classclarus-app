@@ -33,6 +33,9 @@ export const RAZ_LEVEL_KEYS = [
 
 export type RazLevel = (typeof RAZ_LEVEL_KEYS)[number];
 
+/** Highest RAZ level — students who pass this enough times become ineligible. */
+export const RAZ_MAX_LEVEL: RazLevel = "Z2";
+
 const RAZ_LEVEL_SET = new Set<string>(RAZ_LEVEL_KEYS);
 
 export function isRazLevel(value: string): value is RazLevel {
