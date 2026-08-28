@@ -86,8 +86,9 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
   const { t: tStudentWork } = useTranslation("studentWork");
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const { isMobile, state, setOpenMobile } = useSidebar();
-  const { can, isPending } = useCan();
+  const { can, isPending, role } = useCan();
   const classId = classDoc._id;
+  const flattenNav = role === "student" || role === "guardian";
   const { data: memberCounts } = useClassMemberCounts(classId);
   const groupsCollapsed = state === "collapsed" && !isMobile;
   const [peopleOpen, setPeopleOpen] = useState(false);
@@ -351,6 +352,111 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
   const visibleAssignersItems = assignersItems.filter((item) => can(item.permission));
   const visibleStudentWorkItems = studentWorkItems.filter((item) => can(item.permission));
   const visibleManageItems = manageItems.filter((item) => can(item.permission));
+
+  const renderFlatItem = (item: NavItem) => {
+    const href = pathFor(item.to, classId);
+    const isActive =
+      item.to === "/class/$classId"
+        ? pathname === href
+        : pathname === href || pathname.startsWith(`${href}/`);
+    const count = countFor(item.countRole);
+
+    return (
+      <SidebarMenuItem key={item.to}>
+        <SidebarMenuButton
+          tooltip={item.title}
+          isActive={isActive}
+          className={count !== null ? "pr-8" : undefined}
+          render={<Link to={item.to} params={{ classId }} onClick={closeMobileSidebar} />}
+        >
+          <item.icon />
+          <span>{item.title}</span>
+        </SidebarMenuButton>
+        {count !== null ? <SidebarMenuBadge className="top-1">{count}</SidebarMenuBadge> : null}
+      </SidebarMenuItem>
+    );
+  };
+
+  if (flattenNav) {
+    const allVisible = [
+      ...visibleTopItems,
+      ...visiblePeopleItems,
+      ...visibleAssignersItems,
+      ...visibleStudentWorkItems,
+      ...visibleManageItems,
+    ];
+    const byRoute = new Map(allVisible.map((item) => [item.to, item]));
+
+    const pickItems = (routes: ClassNavTo[]) =>
+      routes
+        .map((route) => byRoute.get(route))
+        .filter((item): item is NavItem => item !== undefined);
+
+    const learnerGroups: Array<{
+      labelKey: "navGroupOverview" | "navGroupLearning" | "navGroupProgress" | "navGroupClassroom";
+      routes: ClassNavTo[];
+    }> = [
+      {
+        labelKey: "navGroupOverview",
+        routes: [
+          "/class/$classId",
+          "/class/$classId/announcements",
+          "/class/$classId/calendar",
+          "/class/$classId/timetable",
+        ],
+      },
+      {
+        labelKey: "navGroupLearning",
+        routes: [
+          "/class/$classId/assignments",
+          "/class/$classId/tasks",
+          "/class/$classId/sw/graded-subjects",
+          "/class/$classId/raz",
+        ],
+      },
+      {
+        labelKey: "navGroupProgress",
+        routes: [
+          "/class/$classId/attendance",
+          "/class/$classId/points",
+          "/class/$classId/behaviors",
+          "/class/$classId/expectations",
+          "/class/$classId/rewards",
+        ],
+      },
+      {
+        labelKey: "navGroupClassroom",
+        routes: [
+          "/class/$classId/groups",
+          "/class/$classId/assigners/seats",
+          "/class/$classId/assigners/random",
+          "/class/$classId/assigners/equitable",
+        ],
+      },
+    ];
+
+    const groups = learnerGroups
+      .map((group) => ({
+        labelKey: group.labelKey,
+        items: pickItems(group.routes),
+      }))
+      .filter((group) => group.items.length > 0);
+
+    if (groups.length === 0) {
+      return null;
+    }
+
+    return (
+      <>
+        {groups.map((group) => (
+          <SidebarGroup key={group.labelKey}>
+            <SidebarGroupLabel>{t(group.labelKey)}</SidebarGroupLabel>
+            <SidebarMenu>{group.items.map(renderFlatItem)}</SidebarMenu>
+          </SidebarGroup>
+        ))}
+      </>
+    );
+  }
 
   const peopleActive = visiblePeopleItems.some((item) => pathname === pathFor(item.to, classId));
   const assignersActive = visibleAssignersItems.some(
