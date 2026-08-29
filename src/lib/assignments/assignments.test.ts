@@ -1,8 +1,13 @@
 import { describe, expect, test } from "vite-plus/test";
 
+import type { Id } from "../../../convex/_generated/dataModel";
 import {
+  assignmentFormValuesFromDetail,
   assignmentGradingStatusForStudent,
+  assignmentMutationPayloadFromForm,
+  emptyAssignmentFormValues,
   isStudentAssignmentHandedIn,
+  type AssignmentListItem,
 } from "@/lib/assignments/assignments";
 
 describe("isStudentAssignmentHandedIn", () => {
@@ -103,5 +108,38 @@ describe("assignmentGradingStatusForStudent", () => {
         viewerScoreStates: [{ studentUserId: "stu-1", graded: false, excused: false }],
       }),
     ).toBe("notGraded");
+  });
+});
+
+describe("assignment worksheet image payload", () => {
+  test("includes worksheetImageFileId when the form has an image", () => {
+    const values = emptyAssignmentFormValues();
+    values.name = "Homework";
+    values.worksheetImageFileId = "file123" as Id<"files">;
+    expect(assignmentMutationPayloadFromForm(values).worksheetImageFileId).toBe("file123");
+  });
+
+  test("omits worksheetImageFileId when the form has no image", () => {
+    const values = emptyAssignmentFormValues();
+    values.name = "Homework";
+    expect(assignmentMutationPayloadFromForm(values).worksheetImageFileId).toBeUndefined();
+  });
+
+  test("copies worksheetImageFileId from assignment detail", () => {
+    const detail = {
+      name: "Homework",
+      subject: undefined,
+      unit: undefined,
+      dueDateKey: undefined,
+      instructionsJson: undefined,
+      scoringMode: "total" as const,
+      totalPoints: 10,
+      sections: undefined,
+      procedureSteps: [],
+      expectationIds: [],
+      acceptLinkSubmissions: true,
+      worksheetImageFileId: "file456" as Id<"files">,
+    } as unknown as AssignmentListItem;
+    expect(assignmentFormValuesFromDetail(detail).worksheetImageFileId).toBe("file456");
   });
 });

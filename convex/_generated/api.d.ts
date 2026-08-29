@@ -134,6 +134,7 @@ import type * as lib_entitlement from "../lib/entitlement.js";
 import type * as lib_equitableAssignersCleanup from "../lib/equitableAssignersCleanup.js";
 import type * as lib_expectationsCleanup from "../lib/expectationsCleanup.js";
 import type * as lib_fileAccess from "../lib/fileAccess.js";
+import type * as lib_files_classFileRefs from "../lib/files/classFileRefs.js";
 import type * as lib_files_uploadPresets from "../lib/files/uploadPresets.js";
 import type * as lib_files_zipEntries from "../lib/files/zipEntries.js";
 import type * as lib_filesCleanup from "../lib/filesCleanup.js";
@@ -392,6 +393,7 @@ declare const fullApi: ApiFromModules<{
   "lib/equitableAssignersCleanup": typeof lib_equitableAssignersCleanup;
   "lib/expectationsCleanup": typeof lib_expectationsCleanup;
   "lib/fileAccess": typeof lib_fileAccess;
+  "lib/files/classFileRefs": typeof lib_files_classFileRefs;
   "lib/files/uploadPresets": typeof lib_files_uploadPresets;
   "lib/files/zipEntries": typeof lib_files_zipEntries;
   "lib/filesCleanup": typeof lib_filesCleanup;

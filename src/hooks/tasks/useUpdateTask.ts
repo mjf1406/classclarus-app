@@ -16,6 +16,7 @@ type UpdateTaskArgs = {
   name: string;
   description?: string;
   dueDateKey?: string;
+  worksheetImageFileId?: Id<"files">;
 };
 
 export function useUpdateTask() {
@@ -43,6 +44,7 @@ export function useUpdateTask() {
                 name: args.name,
                 description: args.description,
                 dueDateKey: args.dueDateKey,
+                worksheetImageFileId: args.worksheetImageFileId,
                 updatedAt: now,
               }
             : item,
@@ -56,6 +58,7 @@ export function useUpdateTask() {
           name: args.name,
           description: args.description,
           dueDateKey: args.dueDateKey,
+          worksheetImageFileId: args.worksheetImageFileId,
           updatedAt: now,
         };
       });

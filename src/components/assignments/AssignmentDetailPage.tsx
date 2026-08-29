@@ -15,6 +15,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Trans, useTranslation } from "react-i18next";
 
 import { AnnouncementBody } from "@/components/announcements/AnnouncementBody";
+import { WorksheetImagePreview } from "@/components/upload/WorksheetImagePreview";
 import { AssignmentGradingStatusBadge } from "@/components/assignments/AssignmentGradingStatusBadge";
 import { DataTableSortableHeader } from "@/components/feedback/DataTableSortableHeader";
 import { DeleteNamedCredenza } from "@/components/groups/DeleteNamedCredenza";
@@ -270,6 +271,22 @@ function AssignmentContentSections({
         <section className="flex flex-col gap-2">
           <h2 className="text-lg font-medium">{t("instructionsLabel")}</h2>
           <AnnouncementBody bodyJson={assignment.instructionsJson} />
+        </section>
+      ) : null}
+
+      {assignment.worksheetImageFileId ? (
+        <section className="flex flex-col gap-2">
+          <h2 className="text-lg font-medium">{t("worksheetImageLabel")}</h2>
+          <p className="text-sm text-muted-foreground">{t("worksheetImageEnlargeHint")}</p>
+          <WorksheetImagePreview
+            fileId={assignment.worksheetImageFileId}
+            alt={t("worksheetImagePreviewAlt")}
+            downloadLabel={t("worksheetImageDownload")}
+            expandLabel={t("worksheetImageExpand")}
+            title={t("worksheetImageLabel")}
+            fileName={assignment.worksheetImage?.name}
+            canDownload={isStaffView}
+          />
         </section>
       ) : null}
 

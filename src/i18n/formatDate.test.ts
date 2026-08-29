@@ -6,6 +6,8 @@ import {
   formatDueRelative,
   formatLocalizedDueDate,
   formatLocalizedSeatChartHistoryDate,
+  formatLocalizedTimeHm,
+  formatLocalizedTimeRange,
 } from "./formatDate";
 
 describe("formatDueRelative", () => {
@@ -52,8 +54,40 @@ describe("formatLocalizedSeatChartHistoryDate", () => {
     await i18n.changeLanguage("en");
   });
 
-  test("formats weekday, date, and time with commas", () => {
+  test("formats weekday, date, and time with the active locale", () => {
     const ts = new Date(2026, 7, 10, 16, 18, 0).getTime();
-    expect(formatLocalizedSeatChartHistoryDate(ts)).toBe("Mon Aug 10, 2026, 4:18 PM");
+    const formatted = formatLocalizedSeatChartHistoryDate(ts);
+    expect(formatted).toMatch(/Aug/);
+    expect(formatted).toMatch(/10/);
+    expect(formatted).toMatch(/2026/);
+    expect(formatted).toMatch(/4:18/);
+  });
+
+  test("uses locale-specific date order", async () => {
+    await i18n.changeLanguage("ja");
+    const ts = new Date(2026, 7, 10, 16, 18, 0).getTime();
+    const formatted = formatLocalizedSeatChartHistoryDate(ts);
+    expect(formatted).toMatch(/2026年/);
+    expect(formatted).toMatch(/8月/);
+  });
+});
+
+describe("formatLocalizedTimeHm", () => {
+  test("uses localized 12-hour markers", () => {
+    expect(formatLocalizedTimeHm("16:30", "12", "en-US")).toMatch(/4:30/);
+    expect(formatLocalizedTimeHm("16:30", "12", "en-US")).toMatch(/PM/i);
+    expect(formatLocalizedTimeHm("16:30", "12", "ja")).not.toMatch(/PM/i);
+  });
+
+  test("keeps 24-hour clock numeric", () => {
+    expect(formatLocalizedTimeHm("16:30", "24", "en-US")).toMatch(/16:30/);
+  });
+});
+
+describe("formatLocalizedTimeRange", () => {
+  test("formats a start and end time together", () => {
+    const range = formatLocalizedTimeRange("09:00", "09:50", "12", "en-US");
+    expect(range).toMatch(/9:00/);
+    expect(range).toMatch(/9:50/);
   });
 });

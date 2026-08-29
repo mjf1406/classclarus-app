@@ -14,6 +14,7 @@ import {
   type RosterNameFormat,
 } from "./lib/rosterNameFormat.js";
 import type { GenderValue } from "./lib/studentRosters.js";
+import { requireClassImageFile } from "./lib/files/classFileRefs.js";
 import { resolveUserImageUrl } from "./lib/userImage.js";
 import {
   classHasOtherTeamWithName,
@@ -122,22 +123,6 @@ function normalizeOptionalIcon(icon: string | undefined): string | undefined {
     throw new Error(`Icon must be at most ${MAX_ICON_LENGTH} characters`);
   }
   return trimmed;
-}
-
-async function requireClassImageFile(
-  ctx: MutationCtx,
-  classId: Id<"classes">,
-  fileId: Id<"files">,
-): Promise<{ name: string }> {
-  const file = await ctx.db.get("files", fileId);
-  // Uniform deny for missing vs wrong-class — avoid existence oracle.
-  if (!file || file.classId !== classId) {
-    throw new Error("File not found or access denied");
-  }
-  if (file.preset !== "images") {
-    throw new Error("Image must be an image upload");
-  }
-  return { name: file.name };
 }
 
 function rosterDisplaySortKey(student: BoardStudent, format: RosterNameFormat): string {

@@ -29,8 +29,10 @@ import {
   resolveLessonDisplayState,
   resolveLessonDisplayStatus,
 } from "@/lib/classroomScreen/lessonDisplayState";
+import { formatLocalizedTimeRange } from "@/i18n/formatDate";
+import { toIntlLocale } from "@/lib/languages";
 import { findAgendaResourceName } from "@/lib/timetable/agendaItems";
-import { formatTimeString, slotDurationMinutes } from "@/lib/timetable/utils";
+import { slotDurationMinutes } from "@/lib/timetable/utils";
 import { areAllStudentsCompleteOnTask, isTaskPastDue, type TaskListItem } from "@/lib/tasks/tasks";
 import type { Id } from "../../../convex/_generated/dataModel";
 
@@ -47,7 +49,8 @@ export function DashboardCurrentSubjectCard({
 }: DashboardCurrentSubjectCardProps) {
   const { t: tClasses } = useTranslation("classes");
   const { t: tClassroomScreen } = useTranslation("classroomScreen");
-  const { t: tTimetable } = useTranslation("timetable");
+  const { t: tTimetable, i18n } = useTranslation("timetable");
+  const locale = toIntlLocale(i18n.language);
   const [minuteBucket, setMinuteBucket] = useState(() => classroomMinuteBucket());
   const query = useClassroomDisplayBundle(classId, minuteBucket);
   const assignmentsQuery = useAssignments(classId);
@@ -126,8 +129,12 @@ export function DashboardCurrentSubjectCard({
                 <p className="truncate text-sm font-semibold">{lesson.subjectName}</p>
                 {slotTimes ? (
                   <p className="truncate text-xs font-medium tabular-nums opacity-90">
-                    {formatTimeString(slotTimes.startTime, timeFormat)} –{" "}
-                    {formatTimeString(slotTimes.endTime, timeFormat)}{" "}
+                    {formatLocalizedTimeRange(
+                      slotTimes.startTime,
+                      slotTimes.endTime,
+                      timeFormat,
+                      locale,
+                    )}{" "}
                     {tTimetable("slotDurationMins", {
                       count: slotDurationMinutes(slotTimes.startTime, slotTimes.endTime),
                     })}

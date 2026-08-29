@@ -11,6 +11,11 @@ import { getClassRoleForUser, listLinkedStudentsForGuardian } from "./lib/guardi
 import { normalizeOptionalDueDateKey } from "./lib/dueDateKey.js";
 import { rateLimiter } from "./lib/rateLimiter.js";
 import { stripAgendaTaskReferences } from "./lib/cleanup/timetableCleanup.js";
+import {
+  loadWorksheetImageMeta,
+  resolveWorksheetImageFileId,
+  worksheetImagePublicFields,
+} from "./lib/files/classFileRefs.js";
 import { deleteTaskWithCompletions } from "./lib/tasksCleanup.js";
 
 const MAX_NAME_LENGTH = 100;
@@ -33,6 +38,7 @@ const taskBaseFields = {
   createdAt: v.number(),
   updatedAt: v.number(),
   archivedAt: v.optional(v.number()),
+  ...worksheetImagePublicFields,
 };
 
 const taskValidator = v.object({
@@ -249,6 +255,7 @@ function toPublicTask(
   createdAt: number;
   updatedAt: number;
   archivedAt?: number;
+  worksheetImageFileId?: Id<"files">;
   completedCount: number;
   studentCount: number;
   completedStudentIds: Array<Id<"users">>;
@@ -260,6 +267,9 @@ function toPublicTask(
     name: task.name,
     description: task.description,
     dueDateKey: task.dueDateKey,
+    ...(task.worksheetImageFileId !== undefined
+      ? { worksheetImageFileId: task.worksheetImageFileId }
+      : {}),
     ...(assignment
       ? {
           assignmentId: assignment.assignmentId,
@@ -321,14 +331,14 @@ export const list = classQuery({
       const completedStudentIds = completions
         .map((row) => row.studentUserId)
         .filter((userId) => studentSet.has(userId));
-      result.push(
-        toPublicTask(
-          doc,
-          completedStudentIds,
-          studentCount,
-          resolveTaskAssignment(doc, assignmentIndex),
-        ),
+      const publicTask = toPublicTask(
+        doc,
+        completedStudentIds,
+        studentCount,
+        resolveTaskAssignment(doc, assignmentIndex),
       );
+      const worksheetImage = await loadWorksheetImageMeta(ctx, doc.worksheetImageFileId);
+      result.push(worksheetImage !== undefined ? { ...publicTask, worksheetImage } : publicTask);
     }
     return result;
   },
@@ -360,6 +370,7 @@ export const get = classQuery({
 
     const assignmentIndex = await buildTaskAssignmentIndex(ctx, classId);
     const assignment = resolveTaskAssignment(task, assignmentIndex);
+    const worksheetImage = await loadWorksheetImageMeta(ctx, task.worksheetImageFileId);
     const base = {
       _id: task._id,
       _creationTime: task._creationTime,
@@ -384,6 +395,10 @@ export const get = classQuery({
       createdAt: task.createdAt,
       updatedAt: task.updatedAt,
       ...(task.archivedAt !== undefined ? { archivedAt: task.archivedAt } : {}),
+      ...(task.worksheetImageFileId !== undefined
+        ? { worksheetImageFileId: task.worksheetImageFileId }
+        : {}),
+      ...(worksheetImage !== undefined ? { worksheetImage } : {}),
     };
 
     if (audience.scope === "class") {
@@ -421,6 +436,7 @@ export const create = classMutation({
     name: v.string(),
     description: v.optional(v.string()),
     dueDateKey: v.optional(v.string()),
+    worksheetImageFileId: v.optional(v.id("files")),
   },
   returns: v.id("tasks"),
   handler: async (ctx, args) => {
@@ -431,6 +447,12 @@ export const create = classMutation({
     const name = normalizeName(args.name);
     const description = normalizeOptionalDescription(args.description);
     const dueDateKey = normalizeOptionalDueDateKey(args.dueDateKey);
+    const worksheetImageFileId = await resolveWorksheetImageFileId(
+      ctx,
+      classId,
+      args.worksheetImageFileId,
+      undefined,
+    );
     const now = Date.now();
 
     const taskId = await ctx.db.insert("tasks", {
@@ -438,6 +460,7 @@ export const create = classMutation({
       name,
       ...(description !== undefined ? { description } : {}),
       ...(dueDateKey !== undefined ? { dueDateKey } : {}),
+      ...(worksheetImageFileId !== undefined ? { worksheetImageFileId } : {}),
       createdBy: ctx.userId,
       createdAt: now,
       updatedAt: now,
@@ -464,6 +487,7 @@ export const update = classMutation({
     name: v.string(),
     description: v.optional(v.string()),
     dueDateKey: v.optional(v.string()),
+    worksheetImageFileId: v.optional(v.id("files")),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -471,15 +495,22 @@ export const update = classMutation({
     await ctx.require("tasks:manage");
 
     const classId = ctx.classDoc._id;
-    await requireTaskInClass(ctx, classId, args.taskId);
+    const existing = await requireTaskInClass(ctx, classId, args.taskId);
     const name = normalizeName(args.name);
     const description = normalizeOptionalDescription(args.description);
     const dueDateKey = normalizeOptionalDueDateKey(args.dueDateKey);
+    const worksheetImageFileId = await resolveWorksheetImageFileId(
+      ctx,
+      classId,
+      args.worksheetImageFileId,
+      existing.worksheetImageFileId,
+    );
 
     await ctx.db.patch("tasks", args.taskId, {
       name,
       description,
       dueDateKey,
+      worksheetImageFileId,
       updatedAt: Date.now(),
     });
 

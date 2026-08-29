@@ -15,6 +15,7 @@ type CreateTaskArgs = {
   name: string;
   description?: string;
   dueDateKey?: string;
+  worksheetImageFileId?: Id<"files">;
 };
 
 export function useCreateTask() {
@@ -38,6 +39,9 @@ export function useCreateTask() {
           name: args.name,
           description: args.description,
           dueDateKey: args.dueDateKey,
+          ...(args.worksheetImageFileId !== undefined
+            ? { worksheetImageFileId: args.worksheetImageFileId }
+            : {}),
           createdBy: `optimistic:${randomClientId()}` as Id<"users">,
           createdAt: now,
           updatedAt: now,

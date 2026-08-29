@@ -56,6 +56,7 @@ export function useUpdateAssignment() {
                 procedureSteps: args.procedureSteps,
                 expectationIds: args.expectationIds,
                 acceptLinkSubmissions: args.acceptLinkSubmissions,
+                worksheetImageFileId: args.worksheetImageFileId,
                 hasInstructions,
                 hasProcedure,
                 updatedAt: now,
@@ -79,6 +80,7 @@ export function useUpdateAssignment() {
           procedureSteps: args.procedureSteps,
           expectationIds: args.expectationIds,
           acceptLinkSubmissions: args.acceptLinkSubmissions,
+          worksheetImageFileId: args.worksheetImageFileId,
           updatedAt: now,
         };
       });

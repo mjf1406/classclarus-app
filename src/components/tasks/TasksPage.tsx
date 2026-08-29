@@ -226,6 +226,7 @@ export function TasksPage({ classId }: TasksPageProps) {
           <TaskFormCredenza
             open={createOpen}
             onOpenChange={setCreateOpen}
+            classId={classId}
             mode="create"
             onSubmit={async (values) => {
               await createTask.mutateAsync({
@@ -233,6 +234,7 @@ export function TasksPage({ classId }: TasksPageProps) {
                 name: values.name,
                 description: values.description,
                 dueDateKey: values.dueDateKey,
+                worksheetImageFileId: values.worksheetImageFileId,
               });
             }}
           />
@@ -241,6 +243,7 @@ export function TasksPage({ classId }: TasksPageProps) {
             onOpenChange={(open) => {
               if (!open) setEditing(null);
             }}
+            classId={classId}
             mode="edit"
             initial={editing}
             onSubmit={async (values) => {
@@ -251,6 +254,7 @@ export function TasksPage({ classId }: TasksPageProps) {
                 name: values.name,
                 description: values.description,
                 dueDateKey: values.dueDateKey,
+                worksheetImageFileId: values.worksheetImageFileId,
               });
               setEditing(null);
             }}

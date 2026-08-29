@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { z } from "zod";
 
 import { AssignmentInstructionsEditor } from "@/components/assignments/AssignmentInstructionsEditor";
+import { WorksheetImageField } from "@/components/upload/WorksheetImageField";
 import { reorderByKey } from "@/components/assignments/assignmentFormReorder";
 import {
   SortableFormItem,
@@ -153,6 +154,7 @@ export function AssignmentFormPage({ classId, mode, initial }: AssignmentFormPag
           ),
           expectationIds: z.array(z.string()),
           acceptLinkSubmissions: z.boolean(),
+          worksheetImageFileId: z.string().optional(),
         })
         .superRefine((value, ctx) => {
           if (value.scoringMode === "sections") {
@@ -1086,6 +1088,19 @@ export function AssignmentFormPage({ classId, mode, initial }: AssignmentFormPag
                 />
                 <p className="text-sm text-muted-foreground">{t("bodyLinkHint")}</p>
               </div>
+            )}
+          </form.Field>
+          <form.Field name="worksheetImageFileId">
+            {(field) => (
+              <WorksheetImageField
+                classId={classId}
+                fileId={field.state.value}
+                onChange={field.handleChange}
+                label={t("worksheetImageLabel")}
+                description={t("worksheetImageDescription")}
+                removeLabel={t("worksheetImageRemove")}
+                previewAlt={t("worksheetImagePreviewAlt")}
+              />
             )}
           </form.Field>
         </section>

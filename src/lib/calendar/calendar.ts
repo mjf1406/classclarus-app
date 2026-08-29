@@ -70,7 +70,7 @@ export function formatDateKeyMonthDay(
   const date = dateKeyToLocalDate(dateKey);
   return {
     month: new Intl.DateTimeFormat(locale, { month: "short" }).format(date),
-    day: String(date.getDate()),
+    day: new Intl.DateTimeFormat(locale, { day: "numeric" }).format(date),
   };
 }
 

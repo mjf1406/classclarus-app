@@ -46,6 +46,9 @@ export function useCreateAssignment() {
           procedureSteps: args.procedureSteps,
           expectationIds: args.expectationIds,
           acceptLinkSubmissions: args.acceptLinkSubmissions,
+          ...(args.worksheetImageFileId !== undefined
+            ? { worksheetImageFileId: args.worksheetImageFileId }
+            : {}),
           scoresReleased: false,
           createdBy: `optimistic:${randomClientId()}` as Id<"users">,
           createdAt: now,

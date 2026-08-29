@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { DashboardAssignersCard } from "@/components/dashboard/DashboardAssignersCard";
 import { DashboardAnnouncementsCard } from "@/components/dashboard/DashboardAnnouncementsCard";
+import { DashboardAssignersCard } from "@/components/dashboard/DashboardAssignersCard";
+import { DashboardAssignmentsCard } from "@/components/dashboard/DashboardAssignmentsCard";
 import { DashboardCurrentSubjectCard } from "@/components/dashboard/DashboardCurrentSubjectCard";
 import { DashboardEventsCard } from "@/components/dashboard/DashboardEventsCard";
 import { DashboardPointsCard } from "@/components/dashboard/DashboardPointsCard";
@@ -67,6 +68,11 @@ export function StudentGuardianDashboardPage({ classId }: StudentGuardianDashboa
           audiencePending={audiencePending}
         />
         <DashboardEventsCard classId={classId} timeZone={timeZone} classPending={classPending} />
+        <DashboardAssignmentsCard
+          classId={classId}
+          studentUserId={activeStudentId}
+          audiencePending={audiencePending}
+        />
         <DashboardTasksCard classId={classId} studentUserId={activeStudentId} />
         <DashboardPointsCard
           classId={classId}

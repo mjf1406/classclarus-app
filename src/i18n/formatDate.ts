@@ -59,19 +59,60 @@ export function formatLocalizedDateTime(timestampMs: number): string {
   }).format(new Date(timestampMs));
 }
 
-/** Seat chart history: "Mon, Aug 10, 2026, 4:18 PM" (locale-aware). */
+/** Seat chart history: weekday, date, and time in the active locale's order. */
 export function formatLocalizedSeatChartHistoryDate(timestampMs: number): string {
-  const date = new Date(timestampMs);
-  const locale = getAppLocale();
-  const weekday = new Intl.DateTimeFormat(locale, { weekday: "short" }).format(date);
-  const month = new Intl.DateTimeFormat(locale, { month: "short" }).format(date);
-  const day = new Intl.DateTimeFormat(locale, { day: "numeric" }).format(date);
-  const year = new Intl.DateTimeFormat(locale, { year: "numeric" }).format(date);
-  const time = new Intl.DateTimeFormat(locale, {
+  return new Intl.DateTimeFormat(getAppLocale(), {
+    weekday: "short",
+    year: "numeric",
+    month: "short",
+    day: "numeric",
     hour: "numeric",
     minute: "2-digit",
+  }).format(new Date(timestampMs));
+}
+
+function parseTimeHm(timeHm: string): Date | null {
+  const [hoursRaw, minutesRaw] = timeHm.split(":");
+  const hours = Number(hoursRaw);
+  const minutes = Number(minutesRaw);
+  if (!Number.isInteger(hours) || !Number.isInteger(minutes)) return null;
+  if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return null;
+  return new Date(2000, 0, 1, hours, minutes);
+}
+
+/** Locale-aware wall clock for an `HH:mm` timetable time. */
+export function formatLocalizedTimeHm(
+  timeHm: string,
+  timeFormat: "12" | "24",
+  locale: string = getAppLocale(),
+): string {
+  const date = parseTimeHm(timeHm);
+  if (!date) return timeHm;
+  return new Intl.DateTimeFormat(locale, {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: timeFormat === "12",
   }).format(date);
-  return `${weekday} ${month} ${day}, ${year}, ${time}`;
+}
+
+/** Locale-aware time range for timetable start/end `HH:mm` values. */
+export function formatLocalizedTimeRange(
+  startHm: string,
+  endHm: string,
+  timeFormat: "12" | "24",
+  locale: string = getAppLocale(),
+): string {
+  const start = parseTimeHm(startHm);
+  const end = parseTimeHm(endHm);
+  const fmt = new Intl.DateTimeFormat(locale, {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: timeFormat === "12",
+  });
+  if (start && end && typeof fmt.formatRange === "function") {
+    return fmt.formatRange(start, end);
+  }
+  return `${formatLocalizedTimeHm(startHm, timeFormat, locale)} – ${formatLocalizedTimeHm(endHm, timeFormat, locale)}`;
 }
 
 /**

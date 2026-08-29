@@ -18,22 +18,26 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { coerceDueDateKeyForInput, normalizeDueDateKey } from "@/lib/dueDate/dueDateKey";
+import { WorksheetImageField } from "@/components/upload/WorksheetImageField";
 import {
   MAX_TASK_DESCRIPTION_LENGTH,
   MAX_TASK_NAME_LENGTH,
   type TaskDetail,
   type TaskListItem,
 } from "@/lib/tasks/tasks";
+import type { Id } from "../../../convex/_generated/dataModel";
 
 type TaskFormValues = {
   name: string;
   description?: string;
   dueDateKey?: string;
+  worksheetImageFileId?: Id<"files">;
 };
 
 type TaskFormCredenzaProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  classId: Id<"classes">;
   mode: "create" | "edit";
   initial?: TaskListItem | TaskDetail | null;
   onSubmit: (values: TaskFormValues) => Promise<void>;
@@ -43,6 +47,7 @@ type FormDefaults = {
   name: string;
   description: string;
   dueDateKey: string;
+  worksheetImageFileId?: Id<"files">;
 };
 
 function fieldErrorMessage(errors: unknown): string | undefined {
@@ -59,6 +64,7 @@ function fieldErrorMessage(errors: unknown): string | undefined {
 export function TaskFormCredenza({
   open,
   onOpenChange,
+  classId,
   mode,
   initial,
   onSubmit,
@@ -72,6 +78,7 @@ export function TaskFormCredenza({
       name: initial?.name ?? "",
       description: initial?.description ?? "",
       dueDateKey: coerceDueDateKeyForInput(initial?.dueDateKey),
+      worksheetImageFileId: initial?.worksheetImageFileId,
     }),
     [initial],
   );
@@ -93,6 +100,7 @@ export function TaskFormCredenza({
             t("descriptionTooLong", { max: MAX_TASK_DESCRIPTION_LENGTH }),
           ),
         dueDateKey: z.string(),
+        worksheetImageFileId: z.string().optional(),
       }),
     [t],
   );
@@ -126,6 +134,9 @@ export function TaskFormCredenza({
           name: parsed.name,
           description,
           dueDateKey,
+          ...(value.worksheetImageFileId
+            ? { worksheetImageFileId: value.worksheetImageFileId }
+            : {}),
         });
       } catch (error) {
         onOpenChange(true);
@@ -230,6 +241,20 @@ export function TaskFormCredenza({
                     </Field>
                   );
                 }}
+              </form.Field>
+
+              <form.Field name="worksheetImageFileId">
+                {(field) => (
+                  <WorksheetImageField
+                    classId={classId}
+                    fileId={field.state.value}
+                    onChange={field.handleChange}
+                    label={t("worksheetImageLabel")}
+                    description={t("worksheetImageDescription")}
+                    removeLabel={t("worksheetImageRemove")}
+                    previewAlt={t("worksheetImagePreviewAlt")}
+                  />
+                )}
               </form.Field>
             </FieldGroup>
             {submitError ? <p className="text-sm text-destructive">{submitError}</p> : null}

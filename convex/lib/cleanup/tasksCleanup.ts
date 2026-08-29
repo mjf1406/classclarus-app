@@ -1,11 +1,13 @@
 import type { Id } from "../../_generated/dataModel.js";
 import type { MutationCtx } from "../../_generated/server.js";
+import { deleteClassFile } from "../files/classFileRefs.js";
 
-/** Delete a task and its completion rows. */
+/** Delete a task, its completion rows, and its worksheet image. */
 export async function deleteTaskWithCompletions(
   ctx: MutationCtx,
   taskId: Id<"tasks">,
 ): Promise<void> {
+  const task = await ctx.db.get("tasks", taskId);
   // eslint-disable-next-line @convex-dev/no-collect-in-query -- task-scoped cleanup
   const completions = await ctx.db
     .query("taskCompletions")
@@ -15,6 +17,7 @@ export async function deleteTaskWithCompletions(
     await ctx.db.delete("taskCompletions", completion._id);
   }
   await ctx.db.delete("tasks", taskId);
+  await deleteClassFile(ctx, task?.worksheetImageFileId);
 }
 
 /** Cascade-delete tasks and completions for a class. */

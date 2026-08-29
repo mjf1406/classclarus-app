@@ -12,6 +12,12 @@ import { normalizeOptionalDueDateKey } from "./lib/dueDateKey.js";
 import { rateLimiter } from "./lib/rateLimiter.js";
 import { deleteScoresForAssignment } from "./lib/assignmentScoresCleanup.js";
 import { stripAgendaResourceReferences } from "./lib/cleanup/timetableCleanup.js";
+import {
+  deleteClassFile,
+  loadWorksheetImageMeta,
+  resolveWorksheetImageFileId,
+  worksheetImagePublicFields,
+} from "./lib/files/classFileRefs.js";
 import { deleteTaskWithCompletions } from "./lib/tasksCleanup.js";
 
 const MAX_NAME_LENGTH = 100;
@@ -76,6 +82,7 @@ const assignmentBaseFields = {
   createdBy: v.id("users"),
   createdAt: v.number(),
   updatedAt: v.number(),
+  ...worksheetImagePublicFields,
 };
 
 const viewerReleasedScoreValidator = v.object({
@@ -722,6 +729,9 @@ function toPublicAssignmentBase(assignment: Doc<"assignments">) {
     createdBy: assignment.createdBy,
     createdAt: assignment.createdAt,
     updatedAt: assignment.updatedAt,
+    ...(assignment.worksheetImageFileId !== undefined
+      ? { worksheetImageFileId: assignment.worksheetImageFileId }
+      : {}),
   };
 }
 
@@ -829,6 +839,7 @@ export const list = classQuery({
         }
       }
 
+      const worksheetImage = await loadWorksheetImageMeta(ctx, doc.worksheetImageFileId);
       result.push({
         ...toPublicAssignmentBase(doc),
         handedInStudentCount: handedInStudents.size,
@@ -837,6 +848,7 @@ export const list = classQuery({
         linkCount: audienceLinks.length,
         hasInstructions: hasInstructions(doc),
         hasProcedure: hasProcedure(doc),
+        ...(worksheetImage !== undefined ? { worksheetImage } : {}),
         ...(viewerReleasedScores !== undefined ? { viewerReleasedScores } : {}),
         ...(viewerScoreStates !== undefined ? { viewerScoreStates } : {}),
       });
@@ -886,9 +898,11 @@ export const get = classQuery({
       steps: assignment.procedureSteps,
       audienceStudentIds,
     });
+    const worksheetImage = await loadWorksheetImageMeta(ctx, assignment.worksheetImageFileId);
     const base = {
       ...toPublicAssignmentBase(assignment),
       procedureSteps,
+      ...(worksheetImage !== undefined ? { worksheetImage } : {}),
     };
 
     if (audience.scope === "class") {
@@ -1061,6 +1075,7 @@ export const create = classMutation({
     procedureSteps: v.optional(v.array(procedureStepInputValidator)),
     expectationIds: v.optional(v.array(v.id("expectations"))),
     acceptLinkSubmissions: v.boolean(),
+    worksheetImageFileId: v.optional(v.id("files")),
   },
   returns: v.id("assignments"),
   handler: async (ctx, args) => {
@@ -1076,6 +1091,12 @@ export const create = classMutation({
     const scoring = normalizeSections(args.scoringMode, args.totalPoints, args.sections);
     const procedureSteps = normalizeProcedureSteps(args.procedureSteps);
     const expectationIds = await normalizeExpectationIds(ctx, classId, args.expectationIds ?? []);
+    const worksheetImageFileId = await resolveWorksheetImageFileId(
+      ctx,
+      classId,
+      args.worksheetImageFileId,
+      undefined,
+    );
     const now = Date.now();
 
     const assignmentId = await ctx.db.insert("assignments", {
@@ -1085,6 +1106,7 @@ export const create = classMutation({
       ...(unit !== undefined ? { unit } : {}),
       ...(dueDateKey !== undefined ? { dueDateKey } : {}),
       ...(instructionsJson !== undefined ? { instructionsJson } : {}),
+      ...(worksheetImageFileId !== undefined ? { worksheetImageFileId } : {}),
       scoringMode: scoring.scoringMode,
       ...(scoring.totalPoints !== undefined ? { totalPoints: scoring.totalPoints } : {}),
       ...(scoring.sections !== undefined ? { sections: scoring.sections } : {}),
@@ -1137,6 +1159,7 @@ export const update = classMutation({
     procedureSteps: v.optional(v.array(procedureStepInputValidator)),
     expectationIds: v.optional(v.array(v.id("expectations"))),
     acceptLinkSubmissions: v.boolean(),
+    worksheetImageFileId: v.optional(v.id("files")),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -1144,7 +1167,7 @@ export const update = classMutation({
     await ctx.require("assignments:manage");
 
     const classId = ctx.classDoc._id;
-    await requireAssignmentInClass(ctx, classId, args.assignmentId);
+    const existing = await requireAssignmentInClass(ctx, classId, args.assignmentId);
     const name = normalizeName(args.name);
     const subject = normalizeOptionalLabel(args.subject, "Subject", MAX_SUBJECT_LENGTH);
     const unit = normalizeOptionalLabel(args.unit, "Unit", MAX_UNIT_LENGTH);
@@ -1153,6 +1176,12 @@ export const update = classMutation({
     const scoring = normalizeSections(args.scoringMode, args.totalPoints, args.sections);
     const procedureSteps = normalizeProcedureSteps(args.procedureSteps);
     const expectationIds = await normalizeExpectationIds(ctx, classId, args.expectationIds ?? []);
+    const worksheetImageFileId = await resolveWorksheetImageFileId(
+      ctx,
+      classId,
+      args.worksheetImageFileId,
+      existing.worksheetImageFileId,
+    );
     const syncedSteps = await syncProcedureTasks(ctx, {
       classId,
       assignmentId: args.assignmentId,
@@ -1173,6 +1202,7 @@ export const update = classMutation({
       procedureSteps: syncedSteps,
       expectationIds,
       acceptLinkSubmissions: args.acceptLinkSubmissions,
+      worksheetImageFileId,
       updatedAt: Date.now(),
     });
 
@@ -1220,6 +1250,7 @@ export const remove = classMutation({
     }
 
     await ctx.db.delete("assignments", args.assignmentId);
+    await deleteClassFile(ctx, existing.worksheetImageFileId);
 
     await recordClassActivity(ctx, {
       classId,

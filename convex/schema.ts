@@ -575,6 +575,8 @@ const schema = defineSchema({
     dueDateKey: v.optional(v.string()),
     /** Set when this task was created from an assignment procedure step. */
     assignmentId: v.optional(v.id("assignments")),
+    /** Optional teacher-uploaded worksheet image (class library, images preset). */
+    worksheetImageFileId: v.optional(v.id("files")),
     createdBy: v.id("users"),
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -582,7 +584,8 @@ const schema = defineSchema({
   })
     .index("by_classId", ["classId"])
     .index("by_classId_updatedAt", ["classId", "updatedAt"])
-    .index("by_assignmentId", ["assignmentId"]),
+    .index("by_assignmentId", ["assignmentId"])
+    .index("by_worksheetImageFileId", ["worksheetImageFileId"]),
   /**
    * Sparse per-student task completion. Missing row = not done.
    */
@@ -659,12 +662,15 @@ const schema = defineSchema({
     acceptLinkSubmissions: v.optional(v.boolean()),
     /** When true, saved scores are visible to students/guardians. */
     scoresReleased: v.optional(v.boolean()),
+    /** Optional teacher-uploaded worksheet image (class library, images preset). */
+    worksheetImageFileId: v.optional(v.id("files")),
     createdBy: v.id("users"),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_classId", ["classId"])
-    .index("by_classId_updatedAt", ["classId", "updatedAt"]),
+    .index("by_classId_updatedAt", ["classId", "updatedAt"])
+    .index("by_worksheetImageFileId", ["worksheetImageFileId"]),
   /**
    * Student-owned links for an assignment. `handedIn` marks which links are submitted.
    */

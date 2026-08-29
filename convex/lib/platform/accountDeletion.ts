@@ -8,6 +8,7 @@ import { deleteJoinCodeById } from "../cleanup/joinCodesCleanup.js";
 import {
   clearBannerIfReferencesFile,
   clearGroupOrTeamImagesIfReferencesFile,
+  clearWorksheetImagesIfReferencesFile,
 } from "../cleanup/filesCleanup.js";
 import { isSelfHosted } from "../billing/selfHosted.js";
 import {
@@ -129,6 +130,7 @@ async function deleteFilesForUser(ctx: MutationCtx, userId: Id<"users">): Promis
   for (const file of files) {
     await clearBannerIfReferencesFile(ctx, file._id, file.classId);
     await clearGroupOrTeamImagesIfReferencesFile(ctx, file._id, file.classId);
+    await clearWorksheetImagesIfReferencesFile(ctx, file._id);
     await ctx.storage.delete(file.storageId);
     await ctx.db.delete("files", file._id);
   }

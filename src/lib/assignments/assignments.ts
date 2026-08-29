@@ -129,6 +129,7 @@ export type AssignmentFormValues = {
   procedureSteps: AssignmentFormProcedureStep[];
   expectationIds: Array<Id<"expectations">>;
   acceptLinkSubmissions: boolean;
+  worksheetImageFileId?: Id<"files">;
 };
 
 export function createEmptyRubricEntry(): AssignmentFormRubricEntry {
@@ -171,6 +172,7 @@ export function emptyAssignmentFormValues(): AssignmentFormValues {
     procedureSteps: [],
     expectationIds: [],
     acceptLinkSubmissions: true,
+    worksheetImageFileId: undefined,
   };
 }
 
@@ -209,6 +211,7 @@ export function assignmentFormValuesFromDetail(
     })),
     expectationIds: [...detail.expectationIds],
     acceptLinkSubmissions: detail.acceptLinkSubmissions !== false,
+    worksheetImageFileId: detail.worksheetImageFileId,
   };
 }
 
@@ -236,6 +239,7 @@ export type AssignmentMutationPayload = {
   }>;
   expectationIds: Array<Id<"expectations">>;
   acceptLinkSubmissions: boolean;
+  worksheetImageFileId?: Id<"files">;
 };
 
 export function assignmentMutationPayloadFromForm(
@@ -261,6 +265,9 @@ export function assignmentMutationPayloadFromForm(
     })),
     expectationIds: values.expectationIds,
     acceptLinkSubmissions: values.acceptLinkSubmissions,
+    ...(values.worksheetImageFileId !== undefined
+      ? { worksheetImageFileId: values.worksheetImageFileId }
+      : {}),
   };
 
   if (values.scoringMode === "total") {
