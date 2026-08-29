@@ -12,6 +12,7 @@ await rm(out, { recursive: true, force: true });
 await mkdir(path.join(out, "scripts"), { recursive: true });
 
 await cp("convex", path.join(out, "convex"), { recursive: true });
+await rm(path.join(out, "convex", "test.setup.ts"), { force: true });
 await cp("patches", path.join(out, "patches"), { recursive: true });
 await cp("package.json", path.join(out, "package.json"));
 await cp("bun.lock", path.join(out, "bun.lock"));
