@@ -114,6 +114,31 @@ describe("prepareSeatsForPrint", () => {
     });
     expect(tiled.scale).toBeLessThan(full.scale);
   });
+
+  test("rotates items into visual space for side perspectives", () => {
+    const prepared = prepareSeatsForPrint({
+      canvasWidth: 1200,
+      canvasHeight: 800,
+      orientation: "right",
+      items: [
+        {
+          id: "d1",
+          kind: "desk",
+          label: "A long student name",
+          deskNumber: 1,
+          x: 100,
+          y: 80,
+          width: 80,
+          height: 60,
+        },
+      ],
+    });
+
+    expect(prepared.canvasWidth).toBeCloseTo((60 + SEAT_CANVAS_GRID_SIZE * 2) * prepared.scale);
+    expect(prepared.canvasHeight).toBeCloseTo((80 + SEAT_CANVAS_GRID_SIZE * 2) * prepared.scale);
+    expect(prepared.items[0]?.width).toBeCloseTo(60 * prepared.scale);
+    expect(prepared.items[0]?.height).toBeCloseTo(80 * prepared.scale);
+  });
 });
 
 describe("chunkOrientations", () => {
@@ -127,7 +152,7 @@ describe("chunkOrientations", () => {
 });
 
 describe("buildSeatsPrintHtml", () => {
-  test("includes branding, orientation transform, and desk number", () => {
+  test("includes branding, desk number, and no CSS canvas rotation", () => {
     const html = buildSeatsPrintHtml(
       {
         canvasWidth: 400,
@@ -162,14 +187,52 @@ describe("buildSeatsPrintHtml", () => {
     expect(html).toContain("/print.css");
     expect(html).toContain('class="print-seats"');
     expect(html).not.toContain("<style>");
-    expect(html).toContain("transform:rotate(180deg)");
-    expect(html).toContain("transform:rotate(-180deg)");
+    expect(html).not.toContain("transform:rotate(");
     expect(html).toContain("desk-num");
     expect(html).toContain(">3<");
     expect(html).toContain("Red");
     expect(html).toContain("Room A");
     expect(html).toContain("Perspective: Back");
     expect(html).toContain("grid-1");
+  });
+
+  test("swaps desk size in HTML for side perspectives so labels wrap to visual width", () => {
+    const html = buildSeatsPrintHtml(
+      {
+        canvasWidth: 400,
+        canvasHeight: 300,
+        orientations: ["left"],
+        perPage: 1,
+        items: [
+          {
+            id: "d1",
+            kind: "desk",
+            label: "A long student name",
+            deskNumber: 1,
+            x: 10,
+            y: 20,
+            width: 80,
+            height: 60,
+          },
+        ],
+      },
+      {
+        documentTitle: "Seats",
+        heading: "Room A",
+        subtitle: "Class 1",
+        logoAlt: "Logo",
+        orientationLabels,
+      },
+      "https://example.com/logo.webp",
+    );
+    expect(html).toContain("Perspective: Left");
+    expect(html).toContain("A long student name");
+    expect(html).not.toContain("transform:rotate(");
+    const itemStyle = html.match(/class="item desk" style="([^"]+)"/)?.[1] ?? "";
+    expect(itemStyle).toMatch(/width:[\d.]+px/);
+    const width = Number(itemStyle.match(/width:([\d.]+)px/)?.[1]);
+    const height = Number(itemStyle.match(/height:([\d.]+)px/)?.[1]);
+    expect(height).toBeGreaterThan(width);
   });
 
   test("renders multiple pages and tiles for selected perspectives", () => {

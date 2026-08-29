@@ -426,12 +426,97 @@ export function placeBlockOnCanvas(options: {
   };
 }
 
+/** Left/right perspectives swap visual width and height. */
+export function isSideSeatOrientation(orientation: SeatOrientation): boolean {
+  return SEAT_ORIENTATION_DEGREES[orientation] % 180 === 90;
+}
+
+/**
+ * Map a rectangle from front-canvas space into the upright page box for a
+ * perspective. Side views swap width/height so labels wrap to the visual desk.
+ */
+export function rotateSeatRectForOrientation(
+  rect: { x: number; y: number; width: number; height: number },
+  canvasWidth: number,
+  canvasHeight: number,
+  orientation: SeatOrientation,
+): { x: number; y: number; width: number; height: number } {
+  const { x, y, width, height } = rect;
+  switch (orientation) {
+    case "front":
+      return { x, y, width, height };
+    case "right":
+      return {
+        x: canvasHeight - y - height,
+        y: x,
+        width: height,
+        height: width,
+      };
+    case "back":
+      return {
+        x: canvasWidth - x - width,
+        y: canvasHeight - y - height,
+        width,
+        height,
+      };
+    case "left":
+      return {
+        x: y,
+        y: canvasWidth - x - width,
+        width: height,
+        height: width,
+      };
+  }
+}
+
+/**
+ * Layout box for labels that stay upright after the editor canvas rotates.
+ * Side perspectives swap width/height so wrapping uses the visual desk size.
+ */
+export function uprightSeatContentBox(
+  width: number,
+  height: number,
+  orientation: SeatOrientation,
+): { width: number; height: number } {
+  if (!isSideSeatOrientation(orientation)) {
+    return { width, height };
+  }
+  return { width: height, height: width };
+}
+
+export function uprightSeatContentStyle(
+  width: number,
+  height: number,
+  orientation: SeatOrientation,
+): {
+  position: "absolute";
+  left: "50%";
+  top: "50%";
+  width: number;
+  height: number;
+  transform: string;
+  transformOrigin: "center center";
+} {
+  const box = uprightSeatContentBox(width, height, orientation);
+  const degrees = SEAT_ORIENTATION_DEGREES[orientation];
+  const rotate = degrees === 0 ? "" : ` rotate(${-degrees}deg)`;
+  return {
+    position: "absolute",
+    left: "50%",
+    top: "50%",
+    width: box.width,
+    height: box.height,
+    transform: `translate(-50%, -50%)${rotate}`,
+    transformOrigin: "center center",
+  };
+}
+
 /** Screen cursor for a layout-space resize edge after the board is rotated. */
 export function resizeCursorForEdge(
   edge: SeatCanvasEdge,
   orientation: SeatOrientation,
 ): "ns-resize" | "ew-resize" {
-  const swapped = SEAT_ORIENTATION_DEGREES[orientation] % 180 === 90;
+  const swapped = isSideSeatOrientation(orientation);
   const isNs = edge === "n" || edge === "s";
   return isNs !== swapped ? "ns-resize" : "ew-resize";
 }

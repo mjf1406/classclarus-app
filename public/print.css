@@ -99,6 +99,7 @@
   box-sizing: border-box;
   border: 1px solid #71717a;
   background: #fff;
+  overflow: hidden;
 }
 
 .print-seats .item.desk {
@@ -118,7 +119,6 @@
   top: 2px;
   left: 4px;
   font-weight: 700;
-  transform-origin: center center;
 }
 
 .print-seats .item-label {
@@ -126,7 +126,7 @@
   text-align: center;
   word-break: break-word;
   line-height: 1.15;
-  transform-origin: center center;
+  max-width: 100%;
 }
 
 .print-seats .team,
@@ -136,7 +136,7 @@
   color: #3f3f46;
   line-height: 1.15;
   padding: 0 3px 3px;
-  transform-origin: center center;
+  max-width: 100%;
 }
 
 @page print-seats-page {

@@ -23,11 +23,13 @@ import {
   placeBlockOnCanvas,
   resizeCursorForEdge,
   resizeSeatCanvas,
+  rotateSeatRectForOrientation,
   SEAT_CANVAS_GRID_SIZE,
   sortSeatLayouts,
   topLeftPlacementOrigin,
   seatItemDisplayLabel,
   teamAssignmentsEqual,
+  uprightSeatContentBox,
   zoneSeatCounts,
   type SeatLayoutItem,
   type SeatLayoutListItem,
@@ -354,6 +356,53 @@ describe("canvasResizePanDelta", () => {
       x: CANVAS_RESIZE_STEP / 2,
       y: -CANVAS_RESIZE_STEP / 2,
     });
+  });
+});
+
+describe("rotateSeatRectForOrientation", () => {
+  const rect = { x: 10, y: 20, width: 40, height: 30 };
+
+  test("front is identity", () => {
+    expect(rotateSeatRectForOrientation(rect, 200, 100, "front")).toEqual(rect);
+  });
+
+  test("right maps top-left toward top-right and swaps size", () => {
+    expect(rotateSeatRectForOrientation(rect, 200, 100, "right")).toEqual({
+      x: 50,
+      y: 10,
+      width: 30,
+      height: 40,
+    });
+  });
+
+  test("left maps top-left toward bottom-left and swaps size", () => {
+    expect(rotateSeatRectForOrientation(rect, 200, 100, "left")).toEqual({
+      x: 20,
+      y: 150,
+      width: 30,
+      height: 40,
+    });
+  });
+
+  test("back flips without swapping size", () => {
+    expect(rotateSeatRectForOrientation(rect, 200, 100, "back")).toEqual({
+      x: 150,
+      y: 50,
+      width: 40,
+      height: 30,
+    });
+  });
+});
+
+describe("uprightSeatContentBox", () => {
+  test("keeps size for front and back", () => {
+    expect(uprightSeatContentBox(80, 60, "front")).toEqual({ width: 80, height: 60 });
+    expect(uprightSeatContentBox(80, 60, "back")).toEqual({ width: 80, height: 60 });
+  });
+
+  test("swaps size for left and right so labels wrap to the visual desk", () => {
+    expect(uprightSeatContentBox(80, 60, "left")).toEqual({ width: 60, height: 80 });
+    expect(uprightSeatContentBox(80, 60, "right")).toEqual({ width: 60, height: 80 });
   });
 });
 

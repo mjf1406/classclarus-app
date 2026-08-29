@@ -63,6 +63,7 @@ import {
   SEAT_ORIENTATION_LABEL_KEYS,
   seatItemDisplayLabel,
   sharedTeamNames,
+  uprightSeatContentStyle,
   type SeatCanvasEdge,
   type SeatLayoutItem,
   type SeatOrientation,
@@ -949,14 +950,6 @@ export function SeatLayoutEditorPage({ classId, layoutId }: SeatLayoutEditorPage
 
   const sharedNames = sharedTeamNames(groups);
   const degrees = SEAT_ORIENTATION_DEGREES[orientation];
-  const textDegrees = -degrees;
-  const textTransformStyle =
-    textDegrees !== 0
-      ? ({
-          transform: `rotate(${textDegrees}deg)`,
-          transformOrigin: "center center",
-        } as const)
-      : undefined;
   const saveLabel = saveItems.isPending
     ? t("editorSaveStatusSaving")
     : dirty
@@ -1206,66 +1199,64 @@ export function SeatLayoutEditorPage({ classId, layoutId }: SeatLayoutEditorPage
                           beginLabelEdit(item);
                         }}
                       >
-                        {item.kind === "desk" && item.deskNumber !== undefined ? (
-                          <span
-                            className="absolute top-0.5 left-1 font-semibold tabular-nums"
-                            style={textTransformStyle}
-                          >
-                            {item.deskNumber}
-                          </span>
-                        ) : null}
-                        {editingId === item.id ? (
-                          <input
-                            ref={labelInputRef}
-                            aria-label={t("editLabel")}
-                            className="absolute inset-0 z-20 size-full bg-background/95 px-1 text-center text-xs outline-none ring-2 ring-primary"
-                            style={textTransformStyle}
-                            value={labelDraft}
-                            onChange={(event) => {
-                              labelDraftRef.current = event.target.value;
-                              setLabelDraft(event.target.value);
-                            }}
-                            onBlur={() => {
-                              commitLabelEdit();
-                            }}
-                            onKeyDown={(event) => {
-                              if (event.key === "Enter") {
-                                event.preventDefault();
-                                event.currentTarget.blur();
-                              } else if (event.key === "Escape") {
-                                event.preventDefault();
-                                cancelLabelEdit();
-                              }
-                              event.stopPropagation();
-                            }}
-                            onPointerDown={(event) => event.stopPropagation()}
-                            onDoubleClick={(event) => event.stopPropagation()}
-                          />
-                        ) : (
-                          <div
-                            className="flex h-full flex-col items-center justify-center gap-0.5 px-1 pt-3 text-center"
-                            style={textTransformStyle}
-                          >
-                            <span className="line-clamp-2 break-words">
-                              {seatItemDisplayLabel(item, itemDefaults)}
+                        <div
+                          className="pointer-events-none overflow-hidden"
+                          style={uprightSeatContentStyle(item.width, item.height, orientation)}
+                        >
+                          {item.kind === "desk" && item.deskNumber !== undefined ? (
+                            <span className="absolute top-0.5 left-1 font-semibold tabular-nums">
+                              {item.deskNumber}
                             </span>
-                            {team ? (
-                              <span
-                                className={cn(
-                                  "line-clamp-1 text-[10px] text-muted-foreground",
-                                  team.stale && "text-destructive",
-                                )}
-                              >
-                                {team.stale ? t("teamStale") : team.label}
+                          ) : null}
+                          {editingId === item.id ? (
+                            <input
+                              ref={labelInputRef}
+                              aria-label={t("editLabel")}
+                              className="absolute inset-0 z-20 size-full bg-background/95 px-1 text-center text-xs outline-none ring-2 ring-primary pointer-events-auto"
+                              value={labelDraft}
+                              onChange={(event) => {
+                                labelDraftRef.current = event.target.value;
+                                setLabelDraft(event.target.value);
+                              }}
+                              onBlur={() => {
+                                commitLabelEdit();
+                              }}
+                              onKeyDown={(event) => {
+                                if (event.key === "Enter") {
+                                  event.preventDefault();
+                                  event.currentTarget.blur();
+                                } else if (event.key === "Escape") {
+                                  event.preventDefault();
+                                  cancelLabelEdit();
+                                }
+                                event.stopPropagation();
+                              }}
+                              onPointerDown={(event) => event.stopPropagation()}
+                              onDoubleClick={(event) => event.stopPropagation()}
+                            />
+                          ) : (
+                            <div className="flex h-full flex-col items-center justify-center gap-0.5 px-1 pt-3 text-center">
+                              <span className="line-clamp-2 break-words">
+                                {seatItemDisplayLabel(item, itemDefaults)}
                               </span>
-                            ) : null}
-                            {item.kind === "desk" && item.zoneName?.trim() ? (
-                              <span className="line-clamp-1 text-[10px] text-muted-foreground">
-                                {item.zoneName.trim()}
-                              </span>
-                            ) : null}
-                          </div>
-                        )}
+                              {team ? (
+                                <span
+                                  className={cn(
+                                    "line-clamp-1 text-[10px] text-muted-foreground",
+                                    team.stale && "text-destructive",
+                                  )}
+                                >
+                                  {team.stale ? t("teamStale") : team.label}
+                                </span>
+                              ) : null}
+                              {item.kind === "desk" && item.zoneName?.trim() ? (
+                                <span className="line-clamp-1 text-[10px] text-muted-foreground">
+                                  {item.zoneName.trim()}
+                                </span>
+                              ) : null}
+                            </div>
+                          )}
+                        </div>
                         {canManage && soleSelected?.id === item.id && editingId !== item.id
                           ? (["n", "e", "s", "w"] as const).map((edge) => (
                               <button

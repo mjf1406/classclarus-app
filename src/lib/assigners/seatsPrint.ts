@@ -1,7 +1,7 @@
 import { APP_CONFIG } from "@/config/app";
 import {
+  rotateSeatRectForOrientation,
   SEAT_CANVAS_GRID_SIZE,
-  SEAT_ORIENTATION_DEGREES,
   type SeatLayoutItem,
   type SeatOrientation,
 } from "@/lib/assigners/seatLayouts";
@@ -152,24 +152,41 @@ export function prepareSeatsForPrint(args: {
 
   const maxWidth = args.maxWidth ?? PRINT_STAGE_MAX_WIDTH;
   const maxHeight = args.maxHeight ?? PRINT_STAGE_MAX_HEIGHT;
-  const degrees = SEAT_ORIENTATION_DEGREES[args.orientation];
-  const isSideView = degrees === 90 || degrees === 270;
-  const layoutWidth = isSideView ? crop.height : crop.width;
-  const layoutHeight = isSideView ? crop.width : crop.height;
+  const rotatedCanvas = rotateSeatRectForOrientation(
+    { x: 0, y: 0, width: crop.width, height: crop.height },
+    crop.width,
+    crop.height,
+    args.orientation,
+  );
+  const layoutWidth = rotatedCanvas.width;
+  const layoutHeight = rotatedCanvas.height;
   const rawScale = Math.min(maxWidth / layoutWidth, maxHeight / layoutHeight);
   const scale = Number.isFinite(rawScale) && rawScale > 0 ? rawScale : 1;
 
   return {
-    canvasWidth: crop.width * scale,
-    canvasHeight: crop.height * scale,
+    canvasWidth: layoutWidth * scale,
+    canvasHeight: layoutHeight * scale,
     scale,
-    items: args.items.map((item) => ({
-      ...item,
-      x: (item.x - crop.offsetX) * scale,
-      y: (item.y - crop.offsetY) * scale,
-      width: item.width * scale,
-      height: item.height * scale,
-    })),
+    items: args.items.map((item) => {
+      const rotated = rotateSeatRectForOrientation(
+        {
+          x: item.x - crop.offsetX,
+          y: item.y - crop.offsetY,
+          width: item.width,
+          height: item.height,
+        },
+        crop.width,
+        crop.height,
+        args.orientation,
+      );
+      return {
+        ...item,
+        x: rotated.x * scale,
+        y: rotated.y * scale,
+        width: rotated.width * scale,
+        height: rotated.height * scale,
+      };
+    }),
   };
 }
 
@@ -185,7 +202,7 @@ export function chunkOrientations(
   return pages;
 }
 
-function itemHtml(item: SeatsPrintItem, scale: number, degrees: number): string {
+function itemHtml(item: SeatsPrintItem, scale: number): string {
   const kindClass =
     item.kind === "desk"
       ? "desk"
@@ -202,10 +219,10 @@ function itemHtml(item: SeatsPrintItem, scale: number, degrees: number): string 
   const labelPadX = Math.max(2, Math.round(4 * scale));
   const displayLabel = item.studentLabel?.trim() || item.label.trim();
   return `<div class="item ${kindClass}" style="left:${item.x}px;top:${item.y}px;width:${item.width}px;height:${item.height}px;font-size:${fontPx}px">
-    ${item.kind === "desk" && item.deskNumber !== undefined ? `<span class="desk-num" style="font-size:${deskNumPx}px;transform:rotate(${-degrees}deg)">${item.deskNumber}</span>` : ""}
-    <span class="item-label" style="padding:${labelPadTop}px ${labelPadX}px 4px;transform:rotate(${-degrees}deg)">${escapePrintHtml(displayLabel)}</span>
-    ${item.teamLabel ? `<span class="team" style="font-size:${teamPx}px;transform:rotate(${-degrees}deg)">${escapePrintHtml(item.teamLabel)}</span>` : ""}
-    ${item.zoneLabel ? `<span class="zone" style="font-size:${zonePx}px;transform:rotate(${-degrees}deg)">${escapePrintHtml(item.zoneLabel)}</span>` : ""}
+    ${item.kind === "desk" && item.deskNumber !== undefined ? `<span class="desk-num" style="font-size:${deskNumPx}px">${item.deskNumber}</span>` : ""}
+    <span class="item-label" style="padding:${labelPadTop}px ${labelPadX}px 4px">${escapePrintHtml(displayLabel)}</span>
+    ${item.teamLabel ? `<span class="team" style="font-size:${teamPx}px">${escapePrintHtml(item.teamLabel)}</span>` : ""}
+    ${item.zoneLabel ? `<span class="zone" style="font-size:${zonePx}px">${escapePrintHtml(item.zoneLabel)}</span>` : ""}
   </div>`;
 }
 
@@ -221,12 +238,11 @@ function tileHtml(
   orientationLabel: string,
 ): string {
   const prepared = prepareSeatsForPrint(args);
-  const degrees = SEAT_ORIENTATION_DEGREES[args.orientation];
-  const items = prepared.items.map((item) => itemHtml(item, prepared.scale, degrees)).join("\n");
+  const items = prepared.items.map((item) => itemHtml(item, prepared.scale)).join("\n");
   return `<div class="tile">
   <p class="tile-caption">${escapePrintHtml(orientationLabel)}</p>
   <div class="stage-wrap">
-    <div class="stage" style="width:${prepared.canvasWidth}px;height:${prepared.canvasHeight}px;transform:rotate(${degrees}deg)">${items}</div>
+    <div class="stage" style="width:${prepared.canvasWidth}px;height:${prepared.canvasHeight}px">${items}</div>
   </div>
 </div>`;
 }
