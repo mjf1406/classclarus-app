@@ -40,9 +40,9 @@ import {
   type StudentRosterEntry,
 } from "@/lib/roster/roster";
 import { useAuthedQuery } from "@/hooks/useAuthedQuery";
-import { ONE_HOUR } from "@/lib/queryCache";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
+import { GC_TIME } from "@/lib/queryCache";
 
 const RAZ_INITIAL_LEVELS_SURFACE = "raz-initial-levels";
 const CHART_URL = "https://www.raz-kids.com/main/ViewPage/name/level-correlation-chart/";
@@ -70,7 +70,11 @@ export function RazInitialLevelsPage({ classId }: RazInitialLevelsPageProps) {
     refetch: refetchLevels,
   } = useRazInitialLevels(classId);
   const { data: settings } = useClassUserSettings(classId);
-  const { data: classDoc } = useAuthedQuery(api.classes.get, { classId }, { gcTime: ONE_HOUR });
+  const { data: classDoc } = useAuthedQuery(
+    api.classes.get,
+    { classId },
+    { gcTime: GC_TIME.stable },
+  );
   const setLevel = useSetRazInitialLevel();
 
   useEnsureStudentRosters(classId, !rosterPending && !isAuthLoading && !rosterError);

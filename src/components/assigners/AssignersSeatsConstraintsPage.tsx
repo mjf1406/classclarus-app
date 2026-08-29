@@ -25,7 +25,6 @@ import { useCan } from "@/hooks/permissions/useCan";
 import { useStudentRoster } from "@/hooks/roster/useStudentRoster";
 import { useAuthedQuery } from "@/hooks/useAuthedQuery";
 import { seatConstraintSummary } from "@/lib/assigners/seatConstraints";
-import { ONE_HOUR } from "@/lib/queryCache";
 import { api } from "../../../convex/_generated/api";
 import {
   isPairConstraintType,
@@ -34,6 +33,7 @@ import {
 } from "@/lib/assigners/seatConstraints";
 import { getRosterDisplayName, resolveRosterNameFormat } from "@/lib/roster/roster";
 import type { Id } from "../../../convex/_generated/dataModel";
+import { GC_TIME } from "@/lib/queryCache";
 
 type AssignersSeatsConstraintsPageProps = {
   classId: Id<"classes">;
@@ -49,7 +49,11 @@ export function AssignersSeatsConstraintsPage({
   const { can } = useCan();
   const canManage = can("assigners:manage");
   // Share `classes.get` cache without the access-log side effect from `useClass`.
-  const { data: classDoc } = useAuthedQuery(api.classes.get, { classId }, { gcTime: ONE_HOUR });
+  const { data: classDoc } = useAuthedQuery(
+    api.classes.get,
+    { classId },
+    { gcTime: GC_TIME.stable },
+  );
   const { data, isPending, isError, refetch } = useSeatConstraints(classId);
   const {
     data: roster,

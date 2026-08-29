@@ -1,8 +1,7 @@
 import { api } from "../../../convex/_generated/api";
 import { useAuthedQuery } from "@/hooks/useAuthedQuery";
-
-const ONE_MINUTE = 60_000;
+import { GC_TIME } from "@/lib/queryCache";
 
 export function useAdminUsers() {
-  return useAuthedQuery(api.adminUsers.listUsers, {}, { gcTime: ONE_MINUTE });
+  return useAuthedQuery(api.adminUsers.listUsers, {}, { gcTime: GC_TIME.realtime });
 }

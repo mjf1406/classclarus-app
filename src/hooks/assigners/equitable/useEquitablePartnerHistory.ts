@@ -4,7 +4,7 @@ import { useConvex } from "convex/react";
 
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
-import { ONE_HOUR } from "@/lib/queryCache";
+import { GC_TIME } from "@/lib/queryCache";
 
 const PAGE_SIZE = 20;
 
@@ -28,7 +28,7 @@ export function equitablePartnerHistoryQueryKey(
   ] as const;
 }
 
-/** gcTime: ONE_HOUR — paginated shared-job dates for a student/partner pair. */
+/** gcTime: GC_TIME.realtime — paginated shared-job dates for a student/partner pair. */
 export function useEquitablePartnerHistory(
   classId: Id<"classes">,
   assignerId: Id<"equitableAssigners"> | undefined,
@@ -44,8 +44,8 @@ export function useEquitablePartnerHistory(
         ? equitablePartnerHistoryQueryKey(classId, assignerId, studentUserId, partnerUserId)
         : ["equitableAssigners", "partnerHistory", "skip"],
     enabled: isAuthenticated && Boolean(assignerId && studentUserId && partnerUserId),
-    gcTime: ONE_HOUR,
-    staleTime: ONE_HOUR,
+    gcTime: GC_TIME.realtime,
+    staleTime: GC_TIME.realtime,
     initialPageParam: undefined as number | undefined,
     queryFn: async ({ pageParam }) => {
       if (!assignerId || !studentUserId || !partnerUserId) {

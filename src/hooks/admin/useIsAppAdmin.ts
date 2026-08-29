@@ -4,8 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { api } from "../../../convex/_generated/api";
 import { isSelfHosted } from "@/lib/selfHosted";
-
-const ONE_MINUTE = 60_000;
+import { GC_TIME } from "@/lib/queryCache";
 
 /**
  * Whether the signed-in user can manage self-host users (`admin:manageUsers`).
@@ -18,7 +17,7 @@ export function useIsAppAdmin() {
 
   const result = useQuery({
     ...convexQuery(api.adminUsers.isAppAdmin, enabled ? {} : "skip"),
-    gcTime: ONE_MINUTE,
+    gcTime: GC_TIME.stable,
     retry: false,
   });
 

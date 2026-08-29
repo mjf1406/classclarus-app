@@ -4,8 +4,8 @@ import { useCallback, useRef } from "react";
 
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { FIVE_MINUTES } from "@/lib/queryCache";
 import { collectAlgorithmHistoryPages } from "@/lib/assigners/seating/algorithmHistoryPages";
+import { GC_TIME } from "@/lib/queryCache";
 
 function algorithmHistoryQuery(
   classId: Id<"classes">,
@@ -35,7 +35,7 @@ export function useSeatAlgorithmData() {
     async (classId: Id<"classes">, layoutId: Id<"seatLayouts">) => {
       const layout = await queryClient.fetchQuery({
         ...convexQuery(api.seatLayouts.get, { classId, layoutId }),
-        gcTime: FIVE_MINUTES,
+        gcTime: GC_TIME.realtime,
       });
       const pageKeys: QueryKey[] = [];
       const collected = await collectAlgorithmHistoryPages(async (cursor) => {
@@ -47,7 +47,7 @@ export function useSeatAlgorithmData() {
         pageKeys.push(query.queryKey);
         return await queryClient.fetchQuery({
           ...query,
-          gcTime: FIVE_MINUTES,
+          gcTime: GC_TIME.realtime,
         });
       });
       historyPageKeys.current.set(`${classId}:${layoutId}`, pageKeys);

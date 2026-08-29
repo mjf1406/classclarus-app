@@ -5,7 +5,8 @@ import { useConvexMutation } from "@convex-dev/react-query";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { useAuthedQuery } from "@/hooks/useAuthedQuery";
-import { ONE_HOUR } from "@/lib/queryCache";
+import { localDateKey } from "@/lib/attendance/dateKey";
+import { GC_TIME } from "@/lib/queryCache";
 
 export function pointsBoardTimeZoneOffsetMinutes(): number {
   return new Date().getTimezoneOffset();
@@ -19,13 +20,21 @@ export function pointsBoardQueryKey(classId: Id<"classes">, dateKey: string) {
   }).queryKey;
 }
 
-/** gcTime: ONE_HOUR — same as roster/attendance; Convex keeps the live query fresh while mounted. */
+export function pointsBoardQueryOptions(classId: Id<"classes">, dateKey: string = localDateKey()) {
+  return convexQuery(api.points.board, {
+    classId,
+    dateKey,
+    timeZoneOffsetMinutes: pointsBoardTimeZoneOffsetMinutes(),
+  });
+}
+
+/** gcTime: GC_TIME.realtime — same as roster/attendance; Convex keeps the live query fresh while mounted. */
 export function usePointsBoard(classId: Id<"classes">, dateKey: string) {
   const timeZoneOffsetMinutes = useMemo(() => pointsBoardTimeZoneOffsetMinutes(), []);
   return useAuthedQuery(
     api.points.board,
     { classId, dateKey, timeZoneOffsetMinutes },
-    { gcTime: ONE_HOUR },
+    { gcTime: GC_TIME.realtime },
   );
 }
 

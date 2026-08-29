@@ -37,7 +37,6 @@ import {
 } from "@/lib/attendance/attendance";
 import { localDateKey } from "@/lib/attendance/dateKey";
 import { buildMembershipIndex } from "@/lib/groups/groupTeamFilters";
-import { ONE_HOUR } from "@/lib/queryCache";
 import {
   getRosterDisplayName,
   resolveRosterNameFormat,
@@ -46,6 +45,7 @@ import {
 } from "@/lib/roster/roster";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
+import { GC_TIME } from "@/lib/queryCache";
 
 type AttendancePageProps = {
   classId: Id<"classes">;
@@ -69,7 +69,11 @@ function StaffAttendancePage({ classId }: AttendancePageProps) {
   const { t: tClasses } = useTranslation("classes");
   const unnamed = tClasses("unnamedMember");
   const dateKey = useMemo(() => localDateKey(), []);
-  const { data: classDoc } = useAuthedQuery(api.classes.get, { classId }, { gcTime: ONE_HOUR });
+  const { data: classDoc } = useAuthedQuery(
+    api.classes.get,
+    { classId },
+    { gcTime: GC_TIME.stable },
+  );
   const {
     data: students,
     isPending: rosterPending,

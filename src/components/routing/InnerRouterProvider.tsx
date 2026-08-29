@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { RouterProvider, type AnyRouter } from "@tanstack/react-router";
 import { useConvexAuth } from "@convex-dev/auth/react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import PendingComponent from "@/components/loading/PendingComponent";
 
@@ -11,6 +12,7 @@ import PendingComponent from "@/components/loading/PendingComponent";
  */
 export function InnerRouterProvider({ router }: { router: AnyRouter }) {
   const auth = useConvexAuth();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (auth.isLoading) {
@@ -23,5 +25,5 @@ export function InnerRouterProvider({ router }: { router: AnyRouter }) {
     return <PendingComponent />;
   }
 
-  return <RouterProvider router={router} context={{ auth }} />;
+  return <RouterProvider router={router} context={{ auth, queryClient }} />;
 }

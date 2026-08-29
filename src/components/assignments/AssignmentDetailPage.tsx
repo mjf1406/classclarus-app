@@ -80,7 +80,6 @@ import {
 } from "@/lib/expectations/expectations";
 import { buildMembershipIndex } from "@/lib/groups/groupTeamFilters";
 import { collectAllStudents, sortStudents } from "@/lib/groups/groups";
-import { ONE_HOUR } from "@/lib/queryCache";
 import {
   getRosterDisplayName,
   normalizeColumnOrder,
@@ -91,6 +90,7 @@ import {
 import { cn } from "@/lib/utils";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
+import { GC_TIME } from "@/lib/queryCache";
 
 const ASSIGNMENTS_ROSTER_SURFACE = "assignments";
 
@@ -498,7 +498,11 @@ function StaffAssignmentDetailPage({ classId, assignmentId }: AssignmentDetailPa
 
   const { data, isPending, isError, refetch } = useAssignment(classId, assignmentId);
   const { data: expectationValues } = useExpectationValues(classId);
-  const { data: classDoc } = useAuthedQuery(api.classes.get, { classId }, { gcTime: ONE_HOUR });
+  const { data: classDoc } = useAuthedQuery(
+    api.classes.get,
+    { classId },
+    { gcTime: GC_TIME.stable },
+  );
   const {
     data: groupsBoard,
     isPending: boardPending,
@@ -867,7 +871,11 @@ function PersonalAssignmentDetailPage({ classId, assignmentId }: AssignmentDetai
   const { t: tExpectations } = useTranslation("expectations");
   const { t: tClasses } = useTranslation("classes");
   const { data: currentUser } = useCurrentUser();
-  const { data: classDoc } = useAuthedQuery(api.classes.get, { classId }, { gcTime: ONE_HOUR });
+  const { data: classDoc } = useAuthedQuery(
+    api.classes.get,
+    { classId },
+    { gcTime: GC_TIME.stable },
+  );
   const { data, isPending, isError, refetch } = useAssignment(classId, assignmentId);
   const { data: audienceData } = useExpectationsForAudience(classId);
   const addLink = useAddAssignmentLink();

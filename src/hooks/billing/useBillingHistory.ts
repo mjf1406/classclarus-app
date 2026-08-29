@@ -3,7 +3,7 @@ import { useAction } from "convex/react";
 import { useConvexAuth } from "@convex-dev/auth/react";
 
 import { api } from "../../../convex/_generated/api";
-import { FIVE_MINUTES } from "@/lib/queryCache";
+import { GC_TIME } from "@/lib/queryCache";
 
 export const billingHistoryQueryKey = ["billing", "orderHistory"] as const;
 
@@ -17,8 +17,8 @@ export function useBillingHistory() {
   const query = useInfiniteQuery({
     queryKey: billingHistoryQueryKey,
     enabled: isAuthenticated,
-    gcTime: FIVE_MINUTES,
-    staleTime: FIVE_MINUTES,
+    gcTime: GC_TIME.realtime,
+    staleTime: GC_TIME.realtime,
     initialPageParam: 1,
     queryFn: async ({ pageParam }) =>
       listOrders({

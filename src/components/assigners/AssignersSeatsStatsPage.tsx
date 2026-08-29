@@ -35,7 +35,6 @@ import { useSeatPersonalStudentsForAudience } from "@/hooks/assigners/useSeatPer
 import { useAuthedQuery } from "@/hooks/useAuthedQuery";
 import { formatLocalizedSeatChartHistoryDate } from "@/i18n/formatDate";
 import { toIntlLocale } from "@/lib/languages";
-import { ONE_HOUR } from "@/lib/queryCache";
 import {
   getRosterDisplayName,
   resolveRosterNameFormat,
@@ -43,6 +42,7 @@ import {
 } from "@/lib/roster/roster";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
+import { GC_TIME } from "@/lib/queryCache";
 
 type AssignersSeatsStatsPageProps = {
   classId: Id<"classes">;
@@ -202,7 +202,11 @@ function CurrentSeatSummaryCard({
 
 export function AssignersSeatsStatsPage({ classId }: AssignersSeatsStatsPageProps) {
   const { t, i18n } = useTranslation("assigners");
-  const { data: classDoc } = useAuthedQuery(api.classes.get, { classId }, { gcTime: ONE_HOUR });
+  const { data: classDoc } = useAuthedQuery(
+    api.classes.get,
+    { classId },
+    { gcTime: GC_TIME.stable },
+  );
   const studentsQuery = useSeatPersonalStudentsForAudience(classId);
   const [selectedUserId, setSelectedUserId] = useState<Id<"users"> | null>(null);
   const [searchQuery, setSearchQuery] = useState("");

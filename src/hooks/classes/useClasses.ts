@@ -3,14 +3,14 @@ import { convexQuery } from "@convex-dev/react-query";
 
 import { useAuthedQuery } from "@/hooks/useAuthedQuery";
 import { api } from "../../../convex/_generated/api";
-import { ONE_HOUR } from "@/lib/queryCache";
+import { GC_TIME } from "@/lib/queryCache";
 
 export function classesListQueryKey() {
   return convexQuery(api.classes.listMine, {}).queryKey;
 }
 
 export function useClasses() {
-  return useAuthedQuery(api.classes.listMine, {}, { gcTime: ONE_HOUR });
+  return useAuthedQuery(api.classes.listMine, {}, { gcTime: GC_TIME.stable });
 }
 
 /** Active (non-archived) classes derived from the listMine cache. */

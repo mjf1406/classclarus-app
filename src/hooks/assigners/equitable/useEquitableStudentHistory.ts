@@ -4,7 +4,7 @@ import { useConvex } from "convex/react";
 
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
-import { ONE_HOUR } from "@/lib/queryCache";
+import { GC_TIME } from "@/lib/queryCache";
 
 const PAGE_SIZE = 20;
 
@@ -30,7 +30,7 @@ export function equitableStudentHistoryQueryKey(
   ] as const;
 }
 
-/** gcTime: ONE_HOUR — paginated equitable assignment history for a placement. */
+/** gcTime: GC_TIME.realtime — paginated equitable assignment history for a placement. */
 export function useEquitableStudentHistory(
   classId: Id<"classes">,
   assignerId: Id<"equitableAssigners"> | undefined,
@@ -46,8 +46,8 @@ export function useEquitableStudentHistory(
         ? equitableStudentHistoryQueryKey(classId, assignerId, studentUserId, placementFilter)
         : ["equitableAssigners", "studentHistory", "skip"],
     enabled: isAuthenticated && Boolean(assignerId && studentUserId && placementFilter),
-    gcTime: ONE_HOUR,
-    staleTime: ONE_HOUR,
+    gcTime: GC_TIME.realtime,
+    staleTime: GC_TIME.realtime,
     initialPageParam: undefined as number | undefined,
     queryFn: async ({ pageParam }) => {
       if (!assignerId || !studentUserId || !placementFilter) {

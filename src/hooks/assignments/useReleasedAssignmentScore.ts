@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { FIVE_MINUTES } from "@/lib/queryCache";
+import { GC_TIME } from "@/lib/queryCache";
 
 export function releasedAssignmentScoreQueryKey(
   classId: Id<"classes">,
@@ -36,7 +36,7 @@ export function useReleasedAssignmentScore(
       api.assignmentScores.getReleasedScore,
       active && studentUserId ? { classId, assignmentId, studentUserId } : "skip",
     ),
-    gcTime: FIVE_MINUTES,
+    gcTime: GC_TIME.realtime,
     retry: false,
   });
 

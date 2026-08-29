@@ -8,15 +8,15 @@ import {
   summarizeAttendanceCounts,
   type AttendanceStatusSummary,
 } from "@/lib/attendance/attendance";
-import { ONE_HOUR } from "@/lib/queryCache";
+import { GC_TIME } from "@/lib/queryCache";
 
-/** gcTime: ONE_HOUR — same as personal attendance history. */
+/** gcTime: GC_TIME.realtime — same as personal attendance history. */
 export function useAttendanceSummaryForAudience(classId: Id<"classes">) {
   const { isAuthenticated, isLoading: isAuthLoading } = useConvexAuth();
 
   const query = useQuery({
     ...convexQuery(api.attendance.summaryForAudience, isAuthenticated ? { classId } : "skip"),
-    gcTime: ONE_HOUR,
+    gcTime: GC_TIME.realtime,
     retry: false,
   });
 

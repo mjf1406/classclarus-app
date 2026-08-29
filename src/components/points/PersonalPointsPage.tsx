@@ -55,7 +55,6 @@ import {
   type PointsLedgerDescriptionFilter,
   type PointsLedgerSortKey,
 } from "@/lib/points/pointsLedgerFilter";
-import { ONE_HOUR } from "@/lib/queryCache";
 import {
   getRosterDisplayName,
   resolveRosterNameFormat,
@@ -64,6 +63,7 @@ import {
 import { cn } from "@/lib/utils";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
+import { GC_TIME } from "@/lib/queryCache";
 
 type PersonalPointsPageProps = {
   classId: Id<"classes">;
@@ -264,7 +264,11 @@ export function PersonalPointsPage({ classId }: PersonalPointsPageProps) {
   const { t } = useTranslation("points");
   const { t: tCommon } = useTranslation("common");
   const dateKey = useMemo(() => localDateKey(), []);
-  const { data: classDoc } = useAuthedQuery(api.classes.get, { classId }, { gcTime: ONE_HOUR });
+  const { data: classDoc } = useAuthedQuery(
+    api.classes.get,
+    { classId },
+    { gcTime: GC_TIME.stable },
+  );
   const { data, isPending, isError, refetch } = usePointsForAudience(classId, dateKey);
   const [selectedUserId, setSelectedUserId] = useState<Id<"users"> | null>(null);
   const [sortKey, setSortKey] = useState<PointsLedgerSortKey>("date");

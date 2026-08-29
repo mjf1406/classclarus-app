@@ -3,7 +3,7 @@ import { convexQuery } from "@convex-dev/react-query";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { useAuthedQuery } from "@/hooks/useAuthedQuery";
-import { FIVE_MINUTES } from "@/lib/queryCache";
+import { GC_TIME } from "@/lib/queryCache";
 
 export function seatChartRecordQueryKey(classId: Id<"classes">, recordId: Id<"seatChartRecords">) {
   return convexQuery(api.seatCharts.getRecord, { classId, recordId }).queryKey;
@@ -15,6 +15,6 @@ export function useSeatChartRecord(
   recordId: Id<"seatChartRecords"> | null,
 ) {
   return useAuthedQuery(api.seatCharts.getRecord, recordId ? { classId, recordId } : "skip", {
-    gcTime: FIVE_MINUTES,
+    gcTime: GC_TIME.realtime,
   });
 }

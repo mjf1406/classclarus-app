@@ -12,6 +12,7 @@ import {
   PopoverTitle,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useGroupTeamFilterState } from "@/hooks/groups/useGroupTeamFilterState";
 import { useGroupsBoard } from "@/hooks/groups/useGroupsBoard";
@@ -59,6 +60,26 @@ type FilterRowsProps = {
   onToggleTeam: (teamId: Id<"teams">) => void;
   onClear: () => void;
 };
+
+const FILTER_SKELETON_COUNT = 5;
+
+function GroupTeamFilterSkeleton({ compact }: { compact: boolean }) {
+  const { t } = useTranslation("classes");
+  const chipClassName = cn("shrink-0 rounded-4xl", compact ? "size-8" : "size-10");
+
+  return (
+    <div role="status" aria-busy="true" aria-label={t("groupTeamFilterButton")}>
+      <div className="md:hidden">
+        <Skeleton className={chipClassName} />
+      </div>
+      <div className="hidden flex-wrap items-center gap-2 md:flex">
+        {Array.from({ length: FILTER_SKELETON_COUNT }, (_, index) => (
+          <Skeleton key={index} className={chipClassName} />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function FilterIconButton({
   label,
@@ -199,7 +220,7 @@ export function GroupTeamFilterButtons({
   trailing,
 }: GroupTeamFilterButtonsProps) {
   const { t } = useTranslation("classes");
-  const { data: board } = useGroupsBoard(classId);
+  const { data: board, isPending } = useGroupsBoard(classId);
   const {
     groupIds,
     teamIds,
@@ -236,6 +257,15 @@ export function GroupTeamFilterButtons({
   }, [board, groupIds, teamIds, includeUngrouped, setState]);
 
   const rowClassName = cn("flex flex-wrap items-center gap-2", className);
+
+  if (isPending) {
+    return (
+      <div className={rowClassName}>
+        <GroupTeamFilterSkeleton compact={compact} />
+        {trailing}
+      </div>
+    );
+  }
 
   if (!board || board.groups.length === 0) {
     if (!trailing) return null;

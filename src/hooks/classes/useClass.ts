@@ -5,14 +5,18 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import { useLogClassAccessOnce } from "@/hooks/activity/useLogClassAccess";
 import { useAuthedQuery } from "@/hooks/useAuthedQuery";
 import { api } from "../../../convex/_generated/api";
-import { ONE_HOUR } from "@/lib/queryCache";
+import { GC_TIME } from "@/lib/queryCache";
 
 export function classDetailQueryKey(classId: Id<"classes">) {
   return convexQuery(api.classes.get, { classId }).queryKey;
 }
 
+export function classDetailQueryOptions(classId: Id<"classes">) {
+  return convexQuery(api.classes.get, { classId });
+}
+
 export function useClass(classId: Id<"classes">) {
-  const result = useAuthedQuery(api.classes.get, { classId }, { gcTime: ONE_HOUR });
+  const result = useAuthedQuery(api.classes.get, { classId }, { gcTime: GC_TIME.stable });
   const accessArgs = useMemo(
     () =>
       result.data

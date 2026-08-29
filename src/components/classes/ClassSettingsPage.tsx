@@ -596,8 +596,8 @@ export function ClassSettingsPage({ classId }: ClassSettingsPageProps) {
                       />
                     }
                   >
-                    <ExternalLink aria-hidden="true" />
                     {tClassroomScreen("openDisplay")}
+                    <ExternalLink data-icon="inline-end" aria-hidden="true" />
                   </Button>
                 </CardHeader>
                 <CardContent>

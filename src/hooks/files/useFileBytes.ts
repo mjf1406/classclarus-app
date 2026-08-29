@@ -5,6 +5,7 @@ import { useConvex } from "convex/react";
 
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
+import { GC_TIME } from "@/lib/queryCache";
 
 /** Prefix for all file-byte TanStack queries (immutable blobs keyed by fileId). */
 export const FILE_BYTES_QUERY_PREFIX = ["files", "getFileBytes"] as const;
@@ -66,7 +67,7 @@ export function useFileBytes(fileId: Id<"files"> | undefined) {
       };
     },
     enabled,
-    gcTime: Infinity,
+    gcTime: GC_TIME.immutable,
     staleTime: Infinity,
     retry: false,
   });

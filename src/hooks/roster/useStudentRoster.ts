@@ -4,16 +4,20 @@ import { convexQuery } from "@convex-dev/react-query";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { useLogClassAccessOnce } from "@/hooks/activity/useLogClassAccess";
 import { useAuthedQuery } from "@/hooks/useAuthedQuery";
-import { ONE_HOUR } from "@/lib/queryCache";
 import { api } from "../../../convex/_generated/api";
+import { GC_TIME } from "@/lib/queryCache";
 
 export function studentRosterQueryKey(classId: Id<"classes">) {
   return convexQuery(api.studentRosters.list, { classId }).queryKey;
 }
 
+export function studentRosterQueryOptions(classId: Id<"classes">) {
+  return convexQuery(api.studentRosters.list, { classId });
+}
+
 /** gcTime: 1 hour — reactive via Convex; matches other class member lists. */
 export function useStudentRoster(classId: Id<"classes">) {
-  const result = useAuthedQuery(api.studentRosters.list, { classId }, { gcTime: ONE_HOUR });
+  const result = useAuthedQuery(api.studentRosters.list, { classId }, { gcTime: GC_TIME.realtime });
   const accessArgs = useMemo(
     () =>
       result.data !== undefined

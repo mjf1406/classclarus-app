@@ -5,7 +5,7 @@ import { useMemo } from "react";
 
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { TEN_SECONDS } from "@/lib/queryCache";
+import { GC_TIME } from "@/lib/queryCache";
 
 export function rewardPurchaseLimitsQueryKeyRoot() {
   return ["convexQuery", api.points.rewardPurchaseLimits] as const;
@@ -32,7 +32,7 @@ export function useRewardPurchaseLimits(
 
   const result = useQuery({
     ...convexQuery(api.points.rewardPurchaseLimits, args),
-    gcTime: TEN_SECONDS,
+    gcTime: GC_TIME.realtime,
     retry: false,
   });
 

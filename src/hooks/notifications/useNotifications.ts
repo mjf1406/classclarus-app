@@ -2,7 +2,7 @@ import { convexQuery } from "@convex-dev/react-query";
 
 import { api } from "../../../convex/_generated/api";
 import { useAuthedQuery } from "@/hooks/useAuthedQuery";
-import { ONE_HOUR } from "@/lib/queryCache";
+import { GC_TIME } from "@/lib/queryCache";
 
 export function notificationsListQueryKey() {
   return convexQuery(api.notifications.list, {}).queryKey;
@@ -14,9 +14,9 @@ export function notificationsCountsQueryKey() {
 
 /** gcTime: 1 hour — user-confirmed for inbox queries. */
 export function useNotificationsList() {
-  return useAuthedQuery(api.notifications.list, {}, { gcTime: ONE_HOUR });
+  return useAuthedQuery(api.notifications.list, {}, { gcTime: GC_TIME.realtime });
 }
 
 export function useNotificationCounts() {
-  return useAuthedQuery(api.notifications.counts, {}, { gcTime: ONE_HOUR });
+  return useAuthedQuery(api.notifications.counts, {}, { gcTime: GC_TIME.realtime });
 }

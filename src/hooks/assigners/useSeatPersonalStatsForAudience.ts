@@ -3,8 +3,8 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 
 import type { Id } from "../../../convex/_generated/dataModel";
-import { ONE_HOUR } from "@/lib/queryCache";
 import { api } from "../../../convex/_generated/api";
+import { GC_TIME } from "@/lib/queryCache";
 
 export function seatPersonalStatsForAudienceQueryKey(
   classId: Id<"classes">,
@@ -16,7 +16,7 @@ export function seatPersonalStatsForAudienceQueryKey(
   }).queryKey;
 }
 
-/** gcTime: ONE_HOUR — personal seat stats; Convex keeps the live query fresh while mounted. */
+/** gcTime: GC_TIME.realtime — personal seat stats; Convex keeps the live query fresh while mounted. */
 export function useSeatPersonalStatsForAudience(
   classId: Id<"classes">,
   studentUserId: Id<"users"> | null,
@@ -29,7 +29,7 @@ export function useSeatPersonalStatsForAudience(
       api.seatCharts.personalStatsForAudience,
       active && studentUserId !== null ? { classId, studentUserId } : "skip",
     ),
-    gcTime: ONE_HOUR,
+    gcTime: GC_TIME.realtime,
     retry: false,
   });
 

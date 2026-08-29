@@ -4,8 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { api } from "../../../convex/_generated/api";
 import { isSelfHosted } from "@/lib/selfHosted";
-
-const THIRTY_SECONDS = 30_000;
+import { GC_TIME } from "@/lib/queryCache";
 
 export type FeedbackAdminListArgs = {
   archived: boolean;
@@ -23,7 +22,7 @@ export function useFeedbackAdminList(args: FeedbackAdminListArgs) {
 
   const result = useQuery({
     ...convexQuery(api.feedback.list, enabled ? args : "skip"),
-    gcTime: THIRTY_SECONDS,
+    gcTime: GC_TIME.realtime,
     retry: false,
   });
 

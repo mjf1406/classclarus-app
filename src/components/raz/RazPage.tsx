@@ -67,7 +67,6 @@ import { useStudentRosterFilter } from "@/hooks/students/useStudentRosterFilter"
 import { useAuthedQuery } from "@/hooks/useAuthedQuery";
 import { buildMembershipIndex, hasGroupTeamMembershipFilters } from "@/lib/groups/groupTeamFilters";
 import { toIntlLocale } from "@/lib/languages";
-import { ONE_HOUR } from "@/lib/queryCache";
 import {
   getRazAssessmentSchedule,
   getRazDisplayStatuses,
@@ -86,6 +85,7 @@ import {
 } from "@/lib/roster/roster";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
+import { GC_TIME } from "@/lib/queryCache";
 
 const ASSESS_URL =
   "https://www.raz-kids.com/main/AssessmentResources/assessmentCategory/read-retell-respond";
@@ -214,7 +214,11 @@ function StaffRazPage({ classId }: RazPageProps) {
     isAuthLoading,
   } = useStudentRoster(classId);
   const { data: settings } = useClassUserSettings(classId);
-  const { data: classDoc } = useAuthedQuery(api.classes.get, { classId }, { gcTime: ONE_HOUR });
+  const { data: classDoc } = useAuthedQuery(
+    api.classes.get,
+    { classId },
+    { gcTime: GC_TIME.stable },
+  );
   const { data: groupsBoard } = useGroupsBoard(classId);
   const groupTeamFilterState = useGroupTeamFilterState(classId);
   const recordAssessment = useRecordRazAssessment();

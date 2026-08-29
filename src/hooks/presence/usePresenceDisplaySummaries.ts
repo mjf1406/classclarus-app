@@ -3,9 +3,9 @@ import { convexQuery } from "@convex-dev/react-query";
 
 import { useAuthedQuery } from "@/hooks/useAuthedQuery";
 import { normalizeOnlineUserIds } from "@/lib/presence/presence";
-import { ONE_HOUR } from "@/lib/queryCache";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
+import { GC_TIME } from "@/lib/queryCache";
 
 export function presenceDisplaySummariesQueryKey(
   classId: Id<"classes">,
@@ -20,7 +20,7 @@ export function presenceDisplaySummariesQueryKey(
 /**
  * Cached display fields for online users in a class room.
  *
- * gcTime: ONE_HOUR — stable member avatars/names; Convex keeps mounted data live.
+ * gcTime: GC_TIME.realtime — stable member avatars/names; Convex keeps mounted data live.
  */
 export function usePresenceDisplaySummaries(
   classId: Id<"classes">,
@@ -31,6 +31,6 @@ export function usePresenceDisplaySummaries(
   return useAuthedQuery(
     api.presence.displaySummaries,
     normalizedUserIds.length > 0 ? { classId, userIds: normalizedUserIds } : "skip",
-    { gcTime: ONE_HOUR },
+    { gcTime: GC_TIME.realtime },
   );
 }

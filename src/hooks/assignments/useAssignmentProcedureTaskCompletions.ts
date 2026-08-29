@@ -4,7 +4,7 @@ import type { FunctionReturnType } from "convex/server";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { useAuthedQuery } from "@/hooks/useAuthedQuery";
-import { FIVE_MINUTES } from "@/lib/queryCache";
+import { GC_TIME } from "@/lib/queryCache";
 
 export type AssignmentProcedureTaskCompletions = NonNullable<
   FunctionReturnType<typeof api.assignments.getProcedureTaskCompletions>
@@ -28,6 +28,6 @@ export function useAssignmentProcedureTaskCompletions(
   return useAuthedQuery(
     api.assignments.getProcedureTaskCompletions,
     { classId, assignmentId },
-    { gcTime: FIVE_MINUTES },
+    { gcTime: GC_TIME.realtime },
   );
 }

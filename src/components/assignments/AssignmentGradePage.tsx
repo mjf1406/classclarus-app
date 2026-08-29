@@ -20,10 +20,10 @@ import { isClassAssignmentDetail } from "@/lib/assignments/assignments";
 import { useAuthedQuery } from "@/hooks/useAuthedQuery";
 import { buildMembershipIndex } from "@/lib/groups/groupTeamFilters";
 import { collectAllStudents, sortStudents } from "@/lib/groups/groups";
-import { ONE_HOUR } from "@/lib/queryCache";
 import { resolveRosterNameFormat, type StudentRosterEntry } from "@/lib/roster/roster";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
+import { GC_TIME } from "@/lib/queryCache";
 
 type AssignmentGradePageProps = {
   classId: Id<"classes">;
@@ -39,7 +39,11 @@ export function AssignmentGradePage({ classId, assignmentId }: AssignmentGradePa
     isError: scoresError,
     refetch: refetchScores,
   } = useAssignmentScores(classId, assignmentId);
-  const { data: classDoc } = useAuthedQuery(api.classes.get, { classId }, { gcTime: ONE_HOUR });
+  const { data: classDoc } = useAuthedQuery(
+    api.classes.get,
+    { classId },
+    { gcTime: GC_TIME.stable },
+  );
   const {
     data: groupsBoard,
     isPending: boardPending,

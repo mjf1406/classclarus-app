@@ -51,7 +51,6 @@ import { useAuthedQuery } from "@/hooks/useAuthedQuery";
 import { useCurrentUser } from "@/hooks/user/useCurrentUser";
 import { buildMembershipIndex, hasGroupTeamMembershipFilters } from "@/lib/groups/groupTeamFilters";
 import type { JoinCodeRole } from "@/lib/members/members";
-import { ONE_HOUR } from "@/lib/queryCache";
 import {
   applyRosterOrder,
   getRosterDisplayName,
@@ -67,6 +66,7 @@ import {
 } from "@/lib/roster/roster";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
+import { GC_TIME } from "@/lib/queryCache";
 
 const GRID_CLASS = "grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4";
 
@@ -96,7 +96,11 @@ export function StudentsPage({ classId }: StudentsPageProps) {
 
   const { data, isPending, isError, refetch, isAuthLoading } = useStudentRoster(classId);
   // Share `classes.get` cache without the access-log side effect from `useClass`.
-  const { data: classDoc } = useAuthedQuery(api.classes.get, { classId }, { gcTime: ONE_HOUR });
+  const { data: classDoc } = useAuthedQuery(
+    api.classes.get,
+    { classId },
+    { gcTime: GC_TIME.stable },
+  );
   const { data: settings } = useClassUserSettings(classId);
   const { data: groupsBoard } = useGroupsBoard(classId);
   const groupTeamFilterState = useGroupTeamFilterState(classId);

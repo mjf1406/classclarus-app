@@ -44,12 +44,14 @@ const router = createRouter({
       isAuthenticated: false,
       isLoading: true,
     },
+    queryClient,
   },
   defaultPendingComponent: PendingComponent,
   defaultErrorComponent: RootErrorComponent,
-  defaultPendingMs: 150,
-  defaultPendingMinMs: 300,
-  defaultPreload: "viewport",
+  defaultPendingMs: 200,
+  defaultPendingMinMs: 0,
+  defaultPreload: "intent",
+  defaultPreloadStaleTime: 0,
 });
 
 declare module "@tanstack/react-router" {

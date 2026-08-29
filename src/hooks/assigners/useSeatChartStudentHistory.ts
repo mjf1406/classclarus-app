@@ -8,7 +8,7 @@ import {
   seatChartStudentHistoryQueryKey,
   type SeatChartPlacementHistoryFilter,
 } from "@/hooks/assigners/useSeatChartStudentSummary";
-import { FIVE_MINUTES } from "@/lib/queryCache";
+import { GC_TIME } from "@/lib/queryCache";
 
 const PAGE_SIZE = 20;
 
@@ -28,8 +28,8 @@ export function useSeatChartStudentHistory(
         ? seatChartStudentHistoryQueryKey(classId, chartId, studentUserId, placementFilter)
         : ["seatCharts", "studentHistory", "skip"],
     enabled: isAuthenticated && studentUserId !== null && placementFilter !== null,
-    gcTime: FIVE_MINUTES,
-    staleTime: FIVE_MINUTES,
+    gcTime: GC_TIME.realtime,
+    staleTime: GC_TIME.realtime,
     initialPageParam: undefined as number | undefined,
     queryFn: async ({ pageParam }) => {
       if (studentUserId === null || placementFilter === null) {

@@ -22,11 +22,11 @@ import {
   recentDashboardTasks,
   upcomingDashboardEvents,
 } from "@/lib/dashboard/dashboard";
-import { ONE_HOUR } from "@/lib/queryCache";
 import { resolveRosterNameFormat } from "@/lib/roster/roster";
 import { isValidTimeZone } from "../../../convex/lib/calendar/timeZone";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
+import { GC_TIME } from "@/lib/queryCache";
 
 type StudentGuardianDashboardPageProps = {
   classId: Id<"classes">;
@@ -38,7 +38,11 @@ export function StudentGuardianDashboardPage({ classId }: StudentGuardianDashboa
   const dateKey = useMemo(() => localDateKey(), []);
   const eventRange = useMemo(() => dashboardEventRange(nowMs), [nowMs]);
 
-  const { data: classDoc } = useAuthedQuery(api.classes.get, { classId }, { gcTime: ONE_HOUR });
+  const { data: classDoc } = useAuthedQuery(
+    api.classes.get,
+    { classId },
+    { gcTime: GC_TIME.stable },
+  );
   const studentsQuery = useSeatPersonalStudentsForAudience(classId);
   const [selectedUserId, setSelectedUserId] = useState<Id<"users"> | null>(null);
 

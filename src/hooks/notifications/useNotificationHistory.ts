@@ -6,8 +6,8 @@ import type { FunctionReturnType } from "convex/server";
 import { useMemo } from "react";
 
 import { api } from "../../../convex/_generated/api";
-import { ONE_HOUR } from "@/lib/queryCache";
 import { HISTORY_PAGE_SIZE, type NotificationStatusFilter } from "@/lib/notifications/history";
+import { GC_TIME } from "@/lib/queryCache";
 
 export const NOTIFICATION_HISTORY_QUERY_KEY = "notificationHistory";
 
@@ -95,7 +95,7 @@ export function useNotificationHistory(filters: NotificationHistoryQueryFilters)
   const query = useInfiniteQuery({
     queryKey,
     enabled: isAuthenticated,
-    gcTime: ONE_HOUR,
+    gcTime: GC_TIME.realtime,
     initialPageParam: null as string | null,
     queryFn: async ({ pageParam }) => {
       return await convex.query(api.notifications.listHistory, {

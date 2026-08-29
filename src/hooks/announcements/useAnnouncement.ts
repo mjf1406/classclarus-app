@@ -3,7 +3,7 @@ import { convexQuery } from "@convex-dev/react-query";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { useAuthedQuery } from "@/hooks/useAuthedQuery";
-import { FIVE_MINUTES } from "@/lib/queryCache";
+import { GC_TIME } from "@/lib/queryCache";
 
 export function announcementDetailQueryKey(
   classId: Id<"classes">,
@@ -17,6 +17,6 @@ export function useAnnouncement(classId: Id<"classes">, announcementId: Id<"anno
   return useAuthedQuery(
     api.announcements.get,
     { classId, announcementId },
-    { gcTime: FIVE_MINUTES },
+    { gcTime: GC_TIME.realtime },
   );
 }

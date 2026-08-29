@@ -6,7 +6,7 @@ import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { useRecordSeatChart } from "@/hooks/assigners/useRecordSeatChart";
 import type { SeatChartAssignment, SeatChartViolation } from "@/lib/assigners/seatCharts";
-import { FIVE_MINUTES } from "@/lib/queryCache";
+import { GC_TIME } from "@/lib/queryCache";
 
 type RecordFlowArgs = {
   classId: Id<"classes">;
@@ -26,7 +26,7 @@ export function useSeatChartRecordFlow() {
           chartId: args.chartId,
           assignments: args.assignments,
         }),
-        gcTime: FIVE_MINUTES,
+        gcTime: GC_TIME.realtime,
       });
     },
     [queryClient],

@@ -27,7 +27,6 @@ import { useRazAssessmentHistoryForAudience } from "@/hooks/raz/useRazAssessment
 import { useRazForAudience } from "@/hooks/raz/useRazForAudience";
 import { useAuthedQuery } from "@/hooks/useAuthedQuery";
 import { toIntlLocale } from "@/lib/languages";
-import { ONE_HOUR } from "@/lib/queryCache";
 import {
   getRosterDisplayName,
   resolveRosterNameFormat,
@@ -37,6 +36,7 @@ import { getInitials } from "@/lib/user/userDisplay";
 import { sanitizeAvatarUrl } from "../../../convex/lib/avatarUrl";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
+import { GC_TIME } from "@/lib/queryCache";
 
 const RESULT_I18N_KEY = {
   level_up: "resultLevelUp",
@@ -159,7 +159,11 @@ function PersonalRazSummaryCard({ student, nameFormat, language }: SummaryCardPr
 
 export function PersonalRazPage({ classId }: PersonalRazPageProps) {
   const { t, i18n } = useTranslation("raz");
-  const { data: classDoc } = useAuthedQuery(api.classes.get, { classId }, { gcTime: ONE_HOUR });
+  const { data: classDoc } = useAuthedQuery(
+    api.classes.get,
+    { classId },
+    { gcTime: GC_TIME.stable },
+  );
   const { data, isPending, isError, refetch } = useRazForAudience(classId);
   const [selectedUserId, setSelectedUserId] = useState<Id<"users"> | null>(null);
   const [sortKey, setSortKey] = useState<HistorySortKey>("date");

@@ -8,7 +8,7 @@ import { useMemo } from "react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { useRevisionRefresh } from "@/hooks/useRevisionRefresh";
-import { ONE_HOUR } from "@/lib/queryCache";
+import { GC_TIME } from "@/lib/queryCache";
 
 const PAGE_SIZE = 40;
 
@@ -25,7 +25,7 @@ export function pointsLedgerForAudienceQueryKey(
   return ["points", "ledgerForAudience", classId, studentUserId] as const;
 }
 
-/** gcTime: ONE_HOUR — same as personal points summary; revision tip keeps mounted data fresh. */
+/** gcTime: GC_TIME.realtime — same as personal points summary; revision tip keeps mounted data fresh. */
 export function usePointsLedgerForAudience(
   classId: Id<"classes">,
   studentUserId: Id<"users"> | null,
@@ -38,15 +38,15 @@ export function usePointsLedgerForAudience(
       api.points.ledgerRevisionForAudience,
       isAuthenticated && studentUserId !== null ? { classId, studentUserId } : "skip",
     ),
-    gcTime: ONE_HOUR,
+    gcTime: GC_TIME.realtime,
     retry: false,
   });
 
   const query = useInfiniteQuery({
     queryKey: pointsLedgerForAudienceQueryKey(classId, studentUserId),
     enabled: isAuthenticated && studentUserId !== null,
-    gcTime: ONE_HOUR,
-    staleTime: ONE_HOUR,
+    gcTime: GC_TIME.realtime,
+    staleTime: GC_TIME.realtime,
     initialPageParam: undefined as number | undefined,
     queryFn: async ({ pageParam }) => {
       if (studentUserId === null) {

@@ -31,7 +31,6 @@ import { useAuthedQuery } from "@/hooks/useAuthedQuery";
 import type { AttendanceDraftStatus, AttendanceStatusSummary } from "@/lib/attendance/attendance";
 import { localDateKey } from "@/lib/attendance/dateKey";
 import { toIntlLocale } from "@/lib/languages";
-import { ONE_HOUR } from "@/lib/queryCache";
 import {
   getRosterDisplayName,
   resolveRosterNameFormat,
@@ -42,6 +41,7 @@ import { cn } from "@/lib/utils";
 import { sanitizeAvatarUrl } from "../../../convex/lib/avatarUrl";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
+import { GC_TIME } from "@/lib/queryCache";
 
 const STATUS_CARD_CLASS: Record<AttendanceDraftStatus, string> = {
   unset: "border-border bg-card",
@@ -247,7 +247,11 @@ export function PersonalAttendancePage({ classId }: PersonalAttendancePageProps)
   const { t: tClasses } = useTranslation("classes");
   const { t: tCommon } = useTranslation("common");
   const dateKey = useMemo(() => localDateKey(), []);
-  const { data: classDoc } = useAuthedQuery(api.classes.get, { classId }, { gcTime: ONE_HOUR });
+  const { data: classDoc } = useAuthedQuery(
+    api.classes.get,
+    { classId },
+    { gcTime: GC_TIME.stable },
+  );
   const { data, isPending, isError, refetch } = useAttendanceForAudience(classId, dateKey);
   const attendanceSummary = useAttendanceSummaryForAudience(classId);
   const [studentFilters, setStudentFilters] = useState<Set<Id<"users">>>(() => new Set());

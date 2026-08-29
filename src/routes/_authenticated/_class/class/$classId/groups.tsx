@@ -3,6 +3,8 @@ import { z } from "zod";
 
 import { GroupsPage } from "@/components/groups/GroupsPage";
 import { RequirePermission } from "@/components/permissions/RequirePermission";
+import { groupsBoardQueryOptions } from "@/hooks/groups/useGroupsBoard";
+import { preloadQuery } from "@/lib/routing/routePreload";
 import type { Id } from "../../../../../../convex/_generated/dataModel";
 
 const groupsSearchSchema = z.object({
@@ -11,6 +13,13 @@ const groupsSearchSchema = z.object({
 
 export const Route = createFileRoute("/_authenticated/_class/class/$classId/groups")({
   validateSearch: groupsSearchSchema,
+  loader: ({ context, params }) => {
+    if (!context.auth.isAuthenticated) {
+      return;
+    }
+    const classId = params.classId as Id<"classes">;
+    preloadQuery(context.queryClient, groupsBoardQueryOptions(classId));
+  },
   component: function ClassGroupsPage() {
     const { classId } = Route.useParams();
     const { focusStudentId } = Route.useSearch();

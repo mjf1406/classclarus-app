@@ -7,7 +7,7 @@ import { toast } from "@/components/ui/toast-manager";
 import { useAuthedQuery } from "@/hooks/useAuthedQuery";
 import { useOptimisticMutation } from "@/hooks/useOptimisticMutation";
 import { messageFromError } from "@/lib/errors/convexError";
-import { ONE_HOUR } from "@/lib/queryCache";
+import { GC_TIME } from "@/lib/queryCache";
 
 export function vapidPublicKeyQueryKey() {
   return convexQuery(api.push.getVapidPublicKey, {}).queryKey;
@@ -18,11 +18,11 @@ export function pushSubscriptionsQueryKey() {
 }
 
 export function useVapidPublicKey() {
-  return useAuthedQuery(api.push.getVapidPublicKey, {}, { gcTime: ONE_HOUR });
+  return useAuthedQuery(api.push.getVapidPublicKey, {}, { gcTime: GC_TIME.realtime });
 }
 
 export function usePushSubscriptions() {
-  return useAuthedQuery(api.push.listMine, {}, { gcTime: ONE_HOUR });
+  return useAuthedQuery(api.push.listMine, {}, { gcTime: GC_TIME.realtime });
 }
 
 export function useSubscribePush() {

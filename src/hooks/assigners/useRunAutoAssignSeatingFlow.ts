@@ -24,9 +24,9 @@ import { studentContextsForEvidence } from "@/lib/assigners/seating/failureStude
 import { runClientSeatingAlgorithmAsync } from "@/lib/assigners/seating/runClientSeatingAlgorithmAsync";
 import type { SeatChartAssignment, SeatChartViolation } from "@/lib/assigners/seatCharts";
 import { groupedStudentCount } from "@/lib/assigners/seatAssignmentScope";
-import { FIVE_MINUTES } from "@/lib/queryCache";
 import type { SeatingRelaxations } from "../../../convex/lib/seating/types";
 import type { SeatLayoutItemSnapshot } from "../../../convex/lib/seatChartGeometry";
+import { GC_TIME } from "@/lib/queryCache";
 
 export type AutoAssignPendingRecord = {
   classId: Id<"classes">;
@@ -79,7 +79,7 @@ export function useRunAutoAssignSeatingFlow(classId: Id<"classes">) {
     async (chartClassId: Id<"classes">, chartId: Id<"seatCharts">) => {
       await queryClient.fetchQuery({
         ...convexQuery(api.seatCharts.get, { classId: chartClassId, chartId }),
-        gcTime: FIVE_MINUTES,
+        gcTime: GC_TIME.realtime,
       });
     },
     [queryClient],

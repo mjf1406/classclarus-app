@@ -5,7 +5,7 @@ import { useConvex } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import type { SeatLayoutMatrixDimension } from "@/hooks/assigners/useSeatLayoutRosterMatrix";
-import { ONE_HOUR } from "@/lib/queryCache";
+import { GC_TIME } from "@/lib/queryCache";
 
 const PAGE_SIZE = 20;
 
@@ -31,7 +31,7 @@ export function seatLayoutStudentHistoryQueryKey(
   ] as const;
 }
 
-/** gcTime: ONE_HOUR — paginated seating occurrence timestamps for a layout dimension key. */
+/** gcTime: GC_TIME.realtime — paginated seating occurrence timestamps for a layout dimension key. */
 export function useSeatLayoutStudentHistory(
   classId: Id<"classes">,
   layoutId: Id<"seatLayouts"> | undefined,
@@ -48,8 +48,8 @@ export function useSeatLayoutStudentHistory(
         ? seatLayoutStudentHistoryQueryKey(classId, layoutId, dimension, studentUserId, key)
         : ["seatLayouts", "studentHistory", "skip"],
     enabled: isAuthenticated && Boolean(layoutId && studentUserId && key),
-    gcTime: ONE_HOUR,
-    staleTime: ONE_HOUR,
+    gcTime: GC_TIME.realtime,
+    staleTime: GC_TIME.realtime,
     initialPageParam: undefined as number | undefined,
     queryFn: async ({ pageParam }) => {
       if (!layoutId || !studentUserId || !key) {

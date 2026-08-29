@@ -17,6 +17,7 @@ import {
   Megaphone,
   RockingChair,
   Dices,
+  ExternalLink,
   Monitor,
   Music,
   Scale,
@@ -70,6 +71,8 @@ type NavItem = {
   permission: ClassPermission;
   /** People-role links show a member count when available. */
   countRole?: MemberListRole;
+  /** Opens in a new browser tab (classroom display, etc.). */
+  openInNewTab?: boolean;
 };
 
 export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
@@ -110,6 +113,26 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
       setOpenMobile(false);
     }
   };
+
+  const navLink = (item: NavItem) => (
+    <Link
+      to={item.to}
+      params={{ classId }}
+      onClick={closeMobileSidebar}
+      target={item.openInNewTab ? "_blank" : undefined}
+      rel={item.openInNewTab ? "noopener noreferrer" : undefined}
+    />
+  );
+
+  const navItemInner = (item: NavItem) => (
+    <>
+      <item.icon />
+      <span>{item.title}</span>
+      {item.openInNewTab ? (
+        <ExternalLink className="ml-auto group-data-[collapsible=icon]:hidden" aria-hidden />
+      ) : null}
+    </>
+  );
 
   // Staff (assistant teacher+) see catalog readers under Manage; students/guardians
   // see them in the main area with other personal reads.
@@ -156,6 +179,7 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
       icon: Monitor,
       to: "/class/$classId/classroom-screen",
       permission: "classroomScreen:read",
+      openInNewTab: true,
     },
     ...(catalogsInMainNav
       ? [
@@ -389,10 +413,9 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
           tooltip={item.title}
           isActive={isActive}
           className={count !== null ? "pr-8" : undefined}
-          render={<Link to={item.to} params={{ classId }} onClick={closeMobileSidebar} />}
+          render={navLink(item)}
         >
-          <item.icon />
-          <span>{item.title}</span>
+          {navItemInner(item)}
         </SidebarMenuButton>
         {count !== null ? <SidebarMenuBadge className="top-1">{count}</SidebarMenuBadge> : null}
       </SidebarMenuItem>
@@ -515,10 +538,9 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
                   <SidebarMenuButton
                     tooltip={item.title}
                     isActive={isActive}
-                    render={<Link to={item.to} params={{ classId }} onClick={closeMobileSidebar} />}
+                    render={navLink(item)}
                   >
-                    <item.icon />
-                    <span>{item.title}</span>
+                    {navItemInner(item)}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               );

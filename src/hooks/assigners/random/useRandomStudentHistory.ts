@@ -4,7 +4,7 @@ import { useConvex } from "convex/react";
 
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
-import { ONE_HOUR } from "@/lib/queryCache";
+import { GC_TIME } from "@/lib/queryCache";
 
 const PAGE_SIZE = 20;
 
@@ -24,7 +24,7 @@ export function randomStudentHistoryQueryKey(
   return [...randomStudentHistoryQueryKeyPrefix(classId, assignerId), studentUserId, item] as const;
 }
 
-/** gcTime: ONE_HOUR — paginated random assignment history for an item. */
+/** gcTime: GC_TIME.realtime — paginated random assignment history for an item. */
 export function useRandomStudentHistory(
   classId: Id<"classes">,
   assignerId: Id<"randomAssigners"> | undefined,
@@ -40,8 +40,8 @@ export function useRandomStudentHistory(
         ? randomStudentHistoryQueryKey(classId, assignerId, studentUserId, item)
         : ["randomAssigners", "studentHistory", "skip"],
     enabled: isAuthenticated && Boolean(assignerId && studentUserId && item),
-    gcTime: ONE_HOUR,
-    staleTime: ONE_HOUR,
+    gcTime: GC_TIME.realtime,
+    staleTime: GC_TIME.realtime,
     initialPageParam: undefined as number | undefined,
     queryFn: async ({ pageParam }) => {
       if (!assignerId || !studentUserId || !item) {

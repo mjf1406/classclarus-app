@@ -5,7 +5,7 @@ import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { useAuthedQuery } from "@/hooks/useAuthedQuery";
 import type { CalendarEvent } from "@/lib/calendar/calendar";
-import { ONE_HOUR } from "@/lib/queryCache";
+import { GC_TIME } from "@/lib/queryCache";
 
 export function calendarRangeQueryKey(
   classId: Id<"classes">,
@@ -61,6 +61,6 @@ export function useCalendarEventsInRange(
   return useAuthedQuery(
     api.calendar.listInRange,
     { classId, rangeStartMs, rangeEndMs },
-    { gcTime: ONE_HOUR },
+    { gcTime: GC_TIME.realtime },
   );
 }

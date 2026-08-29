@@ -11,7 +11,7 @@ import {
   ACTIVITY_RECENT_PAGE_SIZE,
   mergeActivityRecentWithPages,
 } from "@/lib/activity/activityPagination";
-import { ONE_HOUR } from "@/lib/queryCache";
+import { GC_TIME } from "@/lib/queryCache";
 
 export const CLASS_ACTIVITY_PAGE_SIZE = ACTIVITY_RECENT_PAGE_SIZE;
 
@@ -22,9 +22,16 @@ export function classActivityQueryKey(classId: Id<"classes">) {
   return ["activity", "list", classId] as const;
 }
 
+export function classActivityRecentQueryOptions(classId: Id<"classes">) {
+  return convexQuery(api.activity.list, {
+    classId,
+    paginationOpts: { numItems: CLASS_ACTIVITY_PAGE_SIZE, cursor: null },
+  });
+}
+
 /**
  * Paginated class activity log (newest first).
- * TanStack infinite pages stay warm for ONE_HOUR; a live recent-page subscription
+ * TanStack infinite pages use short gcTime; a live recent-page subscription
  * overlays new events without refetching the full year unless a gap is detected.
  */
 export function useClassActivity(classId: Id<"classes">) {
@@ -41,15 +48,15 @@ export function useClassActivity(classId: Id<"classes">) {
           }
         : "skip",
     ),
-    gcTime: ONE_HOUR,
+    gcTime: GC_TIME.realtime,
     retry: false,
   });
 
   const pagesQuery = useInfiniteQuery({
     queryKey: classActivityQueryKey(classId),
     enabled: isAuthenticated,
-    gcTime: ONE_HOUR,
-    staleTime: ONE_HOUR,
+    gcTime: GC_TIME.realtime,
+    staleTime: GC_TIME.realtime,
     initialPageParam: null as string | null,
     queryFn: async ({ pageParam }) => {
       return await convex.query(api.activity.list, {

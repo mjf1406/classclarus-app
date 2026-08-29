@@ -51,11 +51,11 @@ import {
   type PointsSortDirection,
   type PointsSortKey,
 } from "@/lib/points/points";
-import { ONE_HOUR } from "@/lib/queryCache";
 import { resolveRosterNameFormat } from "@/lib/roster/roster";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { toast } from "@/components/ui/toast-manager";
+import { GC_TIME } from "@/lib/queryCache";
 
 /** 3 cols always; 9.5rem cap keeps cards near phone size on wide viewports. */
 const GRID_CLASS =
@@ -87,7 +87,11 @@ function StaffPointsPage({ classId }: PointsPageProps) {
   const dateKey = useMemo(() => localDateKey(), []);
 
   const { data, isPending, isError, refetch, isAuthLoading } = usePointsBoard(classId, dateKey);
-  const { data: classDoc } = useAuthedQuery(api.classes.get, { classId }, { gcTime: ONE_HOUR });
+  const { data: classDoc } = useAuthedQuery(
+    api.classes.get,
+    { classId },
+    { gcTime: GC_TIME.stable },
+  );
   const { data: groupsBoard } = useGroupsBoard(classId);
   const { data: behaviors } = useBehaviors(classId);
   const { data: rewards } = useRewards(classId);

@@ -3,8 +3,8 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 
 import type { Id } from "../../../convex/_generated/dataModel";
-import { ONE_HOUR } from "@/lib/queryCache";
 import { api } from "../../../convex/_generated/api";
+import { GC_TIME } from "@/lib/queryCache";
 
 export function razAssessmentHistoryForAudienceQueryKey(
   classId: Id<"classes">,
@@ -16,7 +16,7 @@ export function razAssessmentHistoryForAudienceQueryKey(
   }).queryKey;
 }
 
-/** gcTime: ONE_HOUR — same as useRazForAudience; Convex keeps the live query fresh while mounted. */
+/** gcTime: GC_TIME.realtime — same as useRazForAudience; Convex keeps the live query fresh while mounted. */
 export function useRazAssessmentHistoryForAudience(
   classId: Id<"classes">,
   studentUserId: Id<"users"> | null,
@@ -29,7 +29,7 @@ export function useRazAssessmentHistoryForAudience(
       api.raz.assessmentHistoryForAudience,
       active && studentUserId !== null ? { classId, studentUserId } : "skip",
     ),
-    gcTime: ONE_HOUR,
+    gcTime: GC_TIME.realtime,
     retry: false,
   });
 

@@ -27,12 +27,27 @@ import {
 } from "@/components/ui/empty";
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { classDetailQueryOptions } from "@/hooks/classes/useClass";
 import { useClass } from "@/hooks/classes/useClass";
 import { useRemoveFileBytesOnAccessLoss } from "@/hooks/files/useFileBytes";
+import { classMemberCountsQueryOptions } from "@/hooks/members/useClassMemberCounts";
+import { classPermissionsQueryOptions } from "@/hooks/permissions/useClassPermissions";
 import { isClassPresenceEnabled } from "@/lib/presence/presenceEnabled";
+import { awaitPreloadQuery } from "@/lib/routing/routePreload";
 import type { Id } from "../../../../../../convex/_generated/dataModel";
 
 export const Route = createFileRoute("/_authenticated/_class/class/$classId")({
+  loader: async ({ context, params }) => {
+    if (!context.auth.isAuthenticated) {
+      return;
+    }
+    const classId = params.classId as Id<"classes">;
+    await Promise.all([
+      awaitPreloadQuery(context.queryClient, classDetailQueryOptions(classId)),
+      awaitPreloadQuery(context.queryClient, classPermissionsQueryOptions(classId)),
+      awaitPreloadQuery(context.queryClient, classMemberCountsQueryOptions(classId)),
+    ]);
+  },
   component: function ClassLayout() {
     const { classId: classIdParam } = Route.useParams();
     const classId = classIdParam as Id<"classes">;

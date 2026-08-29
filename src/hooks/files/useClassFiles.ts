@@ -5,7 +5,7 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import { api } from "../../../convex/_generated/api";
 import { useLogClassAccessOnce } from "@/hooks/activity/useLogClassAccess";
 import { useAuthedQuery } from "@/hooks/useAuthedQuery";
-import { FIVE_MINUTES } from "@/lib/queryCache";
+import { GC_TIME } from "@/lib/queryCache";
 
 export function classFilesListQueryKey(classId: Id<"classes">) {
   return convexQuery(api.files.listClassFiles, { classId }).queryKey;
@@ -16,7 +16,11 @@ export function classFilesListQueryKey(classId: Id<"classes">) {
  * gcTime: 5 minutes — list is reactive via Convex; moderate cache after unmount.
  */
 export function useClassFiles(classId: Id<"classes">) {
-  const result = useAuthedQuery(api.files.listClassFiles, { classId }, { gcTime: FIVE_MINUTES });
+  const result = useAuthedQuery(
+    api.files.listClassFiles,
+    { classId },
+    { gcTime: GC_TIME.realtime },
+  );
   const accessArgs = useMemo(
     () =>
       result.data !== undefined

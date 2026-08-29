@@ -4,8 +4,8 @@ import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import type { EquitableGenderBucket } from "../../../../convex/lib/assigners/equitableGenderBuckets";
 import { useAuthedQuery } from "@/hooks/useAuthedQuery";
-import { ONE_HOUR } from "@/lib/queryCache";
 import type { EquitableAssignerScope } from "@/lib/assigners/equitableAssigners";
+import { GC_TIME } from "@/lib/queryCache";
 
 export function equitableStudentSummaryQueryKey(
   classId: Id<"classes">,
@@ -27,7 +27,7 @@ export function equitableStudentSummaryQueryKey(
   }).queryKey;
 }
 
-/** gcTime: ONE_HOUR — student inspector stats for manual equitable editor. */
+/** gcTime: GC_TIME.realtime — student inspector stats for manual equitable editor. */
 export function useEquitableStudentSummary(
   classId: Id<"classes">,
   assignerId: Id<"equitableAssigners"> | undefined,
@@ -50,6 +50,6 @@ export function useEquitableStudentSummary(
           ...(draftSlotId ? { draftSlotId } : {}),
         }
       : "skip",
-    { gcTime: ONE_HOUR },
+    { gcTime: GC_TIME.realtime },
   );
 }

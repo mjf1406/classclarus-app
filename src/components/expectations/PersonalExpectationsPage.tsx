@@ -26,10 +26,10 @@ import {
   formatExpectationValue,
   valuesByExpectationAndStudent,
 } from "@/lib/expectations/expectations";
-import { ONE_HOUR } from "@/lib/queryCache";
 import { getRosterDisplayName, resolveRosterNameFormat } from "@/lib/roster/roster";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
+import { GC_TIME } from "@/lib/queryCache";
 
 type PersonalExpectationsPageProps = {
   classId: Id<"classes">;
@@ -38,7 +38,11 @@ type PersonalExpectationsPageProps = {
 export function PersonalExpectationsPage({ classId }: PersonalExpectationsPageProps) {
   const { t } = useTranslation("expectations");
   const { t: tClasses } = useTranslation("classes");
-  const { data: classDoc } = useAuthedQuery(api.classes.get, { classId }, { gcTime: ONE_HOUR });
+  const { data: classDoc } = useAuthedQuery(
+    api.classes.get,
+    { classId },
+    { gcTime: GC_TIME.stable },
+  );
   const { data, isPending, isError, refetch } = useExpectationsForAudience(classId);
 
   const nameFormat = useMemo(
