@@ -17,11 +17,14 @@ import {
   Megaphone,
   RockingChair,
   Dices,
+  Monitor,
+  Music,
   Scale,
   SmilePlus,
   Settings2,
   Shield,
   Target,
+  Timer,
   UserRound,
   Users,
   UsersRound,
@@ -75,6 +78,7 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
   const { t: tAttendance } = useTranslation("attendance");
   const { t: tCalendar } = useTranslation("calendar");
   const { t: tTimetable } = useTranslation("timetable");
+  const { t: tClassroomScreen } = useTranslation("classroomScreen");
   const { t: tTasks } = useTranslation("tasks");
   const { t: tAssignments } = useTranslation("assignments");
   const { t: tPoints } = useTranslation("points");
@@ -146,6 +150,12 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
       icon: CalendarDays,
       to: "/class/$classId/timetable",
       permission: "timetable:read",
+    },
+    {
+      title: tClassroomScreen("nav"),
+      icon: Monitor,
+      to: "/class/$classId/classroom-screen",
+      permission: "classroomScreen:read",
     },
     ...(catalogsInMainNav
       ? [
@@ -323,6 +333,18 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
           },
         ]
       : []),
+    {
+      title: tClassroomScreen("timersTitle"),
+      icon: Timer,
+      to: "/class/$classId/timers",
+      permission: "classroomScreen:manage",
+    },
+    {
+      title: tClassroomScreen("audioTitle"),
+      icon: Music,
+      to: "/class/$classId/audio",
+      permission: "classroomScreen:manage",
+    },
     {
       title: t("navActivityLog"),
       icon: History,

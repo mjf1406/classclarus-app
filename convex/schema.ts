@@ -1297,6 +1297,66 @@ const schema = defineSchema({
   })
     .index("by_slotId_year_week", ["slotId", "year", "weekNumber"])
     .index("by_classId", ["classId"]),
+  /** Per-class classroom screen clock settings (one row per class). */
+  classroomClockSettings: defineTable({
+    classId: v.id("classes"),
+    clockSize: v.number(),
+    dateSize: v.number(),
+    clockBgColor: v.string(),
+    timerBgColor: v.string(),
+    dateLocation: v.union(v.literal("above"), v.literal("below")),
+    timeFormat: v.union(v.literal("12h"), v.literal("24h")),
+    currentTimeSize: v.optional(v.number()),
+    endTimeSize: v.optional(v.number()),
+    timerTitleSize: v.optional(v.number()),
+    timerEndBehavior: v.optional(
+      v.union(v.literal("countUp"), v.literal("hold"), v.literal("return")),
+    ),
+    overtimeAutoDismissSeconds: v.optional(v.number()),
+    bgTransition: v.optional(v.string()),
+    audioCues: v.optional(v.any()),
+    displayContentFontSize: v.optional(v.number()),
+    displayHeadingFontSize: v.optional(v.number()),
+    quickText: v.optional(v.string()),
+    quickTextTitle: v.optional(v.string()),
+    updatedAt: v.number(),
+  }).index("by_classId", ["classId"]),
+  /** Saved classroom timers. */
+  classroomTimers: defineTable({
+    classId: v.id("classes"),
+    name: v.string(),
+    durationSeconds: v.number(),
+    bgColor: v.string(),
+    endTime: v.optional(v.string()),
+    bgTransition: v.optional(v.string()),
+    audioCues: v.optional(v.any()),
+    nextTimerId: v.optional(v.id("classroomTimers")),
+    sortOrder: v.number(),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_classId", ["classId"]),
+  /** Uploaded audio metadata for classroom screen cues. */
+  classroomAudioFiles: defineTable({
+    classId: v.id("classes"),
+    name: v.string(),
+    fileId: v.id("files"),
+    contentType: v.string(),
+    size: v.number(),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+  }).index("by_classId", ["classId"]),
+  /** Synced display session state (one row per class). */
+  classroomDisplaySessions: defineTable({
+    classId: v.id("classes"),
+    sessionJson: v.optional(v.any()),
+    endsAt: v.optional(v.number()),
+    paused: v.boolean(),
+    pausedRemainingMs: v.optional(v.number()),
+    pushedLessonId: v.optional(v.id("timetableLessons")),
+    pushedUntil: v.optional(v.number()),
+    updatedAt: v.number(),
+  }).index("by_classId", ["classId"]),
   feedback: defineTable({
     userId: v.id("users"),
     type: v.union(v.literal("bug"), v.literal("feature"), v.literal("concern"), v.literal("other")),

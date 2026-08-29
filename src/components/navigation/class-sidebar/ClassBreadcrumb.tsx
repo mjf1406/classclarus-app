@@ -31,6 +31,9 @@ type BreadcrumbTarget =
   | { kind: "calendar" }
   | { kind: "calendarEventDetail"; eventId: Id<"calendarEvents"> }
   | { kind: "timetable" }
+  | { kind: "classroomScreen" }
+  | { kind: "timers" }
+  | { kind: "audio" }
   | { kind: "announcements" }
   | { kind: "tasks" }
   | { kind: "taskDetail"; taskId: Id<"tasks"> }
@@ -86,6 +89,15 @@ function breadcrumbTarget(pathname: string, classId: string): BreadcrumbTarget {
   }
   if (pathname === `${base}/timetable` || pathname.startsWith(`${base}/timetable/`)) {
     return { kind: "timetable" };
+  }
+  if (pathname === `${base}/classroom-screen` || pathname.startsWith(`${base}/classroom-screen/`)) {
+    return { kind: "classroomScreen" };
+  }
+  if (pathname === `${base}/timers` || pathname.startsWith(`${base}/timers/`)) {
+    return { kind: "timers" };
+  }
+  if (pathname === `${base}/audio` || pathname.startsWith(`${base}/audio/`)) {
+    return { kind: "audio" };
   }
   if (pathname === `${base}/announcements` || pathname.startsWith(`${base}/announcements/`)) {
     return { kind: "announcements" };
@@ -679,6 +691,7 @@ export function ClassBreadcrumb({ classDoc }: ClassBreadcrumbProps) {
   const { t: tAttendance } = useTranslation("attendance");
   const { t: tCalendar } = useTranslation("calendar");
   const { t: tTimetable } = useTranslation("timetable");
+  const { t: tClassroomScreen } = useTranslation("classroomScreen");
   const { t: tAnnouncements } = useTranslation("announcements");
   const { t: tTasks } = useTranslation("tasks");
   const { t: tAssignments } = useTranslation("assignments");
@@ -700,44 +713,50 @@ export function ClassBreadcrumb({ classDoc }: ClassBreadcrumbProps) {
         ? tCalendar("nav")
         : target.kind === "timetable"
           ? tTimetable("nav")
-          : target.kind === "announcements"
-            ? tAnnouncements("nav")
-            : target.kind === "tasks" || target.kind === "taskDetail"
-              ? tTasks("nav")
-              : target.kind === "assignments" ||
-                  target.kind === "assignmentNew" ||
-                  target.kind === "assignmentDetail" ||
-                  target.kind === "assignmentEdit" ||
-                  target.kind === "assignmentGrade" ||
-                  target.kind === "assignmentTasks"
-                ? tAssignments("nav")
-                : target.kind === "points"
-                  ? tPoints("nav")
-                  : target.kind === "behaviors"
-                    ? tBehaviors("nav")
-                    : target.kind === "rewards"
-                      ? tRewards("nav")
-                      : target.kind === "expectations" || target.kind === "expectationDetail"
-                        ? tExpectations("nav")
-                        : target.kind === "raz" || target.kind === "razInitialLevels"
-                          ? tRaz("nav")
-                          : target.kind === "assignersSeats" ||
-                              target.kind === "seatLayoutDetail" ||
-                              target.kind === "seatChartDetail"
-                            ? tAssigners("navSeats")
-                            : target.kind === "assignersRandom"
-                              ? tAssigners("navRandom")
-                              : target.kind === "assignersEquitable" ||
-                                  target.kind === "assignersEquitableNew" ||
-                                  target.kind === "equitableAssignerDetail" ||
-                                  target.kind === "equitableAssignerEdit" ||
-                                  target.kind === "equitableAssignerManual"
-                                ? tAssigners("navEquitable")
-                                : target.kind === "studentWorkGradeScales"
-                                  ? tStudentWork("navGradeScales")
-                                  : target.kind === "studentWorkGradedSubjects"
-                                    ? tStudentWork("navGradedSubjects")
-                                    : t(target.key);
+          : target.kind === "classroomScreen"
+            ? tClassroomScreen("nav")
+            : target.kind === "timers"
+              ? tClassroomScreen("timersTitle")
+              : target.kind === "audio"
+                ? tClassroomScreen("audioTitle")
+                : target.kind === "announcements"
+                  ? tAnnouncements("nav")
+                  : target.kind === "tasks" || target.kind === "taskDetail"
+                    ? tTasks("nav")
+                    : target.kind === "assignments" ||
+                        target.kind === "assignmentNew" ||
+                        target.kind === "assignmentDetail" ||
+                        target.kind === "assignmentEdit" ||
+                        target.kind === "assignmentGrade" ||
+                        target.kind === "assignmentTasks"
+                      ? tAssignments("nav")
+                      : target.kind === "points"
+                        ? tPoints("nav")
+                        : target.kind === "behaviors"
+                          ? tBehaviors("nav")
+                          : target.kind === "rewards"
+                            ? tRewards("nav")
+                            : target.kind === "expectations" || target.kind === "expectationDetail"
+                              ? tExpectations("nav")
+                              : target.kind === "raz" || target.kind === "razInitialLevels"
+                                ? tRaz("nav")
+                                : target.kind === "assignersSeats" ||
+                                    target.kind === "seatLayoutDetail" ||
+                                    target.kind === "seatChartDetail"
+                                  ? tAssigners("navSeats")
+                                  : target.kind === "assignersRandom"
+                                    ? tAssigners("navRandom")
+                                    : target.kind === "assignersEquitable" ||
+                                        target.kind === "assignersEquitableNew" ||
+                                        target.kind === "equitableAssignerDetail" ||
+                                        target.kind === "equitableAssignerEdit" ||
+                                        target.kind === "equitableAssignerManual"
+                                      ? tAssigners("navEquitable")
+                                      : target.kind === "studentWorkGradeScales"
+                                        ? tStudentWork("navGradeScales")
+                                        : target.kind === "studentWorkGradedSubjects"
+                                          ? tStudentWork("navGradedSubjects")
+                                          : t(target.key);
 
   return (
     <Breadcrumb aria-label={t("breadcrumb")} className="min-w-0">

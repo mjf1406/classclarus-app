@@ -12,6 +12,7 @@ import { deleteAnnouncementsForClass } from "./announcementsCleanup.js";
 import { deleteAssignmentsForClass } from "./assignmentsCleanup.js";
 import { deleteAttendanceForClass } from "./attendanceCleanup.js";
 import { deleteBehaviorsForClass } from "./behaviorsCleanup.js";
+import { deleteClassroomScreenForClass } from "./classroomScreenCleanup.js";
 import { deleteCalendarForClass } from "./calendarCleanup.js";
 import { deleteEquitableAssignersForClass } from "./equitableAssignersCleanup.js";
 import { deleteExpectationsForClass } from "./expectationsCleanup.js";
@@ -44,6 +45,7 @@ export const CLASS_DELETION_STAGES = [
   "announcements",
   "calendar",
   "timetable",
+  "classroomScreen",
   "tasks",
   "assignments",
   "expectations",
@@ -145,6 +147,9 @@ export async function runDeletionStage(
       return { stageComplete: true };
     case "timetable":
       await deleteTimetableForClass(ctx, classId);
+      return { stageComplete: true };
+    case "classroomScreen":
+      await deleteClassroomScreenForClass(ctx, classId);
       return { stageComplete: true };
     case "tasks":
       await deleteTasksForClass(ctx, classId);

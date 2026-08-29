@@ -1,13 +1,16 @@
-import { PencilIcon } from "lucide-react";
+import { PencilIcon, ExternalLink } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { QRCodeSVG } from "qrcode.react";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { ClockSettingsSection } from "@/components/classroomScreen/ClockSettingsSection";
 import {
   ClassFormCredenza,
   type ClassFormInitialValues,
 } from "@/components/classes/ClassFormCredenza";
 import { ClassIconDisplay } from "@/components/classes/ClassIconDisplay";
+import { TableOfContents } from "@/components/navigation/TableOfContents";
 import { PointsBadgeCustomAlertsField } from "@/components/classes/PointsBadgeCustomAlertsField";
 import { TimezoneSelect } from "@/components/classes/TimezoneSelect";
 import { LanguageSelect } from "@/components/i18n/LanguageSelect";
@@ -62,6 +65,20 @@ import type { Id } from "../../../convex/_generated/dataModel";
 type ClassSettingsPageProps = {
   classId: Id<"classes">;
 };
+
+const SETTINGS_SECTION_IDS = {
+  class: "settings-class",
+  studentLanguage: "settings-student-language",
+  timezone: "settings-timezone",
+  rosterNames: "settings-roster-names",
+  pointsWarnings: "settings-points-warnings",
+  pointsRemoving: "settings-points-removing",
+  pointsPublic: "settings-points-public",
+  banner: "settings-banner",
+  clock: "settings-clock",
+} as const;
+
+const SETTINGS_CARD_CLASS = "scroll-mt-20";
 
 function SettingsSkeleton() {
   return <Skeleton className="h-48 w-full max-w-2xl rounded-2xl" />;
@@ -180,8 +197,10 @@ function PointsPublicDisplayShare({
 
 export function ClassSettingsPage({ classId }: ClassSettingsPageProps) {
   const { t } = useTranslation("classes");
+  const { t: tClassroomScreen } = useTranslation("classroomScreen");
   const { can, isPending: permissionsPending } = useCan();
   const canUpdateClass = !permissionsPending && can("class:update");
+  const canManageClassroomScreen = !permissionsPending && can("classroomScreen:manage");
   const { data: classDoc, isPending, isError, refetch, isAuthLoading } = useClass(classId);
   const updateClass = useUpdateClass();
   const setBanner = useSetClassBanner();
@@ -243,6 +262,48 @@ export function ClassSettingsPage({ classId }: ClassSettingsPageProps) {
     setStudentLanguage.mutate({ classId, studentLanguage });
   };
 
+  const tocItems = useMemo(() => {
+    if (!classDoc) return [];
+    const items = [
+      { title: classDoc.name, url: `#${SETTINGS_SECTION_IDS.class}`, depth: 2 },
+      {
+        title: t("studentLanguageTitle"),
+        url: `#${SETTINGS_SECTION_IDS.studentLanguage}`,
+        depth: 2,
+      },
+      { title: t("timezoneTitle"), url: `#${SETTINGS_SECTION_IDS.timezone}`, depth: 2 },
+      {
+        title: t("rosterNameFormatTitle"),
+        url: `#${SETTINGS_SECTION_IDS.rosterNames}`,
+        depth: 2,
+      },
+      {
+        title: t("pointsBadgeWarningsSection"),
+        url: `#${SETTINGS_SECTION_IDS.pointsWarnings}`,
+        depth: 2,
+      },
+      {
+        title: t("pointsBadgeRemovingPointsSection"),
+        url: `#${SETTINGS_SECTION_IDS.pointsRemoving}`,
+        depth: 2,
+      },
+      {
+        title: t("pointsPublicDisplayTitle"),
+        url: `#${SETTINGS_SECTION_IDS.pointsPublic}`,
+        depth: 2,
+      },
+      { title: t("bannerTitle"), url: `#${SETTINGS_SECTION_IDS.banner}`, depth: 2 },
+    ];
+    if (canManageClassroomScreen) {
+      items.push({
+        title: tClassroomScreen("clockSettingsTitle"),
+        url: `#${SETTINGS_SECTION_IDS.clock}`,
+        depth: 2,
+      });
+    }
+    return items;
+  }, [canManageClassroomScreen, classDoc, t, tClassroomScreen]);
+
   const savePointsBadgeWindows = (patch: {
     warningWindowAmount?: number;
     warningWindowUnit?: PointsBadgeWindowUnit;
@@ -274,246 +335,294 @@ export function ClassSettingsPage({ classId }: ClassSettingsPageProps) {
   };
 
   return (
-    <div className="flex w-full flex-col gap-6 px-4 py-8 sm:px-8">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t("navSettings")}</h1>
-        <p className="hidden text-muted-foreground sm:block">{t("settingsDescription")}</p>
-      </div>
+    <div className="flex w-full items-start gap-12 px-4 py-8 sm:px-8">
+      <div className="flex min-w-0 w-full max-w-2xl flex-col gap-6">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t("navSettings")}</h1>
+          <p className="hidden text-muted-foreground sm:block">{t("settingsDescription")}</p>
+        </div>
 
-      {showSkeleton ? <SettingsSkeleton /> : null}
+        {!showSkeleton && !isError && classDoc ? (
+          <TableOfContents items={tocItems} variant="dropdown" className="xl:hidden" />
+        ) : null}
 
-      {!showSkeleton && isError ? (
-        <ErrorState
-          card
-          onRetry={async () => {
-            await refetch();
-          }}
-          description={t("loadFailed")}
-        />
-      ) : null}
+        {showSkeleton ? <SettingsSkeleton /> : null}
 
-      {!showSkeleton && !isError && classDoc ? (
-        <>
-          <Card className="max-w-2xl">
-            <CardHeader className="flex flex-row items-start justify-between gap-3">
-              <div className="flex min-w-0 items-start gap-3">
-                <ClassIconDisplay icon={classDoc.icon} />
-                <div className="min-w-0">
-                  <CardTitle className="text-lg font-semibold">{classDoc.name}</CardTitle>
-                  <CardDescription>{classDoc.year}</CardDescription>
-                </div>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                aria-label={t("editAction")}
-                onClick={() => setEditOpen(true)}
-              >
-                <PencilIcon aria-hidden="true" />
-              </Button>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-3">
-              <p className="text-sm text-muted-foreground">
-                {classDoc.description?.trim() || t("noDescription")}
-              </p>
-              <div className="flex flex-col gap-0.5 text-xs text-muted-foreground">
-                <span>
-                  {t("createdAt", {
-                    date: formatLocalizedDateTime(classDoc._creationTime),
-                  })}
-                </span>
-                <span>
-                  {t("updatedAt", {
-                    date: formatLocalizedDateTime(classDoc.updatedAt),
-                  })}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
+        {!showSkeleton && isError ? (
+          <ErrorState
+            card
+            onRetry={async () => {
+              await refetch();
+            }}
+            description={t("loadFailed")}
+          />
+        ) : null}
 
-          <Card className="max-w-2xl">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold">{t("studentLanguageTitle")}</CardTitle>
-              <CardDescription>{t("studentLanguageDescription")}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <LanguageSelect
-                value={classDoc.studentLanguage}
-                onValueChange={handleStudentLanguageChange}
-                disabled={setStudentLanguage.isPending}
-                triggerClassName="w-auto min-w-40"
-              />
-            </CardContent>
-          </Card>
-
-          <Card className="max-w-2xl">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold">{t("timezoneTitle")}</CardTitle>
-              <CardDescription>{t("timezoneDescription")}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <TimezoneSelect
-                value={classDoc.timezone}
-                disabled={!canUpdateClass || setTimezone.isPending}
-                onValueChange={(timezone) => {
-                  setTimezone.mutate({ classId, timezone });
-                }}
-              />
-            </CardContent>
-          </Card>
-
-          <Card className="max-w-2xl">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold">{t("rosterNameFormatTitle")}</CardTitle>
-              <CardDescription>{t("rosterNameFormatDescription")}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <RosterNameFormatControls
-                value={nameFormat}
-                onChange={handleNameFormatChange}
-                disabled={!canUpdateClass || setRosterNameFormat.isPending}
-              />
-            </CardContent>
-          </Card>
-
-          <Card className="max-w-2xl">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold">
-                {t("pointsBadgeWarningsSection")}
-              </CardTitle>
-              <CardDescription>{t("pointsBadgeWarningWindowDescription")}</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-5">
-              <PointsBadgeLookbackField
-                amount={classDoc.warningWindowAmount}
-                unit={classDoc.warningWindowUnit}
-                disabled={!canUpdateClass || setPointsBadgeWindows.isPending}
-                label={t("pointsBadgeWarningWindowLabel")}
-                amountAria={t("pointsBadgeWarningWindowAmountAria")}
-                unitAria={t("pointsBadgeWarningWindowUnitAria")}
-                onAmountChange={(warningWindowAmount) =>
-                  savePointsBadgeWindows({ warningWindowAmount })
-                }
-                onUnitChange={(warningWindowUnit) => savePointsBadgeWindows({ warningWindowUnit })}
-              />
-              <PointsBadgeCustomAlertsField
-                idPrefix="points-badge-warning-alert"
-                alerts={classDoc.warningAlerts}
-                disabled={!canUpdateClass || setPointsBadgeWindows.isPending}
-                onChange={(warningAlerts) => savePointsBadgeWindows({ warningAlerts })}
-              />
-            </CardContent>
-          </Card>
-
-          <Card className="max-w-2xl">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold">
-                {t("pointsBadgeRemovingPointsSection")}
-              </CardTitle>
-              <CardDescription>{t("pointsBadgeMinusWindowDescription")}</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-5">
-              <PointsBadgeLookbackField
-                amount={classDoc.minusWindowAmount}
-                unit={classDoc.minusWindowUnit}
-                disabled={!canUpdateClass || setPointsBadgeWindows.isPending}
-                label={t("pointsBadgeMinusWindowLabel")}
-                amountAria={t("pointsBadgeMinusWindowAmountAria")}
-                unitAria={t("pointsBadgeMinusWindowUnitAria")}
-                onAmountChange={(minusWindowAmount) =>
-                  savePointsBadgeWindows({ minusWindowAmount })
-                }
-                onUnitChange={(minusWindowUnit) => savePointsBadgeWindows({ minusWindowUnit })}
-              />
-              <PointsBadgeCustomAlertsField
-                idPrefix="points-badge-minus-alert"
-                alerts={classDoc.minusAlerts}
-                disabled={!canUpdateClass || setPointsBadgeWindows.isPending}
-                onChange={(minusAlerts) => savePointsBadgeWindows({ minusAlerts })}
-              />
-            </CardContent>
-          </Card>
-
-          <Card className="max-w-2xl">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold">
-                {t("pointsPublicDisplayTitle")}
-              </CardTitle>
-              <CardDescription>{t("pointsPublicDisplayDescription")}</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex flex-col gap-0.5">
-                  <Label htmlFor="points-public-display">{t("pointsPublicDisplayLabel")}</Label>
-                  <p className="text-sm text-muted-foreground">{t("pointsPublicDisplayHint")}</p>
-                </div>
-                <Switch
-                  id="points-public-display"
-                  checked={classDoc.pointsPublicEnabled === true}
-                  disabled={!canUpdateClass || setPointsPublicDisplay.isPending}
-                  onCheckedChange={(checked) => {
-                    void setPointsPublicDisplay.mutateAsync({
-                      classId,
-                      enabled: checked,
-                    });
-                  }}
-                />
-              </div>
-              {classDoc.pointsPublicEnabled === true && classDoc.pointsPublicSlug ? (
-                <PointsPublicDisplayShare
-                  publicSlug={classDoc.pointsPublicSlug}
-                  copyLabel={t("pointsPublicDisplayCopyLink")}
-                  qrLabel={t("pointsPublicDisplayQrLabel")}
-                />
-              ) : null}
-            </CardContent>
-          </Card>
-
-          <Card className="max-w-2xl">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold">{t("bannerTitle")}</CardTitle>
-              <CardDescription>{t("bannerDescription")}</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-4">
-              {classDoc.bannerFileId ? (
-                <div className="flex flex-col gap-3">
-                  <BannerPreview fileId={classDoc.bannerFileId} />
-                  <div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={clearBanner.isPending}
-                      onClick={handleClearBanner}
-                    >
-                      {t("bannerRemove")}
-                    </Button>
+        {!showSkeleton && !isError && classDoc ? (
+          <>
+            <Card id={SETTINGS_SECTION_IDS.class} className={SETTINGS_CARD_CLASS}>
+              <CardHeader className="flex flex-row items-start justify-between gap-3">
+                <div className="flex min-w-0 items-start gap-3">
+                  <ClassIconDisplay icon={classDoc.icon} />
+                  <div className="min-w-0">
+                    <CardTitle className="text-lg font-semibold">{classDoc.name}</CardTitle>
+                    <CardDescription>{classDoc.year}</CardDescription>
                   </div>
                 </div>
-              ) : null}
-              <FileDropzone
-                title={t("bannerTitle")}
-                variant="compact"
-                presetKey="images"
-                classId={classId}
-                multiple={false}
-                onUploaded={handleBannerUploaded}
-              />
-            </CardContent>
-          </Card>
-        </>
-      ) : null}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  aria-label={t("editAction")}
+                  onClick={() => setEditOpen(true)}
+                >
+                  <PencilIcon aria-hidden="true" />
+                </Button>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-3">
+                <p className="text-sm text-muted-foreground">
+                  {classDoc.description?.trim() || t("noDescription")}
+                </p>
+                <div className="flex flex-col gap-0.5 text-xs text-muted-foreground">
+                  <span>
+                    {t("createdAt", {
+                      date: formatLocalizedDateTime(classDoc._creationTime),
+                    })}
+                  </span>
+                  <span>
+                    {t("updatedAt", {
+                      date: formatLocalizedDateTime(classDoc.updatedAt),
+                    })}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
 
-      {classDoc ? (
-        <ClassFormCredenza
-          key={`edit:${classDoc._id}:${classDoc.updatedAt}`}
-          open={editOpen}
-          onOpenChange={setEditOpen}
-          mode="edit"
-          initialValues={formInitialValues}
-          onSubmit={handleSubmit}
-        />
+            <Card id={SETTINGS_SECTION_IDS.studentLanguage} className={SETTINGS_CARD_CLASS}>
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold">{t("studentLanguageTitle")}</CardTitle>
+                <CardDescription>{t("studentLanguageDescription")}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <LanguageSelect
+                  value={classDoc.studentLanguage}
+                  onValueChange={handleStudentLanguageChange}
+                  disabled={setStudentLanguage.isPending}
+                  triggerClassName="w-auto min-w-40"
+                />
+              </CardContent>
+            </Card>
+
+            <Card id={SETTINGS_SECTION_IDS.timezone} className={SETTINGS_CARD_CLASS}>
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold">{t("timezoneTitle")}</CardTitle>
+                <CardDescription>{t("timezoneDescription")}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <TimezoneSelect
+                  value={classDoc.timezone}
+                  disabled={!canUpdateClass || setTimezone.isPending}
+                  onValueChange={(timezone) => {
+                    setTimezone.mutate({ classId, timezone });
+                  }}
+                />
+              </CardContent>
+            </Card>
+
+            <Card id={SETTINGS_SECTION_IDS.rosterNames} className={SETTINGS_CARD_CLASS}>
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold">
+                  {t("rosterNameFormatTitle")}
+                </CardTitle>
+                <CardDescription>{t("rosterNameFormatDescription")}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <RosterNameFormatControls
+                  value={nameFormat}
+                  onChange={handleNameFormatChange}
+                  disabled={!canUpdateClass || setRosterNameFormat.isPending}
+                />
+              </CardContent>
+            </Card>
+
+            <Card id={SETTINGS_SECTION_IDS.pointsWarnings} className={SETTINGS_CARD_CLASS}>
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold">
+                  {t("pointsBadgeWarningsSection")}
+                </CardTitle>
+                <CardDescription>{t("pointsBadgeWarningWindowDescription")}</CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-5">
+                <PointsBadgeLookbackField
+                  amount={classDoc.warningWindowAmount}
+                  unit={classDoc.warningWindowUnit}
+                  disabled={!canUpdateClass || setPointsBadgeWindows.isPending}
+                  label={t("pointsBadgeWarningWindowLabel")}
+                  amountAria={t("pointsBadgeWarningWindowAmountAria")}
+                  unitAria={t("pointsBadgeWarningWindowUnitAria")}
+                  onAmountChange={(warningWindowAmount) =>
+                    savePointsBadgeWindows({ warningWindowAmount })
+                  }
+                  onUnitChange={(warningWindowUnit) =>
+                    savePointsBadgeWindows({ warningWindowUnit })
+                  }
+                />
+                <PointsBadgeCustomAlertsField
+                  idPrefix="points-badge-warning-alert"
+                  alerts={classDoc.warningAlerts}
+                  disabled={!canUpdateClass || setPointsBadgeWindows.isPending}
+                  onChange={(warningAlerts) => savePointsBadgeWindows({ warningAlerts })}
+                />
+              </CardContent>
+            </Card>
+
+            <Card id={SETTINGS_SECTION_IDS.pointsRemoving} className={SETTINGS_CARD_CLASS}>
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold">
+                  {t("pointsBadgeRemovingPointsSection")}
+                </CardTitle>
+                <CardDescription>{t("pointsBadgeMinusWindowDescription")}</CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-5">
+                <PointsBadgeLookbackField
+                  amount={classDoc.minusWindowAmount}
+                  unit={classDoc.minusWindowUnit}
+                  disabled={!canUpdateClass || setPointsBadgeWindows.isPending}
+                  label={t("pointsBadgeMinusWindowLabel")}
+                  amountAria={t("pointsBadgeMinusWindowAmountAria")}
+                  unitAria={t("pointsBadgeMinusWindowUnitAria")}
+                  onAmountChange={(minusWindowAmount) =>
+                    savePointsBadgeWindows({ minusWindowAmount })
+                  }
+                  onUnitChange={(minusWindowUnit) => savePointsBadgeWindows({ minusWindowUnit })}
+                />
+                <PointsBadgeCustomAlertsField
+                  idPrefix="points-badge-minus-alert"
+                  alerts={classDoc.minusAlerts}
+                  disabled={!canUpdateClass || setPointsBadgeWindows.isPending}
+                  onChange={(minusAlerts) => savePointsBadgeWindows({ minusAlerts })}
+                />
+              </CardContent>
+            </Card>
+
+            <Card id={SETTINGS_SECTION_IDS.pointsPublic} className={SETTINGS_CARD_CLASS}>
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold">
+                  {t("pointsPublicDisplayTitle")}
+                </CardTitle>
+                <CardDescription>{t("pointsPublicDisplayDescription")}</CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex flex-col gap-0.5">
+                    <Label htmlFor="points-public-display">{t("pointsPublicDisplayLabel")}</Label>
+                    <p className="text-sm text-muted-foreground">{t("pointsPublicDisplayHint")}</p>
+                  </div>
+                  <Switch
+                    id="points-public-display"
+                    checked={classDoc.pointsPublicEnabled === true}
+                    disabled={!canUpdateClass || setPointsPublicDisplay.isPending}
+                    onCheckedChange={(checked) => {
+                      void setPointsPublicDisplay.mutateAsync({
+                        classId,
+                        enabled: checked,
+                      });
+                    }}
+                  />
+                </div>
+                {classDoc.pointsPublicEnabled === true && classDoc.pointsPublicSlug ? (
+                  <PointsPublicDisplayShare
+                    publicSlug={classDoc.pointsPublicSlug}
+                    copyLabel={t("pointsPublicDisplayCopyLink")}
+                    qrLabel={t("pointsPublicDisplayQrLabel")}
+                  />
+                ) : null}
+              </CardContent>
+            </Card>
+
+            <Card id={SETTINGS_SECTION_IDS.banner} className={SETTINGS_CARD_CLASS}>
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold">{t("bannerTitle")}</CardTitle>
+                <CardDescription>{t("bannerDescription")}</CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-4">
+                {classDoc.bannerFileId ? (
+                  <div className="flex flex-col gap-3">
+                    <BannerPreview fileId={classDoc.bannerFileId} />
+                    <div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={clearBanner.isPending}
+                        onClick={handleClearBanner}
+                      >
+                        {t("bannerRemove")}
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
+                <FileDropzone
+                  title={t("bannerTitle")}
+                  variant="compact"
+                  presetKey="images"
+                  classId={classId}
+                  multiple={false}
+                  onUploaded={handleBannerUploaded}
+                />
+              </CardContent>
+            </Card>
+
+            {canManageClassroomScreen ? (
+              <Card id={SETTINGS_SECTION_IDS.clock} className={SETTINGS_CARD_CLASS}>
+                <CardHeader className="flex flex-row items-start justify-between gap-3">
+                  <div>
+                    <CardTitle className="text-lg font-semibold">
+                      {tClassroomScreen("clockSettingsTitle")}
+                    </CardTitle>
+                    <CardDescription>
+                      {tClassroomScreen("clockSettingsDescription")}
+                    </CardDescription>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    render={
+                      <Link
+                        to="/class/$classId/classroom-screen"
+                        params={{ classId }}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      />
+                    }
+                  >
+                    <ExternalLink aria-hidden="true" />
+                    {tClassroomScreen("openDisplay")}
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  <ClockSettingsSection classId={classId} />
+                </CardContent>
+              </Card>
+            ) : null}
+          </>
+        ) : null}
+
+        {classDoc ? (
+          <ClassFormCredenza
+            key={`edit:${classDoc._id}:${classDoc.updatedAt}`}
+            open={editOpen}
+            onOpenChange={setEditOpen}
+            mode="edit"
+            initialValues={formInitialValues}
+            onSubmit={handleSubmit}
+          />
+        ) : null}
+      </div>
+      {!showSkeleton && !isError && classDoc ? (
+        <div className="sticky top-16 ml-auto hidden h-[calc(100vh-5rem)] w-52 shrink-0 overflow-y-auto xl:block">
+          <TableOfContents items={tocItems} />
+        </div>
       ) : null}
     </div>
   );

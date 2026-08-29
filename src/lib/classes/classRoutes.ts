@@ -7,6 +7,9 @@ export type ClassNavTo =
   | "/class/$classId/attendance"
   | "/class/$classId/calendar"
   | "/class/$classId/timetable"
+  | "/class/$classId/classroom-screen"
+  | "/class/$classId/timers"
+  | "/class/$classId/audio"
   | "/class/$classId/tasks"
   | "/class/$classId/assignments"
   | "/class/$classId/points"
@@ -35,6 +38,9 @@ const REST_TO_ROUTE: Record<string, ClassNavTo> = {
   "/attendance": "/class/$classId/attendance",
   "/calendar": "/class/$classId/calendar",
   "/timetable": "/class/$classId/timetable",
+  "/classroom-screen": "/class/$classId/classroom-screen",
+  "/timers": "/class/$classId/timers",
+  "/audio": "/class/$classId/audio",
   "/tasks": "/class/$classId/tasks",
   "/assignments": "/class/$classId/assignments",
   "/points": "/class/$classId/points",
@@ -73,6 +79,12 @@ export function pathFor(to: ClassNavTo, classId: string): string {
       return `/class/${classId}/calendar`;
     case "/class/$classId/timetable":
       return `/class/${classId}/timetable`;
+    case "/class/$classId/classroom-screen":
+      return `/class/${classId}/classroom-screen`;
+    case "/class/$classId/timers":
+      return `/class/${classId}/timers`;
+    case "/class/$classId/audio":
+      return `/class/${classId}/audio`;
     case "/class/$classId/tasks":
       return `/class/${classId}/tasks`;
     case "/class/$classId/assignments":
@@ -127,6 +139,15 @@ export function classRouteFromPathname(pathname: string, classId: string): Class
   }
   if (rest === "/timetable" || rest.startsWith("/timetable/")) {
     return "/class/$classId/timetable";
+  }
+  if (rest === "/classroom-screen" || rest.startsWith("/classroom-screen/")) {
+    return "/class/$classId/classroom-screen";
+  }
+  if (rest === "/timers" || rest.startsWith("/timers/")) {
+    return "/class/$classId/timers";
+  }
+  if (rest === "/audio" || rest.startsWith("/audio/")) {
+    return "/class/$classId/audio";
   }
   if (rest === "/tasks" || rest.startsWith("/tasks/")) {
     return "/class/$classId/tasks";

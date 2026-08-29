@@ -33,10 +33,12 @@ import { Route as AuthenticatedAdminFeedbackRouteImport } from './routes/_authen
 import { Route as AuthenticatedDRunIdRouteImport } from './routes/_authenticated/d.$runId'
 import { Route as AuthenticatedDeRunIdRouteImport } from './routes/_authenticated/de.$runId'
 import { Route as AuthenticatedClassClassClassIdRouteRouteImport } from './routes/_authenticated/_class/class/$classId/route'
+import { Route as AuthenticatedClassClassIdClassroomScreenRouteImport } from './routes/_authenticated/class.$classId_.classroom-screen'
 import { Route as AuthenticatedClassClassClassIdIndexRouteImport } from './routes/_authenticated/_class/class/$classId/index'
 import { Route as AuthenticatedClassClassClassIdActivityRouteImport } from './routes/_authenticated/_class/class/$classId/activity'
 import { Route as AuthenticatedClassClassClassIdAssistantTeachersRouteImport } from './routes/_authenticated/_class/class/$classId/assistant-teachers'
 import { Route as AuthenticatedClassClassClassIdAttendanceRouteImport } from './routes/_authenticated/_class/class/$classId/attendance'
+import { Route as AuthenticatedClassClassClassIdAudioRouteImport } from './routes/_authenticated/_class/class/$classId/audio'
 import { Route as AuthenticatedClassClassClassIdBehaviorsRouteImport } from './routes/_authenticated/_class/class/$classId/behaviors'
 import { Route as AuthenticatedClassClassClassIdGroupsRouteImport } from './routes/_authenticated/_class/class/$classId/groups'
 import { Route as AuthenticatedClassClassClassIdGuardiansRouteImport } from './routes/_authenticated/_class/class/$classId/guardians'
@@ -47,6 +49,7 @@ import { Route as AuthenticatedClassClassClassIdRewardsRouteImport } from './rou
 import { Route as AuthenticatedClassClassClassIdSettingsRouteImport } from './routes/_authenticated/_class/class/$classId/settings'
 import { Route as AuthenticatedClassClassClassIdStudentsRouteImport } from './routes/_authenticated/_class/class/$classId/students'
 import { Route as AuthenticatedClassClassClassIdTeachersRouteImport } from './routes/_authenticated/_class/class/$classId/teachers'
+import { Route as AuthenticatedClassClassClassIdTimersRouteImport } from './routes/_authenticated/_class/class/$classId/timers'
 import { Route as AuthenticatedClassClassClassIdAnnouncementsIndexRouteImport } from './routes/_authenticated/_class/class/$classId/announcements/index'
 import { Route as AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRouteImport } from './routes/_authenticated/_class/class/$classId/announcements/$announcementId'
 import { Route as AuthenticatedClassClassClassIdAssignmentsIndexRouteImport } from './routes/_authenticated/_class/class/$classId/assignments/index'
@@ -214,6 +217,12 @@ const AuthenticatedClassClassClassIdRouteRoute =
     path: '/class/$classId',
     getParentRoute: () => AuthenticatedClassRouteRoute,
   } as any)
+const AuthenticatedClassClassIdClassroomScreenRoute =
+  AuthenticatedClassClassIdClassroomScreenRouteImport.update({
+    id: '/class/$classId_/classroom-screen',
+    path: '/class/$classId/classroom-screen',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedClassClassClassIdIndexRoute =
   AuthenticatedClassClassClassIdIndexRouteImport.update({
     id: '/',
@@ -236,6 +245,12 @@ const AuthenticatedClassClassClassIdAttendanceRoute =
   AuthenticatedClassClassClassIdAttendanceRouteImport.update({
     id: '/attendance',
     path: '/attendance',
+    getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
+  } as any)
+const AuthenticatedClassClassClassIdAudioRoute =
+  AuthenticatedClassClassClassIdAudioRouteImport.update({
+    id: '/audio',
+    path: '/audio',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
   } as any)
 const AuthenticatedClassClassClassIdBehaviorsRoute =
@@ -296,6 +311,12 @@ const AuthenticatedClassClassClassIdTeachersRoute =
   AuthenticatedClassClassClassIdTeachersRouteImport.update({
     id: '/teachers',
     path: '/teachers',
+    getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
+  } as any)
+const AuthenticatedClassClassClassIdTimersRoute =
+  AuthenticatedClassClassClassIdTimersRouteImport.update({
+    id: '/timers',
+    path: '/timers',
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
   } as any)
 const AuthenticatedClassClassClassIdAnnouncementsIndexRoute =
@@ -616,9 +637,11 @@ export interface FileRoutesByFullPath {
   '/de/$runId': typeof AuthenticatedDeRunIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/class/$classId': typeof AuthenticatedClassClassClassIdRouteRouteWithChildren
+  '/class/$classId/classroom-screen': typeof AuthenticatedClassClassIdClassroomScreenRoute
   '/class/$classId/activity': typeof AuthenticatedClassClassClassIdActivityRoute
   '/class/$classId/assistant-teachers': typeof AuthenticatedClassClassClassIdAssistantTeachersRoute
   '/class/$classId/attendance': typeof AuthenticatedClassClassClassIdAttendanceRoute
+  '/class/$classId/audio': typeof AuthenticatedClassClassClassIdAudioRoute
   '/class/$classId/behaviors': typeof AuthenticatedClassClassClassIdBehaviorsRoute
   '/class/$classId/groups': typeof AuthenticatedClassClassClassIdGroupsRoute
   '/class/$classId/guardians': typeof AuthenticatedClassClassClassIdGuardiansRoute
@@ -629,6 +652,7 @@ export interface FileRoutesByFullPath {
   '/class/$classId/settings': typeof AuthenticatedClassClassClassIdSettingsRoute
   '/class/$classId/students': typeof AuthenticatedClassClassClassIdStudentsRoute
   '/class/$classId/teachers': typeof AuthenticatedClassClassClassIdTeachersRoute
+  '/class/$classId/timers': typeof AuthenticatedClassClassClassIdTimersRoute
   '/class/$classId/': typeof AuthenticatedClassClassClassIdIndexRoute
   '/class/$classId/assignments/$assignmentId': typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRouteWithChildren
   '/class/$classId/announcements/$announcementId': typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute
@@ -695,9 +719,11 @@ export interface FileRoutesByTo {
   '/d/$runId': typeof AuthenticatedDRunIdRoute
   '/de/$runId': typeof AuthenticatedDeRunIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
+  '/class/$classId/classroom-screen': typeof AuthenticatedClassClassIdClassroomScreenRoute
   '/class/$classId/activity': typeof AuthenticatedClassClassClassIdActivityRoute
   '/class/$classId/assistant-teachers': typeof AuthenticatedClassClassClassIdAssistantTeachersRoute
   '/class/$classId/attendance': typeof AuthenticatedClassClassClassIdAttendanceRoute
+  '/class/$classId/audio': typeof AuthenticatedClassClassClassIdAudioRoute
   '/class/$classId/behaviors': typeof AuthenticatedClassClassClassIdBehaviorsRoute
   '/class/$classId/groups': typeof AuthenticatedClassClassClassIdGroupsRoute
   '/class/$classId/guardians': typeof AuthenticatedClassClassClassIdGuardiansRoute
@@ -708,6 +734,7 @@ export interface FileRoutesByTo {
   '/class/$classId/settings': typeof AuthenticatedClassClassClassIdSettingsRoute
   '/class/$classId/students': typeof AuthenticatedClassClassClassIdStudentsRoute
   '/class/$classId/teachers': typeof AuthenticatedClassClassClassIdTeachersRoute
+  '/class/$classId/timers': typeof AuthenticatedClassClassClassIdTimersRoute
   '/class/$classId': typeof AuthenticatedClassClassClassIdIndexRoute
   '/class/$classId/announcements/$announcementId': typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute
   '/class/$classId/assignments/new': typeof AuthenticatedClassClassClassIdAssignmentsNewRoute
@@ -780,9 +807,11 @@ export interface FileRoutesById {
   '/_authenticated/_app/': typeof AuthenticatedAppIndexRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/_class/class/$classId': typeof AuthenticatedClassClassClassIdRouteRouteWithChildren
+  '/_authenticated/class/$classId_/classroom-screen': typeof AuthenticatedClassClassIdClassroomScreenRoute
   '/_authenticated/_class/class/$classId/activity': typeof AuthenticatedClassClassClassIdActivityRoute
   '/_authenticated/_class/class/$classId/assistant-teachers': typeof AuthenticatedClassClassClassIdAssistantTeachersRoute
   '/_authenticated/_class/class/$classId/attendance': typeof AuthenticatedClassClassClassIdAttendanceRoute
+  '/_authenticated/_class/class/$classId/audio': typeof AuthenticatedClassClassClassIdAudioRoute
   '/_authenticated/_class/class/$classId/behaviors': typeof AuthenticatedClassClassClassIdBehaviorsRoute
   '/_authenticated/_class/class/$classId/groups': typeof AuthenticatedClassClassClassIdGroupsRoute
   '/_authenticated/_class/class/$classId/guardians': typeof AuthenticatedClassClassClassIdGuardiansRoute
@@ -793,6 +822,7 @@ export interface FileRoutesById {
   '/_authenticated/_class/class/$classId/settings': typeof AuthenticatedClassClassClassIdSettingsRoute
   '/_authenticated/_class/class/$classId/students': typeof AuthenticatedClassClassClassIdStudentsRoute
   '/_authenticated/_class/class/$classId/teachers': typeof AuthenticatedClassClassClassIdTeachersRoute
+  '/_authenticated/_class/class/$classId/timers': typeof AuthenticatedClassClassClassIdTimersRoute
   '/_authenticated/_class/class/$classId/': typeof AuthenticatedClassClassClassIdIndexRoute
   '/_authenticated/_class/class/$classId/assignments/$assignmentId': typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRouteWithChildren
   '/_authenticated/_class/class/$classId/announcements/$announcementId': typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute
@@ -863,9 +893,11 @@ export interface FileRouteTypes {
     | '/de/$runId'
     | '/admin/'
     | '/class/$classId'
+    | '/class/$classId/classroom-screen'
     | '/class/$classId/activity'
     | '/class/$classId/assistant-teachers'
     | '/class/$classId/attendance'
+    | '/class/$classId/audio'
     | '/class/$classId/behaviors'
     | '/class/$classId/groups'
     | '/class/$classId/guardians'
@@ -876,6 +908,7 @@ export interface FileRouteTypes {
     | '/class/$classId/settings'
     | '/class/$classId/students'
     | '/class/$classId/teachers'
+    | '/class/$classId/timers'
     | '/class/$classId/'
     | '/class/$classId/assignments/$assignmentId'
     | '/class/$classId/announcements/$announcementId'
@@ -942,9 +975,11 @@ export interface FileRouteTypes {
     | '/d/$runId'
     | '/de/$runId'
     | '/admin'
+    | '/class/$classId/classroom-screen'
     | '/class/$classId/activity'
     | '/class/$classId/assistant-teachers'
     | '/class/$classId/attendance'
+    | '/class/$classId/audio'
     | '/class/$classId/behaviors'
     | '/class/$classId/groups'
     | '/class/$classId/guardians'
@@ -955,6 +990,7 @@ export interface FileRouteTypes {
     | '/class/$classId/settings'
     | '/class/$classId/students'
     | '/class/$classId/teachers'
+    | '/class/$classId/timers'
     | '/class/$classId'
     | '/class/$classId/announcements/$announcementId'
     | '/class/$classId/assignments/new'
@@ -1026,9 +1062,11 @@ export interface FileRouteTypes {
     | '/_authenticated/_app/'
     | '/_authenticated/admin/'
     | '/_authenticated/_class/class/$classId'
+    | '/_authenticated/class/$classId_/classroom-screen'
     | '/_authenticated/_class/class/$classId/activity'
     | '/_authenticated/_class/class/$classId/assistant-teachers'
     | '/_authenticated/_class/class/$classId/attendance'
+    | '/_authenticated/_class/class/$classId/audio'
     | '/_authenticated/_class/class/$classId/behaviors'
     | '/_authenticated/_class/class/$classId/groups'
     | '/_authenticated/_class/class/$classId/guardians'
@@ -1039,6 +1077,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_class/class/$classId/settings'
     | '/_authenticated/_class/class/$classId/students'
     | '/_authenticated/_class/class/$classId/teachers'
+    | '/_authenticated/_class/class/$classId/timers'
     | '/_authenticated/_class/class/$classId/'
     | '/_authenticated/_class/class/$classId/assignments/$assignmentId'
     | '/_authenticated/_class/class/$classId/announcements/$announcementId'
@@ -1265,6 +1304,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedClassClassClassIdRouteRouteImport
       parentRoute: typeof AuthenticatedClassRouteRoute
     }
+    '/_authenticated/class/$classId_/classroom-screen': {
+      id: '/_authenticated/class/$classId_/classroom-screen'
+      path: '/class/$classId/classroom-screen'
+      fullPath: '/class/$classId/classroom-screen'
+      preLoaderRoute: typeof AuthenticatedClassClassIdClassroomScreenRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/_class/class/$classId/': {
       id: '/_authenticated/_class/class/$classId/'
       path: '/'
@@ -1291,6 +1337,13 @@ declare module '@tanstack/react-router' {
       path: '/attendance'
       fullPath: '/class/$classId/attendance'
       preLoaderRoute: typeof AuthenticatedClassClassClassIdAttendanceRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/audio': {
+      id: '/_authenticated/_class/class/$classId/audio'
+      path: '/audio'
+      fullPath: '/class/$classId/audio'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdAudioRouteImport
       parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
     }
     '/_authenticated/_class/class/$classId/behaviors': {
@@ -1361,6 +1414,13 @@ declare module '@tanstack/react-router' {
       path: '/teachers'
       fullPath: '/class/$classId/teachers'
       preLoaderRoute: typeof AuthenticatedClassClassClassIdTeachersRouteImport
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
+    }
+    '/_authenticated/_class/class/$classId/timers': {
+      id: '/_authenticated/_class/class/$classId/timers'
+      path: '/timers'
+      fullPath: '/class/$classId/timers'
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdTimersRouteImport
       parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute
     }
     '/_authenticated/_class/class/$classId/announcements/': {
@@ -1736,6 +1796,7 @@ interface AuthenticatedClassClassClassIdRouteRouteChildren {
   AuthenticatedClassClassClassIdActivityRoute: typeof AuthenticatedClassClassClassIdActivityRoute
   AuthenticatedClassClassClassIdAssistantTeachersRoute: typeof AuthenticatedClassClassClassIdAssistantTeachersRoute
   AuthenticatedClassClassClassIdAttendanceRoute: typeof AuthenticatedClassClassClassIdAttendanceRoute
+  AuthenticatedClassClassClassIdAudioRoute: typeof AuthenticatedClassClassClassIdAudioRoute
   AuthenticatedClassClassClassIdBehaviorsRoute: typeof AuthenticatedClassClassClassIdBehaviorsRoute
   AuthenticatedClassClassClassIdGroupsRoute: typeof AuthenticatedClassClassClassIdGroupsRoute
   AuthenticatedClassClassClassIdGuardiansRoute: typeof AuthenticatedClassClassClassIdGuardiansRoute
@@ -1746,6 +1807,7 @@ interface AuthenticatedClassClassClassIdRouteRouteChildren {
   AuthenticatedClassClassClassIdSettingsRoute: typeof AuthenticatedClassClassClassIdSettingsRoute
   AuthenticatedClassClassClassIdStudentsRoute: typeof AuthenticatedClassClassClassIdStudentsRoute
   AuthenticatedClassClassClassIdTeachersRoute: typeof AuthenticatedClassClassClassIdTeachersRoute
+  AuthenticatedClassClassClassIdTimersRoute: typeof AuthenticatedClassClassClassIdTimersRoute
   AuthenticatedClassClassClassIdIndexRoute: typeof AuthenticatedClassClassClassIdIndexRoute
   AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRoute: typeof AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRouteWithChildren
   AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute: typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute
@@ -1798,6 +1860,8 @@ const AuthenticatedClassClassClassIdRouteRouteChildren: AuthenticatedClassClassC
       AuthenticatedClassClassClassIdAssistantTeachersRoute,
     AuthenticatedClassClassClassIdAttendanceRoute:
       AuthenticatedClassClassClassIdAttendanceRoute,
+    AuthenticatedClassClassClassIdAudioRoute:
+      AuthenticatedClassClassClassIdAudioRoute,
     AuthenticatedClassClassClassIdBehaviorsRoute:
       AuthenticatedClassClassClassIdBehaviorsRoute,
     AuthenticatedClassClassClassIdGroupsRoute:
@@ -1818,6 +1882,8 @@ const AuthenticatedClassClassClassIdRouteRouteChildren: AuthenticatedClassClassC
       AuthenticatedClassClassClassIdStudentsRoute,
     AuthenticatedClassClassClassIdTeachersRoute:
       AuthenticatedClassClassClassIdTeachersRoute,
+    AuthenticatedClassClassClassIdTimersRoute:
+      AuthenticatedClassClassClassIdTimersRoute,
     AuthenticatedClassClassClassIdIndexRoute:
       AuthenticatedClassClassClassIdIndexRoute,
     AuthenticatedClassClassClassIdAssignmentsAssignmentIdRouteRoute:
@@ -1946,6 +2012,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
   AuthenticatedDRunIdRoute: typeof AuthenticatedDRunIdRoute
   AuthenticatedDeRunIdRoute: typeof AuthenticatedDeRunIdRoute
+  AuthenticatedClassClassIdClassroomScreenRoute: typeof AuthenticatedClassClassIdClassroomScreenRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -1954,6 +2021,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRouteRoute: AuthenticatedAdminRouteRouteWithChildren,
   AuthenticatedDRunIdRoute: AuthenticatedDRunIdRoute,
   AuthenticatedDeRunIdRoute: AuthenticatedDeRunIdRoute,
+  AuthenticatedClassClassIdClassroomScreenRoute:
+    AuthenticatedClassClassIdClassroomScreenRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
