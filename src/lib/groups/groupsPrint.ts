@@ -5,6 +5,13 @@ import {
   type RosterNameFormat,
 } from "@/lib/roster/roster";
 import { APP_CONFIG } from "@/config/app";
+import {
+  buildPrintDocumentClose,
+  buildPrintDocumentOpen,
+  escapePrintHtml,
+  resolveAppAssetUrl,
+} from "@/lib/print/printDocument";
+import { printHtmlDocument } from "@/lib/print/printFrame";
 
 export const GROUPS_PRINT_LOGO_PATH = "/brand/logo/icon-and-text-horizontal.webp";
 
@@ -25,15 +32,6 @@ export type GroupsPrintLabels = {
   teamColumnLabel: string;
   logoAlt: string;
 };
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
 
 function studentLabel(
   student: GroupsBoard["ungrouped"][number],
@@ -119,8 +117,8 @@ export function buildGroupsPrintHtml(
   logoUrl: string,
 ): string {
   const headerCells = [
-    `<th scope="col">${escapeHtml(labels.teamColumnLabel)}</th>`,
-    ...matrix.groupNames.map((name) => `<th scope="col">${escapeHtml(name)}</th>`),
+    `<th scope="col">${escapePrintHtml(labels.teamColumnLabel)}</th>`,
+    ...matrix.groupNames.map((name) => `<th scope="col">${escapePrintHtml(name)}</th>`),
   ].join("");
 
   const bodyRows = matrix.rows
@@ -128,105 +126,28 @@ export function buildGroupsPrintHtml(
       const cells = row.cells
         .map((names) => {
           const content =
-            names.length === 0 ? "" : names.map((name) => escapeHtml(name)).join("<br />");
+            names.length === 0 ? "" : names.map((name) => escapePrintHtml(name)).join("<br />");
           return `<td>${content}</td>`;
         })
         .join("");
-      return `<tr><th scope="row">${escapeHtml(row.teamName)}</th>${cells}</tr>`;
+      return `<tr><th scope="row">${escapePrintHtml(row.teamName)}</th>${cells}</tr>`;
     })
     .join("");
 
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <title>${escapeHtml(labels.documentTitle)}</title>
-  <style>
-    @page { size: landscape; margin: 12mm; }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      color: #111;
-      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
-      font-size: 12px;
-      line-height: 1.4;
-    }
-    .brand {
-      display: flex;
-      align-items: center;
-      margin-bottom: 16px;
-    }
-    .brand img {
-      display: block;
-      height: 40px;
-      width: auto;
-    }
-    h1 {
-      margin: 0 0 4px;
-      font-size: 18px;
-      font-weight: 650;
-      letter-spacing: -0.01em;
-    }
-    .meta {
-      margin: 0 0 16px;
-      color: #555;
-      font-size: 12px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      table-layout: fixed;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px 10px;
-      vertical-align: top;
-      word-wrap: break-word;
-      overflow-wrap: anywhere;
-    }
-    thead th {
-      background: #f4f4f5;
-      font-weight: 650;
-      text-align: left;
-    }
-    tbody th {
-      background: #fafafa;
-      font-weight: 600;
-      text-align: left;
-      width: 12rem;
-    }
-  </style>
-</head>
-<body>
+  return `${buildPrintDocumentOpen({
+    title: labels.documentTitle,
+    bodyClass: "print-groups",
+    lang: "en",
+  })}
   <div class="brand">
-    <img src="${escapeHtml(logoUrl)}" alt="${escapeHtml(labels.logoAlt)}" width="169" height="53" />
+    <img src="${escapePrintHtml(logoUrl)}" alt="${escapePrintHtml(labels.logoAlt)}" width="169" height="53" />
   </div>
-  <h1>${escapeHtml(labels.heading)}</h1>
-  <p class="meta">${escapeHtml(labels.subtitle)}</p>
+  <h1>${escapePrintHtml(labels.heading)}</h1>
+  <p class="meta">${escapePrintHtml(labels.subtitle)}</p>
   <table>
     <thead><tr>${headerCells}</tr></thead>
     <tbody>${bodyRows}</tbody>
-  </table>
-</body>
-</html>`;
-}
-
-function waitForImages(doc: Document): Promise<void> {
-  const images = [...doc.images];
-  if (images.length === 0) return Promise.resolve();
-  return Promise.all(
-    images.map(
-      (image) =>
-        new Promise<void>((resolve) => {
-          if (image.complete) {
-            resolve();
-            return;
-          }
-          image.addEventListener("load", () => resolve(), { once: true });
-          image.addEventListener("error", () => resolve(), { once: true });
-        }),
-    ),
-  ).then(() => undefined);
+  </table>${buildPrintDocumentClose()}`;
 }
 
 /**
@@ -240,49 +161,9 @@ export async function printGroupsMatrix(
     throw new Error("Nothing to print");
   }
 
-  const logoUrl = new URL(GROUPS_PRINT_LOGO_PATH, window.location.origin).href;
+  const logoUrl = resolveAppAssetUrl(GROUPS_PRINT_LOGO_PATH);
   const html = buildGroupsPrintHtml(matrix, labels, logoUrl);
-
-  const iframe = document.createElement("iframe");
-  iframe.setAttribute("title", labels.documentTitle);
-  iframe.setAttribute("aria-hidden", "true");
-  Object.assign(iframe.style, {
-    position: "fixed",
-    right: "0",
-    bottom: "0",
-    width: "0",
-    height: "0",
-    border: "0",
-    opacity: "0",
-    pointerEvents: "none",
-  });
-  document.body.appendChild(iframe);
-
-  const frameWindow = iframe.contentWindow;
-  const frameDocument = iframe.contentDocument;
-  if (!frameWindow || !frameDocument) {
-    iframe.remove();
-    throw new Error("Could not open print frame");
-  }
-
-  frameDocument.open();
-  frameDocument.write(html);
-  frameDocument.close();
-
-  try {
-    await waitForImages(frameDocument);
-    const cleanup = () => {
-      iframe.remove();
-    };
-    frameWindow.addEventListener("afterprint", cleanup, { once: true });
-    // Fallback if afterprint never fires (some browsers).
-    window.setTimeout(cleanup, 60_000);
-    frameWindow.focus();
-    frameWindow.print();
-  } catch (error) {
-    iframe.remove();
-    throw error;
-  }
+  await printHtmlDocument({ documentTitle: labels.documentTitle, html });
 }
 
 export function groupsPrintLogoAlt(): string {

@@ -7,6 +7,7 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import { toast } from "@/components/ui/toast-manager";
 import { announcementDetailQueryKey } from "@/hooks/announcements/useAnnouncement";
 import { announcementsListQueryKey } from "@/hooks/announcements/useAnnouncements";
+import { recentAnnouncementsQueryKey } from "@/hooks/announcements/useRecentAnnouncements";
 import { useOptimisticMutation } from "@/hooks/useOptimisticMutation";
 import type { Announcement, AnnouncementList } from "@/lib/announcements/announcements";
 import { messageFromError } from "@/lib/errors/convexError";
@@ -27,6 +28,7 @@ export function useSetAnnouncementPublic() {
     mutationFn: (args: SetAnnouncementPublicArgs) => mutationFn(args),
     queryKeys: (args) => [
       announcementsListQueryKey(args.classId),
+      recentAnnouncementsQueryKey(args.classId),
       announcementDetailQueryKey(args.classId, args.announcementId),
     ],
     applyOptimisticUpdate: (queryClient, args) => {

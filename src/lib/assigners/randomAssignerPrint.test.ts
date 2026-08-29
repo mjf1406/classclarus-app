@@ -208,6 +208,9 @@ describe("buildRandomAssignerPrintHtml", () => {
       { order: "firstLast", space: true },
     );
     expect(html).toContain("logo.webp");
+    expect(html).toContain('<link rel="stylesheet"');
+    expect(html).toContain('class="print-table-assigner"');
+    expect(html).not.toContain("<style>");
     expect(html).toContain("Chromebooks");
     expect(html).toContain("CB-1");
     expect(html).toContain("#3 - Alex Kim");

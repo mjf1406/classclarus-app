@@ -46,6 +46,13 @@ const announcementValidator = v.object({
   updatedAt: v.number(),
 });
 
+const announcementSummaryValidator = v.object({
+  _id: v.id("announcements"),
+  title: v.string(),
+  createdAt: v.number(),
+  updatedAt: v.number(),
+});
+
 const publicAnnouncementValidator = v.object({
   title: v.string(),
   bodyJson: v.string(),
@@ -232,6 +239,37 @@ export const list = classQuery({
       });
     }
     return result;
+  },
+});
+
+const DEFAULT_RECENT_ANNOUNCEMENT_LIMIT = 5;
+const MAX_RECENT_ANNOUNCEMENT_LIMIT = 20;
+
+/**
+ * Lightweight recent announcements for dashboard cards (newest first).
+ */
+export const listRecent = classQuery({
+  args: {
+    limit: v.optional(v.number()),
+  },
+  returns: v.array(announcementSummaryValidator),
+  handler: async (ctx, args) => {
+    const classId = ctx.classDoc._id;
+    const requested = args.limit ?? DEFAULT_RECENT_ANNOUNCEMENT_LIMIT;
+    const limit = Math.min(Math.max(Math.floor(requested), 1), MAX_RECENT_ANNOUNCEMENT_LIMIT);
+
+    const docs = await ctx.db
+      .query("announcements")
+      .withIndex("by_classId_createdAt", (q) => q.eq("classId", classId))
+      .order("desc")
+      .take(limit);
+
+    return docs.map((doc) => ({
+      _id: doc._id,
+      title: doc.title,
+      createdAt: doc.createdAt,
+      updatedAt: doc.updatedAt,
+    }));
   },
 });
 

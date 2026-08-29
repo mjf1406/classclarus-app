@@ -1,6 +1,13 @@
 import { APP_CONFIG } from "@/config/app";
 import type { RosterNameFormat } from "@/lib/roster/roster";
 import { formatRosterNameParts } from "@/lib/roster/roster";
+import {
+  buildPrintDocumentClose,
+  buildPrintDocumentOpen,
+  escapePrintHtml,
+  resolveAppAssetUrl,
+} from "@/lib/print/printDocument";
+import { printHtmlDocument } from "@/lib/print/printFrame";
 
 export const RANDOM_ASSIGNER_PRINT_LOGO_PATH = "/brand/logo/icon-and-text-horizontal.webp";
 
@@ -37,15 +44,6 @@ export type RandomAssignerPrintMatrix = {
     cells: Array<Array<string>>;
   }>;
 };
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
 
 export function randomAssignerPrintLogoAlt(): string {
   return `${APP_CONFIG.name} Logo`;
@@ -207,77 +205,38 @@ export function buildRandomAssignerPrintHtml(
   });
 
   const headerCells = [
-    `<th>${escapeHtml(labels.itemColumn)}</th>`,
-    ...matrix.groupNames.map((name) => `<th>${escapeHtml(name)}</th>`),
+    `<th>${escapePrintHtml(labels.itemColumn)}</th>`,
+    ...matrix.groupNames.map((name) => `<th>${escapePrintHtml(name)}</th>`),
   ].join("");
 
   const bodyRows = matrix.rows
     .map((row) => {
       const cells = row.cells
         .map(
-          (students) => `<td>${students.map((student) => escapeHtml(student)).join("<br />")}</td>`,
+          (students) =>
+            `<td>${students.map((student) => escapePrintHtml(student)).join("<br />")}</td>`,
         )
         .join("");
-      return `<tr><td>${escapeHtml(row.item)}</td>${cells}</tr>`;
+      return `<tr><td>${escapePrintHtml(row.item)}</td>${cells}</tr>`;
     })
     .join("");
 
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <title>${escapeHtml(labels.documentTitle)}</title>
-  <style>
-    @page { margin: 12mm; }
-    * { box-sizing: border-box; }
-    body {
-      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
-      color: #111;
-      margin: 0;
-      padding: 0;
-    }
-    .brand { margin-bottom: 1rem; }
-    .brand img { height: 40px; width: auto; }
-    h1 { font-size: 1.25rem; margin: 0 0 0.25rem; }
-    .meta { color: #555; font-size: 0.875rem; margin: 0 0 1.25rem; }
-    table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
-    th, td { border: 1px solid #ccc; padding: 0.4rem 0.5rem; text-align: left; vertical-align: top; }
-    th { background: #f5f5f5; font-weight: 600; }
-    td:first-child, th:first-child { font-weight: 600; white-space: nowrap; }
-  </style>
-</head>
-<body>
+  return `${buildPrintDocumentOpen({
+    title: labels.documentTitle,
+    bodyClass: "print-table-assigner",
+    lang: "en",
+  })}
   <div class="brand">
-    <img src="${escapeHtml(logoUrl)}" alt="${escapeHtml(labels.logoAlt)}" width="169" height="53" />
+    <img src="${escapePrintHtml(logoUrl)}" alt="${escapePrintHtml(labels.logoAlt)}" width="169" height="53" />
   </div>
-  <h1>${escapeHtml(labels.heading)}</h1>
-  <p class="meta">${escapeHtml(labels.subtitle)}</p>
+  <h1>${escapePrintHtml(labels.heading)}</h1>
+  <p class="meta">${escapePrintHtml(labels.subtitle)}</p>
   <table>
     <thead>
       <tr>${headerCells}</tr>
     </thead>
     <tbody>${bodyRows}</tbody>
-  </table>
-</body>
-</html>`;
-}
-
-function waitForImages(doc: Document): Promise<void> {
-  const images = [...doc.images];
-  if (images.length === 0) return Promise.resolve();
-  return Promise.all(
-    images.map(
-      (img) =>
-        new Promise<void>((resolve) => {
-          if (img.complete) {
-            resolve();
-            return;
-          }
-          img.addEventListener("load", () => resolve(), { once: true });
-          img.addEventListener("error", () => resolve(), { once: true });
-        }),
-    ),
-  ).then(() => undefined);
+  </table>${buildPrintDocumentClose()}`;
 }
 
 export async function printRandomAssignerRun(
@@ -285,33 +244,7 @@ export async function printRandomAssignerRun(
   labels: RandomAssignerPrintLabels,
   nameFormat: RosterNameFormat,
 ): Promise<void> {
-  const logoUrl = new URL(RANDOM_ASSIGNER_PRINT_LOGO_PATH, window.location.origin).href;
+  const logoUrl = resolveAppAssetUrl(RANDOM_ASSIGNER_PRINT_LOGO_PATH);
   const html = buildRandomAssignerPrintHtml(run, labels, logoUrl, nameFormat);
-  const iframe = document.createElement("iframe");
-  iframe.setAttribute(
-    "style",
-    "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;",
-  );
-  document.body.appendChild(iframe);
-
-  const frameWindow = iframe.contentWindow;
-  const frameDocument = iframe.contentDocument ?? frameWindow?.document;
-  if (!frameWindow || !frameDocument) {
-    iframe.remove();
-    throw new Error("Print frame unavailable");
-  }
-
-  frameDocument.open();
-  frameDocument.write(html);
-  frameDocument.close();
-
-  await waitForImages(frameDocument);
-
-  const cleanup = () => {
-    iframe.remove();
-  };
-  frameWindow.addEventListener("afterprint", cleanup, { once: true });
-  window.setTimeout(cleanup, 60_000);
-  frameWindow.focus();
-  frameWindow.print();
+  await printHtmlDocument({ documentTitle: labels.documentTitle, html });
 }

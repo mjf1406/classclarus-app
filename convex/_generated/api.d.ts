@@ -31,6 +31,7 @@ import type * as classUserSettings from "../classUserSettings.js";
 import type * as classes from "../classes.js";
 import type * as classesBackfill from "../classesBackfill.js";
 import type * as crons from "../crons.js";
+import type * as dashboard from "../dashboard.js";
 import type * as equitableAssigners from "../equitableAssigners.js";
 import type * as expectations from "../expectations.js";
 import type * as feedback from "../feedback.js";
@@ -118,6 +119,7 @@ import type * as lib_cleanup_seatingCleanup from "../lib/cleanup/seatingCleanup.
 import type * as lib_cleanup_tasksCleanup from "../lib/cleanup/tasksCleanup.js";
 import type * as lib_cleanup_timetableCleanup from "../lib/cleanup/timetableCleanup.js";
 import type * as lib_customFunctions from "../lib/customFunctions.js";
+import type * as lib_dashboard_dashboard from "../lib/dashboard/dashboard.js";
 import type * as lib_dueDateKey from "../lib/dueDateKey.js";
 import type * as lib_entitlement from "../lib/entitlement.js";
 import type * as lib_equitableAssignersCleanup from "../lib/equitableAssignersCleanup.js";
@@ -274,6 +276,7 @@ declare const fullApi: ApiFromModules<{
   classes: typeof classes;
   classesBackfill: typeof classesBackfill;
   crons: typeof crons;
+  dashboard: typeof dashboard;
   equitableAssigners: typeof equitableAssigners;
   expectations: typeof expectations;
   feedback: typeof feedback;
@@ -361,6 +364,7 @@ declare const fullApi: ApiFromModules<{
   "lib/cleanup/tasksCleanup": typeof lib_cleanup_tasksCleanup;
   "lib/cleanup/timetableCleanup": typeof lib_cleanup_timetableCleanup;
   "lib/customFunctions": typeof lib_customFunctions;
+  "lib/dashboard/dashboard": typeof lib_dashboard_dashboard;
   "lib/dueDateKey": typeof lib_dueDateKey;
   "lib/entitlement": typeof lib_entitlement;
   "lib/equitableAssignersCleanup": typeof lib_equitableAssignersCleanup;

@@ -4,6 +4,7 @@ import { api } from "../../../convex/_generated/api";
 
 export type Announcement = NonNullable<FunctionReturnType<typeof api.announcements.get>>;
 export type AnnouncementList = FunctionReturnType<typeof api.announcements.list>;
+export type RecentAnnouncementList = FunctionReturnType<typeof api.announcements.listRecent>;
 export type PublicAnnouncement = NonNullable<
   FunctionReturnType<typeof api.announcements.getByPublicSlug>
 >;

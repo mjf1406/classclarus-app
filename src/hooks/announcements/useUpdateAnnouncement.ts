@@ -6,8 +6,13 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import { toast } from "@/components/ui/toast-manager";
 import { announcementDetailQueryKey } from "@/hooks/announcements/useAnnouncement";
 import { announcementsListQueryKey } from "@/hooks/announcements/useAnnouncements";
+import { recentAnnouncementsQueryKey } from "@/hooks/announcements/useRecentAnnouncements";
 import { useOptimisticMutation } from "@/hooks/useOptimisticMutation";
-import type { Announcement, AnnouncementList } from "@/lib/announcements/announcements";
+import type {
+  Announcement,
+  AnnouncementList,
+  RecentAnnouncementList,
+} from "@/lib/announcements/announcements";
 import { messageFromError } from "@/lib/errors/convexError";
 
 type UpdateAnnouncementArgs = {
@@ -27,6 +32,7 @@ export function useUpdateAnnouncement() {
     mutationFn: (args: UpdateAnnouncementArgs) => mutationFn(args),
     queryKeys: (args) => [
       announcementsListQueryKey(args.classId),
+      recentAnnouncementsQueryKey(args.classId),
       announcementDetailQueryKey(args.classId, args.announcementId),
     ],
     applyOptimisticUpdate: (queryClient, args) => {
@@ -58,6 +64,14 @@ export function useUpdateAnnouncement() {
           attachmentFileIds: args.attachmentFileIds ?? old.attachmentFileIds,
           updatedAt: now,
         };
+      });
+
+      const recentKey = recentAnnouncementsQueryKey(args.classId);
+      queryClient.setQueryData<RecentAnnouncementList>(recentKey, (old) => {
+        if (!old) return old;
+        return old.map((item) =>
+          item._id === args.announcementId ? { ...item, title: args.title, updatedAt: now } : item,
+        );
       });
     },
     onError: (error) => {

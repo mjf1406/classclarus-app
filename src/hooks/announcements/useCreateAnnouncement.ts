@@ -5,8 +5,12 @@ import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { toast } from "@/components/ui/toast-manager";
 import { announcementsListQueryKey } from "@/hooks/announcements/useAnnouncements";
+import {
+  recentAnnouncementsQueryKey,
+  DASHBOARD_ANNOUNCEMENT_LIMIT,
+} from "@/hooks/announcements/useRecentAnnouncements";
 import { useOptimisticMutation } from "@/hooks/useOptimisticMutation";
-import type { AnnouncementList } from "@/lib/announcements/announcements";
+import type { AnnouncementList, RecentAnnouncementList } from "@/lib/announcements/announcements";
 import { EMPTY_ANNOUNCEMENT_BODY_JSON } from "@/lib/announcements/tiptapExtensions";
 import { messageFromError } from "@/lib/errors/convexError";
 import { randomClientId } from "@/lib/optimistic";
@@ -26,7 +30,10 @@ export function useCreateAnnouncement() {
 
   return useOptimisticMutation({
     mutationFn: (args: CreateAnnouncementArgs) => mutationFn(args),
-    queryKeys: (args) => [announcementsListQueryKey(args.classId)],
+    queryKeys: (args) => [
+      announcementsListQueryKey(args.classId),
+      recentAnnouncementsQueryKey(args.classId),
+    ],
     applyOptimisticUpdate: (queryClient, args) => {
       const queryKey = announcementsListQueryKey(args.classId);
       const now = Date.now();
@@ -55,6 +62,18 @@ export function useCreateAnnouncement() {
         };
         if (!old) return [next];
         return [next, ...old];
+      });
+
+      const recentKey = recentAnnouncementsQueryKey(args.classId);
+      queryClient.setQueryData<RecentAnnouncementList>(recentKey, (old) => {
+        const summary: RecentAnnouncementList[number] = {
+          _id: optimisticId,
+          title: args.title,
+          createdAt: now,
+          updatedAt: now,
+        };
+        if (!old) return [summary];
+        return [summary, ...old].slice(0, DASHBOARD_ANNOUNCEMENT_LIMIT);
       });
     },
     onError: (error) => {

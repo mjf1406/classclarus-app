@@ -4,8 +4,8 @@ import { useTranslation } from "react-i18next";
 
 import { DataTableSortableHeader } from "@/components/feedback/DataTableSortableHeader";
 import { PersonalStudentPicker } from "@/components/personal/PersonalStudentPicker";
+import { RazSummaryContent } from "@/components/raz/RazSummaryContent";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import {
   Empty,
   EmptyDescription,
@@ -29,11 +29,6 @@ import { useAuthedQuery } from "@/hooks/useAuthedQuery";
 import { toIntlLocale } from "@/lib/languages";
 import { ONE_HOUR } from "@/lib/queryCache";
 import {
-  getRazAssessmentSchedule,
-  getRazDisplayStatuses,
-  type RazDisplayStatus,
-} from "@/lib/raz/assessmentSchedule";
-import {
   getRosterDisplayName,
   resolveRosterNameFormat,
   type RosterNameFormat,
@@ -42,16 +37,6 @@ import { getInitials } from "@/lib/user/userDisplay";
 import { sanitizeAvatarUrl } from "../../../convex/lib/avatarUrl";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
-
-const STATUS_I18N_KEY = {
-  rti: "statusRti",
-  pending: "statusPending",
-  overdue: "statusOverdue",
-  due_now: "statusDueNow",
-  coming_soon: "statusComingSoon",
-  up_to_date: "statusUpToDate",
-  ineligible: "statusIneligible",
-} as const;
 
 const RESULT_I18N_KEY = {
   level_up: "resultLevelUp",
@@ -71,35 +56,12 @@ type PersonalRazAssessment = NonNullable<
   ReturnType<typeof useRazAssessmentHistoryForAudience>["data"]
 >[number];
 
-function formatMediumDate(timestampMs: number, language: string): string {
-  const locale = toIntlLocale(language);
-  return new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(new Date(timestampMs));
-}
-
 function formatMediumDateTime(timestampMs: number, language: string): string {
   const locale = toIntlLocale(language);
   return new Intl.DateTimeFormat(locale, {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(timestampMs));
-}
-
-function statusBadgeVariant(
-  status: RazDisplayStatus,
-): "default" | "secondary" | "destructive" | "outline" {
-  switch (status) {
-    case "rti":
-    case "overdue":
-      return "destructive";
-    case "due_now":
-      return "default";
-    case "pending":
-    case "coming_soon":
-      return "secondary";
-    case "up_to_date":
-    case "ineligible":
-      return "outline";
-  }
 }
 
 function nextSortState(
@@ -164,7 +126,6 @@ type SummaryCardProps = {
 };
 
 function PersonalRazSummaryCard({ student, nameFormat, language }: SummaryCardProps) {
-  const { t } = useTranslation("raz");
   const { t: tClasses } = useTranslation("classes");
   const displayName = getRosterDisplayName(student, tClasses("unnamedMember"), nameFormat);
   const initials = getInitials({
@@ -173,38 +134,6 @@ function PersonalRazSummaryCard({ student, nameFormat, language }: SummaryCardPr
     email: student.email,
   });
   const avatarSrc = sanitizeAvatarUrl(student.image);
-
-  const schedule =
-    student.currentLevel != null &&
-    student.scheduleAnchorAt != null &&
-    student.manualStatus !== "ineligible"
-      ? getRazAssessmentSchedule(
-          student.currentLevel,
-          student.scheduleAnchorAt,
-          Date.now(),
-          student.lastAssessedAt,
-          { forceOverdue: student.manualStatus === "rti" },
-        )
-      : null;
-
-  const statuses =
-    student.currentLevel != null && student.scheduleAnchorAt != null
-      ? getRazDisplayStatuses({
-          level: student.currentLevel,
-          scheduleAnchorAt: student.scheduleAnchorAt,
-          lastAssessedAt: student.lastAssessedAt,
-          manualStatus: student.manualStatus,
-        })
-      : [];
-
-  const dueRelative =
-    schedule == null
-      ? null
-      : schedule.daysUntilDue < 0
-        ? t("dueOverdueDays", { count: Math.abs(schedule.daysUntilDue) })
-        : schedule.daysUntilDue === 0
-          ? t("dueToday")
-          : t("dueInDays", { count: schedule.daysUntilDue });
 
   return (
     <div className="flex flex-col gap-4 rounded-2xl border bg-card p-4">
@@ -220,79 +149,10 @@ function PersonalRazSummaryCard({ student, nameFormat, language }: SummaryCardPr
             </span>
             <p className="truncate font-medium">{displayName}</p>
           </div>
-          {statuses.length > 0 ? (
-            <div className="mt-1.5 flex flex-wrap gap-1.5">
-              {statuses.map((status) => (
-                <Badge key={status} variant={statusBadgeVariant(status)}>
-                  {t(STATUS_I18N_KEY[status])}
-                </Badge>
-              ))}
-            </div>
-          ) : null}
         </div>
       </div>
 
-      <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
-        <div className="flex flex-col gap-0.5">
-          <dt className="text-muted-foreground">{t("columnCurrentLevel")}</dt>
-          <dd className="text-lg font-semibold tabular-nums">
-            {student.currentLevel ?? t("levelUnset")}
-          </dd>
-        </div>
-        <div className="flex flex-col gap-0.5">
-          <dt className="text-muted-foreground">{t("lastAssessedLabel")}</dt>
-          <dd className="font-medium tabular-nums">
-            {student.lastAssessedAt != null
-              ? formatMediumDateTime(student.lastAssessedAt, language)
-              : t("neverAssessed")}
-          </dd>
-        </div>
-        <div className="col-span-2 flex flex-col gap-0.5 sm:col-span-1">
-          <dt className="text-muted-foreground">{t("columnNextDue")}</dt>
-          <dd className="flex flex-col gap-0.5">
-            {student.manualStatus === "ineligible" ? (
-              <span className="font-medium text-muted-foreground">{t("dueIneligible")}</span>
-            ) : dueRelative != null && schedule != null ? (
-              <>
-                <span className="font-medium">{dueRelative}</span>
-                <span className="text-muted-foreground text-xs tabular-nums">
-                  {t("dueWindowDates", {
-                    start: formatMediumDate(schedule.windowStartAt, language),
-                    end: formatMediumDate(schedule.windowEndAt, language),
-                  })}
-                </span>
-                <span className="text-muted-foreground text-xs tabular-nums">
-                  {t("dueRangeDays", {
-                    lower: schedule.lowerBoundDays,
-                    upper: schedule.upperBoundDays,
-                  })}
-                </span>
-              </>
-            ) : (
-              <span className="font-medium text-muted-foreground">{t("dueUnavailable")}</span>
-            )}
-          </dd>
-        </div>
-      </dl>
-
-      <div className="flex flex-col gap-1.5">
-        <p className="text-sm text-muted-foreground">{t("resultMixLabel")}</p>
-        {student.assessmentCount === 0 ? (
-          <p className="text-sm text-muted-foreground">{t("resultMixEmpty")}</p>
-        ) : (
-          <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm tabular-nums">
-            <span>
-              {t("resultLevelUp")}: {student.levelUpPct}%
-            </span>
-            <span>
-              {t("resultStay")}: {student.stayPct}%
-            </span>
-            <span>
-              {t("resultLevelDown")}: {student.levelDownPct}%
-            </span>
-          </div>
-        )}
-      </div>
+      <RazSummaryContent student={student} language={language} />
     </div>
   );
 }

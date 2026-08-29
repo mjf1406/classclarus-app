@@ -158,6 +158,10 @@ describe("buildSeatsPrintHtml", () => {
       "https://example.com/logo.webp",
     );
     expect(html).toContain("https://example.com/logo.webp");
+    expect(html).toContain('<link rel="stylesheet"');
+    expect(html).toContain("/print.css");
+    expect(html).toContain('class="print-seats"');
+    expect(html).not.toContain("<style>");
     expect(html).toContain("transform:rotate(180deg)");
     expect(html).toContain("transform:rotate(-180deg)");
     expect(html).toContain("desk-num");
@@ -202,7 +206,8 @@ describe("buildSeatsPrintHtml", () => {
     expect(html).toContain("grid-2");
     expect(html).toContain("Perspective: Front");
     expect(html).toContain("Perspective: Right");
-    expect(html).toContain("page-break-after: always");
+    expect(html).toContain('class="page');
+    expect(html).not.toContain("<style>");
   });
 
   test("uses 2x2 grid for four per page", () => {

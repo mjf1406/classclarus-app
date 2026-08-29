@@ -5,6 +5,13 @@ import {
   type SeatLayoutItem,
   type SeatOrientation,
 } from "@/lib/assigners/seatLayouts";
+import {
+  buildPrintDocumentClose,
+  buildPrintDocumentOpen,
+  escapePrintHtml,
+  resolveAppAssetUrl,
+} from "@/lib/print/printDocument";
+import { printHtmlDocument } from "@/lib/print/printFrame";
 
 export const SEATS_PRINT_LOGO_PATH = "/brand/logo/icon-and-text-horizontal.webp";
 
@@ -178,15 +185,6 @@ export function chunkOrientations(
   return pages;
 }
 
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
-
 function itemHtml(item: SeatsPrintItem, scale: number, degrees: number): string {
   const kindClass =
     item.kind === "desk"
@@ -205,9 +203,9 @@ function itemHtml(item: SeatsPrintItem, scale: number, degrees: number): string 
   const displayLabel = item.studentLabel?.trim() || item.label.trim();
   return `<div class="item ${kindClass}" style="left:${item.x}px;top:${item.y}px;width:${item.width}px;height:${item.height}px;font-size:${fontPx}px">
     ${item.kind === "desk" && item.deskNumber !== undefined ? `<span class="desk-num" style="font-size:${deskNumPx}px;transform:rotate(${-degrees}deg)">${item.deskNumber}</span>` : ""}
-    <span class="item-label" style="padding:${labelPadTop}px ${labelPadX}px 4px;transform:rotate(${-degrees}deg)">${escapeHtml(displayLabel)}</span>
-    ${item.teamLabel ? `<span class="team" style="font-size:${teamPx}px;transform:rotate(${-degrees}deg)">${escapeHtml(item.teamLabel)}</span>` : ""}
-    ${item.zoneLabel ? `<span class="zone" style="font-size:${zonePx}px;transform:rotate(${-degrees}deg)">${escapeHtml(item.zoneLabel)}</span>` : ""}
+    <span class="item-label" style="padding:${labelPadTop}px ${labelPadX}px 4px;transform:rotate(${-degrees}deg)">${escapePrintHtml(displayLabel)}</span>
+    ${item.teamLabel ? `<span class="team" style="font-size:${teamPx}px;transform:rotate(${-degrees}deg)">${escapePrintHtml(item.teamLabel)}</span>` : ""}
+    ${item.zoneLabel ? `<span class="zone" style="font-size:${zonePx}px;transform:rotate(${-degrees}deg)">${escapePrintHtml(item.zoneLabel)}</span>` : ""}
   </div>`;
 }
 
@@ -226,7 +224,7 @@ function tileHtml(
   const degrees = SEAT_ORIENTATION_DEGREES[args.orientation];
   const items = prepared.items.map((item) => itemHtml(item, prepared.scale, degrees)).join("\n");
   return `<div class="tile">
-  <p class="tile-caption">${escapeHtml(orientationLabel)}</p>
+  <p class="tile-caption">${escapePrintHtml(orientationLabel)}</p>
   <div class="stage-wrap">
     <div class="stage" style="width:${prepared.canvasWidth}px;height:${prepared.canvasHeight}px;transform:rotate(${degrees}deg)">${items}</div>
   </div>
@@ -264,169 +262,26 @@ export function buildSeatsPrintHtml(
       const isLast = pageIndex === pages.length - 1;
       return `<section class="page${isLast ? " page-last" : ""}">
   <div class="brand">
-    <img src="${escapeHtml(logoUrl)}" alt="${escapeHtml(labels.logoAlt)}" width="169" height="53" />
+    <img src="${escapePrintHtml(logoUrl)}" alt="${escapePrintHtml(labels.logoAlt)}" width="169" height="53" />
   </div>
-  <h1>${escapeHtml(labels.heading)}</h1>
-  <p class="meta">${escapeHtml(labels.subtitle)}</p>
+  <h1>${escapePrintHtml(labels.heading)}</h1>
+  <p class="meta">${escapePrintHtml(labels.subtitle)}</p>
   <div class="tiles ${gridClass}">${tiles}</div>
 </section>`;
     })
     .join("\n");
 
-  return `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <title>${escapeHtml(labels.documentTitle)}</title>
-  <style>
-    @page { margin: 12mm; }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
-      color: #18181b;
-    }
-    .page {
-      break-after: page;
-      page-break-after: always;
-    }
-    .page-last {
-      break-after: auto;
-      page-break-after: auto;
-    }
-    .brand { margin-bottom: 10px; }
-    h1 { font-size: 16px; margin: 0 0 4px; }
-    .meta { margin: 0 0 10px; color: #52525b; font-size: 11px; }
-    .tiles {
-      display: grid;
-      gap: ${PRINT_TILE_GAP}px;
-      width: 100%;
-    }
-    .tiles.grid-1 { grid-template-columns: 1fr; }
-    .tiles.grid-2 { grid-template-columns: 1fr; }
-    .tiles.grid-4 { grid-template-columns: 1fr 1fr; }
-    .tile { min-width: 0; }
-    .tile-caption {
-      margin: 0 0 4px;
-      color: #52525b;
-      font-size: 10px;
-      font-weight: 600;
-    }
-    .stage-wrap {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      overflow: hidden;
-    }
-    .stage {
-      position: relative;
-      border: 1px solid #d4d4d8;
-      background: #fafafa;
-      transform-origin: center center;
-    }
-    .item {
-      position: absolute;
-      box-sizing: border-box;
-      border: 1px solid #71717a;
-      background: #fff;
-    }
-    .item.desk { background: #eff6ff; }
-    .item.teacher { background: #fef3c7; }
-    .item.board { background: #ecfccb; }
-    .desk-num {
-      position: absolute;
-      top: 2px;
-      left: 4px;
-      font-weight: 700;
-      transform-origin: center center;
-    }
-    .item-label {
-      display: block;
-      text-align: center;
-      word-break: break-word;
-      line-height: 1.15;
-      transform-origin: center center;
-    }
-    .team,
-    .zone {
-      display: block;
-      text-align: center;
-      color: #3f3f46;
-      line-height: 1.15;
-      padding: 0 3px 3px;
-      transform-origin: center center;
-    }
-  </style>
-</head>
-<body>
-${pagesHtml}
-</body>
-</html>`;
-}
-
-function waitForImages(doc: Document): Promise<void> {
-  const images = [...doc.images];
-  if (images.length === 0) return Promise.resolve();
-  return Promise.all(
-    images.map(
-      (image) =>
-        new Promise<void>((resolve) => {
-          if (image.complete) {
-            resolve();
-            return;
-          }
-          image.addEventListener("load", () => resolve(), { once: true });
-          image.addEventListener("error", () => resolve(), { once: true });
-        }),
-    ),
-  ).then(() => undefined);
+  return `${buildPrintDocumentOpen({ title: labels.documentTitle, bodyClass: "print-seats" })}
+${pagesHtml}${buildPrintDocumentClose()}`;
 }
 
 export async function printSeatLayout(
   args: SeatsPrintOptions,
   labels: SeatsPrintLabels,
 ): Promise<void> {
-  const logoUrl = new URL(SEATS_PRINT_LOGO_PATH, window.location.origin).href;
+  const logoUrl = resolveAppAssetUrl(SEATS_PRINT_LOGO_PATH);
   const html = buildSeatsPrintHtml(args, labels, logoUrl);
-
-  const iframe = document.createElement("iframe");
-  iframe.setAttribute("title", labels.documentTitle);
-  iframe.setAttribute("aria-hidden", "true");
-  Object.assign(iframe.style, {
-    position: "fixed",
-    right: "0",
-    bottom: "0",
-    width: "0",
-    height: "0",
-    border: "0",
-    opacity: "0",
-    pointerEvents: "none",
-  });
-  document.body.appendChild(iframe);
-
-  const frameWindow = iframe.contentWindow;
-  const frameDocument = iframe.contentDocument;
-  if (!frameWindow || !frameDocument) {
-    iframe.remove();
-    throw new Error("Could not open print frame");
-  }
-
-  frameDocument.open();
-  frameDocument.write(html);
-  frameDocument.close();
-
-  try {
-    await waitForImages(frameDocument);
-    const cleanup = () => {
-      iframe.remove();
-    };
-    frameWindow.addEventListener("afterprint", cleanup, { once: true });
-    window.setTimeout(cleanup, 60_000);
-    frameWindow.focus();
-    frameWindow.print();
-  } catch (error) {
-    iframe.remove();
-    throw error;
-  }
+  await printHtmlDocument({ documentTitle: labels.documentTitle, html });
 }
 
 export function seatsPrintLogoAlt(): string {

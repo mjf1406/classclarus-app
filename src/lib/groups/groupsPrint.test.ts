@@ -165,6 +165,9 @@ describe("buildGroupsPrintHtml", () => {
     );
 
     expect(html).toContain("icon-and-text-horizontal.webp");
+    expect(html).toContain('<link rel="stylesheet"');
+    expect(html).toContain('class="print-groups"');
+    expect(html).not.toContain("<style>");
     expect(html).toContain("Alice &lt;B&gt;");
     expect(html).not.toContain("Alice <B>");
   });
