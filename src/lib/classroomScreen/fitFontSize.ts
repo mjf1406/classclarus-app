@@ -40,6 +40,8 @@ function measureTextHeight(fontSize: number, lineHeightMultiplier: number): numb
   return fontSize * lineHeightMultiplier;
 }
 
+export type FitFontAxis = "both" | "width";
+
 export function computeFitFontSize(
   containerWidth: number,
   containerHeight: number,
@@ -50,8 +52,9 @@ export function computeFitFontSize(
   fontWeight: string,
   lineHeightMultiplier: number,
   maxFontSize = MAX_FONT_SIZE,
+  fitAxis: FitFontAxis = "both",
 ): number {
-  if (containerWidth <= 0 || containerHeight <= 0) return MIN_FONT_SIZE;
+  if (containerWidth <= 0 || (fitAxis === "both" && containerHeight <= 0)) return MIN_FONT_SIZE;
 
   const maxWidth = containerWidth * maxWidthRatio;
   const maxHeight = containerHeight * maxHeightRatio;
@@ -63,7 +66,9 @@ export function computeFitFontSize(
     const mid = Math.floor((lo + hi) / 2);
     const width = measureTextWidth(benchmark, mid, fontFamily, fontWeight);
     const height = measureTextHeight(mid, lineHeightMultiplier);
-    if (width <= maxWidth && height <= maxHeight) {
+    const widthOk = width <= maxWidth;
+    const heightOk = fitAxis === "width" || height <= maxHeight;
+    if (widthOk && heightOk) {
       best = mid;
       lo = mid + 1;
     } else {
@@ -72,4 +77,16 @@ export function computeFitFontSize(
   }
 
   return best;
+}
+
+export function remainingFitHeight(
+  containerHeight: number,
+  paddingY: number,
+  gap: number,
+  childCount: number,
+  reservedHeights: number[],
+): number {
+  const gapTotal = Math.max(0, childCount - 1) * gap;
+  const reserved = reservedHeights.reduce((sum, height) => sum + height, 0);
+  return Math.max(0, containerHeight - paddingY - reserved - gapTotal);
 }

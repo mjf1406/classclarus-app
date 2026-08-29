@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ListPlus, Pause, Play, RotateCcw, SkipForward, Square, TimerOff } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { AnimatedBackground } from "@/components/classroomScreen/AnimatedBackground";
+import { FitText } from "@/components/classroomScreen/FitText";
+import { useReservedFitHeight } from "@/hooks/classroomScreen/useFitFontSize";
 import {
   PlusMinusThirtyButtons,
   TimeAdjustControls,
@@ -20,7 +22,8 @@ import {
   useUpdateClassroomSession,
 } from "@/hooks/classroomScreen/useClassroomScreenMutations";
 import {
-  useClassroomScreenBundle,
+  type ClassroomAudioFile,
+  type ClassroomDisplaySession,
   type ClassroomTimer,
 } from "@/hooks/classroomScreen/useClassroomScreenQueries";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -57,6 +60,7 @@ import { cn } from "@/lib/utils";
 interface ClockProps {
   classId: Id<"classes">;
   isRunner?: boolean;
+  canControlSession?: boolean;
   compact?: boolean;
   showTimeAdjust?: boolean;
   fillWidth?: boolean;
@@ -73,6 +77,9 @@ interface ClockProps {
   overtimeAutoDismissSeconds?: number;
   bgTransition?: BgTransition;
   globalAudioCues?: AudioCues;
+  displaySession?: ClassroomDisplaySession;
+  timers?: ClassroomTimer[];
+  audioFiles?: ClassroomAudioFile[];
 }
 
 function formatTime(date: Date, timeFormat: string, locale: string): string {
@@ -91,6 +98,10 @@ function formatDate(date: Date, locale: string): string {
     month: "long",
     day: "numeric",
   });
+}
+
+function digitWidthBenchmark(text: string): string {
+  return text.replace(/\d/g, "0");
 }
 
 const DURATION_PRESETS = [
@@ -303,6 +314,7 @@ function ActiveTransportControls({
 export function Clock({
   classId,
   isRunner = false,
+  canControlSession = false,
   compact = false,
   showTimeAdjust = false,
   fillWidth = false,
@@ -319,14 +331,20 @@ export function Clock({
   overtimeAutoDismissSeconds = 0,
   bgTransition = DEFAULT_BG_TRANSITION,
   globalAudioCues,
+  displaySession,
+  timers,
+  audioFiles = [],
 }: ClockProps) {
   const { t, i18n } = useTranslation("classroomScreen");
   const locale = toIntlLocale(i18n.language);
+  const sessionRunner = isRunner && canControlSession;
   const [now, setNow] = useState(() => new Date());
   const [queuePopoverOpen, setQueuePopoverOpen] = useState(false);
   const [tick, setTick] = useState(0);
+  const fitAreaRef = useRef<HTMLDivElement>(null);
+  const reservedTopRef = useRef<HTMLDivElement>(null);
+  const reservedBottomRef = useRef<HTMLDivElement>(null);
 
-  const { data: bundle } = useClassroomScreenBundle(classId);
   const startSession = useStartClassroomSession();
   const stopSessionMutation = useStopClassroomSession();
   const pauseSession = usePauseClassroomSession();
@@ -335,11 +353,16 @@ export function Clock({
   const skipSegmentMutation = useSkipClassroomSessionSegment();
   const updateSession = useUpdateClassroomSession();
 
-  const displaySession = bundle?.displaySession;
-  const timers = bundle?.timers;
   const session = useMemo(
     () => parseSessionJson(displaySession?.sessionJson),
     [displaySession?.sessionJson],
+  );
+  const clockFitLayoutKey = `${fillWidth ? "fill" : "fixed"}-${session ? "active" : "idle"}-${dateLocation}-${canControlSession}-${compact}-${showTimeAdjust}`;
+  const clockBudgetHeight = useReservedFitHeight(
+    fitAreaRef,
+    reservedTopRef,
+    reservedBottomRef,
+    clockFitLayoutKey,
   );
   const endsAt = displaySession?.endsAt ?? null;
   const paused = displaySession?.paused ?? false;
@@ -361,7 +384,7 @@ export function Clock({
   const lastIntervalChimeRef = useRef(0);
   const lastSessionIndexRef = useRef<number | null>(null);
 
-  const urlMap = createAudioUrlMap(toAudioUrlList(bundle?.audioFiles ?? []));
+  const urlMap = createAudioUrlMap(toAudioUrlList(audioFiles));
   const { playById, unlock, startPlayDuring, stopPlayDuring, stopAll, pauseAll, resumeAll } =
     useAudioPlayer(urlMap);
   const playByIdRef = useRef(playById);
@@ -399,7 +422,7 @@ export function Clock({
 
   const playSegmentStart = useCallback(
     (activeSession: ActiveSession) => {
-      if (!isRunner) return;
+      if (!sessionRunner) return;
       const segment = activeSession.segments[activeSession.index]!;
       stopPlayDuringRef.current();
       playByIdRef.current(
@@ -408,7 +431,7 @@ export function Clock({
       );
       startPlayDuringRef.current(segment.audioCues.playDuring.audioId);
     },
-    [isRunner],
+    [sessionRunner],
   );
 
   const currentBgColor = getCurrentBgColor(session, clockBgColor);
@@ -418,15 +441,24 @@ export function Clock({
 
   const handleStartSession = useCallback(
     async (newSession: ActiveSession) => {
+      if (!canControlSession) return;
       unlock();
-      if (isRunner) {
+      if (sessionRunner) {
         resetSegmentAudioState(newSession.index);
         prevRemainingRef.current = resolveSegmentDuration(newSession.segments[newSession.index]!);
         playSegmentStart(newSession);
       }
       await startSession.mutateAsync({ classId, session: newSession });
     },
-    [classId, unlock, isRunner, resetSegmentAudioState, playSegmentStart, startSession],
+    [
+      canControlSession,
+      classId,
+      unlock,
+      sessionRunner,
+      resetSegmentAudioState,
+      playSegmentStart,
+      startSession,
+    ],
   );
 
   const handleQuickPreset = useCallback(
@@ -445,35 +477,38 @@ export function Clock({
 
   const handleQueueTimer = useCallback(
     async (timer: ClassroomTimer) => {
-      if (!session) return;
+      if (!canControlSession || !session) return;
       const updated = appendTimerToSession(session, timer, globalAudioCues);
       await updateSession.mutateAsync({ classId, session: updated });
       setQueuePopoverOpen(false);
     },
-    [session, globalAudioCues, updateSession, classId],
+    [canControlSession, session, globalAudioCues, updateSession, classId],
   );
 
   const handleClearUpcoming = useCallback(async () => {
+    if (!canControlSession) return;
     const current = sessionRef.current;
     if (!current || !hasUpcomingSegments(current)) return;
     const updated = truncateUpcomingSegments(current);
     await updateSession.mutateAsync({ classId, session: updated });
-  }, [updateSession, classId]);
+  }, [canControlSession, updateSession, classId]);
 
   const adjustTime = useCallback(
     (deltaSeconds: number) => {
+      if (!canControlSession) return;
       void adjustSession.mutateAsync({ classId, deltaSeconds });
     },
-    [classId, adjustSession],
+    [canControlSession, classId, adjustSession],
   );
 
   const stopSession = useCallback(
     async (playSound = false) => {
-      if (playSound && isRunner && sessionRef.current) {
+      if (!canControlSession) return;
+      if (playSound && sessionRunner && sessionRef.current) {
         stopAllRef.current();
         const segment = getCurrentSegment(sessionRef.current);
         playByIdRef.current(segment.audioCues.stop.audioId, segment.audioCues.stop.repeat, true);
-      } else if (isRunner) {
+      } else if (sessionRunner) {
         stopPlayDuringRef.current();
       }
       prevRemainingRef.current = null;
@@ -485,14 +520,15 @@ export function Clock({
       lastIntervalChimeRef.current = 0;
       await stopSessionMutation.mutateAsync({ classId });
     },
-    [classId, isRunner, stopSessionMutation],
+    [canControlSession, classId, sessionRunner, stopSessionMutation],
   );
 
   const skipSegment = useCallback(async () => {
+    if (!canControlSession) return;
     const current = sessionRef.current;
     if (!current) return;
 
-    if (isRunner) {
+    if (sessionRunner) {
       const segment = getCurrentSegment(current);
       stopPlayDuringRef.current();
       playByIdRef.current(segment.audioCues.skip.audioId, segment.audioCues.skip.repeat);
@@ -500,22 +536,30 @@ export function Clock({
 
     await skipSegmentMutation.mutateAsync({ classId });
     const nextSession = sessionRef.current;
-    if (nextSession && isRunner) {
+    if (nextSession && sessionRunner) {
       resetSegmentAudioState(nextSession.index);
       prevRemainingRef.current = resolveSegmentDuration(nextSession.segments[nextSession.index]!);
       playSegmentStart(nextSession);
-    } else if (!nextSession && isRunner) {
+    } else if (!nextSession && sessionRunner) {
       stopAllRef.current();
     }
-  }, [classId, isRunner, resetSegmentAudioState, playSegmentStart, skipSegmentMutation]);
+  }, [
+    canControlSession,
+    classId,
+    sessionRunner,
+    resetSegmentAudioState,
+    playSegmentStart,
+    skipSegmentMutation,
+  ]);
 
   const handlePauseToggle = useCallback(async () => {
+    if (!canControlSession) return;
     const current = sessionRef.current;
     if (!current) return;
 
     if (paused) {
       const remainingMs = pausedRemainingMs ?? (endsAt ? Math.max(0, endsAt - Date.now()) : 0);
-      if (isRunner) {
+      if (sessionRunner) {
         const cues = getCurrentSegment(current).audioCues;
         playByIdRef.current(cues.resume.audioId, cues.resume.repeat, true, true);
         resumeAllRef.current();
@@ -523,14 +567,23 @@ export function Clock({
       await resumeSession.mutateAsync({ classId, remainingMs });
     } else {
       const remainingMs = endsAt ? Math.max(0, endsAt - Date.now()) : 0;
-      if (isRunner) {
+      if (sessionRunner) {
         pauseAllRef.current();
         const cues = getCurrentSegment(current).audioCues;
         playByIdRef.current(cues.pause.audioId, cues.pause.repeat, true, true);
       }
       await pauseSession.mutateAsync({ classId, remainingMs });
     }
-  }, [classId, paused, pausedRemainingMs, endsAt, isRunner, resumeSession, pauseSession]);
+  }, [
+    canControlSession,
+    classId,
+    paused,
+    pausedRemainingMs,
+    endsAt,
+    sessionRunner,
+    resumeSession,
+    pauseSession,
+  ]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -541,17 +594,17 @@ export function Clock({
   }, []);
 
   useEffect(() => {
-    if (!isRunner || !session) return;
+    if (!sessionRunner || !session) return;
     if (lastSessionIndexRef.current !== session.index) {
       lastSessionIndexRef.current = session.index;
       resetSegmentAudioState(session.index);
       prevRemainingRef.current = remaining;
       playSegmentStart(session);
     }
-  }, [session, isRunner, resetSegmentAudioState, playSegmentStart, remaining]);
+  }, [session, sessionRunner, resetSegmentAudioState, playSegmentStart, remaining]);
 
   useEffect(() => {
-    if (!isRunner || !session || paused) return;
+    if (!sessionRunner || !session || paused) return;
 
     const segment = getCurrentSegment(session);
     const cues = segment.audioCues;
@@ -604,10 +657,10 @@ export function Clock({
     }
 
     prevRemainingRef.current = remaining;
-  }, [remaining, session, paused, timerEndBehavior, isRunner]);
+  }, [remaining, session, paused, timerEndBehavior, sessionRunner]);
 
   useEffect(() => {
-    if (!isRunner || !session || paused) return;
+    if (!canControlSession || !sessionRunner || !session || paused) return;
     if (remaining > 0) return;
     if (firedSegmentEndRef.current === session.index) return;
 
@@ -645,14 +698,15 @@ export function Clock({
     timerEndBehavior,
     stopSession,
     classId,
-    isRunner,
+    canControlSession,
+    sessionRunner,
     resetSegmentAudioState,
     playSegmentStart,
     skipSegmentMutation,
   ]);
 
   useEffect(() => {
-    if (!isRunner || !session || paused) return;
+    if (!canControlSession || !sessionRunner || !session || paused) return;
     if (timerEndBehavior !== "countUp") return;
     if (overtimeAutoDismissSeconds <= 0) return;
     if (!isLastSegment(session)) return;
@@ -671,13 +725,32 @@ export function Clock({
     timerEndBehavior,
     overtimeAutoDismissSeconds,
     stopSession,
-    isRunner,
+    canControlSession,
+    sessionRunner,
   ]);
 
+  const formattedClockTime = formatTime(now, timeFormat, locale);
+  const formattedCountdown = formatCountdown(remaining);
+  const formattedDateText = formatDate(now, locale);
+  const clockFitClassName = cn(
+    "font-mono tabular-nums w-full min-w-0",
+    fillWidth ? "min-h-0 h-auto" : "h-24",
+  );
+  const clockFitWrapperClassName = fillWidth
+    ? "flex w-full shrink-0 items-center justify-center"
+    : "w-full";
+  const clockMeasureRef = fillWidth ? fitAreaRef : undefined;
+  const clockAvailableHeight = fillWidth ? clockBudgetHeight : undefined;
+
   const dateElement = (
-    <p className="font-mono tabular-nums" style={{ fontSize: `${dateSize}px` }}>
-      {formatDate(now, locale)}
-    </p>
+    <FitText
+      benchmark={formattedDateText}
+      maxFontSize={dateSize}
+      fitAxis="width"
+      className="max-w-full px-2 font-mono tabular-nums"
+    >
+      <p className="whitespace-nowrap">{formattedDateText}</p>
+    </FitText>
   );
 
   const wallTimeElement = (
@@ -687,44 +760,56 @@ export function Clock({
   );
 
   const countdownElement = (
-    <time
-      className="font-mono tabular-nums leading-none tracking-tight select-none"
-      style={{
-        fontSize: `${clockSize}px`,
-        color: remaining < 0 ? overtimeTextColor : undefined,
-      }}
+    <FitText
+      benchmark={digitWidthBenchmark(formattedCountdown)}
+      maxFontSize={clockSize}
+      className={clockFitClassName}
+      style={{ color: remaining < 0 ? overtimeTextColor : undefined }}
+      measureRef={clockMeasureRef}
+      availableHeight={clockAvailableHeight}
     >
-      {formatCountdown(remaining)}
-    </time>
+      <time className="font-mono tabular-nums leading-none tracking-tight whitespace-nowrap select-none">
+        {formattedCountdown}
+      </time>
+    </FitText>
   );
 
   const idleWallClockElement = (
-    <time
-      className="font-mono tabular-nums leading-none tracking-tight select-none"
-      style={{ fontSize: `${clockSize}px` }}
-      dateTime={now.toISOString()}
+    <FitText
+      benchmark={digitWidthBenchmark(formattedClockTime)}
+      maxFontSize={clockSize}
+      className={clockFitClassName}
+      measureRef={clockMeasureRef}
+      availableHeight={clockAvailableHeight}
     >
-      {formatTime(now, timeFormat, locale)}
-    </time>
+      <time
+        className="font-mono tabular-nums leading-none tracking-tight whitespace-nowrap select-none"
+        dateTime={now.toISOString()}
+      >
+        {formattedClockTime}
+      </time>
+    </FitText>
   );
 
   const activeSegment = session ? getCurrentSegment(session) : null;
   const upcomingSegments = session ? session.segments.slice(session.index + 1) : [];
   const hasUpcoming = session ? hasUpcomingSegments(session) : false;
 
-  const activeVisualContent = session && activeSegment && (
+  const activeTopVisuals = session && activeSegment && (
     <>
       <div className="flex w-full flex-col items-center gap-1">
         {dateLocation === "above" && dateElement}
         {wallTimeElement}
       </div>
-      <div className="flex w-full flex-col items-center gap-1">
-        <p className="font-medium" style={{ fontSize: `${timerTitleSize}px` }}>
-          {activeSegment.label}
-        </p>
-        {countdownElement}
-        {dateLocation === "below" && dateElement}
-      </div>
+      <p className="font-medium" style={{ fontSize: `${timerTitleSize}px` }}>
+        {activeSegment.label}
+      </p>
+    </>
+  );
+
+  const activeBottomVisuals = session && activeSegment && (
+    <>
+      {dateLocation === "below" ? dateElement : null}
       <div className="flex flex-col items-center gap-1" style={{ fontSize: `${endTimeSize}px` }}>
         <p className="font-mono tabular-nums">
           {t("endsAt")} {endsAt !== null ? formatEndTimestamp(endsAt, timeFormat, locale) : ""}
@@ -733,16 +818,18 @@ export function Clock({
           <div className="flex flex-col items-center gap-0.5 opacity-70">
             <div className="flex items-center gap-2">
               <p className="text-sm font-medium">{t("upNext")}</p>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-auto px-1 py-0 text-xs opacity-80 hover:opacity-100"
-                onClick={() => void handleClearUpcoming()}
-              >
-                <TimerOff className="size-3" />
-                {t("cancel")}
-              </Button>
+              {canControlSession ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-auto px-1 py-0 text-xs opacity-80 hover:opacity-100"
+                  onClick={() => void handleClearUpcoming()}
+                >
+                  <TimerOff className="size-3" />
+                  {t("cancel")}
+                </Button>
+              ) : null}
             </div>
             {upcomingSegments.map((seg, index) => (
               <p key={`${seg.label}-${index}`} className="font-mono tabular-nums text-sm">
@@ -755,7 +842,7 @@ export function Clock({
     </>
   );
 
-  const activeTransportContent = session && activeSegment && !compact && (
+  const activeTransportContent = session && activeSegment && canControlSession && !compact && (
     <>
       <ActiveTransportControls
         session={session}
@@ -809,52 +896,81 @@ export function Clock({
     </>
   );
 
-  const activeTimeAdjustContent = session && activeSegment && showTimeAdjust && compact && (
-    <div className="flex w-full min-w-0 flex-col items-center gap-3 px-4">
-      <TimeAdjustControls remaining={remaining} onAdjust={adjustTime} showProminentThirty={false} />
-      <DisplayTransportControls
-        session={session}
-        paused={paused}
-        remaining={remaining}
-        hasUpcoming={hasUpcoming}
-        onAdjust={adjustTime}
-        onPauseToggle={() => void handlePauseToggle()}
-        onSkip={() => void skipSegment()}
-        onStop={() => void stopSession(true)}
-        onClearUpcoming={() => void handleClearUpcoming()}
-        labels={transportLabels}
-      />
-    </div>
-  );
+  const activeTimeAdjustContent = session &&
+    activeSegment &&
+    canControlSession &&
+    showTimeAdjust &&
+    compact && (
+      <div className="flex w-full min-w-0 flex-col items-center gap-3 px-4">
+        <TimeAdjustControls
+          remaining={remaining}
+          onAdjust={adjustTime}
+          showProminentThirty={false}
+        />
+        <DisplayTransportControls
+          session={session}
+          paused={paused}
+          remaining={remaining}
+          hasUpcoming={hasUpcoming}
+          onAdjust={adjustTime}
+          onPauseToggle={() => void handlePauseToggle()}
+          onSkip={() => void skipSegment()}
+          onStop={() => void stopSession(true)}
+          onClearUpcoming={() => void handleClearUpcoming()}
+          labels={transportLabels}
+        />
+      </div>
+    );
+
+  const reservedWrapClassName = "flex w-full shrink-0 flex-col items-center gap-1";
+
+  const renderFillPane = (
+    top: ReactNode,
+    clock: ReactNode,
+    bottom: ReactNode,
+    controls: ReactNode,
+  ) =>
+    fillWidth ? (
+      <div
+        ref={fitAreaRef}
+        className="flex h-full min-h-0 w-full flex-col items-center justify-center gap-1 overflow-hidden px-2 py-2"
+      >
+        {top ? (
+          <div ref={reservedTopRef} className={reservedWrapClassName}>
+            {top}
+          </div>
+        ) : null}
+        <div className={clockFitWrapperClassName}>{clock}</div>
+        {bottom || controls ? (
+          <div ref={reservedBottomRef} className={reservedWrapClassName}>
+            {bottom}
+            {controls}
+          </div>
+        ) : null}
+      </div>
+    ) : (
+      <>
+        {top}
+        <div className={clockFitWrapperClassName}>{clock}</div>
+        {bottom}
+        {controls}
+      </>
+    );
+
+  const activeControls =
+    activeTransportContent || activeTimeAdjustContent ? (
+      <>
+        {activeTransportContent}
+        {activeTimeAdjustContent}
+      </>
+    ) : null;
 
   const activeMainContent =
     session &&
     activeSegment &&
-    (fillWidth ? (
-      <div className="flex h-full w-full items-center justify-center overflow-y-auto px-2 py-2">
-        <div className="flex w-full flex-col items-center gap-3">
-          {activeVisualContent}
-          {activeTransportContent}
-          {activeTimeAdjustContent}
-        </div>
-      </div>
-    ) : (
-      <>
-        {activeVisualContent}
-        {activeTransportContent}
-        {activeTimeAdjustContent}
-      </>
-    ));
+    renderFillPane(activeTopVisuals, countdownElement, activeBottomVisuals, activeControls);
 
-  const idleClockCluster = (
-    <div className="flex w-full flex-col items-center gap-1">
-      {dateLocation === "above" && dateElement}
-      {idleWallClockElement}
-      {dateLocation === "below" && dateElement}
-    </div>
-  );
-
-  const idleControls = (
+  const idleControls = canControlSession ? (
     <>
       <DurationPresetButtons onSelect={handleQuickPreset} largeControls={fillWidth} />
       <QuickPickList
@@ -866,31 +982,23 @@ export function Clock({
         emptyLabel={t("noSavedTimers")}
       />
     </>
-  );
+  ) : null;
 
   const idleMainContent =
     !session &&
-    (fillWidth ? (
-      <div className="flex h-full w-full items-center justify-center overflow-y-auto px-2 py-2">
-        <div className="flex w-full flex-col items-center gap-3">
-          {idleClockCluster}
-          {idleControls}
-        </div>
-      </div>
-    ) : (
-      <>
-        {idleClockCluster}
-        {idleControls}
-      </>
-    ));
+    renderFillPane(
+      dateLocation === "above" ? dateElement : null,
+      idleWallClockElement,
+      dateLocation === "below" ? dateElement : null,
+      idleControls,
+    );
 
   const activeVideo = session && activeSegment ? activeSegment.audioCues.video : null;
 
   return (
     <div
       className={cn(
-        "relative flex h-full w-full flex-col items-center overflow-hidden p-2",
-        !fillWidth && "justify-center",
+        "relative flex h-full min-h-0 min-w-0 w-full flex-col items-center justify-center overflow-hidden p-2",
       )}
     >
       <AnimatedBackground color={currentBgColor} transition={activeBgTransition} />
@@ -903,8 +1011,10 @@ export function Clock({
       )}
       <div
         className={cn(
-          "relative z-10",
-          fillWidth ? "h-full w-full" : "flex w-full max-w-2xl flex-col items-center gap-3",
+          "relative z-10 min-h-0 min-w-0",
+          fillWidth
+            ? "flex h-full w-full min-h-0 flex-col"
+            : "flex w-full max-w-2xl flex-col items-center gap-3",
         )}
         style={{ color: textColor }}
       >

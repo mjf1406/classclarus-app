@@ -30,6 +30,7 @@ export const ACTIVITY_RESOURCE_TYPES = [
   "timetableTerm",
   "timetableSlot",
   "timetableSubject",
+  "timetableLesson",
 ] as const;
 export type ActivityResourceType = (typeof ACTIVITY_RESOURCE_TYPES)[number];
 

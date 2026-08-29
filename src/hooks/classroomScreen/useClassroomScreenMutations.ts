@@ -1,3 +1,4 @@
+import type { Query, QueryClient } from "@tanstack/react-query";
 import type { FunctionArgs } from "convex/server";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { useTranslation } from "react-i18next";
@@ -8,10 +9,12 @@ import type { ActiveSession } from "../../../convex/lib/classroomScreen/activeSe
 import type { AudioCues } from "../../../convex/lib/classroomScreen/audioCues";
 import {
   classroomAudioQueryKey,
-  classroomScreenBundleQueryKey,
   classroomSettingsQueryKey,
   classroomTimersQueryKey,
-  type ClassroomScreenBundle,
+  isClassroomDisplayBundleQueryKey,
+  type ClassroomAudioFile,
+  type ClassroomDisplayBundle,
+  type ClassroomTimer,
 } from "@/hooks/classroomScreen/useClassroomScreenQueries";
 import { useOptimisticMutation } from "@/hooks/useOptimisticMutation";
 import { toast } from "@/components/ui/toast-manager";
@@ -21,29 +24,53 @@ function showMutationError(message: string) {
   toast.add({ type: "error", title: message });
 }
 
-function bundleKey(classId: Id<"classes">) {
-  return [classroomScreenBundleQueryKey(classId)];
+function isDisplayBundleQuery(query: Query, classId: Id<"classes">): boolean {
+  return isClassroomDisplayBundleQueryKey(query.queryKey, classId);
+}
+
+function patchDisplayBundle(
+  queryClient: QueryClient,
+  classId: Id<"classes">,
+  patch: (bundle: ClassroomDisplayBundle) => ClassroomDisplayBundle,
+) {
+  queryClient.setQueriesData<ClassroomDisplayBundle>(
+    { predicate: (query) => isDisplayBundleQuery(query, classId) },
+    (old) => (old ? patch(old) : old),
+  );
+}
+
+function displayBundleKeys(classId: Id<"classes">) {
+  return (_variables: { classId: Id<"classes"> }, queryClient: QueryClient) =>
+    queryClient
+      .getQueryCache()
+      .findAll({ predicate: (query) => isDisplayBundleQuery(query, classId) })
+      .map((query) => query.queryKey);
 }
 
 function timerKeys(classId: Id<"classes">) {
-  return [classroomTimersQueryKey(classId), classroomScreenBundleQueryKey(classId)];
+  return [classroomTimersQueryKey(classId)];
 }
 
 function audioKeys(classId: Id<"classes">) {
-  return [classroomAudioQueryKey(classId), classroomScreenBundleQueryKey(classId)];
+  return [classroomAudioQueryKey(classId)];
 }
 
-function settingsKeys(classId: Id<"classes">) {
-  return [classroomSettingsQueryKey(classId), classroomScreenBundleQueryKey(classId)];
+function settingsKeys(_variables: { classId: Id<"classes"> }, queryClient: QueryClient) {
+  const classId = _variables.classId;
+  return [
+    classroomSettingsQueryKey(classId),
+    ...displayBundleKeys(classId)(_variables, queryClient),
+  ];
 }
 
-function patchBundle(
-  queryClient: import("@tanstack/react-query").QueryClient,
+function patchTimers(
+  queryClient: QueryClient,
   classId: Id<"classes">,
-  patch: (bundle: ClassroomScreenBundle) => ClassroomScreenBundle,
+  patch: (timers: ClassroomTimer[]) => ClassroomTimer[],
 ) {
-  const key = classroomScreenBundleQueryKey(classId);
-  queryClient.setQueryData<ClassroomScreenBundle>(key, (old) => (old ? patch(old) : old));
+  queryClient.setQueryData<ClassroomTimer[]>(classroomTimersQueryKey(classId), (old) =>
+    old ? patch(old) : old,
+  );
 }
 
 export function useUpsertClassroomSettings() {
@@ -52,11 +79,11 @@ export function useUpsertClassroomSettings() {
 
   return useOptimisticMutation({
     mutationFn,
-    queryKeys: (args) => settingsKeys(args.classId),
+    queryKeys: (args, queryClient) => settingsKeys(args, queryClient),
     applyOptimisticUpdate: (queryClient, args) => {
       const { classId, ...updates } = args;
       const now = Date.now();
-      patchBundle(queryClient, classId, (bundle) => ({
+      patchDisplayBundle(queryClient, classId, (bundle) => ({
         ...bundle,
         settings: {
           ...bundle.settings,
@@ -66,7 +93,7 @@ export function useUpsertClassroomSettings() {
       }));
       queryClient.setQueryData(
         classroomSettingsQueryKey(classId),
-        (old: ClassroomScreenBundle["settings"] | undefined) =>
+        (old: ClassroomDisplayBundle["settings"] | undefined) =>
           old ? { ...old, ...updates, updatedAt: now } : old,
       );
     },
@@ -85,28 +112,25 @@ export function useCreateClassroomTimer() {
     queryKeys: (args) => timerKeys(args.classId),
     applyOptimisticUpdate: (queryClient, args) => {
       const now = Date.now();
-      patchBundle(queryClient, args.classId, (bundle) => ({
-        ...bundle,
-        timers: [
-          ...bundle.timers,
-          {
-            _id: `optimistic:${now}` as Id<"classroomTimers">,
-            _creationTime: now,
-            classId: args.classId,
-            name: args.name,
-            durationSeconds: args.durationSeconds,
-            bgColor: args.bgColor,
-            endTime: args.endTime,
-            bgTransition: args.bgTransition,
-            audioCues: args.audioCues,
-            nextTimerId: args.nextTimerId,
-            sortOrder: bundle.timers.length,
-            createdBy: "" as Id<"users">,
-            createdAt: now,
-            updatedAt: now,
-          },
-        ],
-      }));
+      patchTimers(queryClient, args.classId, (timers) => [
+        ...timers,
+        {
+          _id: `optimistic:${now}` as Id<"classroomTimers">,
+          _creationTime: now,
+          classId: args.classId,
+          name: args.name,
+          durationSeconds: args.durationSeconds,
+          bgColor: args.bgColor,
+          endTime: args.endTime,
+          bgTransition: args.bgTransition,
+          audioCues: args.audioCues,
+          nextTimerId: args.nextTimerId,
+          sortOrder: timers.length,
+          createdBy: "" as Id<"users">,
+          createdAt: now,
+          updatedAt: now,
+        },
+      ]);
     },
     onError: (error) => {
       showMutationError(messageFromError(error, t("timerSaveError")));
@@ -122,9 +146,8 @@ export function useUpdateClassroomTimer() {
     mutationFn,
     queryKeys: (args) => timerKeys(args.classId),
     applyOptimisticUpdate: (queryClient, args) => {
-      patchBundle(queryClient, args.classId, (bundle) => ({
-        ...bundle,
-        timers: bundle.timers.map((timer) =>
+      patchTimers(queryClient, args.classId, (timers) =>
+        timers.map((timer) =>
           timer._id === args.timerId
             ? {
                 ...timer,
@@ -144,7 +167,7 @@ export function useUpdateClassroomTimer() {
               }
             : timer,
         ),
-      }));
+      );
     },
     onError: (error) => {
       showMutationError(messageFromError(error, t("timerSaveError")));
@@ -160,10 +183,9 @@ export function useDeleteClassroomTimer() {
     mutationFn,
     queryKeys: (args) => timerKeys(args.classId),
     applyOptimisticUpdate: (queryClient, args) => {
-      patchBundle(queryClient, args.classId, (bundle) => ({
-        ...bundle,
-        timers: bundle.timers.filter((timer) => timer._id !== args.timerId),
-      }));
+      patchTimers(queryClient, args.classId, (timers) =>
+        timers.filter((timer) => timer._id !== args.timerId),
+      );
     },
     onError: (error) => {
       showMutationError(messageFromError(error, t("timerDeleteError")));
@@ -192,10 +214,9 @@ export function useDeleteClassroomAudio() {
     mutationFn,
     queryKeys: (args) => audioKeys(args.classId),
     applyOptimisticUpdate: (queryClient, args) => {
-      patchBundle(queryClient, args.classId, (bundle) => ({
-        ...bundle,
-        audioFiles: bundle.audioFiles.filter((file) => file._id !== args.audioFileId),
-      }));
+      queryClient.setQueryData<ClassroomAudioFile[]>(classroomAudioQueryKey(args.classId), (old) =>
+        old?.filter((file) => file._id !== args.audioFileId),
+      );
     },
     onError: (error) => {
       showMutationError(messageFromError(error, t("audioDeleteError")));
@@ -214,17 +235,17 @@ type DisplaySessionMutation =
 function useDisplaySessionMutation<TMutation extends DisplaySessionMutation>(
   mutationRef: TMutation,
   applyPatch: (
-    bundle: ClassroomScreenBundle,
+    bundle: ClassroomDisplayBundle,
     args: FunctionArgs<TMutation>,
-  ) => ClassroomScreenBundle["displaySession"],
+  ) => ClassroomDisplayBundle["displaySession"],
 ) {
   const mutationFn = useConvexMutation(mutationRef);
 
   return useOptimisticMutation({
     mutationFn: mutationFn as unknown as (args: FunctionArgs<TMutation>) => Promise<null>,
-    queryKeys: (args: FunctionArgs<TMutation>) => bundleKey(args.classId),
+    queryKeys: (args, queryClient) => displayBundleKeys(args.classId)(args, queryClient),
     applyOptimisticUpdate: (queryClient, args: FunctionArgs<TMutation>) => {
-      patchBundle(queryClient, args.classId, (bundle) => ({
+      patchDisplayBundle(queryClient, args.classId, (bundle) => ({
         ...bundle,
         displaySession: applyPatch(bundle, args),
       }));
@@ -298,9 +319,9 @@ export function useSkipClassroomSessionSegment() {
   const mutationFn = useConvexMutation(api.classroomScreen.skipSessionSegment);
   return useOptimisticMutation({
     mutationFn,
-    queryKeys: (args) => bundleKey(args.classId),
+    queryKeys: (args, queryClient) => displayBundleKeys(args.classId)(args, queryClient),
     applyOptimisticUpdate: (queryClient, args) => {
-      patchBundle(queryClient, args.classId, (bundle) => {
+      patchDisplayBundle(queryClient, args.classId, (bundle) => {
         const parsed = bundle.displaySession.sessionJson as ActiveSession | undefined;
         if (!parsed) return bundle;
         const nextIndex = parsed.index + 1;
@@ -339,9 +360,9 @@ export function useUpdateClassroomSession() {
   const mutationFn = useConvexMutation(api.classroomScreen.updateSession);
   return useOptimisticMutation({
     mutationFn,
-    queryKeys: (args) => bundleKey(args.classId),
+    queryKeys: (args, queryClient) => displayBundleKeys(args.classId)(args, queryClient),
     applyOptimisticUpdate: (queryClient, args) => {
-      patchBundle(queryClient, args.classId, (bundle) => ({
+      patchDisplayBundle(queryClient, args.classId, (bundle) => ({
         ...bundle,
         displaySession: {
           ...bundle.displaySession,
@@ -357,9 +378,9 @@ export function usePushLessonToDisplay() {
   const mutationFn = useConvexMutation(api.classroomScreen.pushLessonToDisplay);
   return useOptimisticMutation({
     mutationFn,
-    queryKeys: (args) => bundleKey(args.classId),
+    queryKeys: (args, queryClient) => displayBundleKeys(args.classId)(args, queryClient),
     applyOptimisticUpdate: (queryClient, args) => {
-      patchBundle(queryClient, args.classId, (bundle) => ({
+      patchDisplayBundle(queryClient, args.classId, (bundle) => ({
         ...bundle,
         displaySession: {
           ...bundle.displaySession,
@@ -376,9 +397,9 @@ export function useClearPushedLesson() {
   const mutationFn = useConvexMutation(api.classroomScreen.clearPushedLesson);
   return useOptimisticMutation({
     mutationFn,
-    queryKeys: (args) => bundleKey(args.classId),
+    queryKeys: (args, queryClient) => displayBundleKeys(args.classId)(args, queryClient),
     applyOptimisticUpdate: (queryClient, args) => {
-      patchBundle(queryClient, args.classId, (bundle) => ({
+      patchDisplayBundle(queryClient, args.classId, (bundle) => ({
         ...bundle,
         displaySession: {
           ...bundle.displaySession,
@@ -396,15 +417,15 @@ export function useClearQuickText() {
   const mutationFn = useConvexMutation(api.classroomScreen.clearQuickText);
   return useOptimisticMutation({
     mutationFn,
-    queryKeys: (args) => settingsKeys(args.classId),
+    queryKeys: (args, queryClient) => settingsKeys(args, queryClient),
     applyOptimisticUpdate: (queryClient, args) => {
-      patchBundle(queryClient, args.classId, (bundle) => ({
+      patchDisplayBundle(queryClient, args.classId, (bundle) => ({
         ...bundle,
         settings: { ...bundle.settings, quickText: undefined, updatedAt: Date.now() },
       }));
       queryClient.setQueryData(
         classroomSettingsQueryKey(args.classId),
-        (old: ClassroomScreenBundle["settings"] | undefined) =>
+        (old: ClassroomDisplayBundle["settings"] | undefined) =>
           old ? { ...old, quickText: undefined, updatedAt: Date.now() } : old,
       );
     },

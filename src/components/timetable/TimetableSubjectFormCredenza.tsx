@@ -5,8 +5,8 @@ import { useTranslation } from "react-i18next";
 
 import { FontAwesomeIconPickerLazy } from "@/components/icons/FontAwesomeIconPickerLazy";
 import { iconDefinitionToId, resolveIconId } from "@/components/icons/fontawesome-icon-catalog";
-import { AssignmentInstructionsEditor } from "@/components/assignments/AssignmentInstructionsEditor";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Credenza,
   CredenzaBody,
@@ -19,12 +19,14 @@ import {
 } from "@/components/ui/credenza";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { TimetableSectionListEditor } from "@/components/timetable/TimetableSectionListEditor";
 import {
   useCreateTimetableSubject,
   useUpdateTimetableSubject,
 } from "@/hooks/timetable/useTimetableMutations";
+import { useTimetableTags } from "@/hooks/timetable/useTimetableQueries";
+import { CALENDAR_AUDIENCE_ROLES } from "../../../convex/lib/calendar/audience";
 import type { TimetableSubject } from "@/lib/timetable/timetable";
-import { EMPTY_NOTES_JSON } from "@/lib/timetable/timetable";
 import {
   createClientTimetableSubjectFormSchema,
   type TimetableSubjectFormValues,
@@ -52,13 +54,24 @@ function fieldErrorMessage(errors: unknown): string | undefined {
   return undefined;
 }
 
+const ROLE_LABEL_KEYS = {
+  owner: "roleOwner",
+  teacher: "roleTeacher",
+  assistant_teacher: "roleAssistantTeacher",
+  student: "roleStudent",
+  guardian: "roleGuardian",
+} as const;
+
 function defaultCreateValues(): TimetableSubjectFormValues {
   return {
     name: "",
     bgColor: "#6366f1",
     textColor: "#ffffff",
     iconName: "",
-    defaultNotesJson: EMPTY_NOTES_JSON,
+    defaultMaterials: [],
+    defaultAnnouncements: [],
+    defaultAgenda: [],
+    calendarAudienceRoles: ["student"],
   };
 }
 
@@ -68,7 +81,10 @@ function valuesFromSubject(subject: TimetableSubject): TimetableSubjectFormValue
     bgColor: subject.bgColor,
     textColor: subject.textColor,
     iconName: subject.iconName ?? "",
-    defaultNotesJson: subject.defaultNotesJson ?? EMPTY_NOTES_JSON,
+    defaultMaterials: subject.defaultMaterials,
+    defaultAnnouncements: subject.defaultAnnouncements,
+    defaultAgenda: subject.defaultAgenda,
+    calendarAudienceRoles: subject.calendarAudienceRoles,
   };
 }
 
@@ -83,8 +99,10 @@ export function TimetableSubjectFormCredenza({
 }: TimetableSubjectFormCredenzaProps) {
   const { t } = useTranslation("timetable");
   const { t: tCommon } = useTranslation("common");
+  const { t: tClasses } = useTranslation("classes");
   const createSubject = useCreateTimetableSubject();
   const updateSubject = useUpdateTimetableSubject();
+  const { data: tags } = useTimetableTags(classId);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [faIcon, setFaIcon] = useState<IconDefinition | null>(null);
   const skipNextResetRef = useRef(false);
@@ -134,7 +152,10 @@ export function TimetableSubjectFormCredenza({
             bgColor: parsed.data.bgColor,
             textColor: parsed.data.textColor,
             iconName,
-            defaultNotesJson: parsed.data.defaultNotesJson,
+            defaultMaterials: parsed.data.defaultMaterials,
+            defaultAnnouncements: parsed.data.defaultAnnouncements,
+            defaultAgenda: parsed.data.defaultAgenda,
+            calendarAudienceRoles: parsed.data.calendarAudienceRoles,
           });
         } else {
           await createSubject.mutateAsync({
@@ -146,7 +167,10 @@ export function TimetableSubjectFormCredenza({
             bgColor: parsed.data.bgColor,
             textColor: parsed.data.textColor,
             iconName,
-            defaultNotesJson: parsed.data.defaultNotesJson,
+            defaultMaterials: parsed.data.defaultMaterials,
+            defaultAnnouncements: parsed.data.defaultAnnouncements,
+            defaultAgenda: parsed.data.defaultAgenda,
+            calendarAudienceRoles: parsed.data.calendarAudienceRoles,
           });
         }
       } catch (error) {
@@ -176,10 +200,15 @@ export function TimetableSubjectFormCredenza({
   const pending = createSubject.isPending || updateSubject.isPending;
 
   const submitOnEnter = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      void form.handleSubmit();
-    }
+    if (event.key !== "Enter" || event.ctrlKey || event.metaKey) return;
+    event.preventDefault();
+    void form.handleSubmit();
+  };
+
+  const submitOnModEnter = (event: KeyboardEvent<HTMLFormElement>) => {
+    if (event.key !== "Enter" || (!event.ctrlKey && !event.metaKey) || pending) return;
+    event.preventDefault();
+    event.currentTarget.requestSubmit();
   };
 
   return (
@@ -196,8 +225,9 @@ export function TimetableSubjectFormCredenza({
             event.preventDefault();
             void form.handleSubmit();
           }}
+          onKeyDown={submitOnModEnter}
         >
-          <CredenzaBody className="space-y-4">
+          <CredenzaBody className="flex flex-col gap-4">
             {submitError ? <p className="text-sm text-destructive">{submitError}</p> : null}
 
             <form.Field name="name">
@@ -302,17 +332,79 @@ export function TimetableSubjectFormCredenza({
               }}
             </form.Field>
 
-            <form.Field name="defaultNotesJson">
+            <form.Field name="calendarAudienceRoles">
+              {(field) => {
+                const error = fieldErrorMessage(field.state.meta.errors);
+                return (
+                  <Field data-invalid={error ? true : undefined}>
+                    <FieldLabel>{t("calendarAudience")}</FieldLabel>
+                    <FieldDescription>{t("calendarAudienceDescription")}</FieldDescription>
+                    <div className="flex flex-col gap-2">
+                      {CALENDAR_AUDIENCE_ROLES.map((role) => {
+                        const checked = field.state.value.includes(role);
+                        return (
+                          <label key={role} className="flex items-center gap-2 text-sm">
+                            <Checkbox
+                              checked={checked}
+                              onCheckedChange={(next) => {
+                                field.handleChange(
+                                  next === true
+                                    ? [...field.state.value, role]
+                                    : field.state.value.filter((item) => item !== role),
+                                );
+                              }}
+                            />
+                            {tClasses(ROLE_LABEL_KEYS[role])}
+                          </label>
+                        );
+                      })}
+                    </div>
+                    {error ? <FieldError>{error}</FieldError> : null}
+                  </Field>
+                );
+              }}
+            </form.Field>
+
+            <form.Field name="defaultMaterials">
               {(field) => (
                 <Field>
-                  <FieldLabel>{t("defaultNotes")}</FieldLabel>
-                  <FieldDescription>{t("defaultNotesDescription")}</FieldDescription>
-                  <AssignmentInstructionsEditor
-                    value={field.state.value ?? EMPTY_NOTES_JSON}
+                  <FieldLabel>{t("materialsSection")}</FieldLabel>
+                  <FieldDescription>{t("defaultMaterialsDescription")}</FieldDescription>
+                  <TimetableSectionListEditor
+                    items={field.state.value}
                     onChange={(next) => field.handleChange(next)}
-                    onSubmit={() => void form.handleSubmit()}
-                    placeholder={t("defaultNotesPlaceholder")}
-                    className="min-h-40"
+                    tags={tags ?? []}
+                    placeholder={t("materialsPlaceholder")}
+                  />
+                </Field>
+              )}
+            </form.Field>
+
+            <form.Field name="defaultAnnouncements">
+              {(field) => (
+                <Field>
+                  <FieldLabel>{t("announcementsSection")}</FieldLabel>
+                  <FieldDescription>{t("defaultAnnouncementsDescription")}</FieldDescription>
+                  <TimetableSectionListEditor
+                    items={field.state.value}
+                    onChange={(next) => field.handleChange(next)}
+                    tags={tags ?? []}
+                    placeholder={t("announcementsPlaceholder")}
+                  />
+                </Field>
+              )}
+            </form.Field>
+
+            <form.Field name="defaultAgenda">
+              {(field) => (
+                <Field>
+                  <FieldLabel>{t("agendaSection")}</FieldLabel>
+                  <FieldDescription>{t("defaultAgendaDescription")}</FieldDescription>
+                  <TimetableSectionListEditor
+                    items={field.state.value}
+                    onChange={(next) => field.handleChange(next)}
+                    tags={tags ?? []}
+                    placeholder={t("agendaPlaceholder")}
                   />
                 </Field>
               )}

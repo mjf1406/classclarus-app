@@ -97,3 +97,13 @@ export function useTimetableWeekBundle(
     { gcTime: GC_TIME.realtime },
   );
 }
+
+export function timetableTagsQueryKey(classId: Id<"classes">) {
+  return convexQuery(api.timetable.listTags, { classId }).queryKey;
+}
+
+export function useTimetableTags(classId: Id<"classes"> | undefined) {
+  return useAuthedQuery(api.timetable.listTags, classId ? { classId } : "skip", {
+    gcTime: GC_TIME.realtime,
+  });
+}

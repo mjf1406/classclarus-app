@@ -51,6 +51,7 @@ export function useCreateAssignment() {
           createdAt: now,
           updatedAt: now,
           handedInStudentCount: 0,
+          handedInStudentIds: [],
           studentCount,
           linkCount: 0,
           hasInstructions: Boolean(args.instructionsJson),

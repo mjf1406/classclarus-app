@@ -15,7 +15,7 @@ describe("planImportedSubjects", () => {
     expect(planned).toEqual([{ name: "PE", bgColor: "#222222", textColor: "#ffffff" }]);
   });
 
-  test("copies default notes and icons for new subjects", () => {
+  test("copies default sections and icons for new subjects", () => {
     const planned = planImportedSubjects(
       [
         {
@@ -23,7 +23,8 @@ describe("planImportedSubjects", () => {
           bgColor: "#abcdef",
           textColor: "#000000",
           iconName: "palette",
-          defaultNotesJson: '{"type":"doc"}',
+          defaultMaterials: [{ key: "m1", text: "Sketchbook", tags: [] }],
+          calendarAudienceRoles: ["student"],
         },
       ],
       [],
@@ -31,7 +32,8 @@ describe("planImportedSubjects", () => {
     expect(planned[0]).toMatchObject({
       name: "Art",
       iconName: "palette",
-      defaultNotesJson: '{"type":"doc"}',
+      defaultMaterials: [{ key: "m1", text: "Sketchbook", tags: [] }],
+      calendarAudienceRoles: ["student"],
     });
   });
 });

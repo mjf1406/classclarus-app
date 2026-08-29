@@ -1,0 +1,273 @@
+import { describe, expect, it } from "vite-plus/test";
+
+import { api, internal } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
+import { authz } from "./authz";
+import { classScope } from "./lib/authzModel";
+import { buildQuickPresetSession } from "./lib/classroomScreen/activeSession";
+import { createConvexTest } from "./test.setup";
+
+type Fixture = Awaited<ReturnType<typeof seedFixture>>;
+
+async function seedFixture(test: ReturnType<typeof createConvexTest>) {
+  await test.action(internal.authzBackfill.syncCatalogRoles, {});
+  return await test.run(async (ctx) => {
+    const ownerId = await ctx.db.insert("users", {
+      name: "Teacher",
+      email: "teacher@example.com",
+    });
+    const classId = await ctx.db.insert("classes", {
+      ownerId,
+      name: "Classroom Screen Test",
+      year: 2026,
+      studentLanguage: "en",
+      updatedAt: 1,
+    });
+
+    const studentId = await ctx.db.insert("users", {
+      name: "Student",
+      email: "student@example.com",
+    });
+    await ctx.db.insert("studentRosters", {
+      classId,
+      userId: studentId,
+      rosterNumber: 1,
+      firstName: "Student",
+    });
+
+    const guardianId = await ctx.db.insert("users", {
+      name: "Guardian",
+      email: "guardian@example.com",
+    });
+
+    const scope = classScope(classId);
+    await authz.assignRole(ctx, ownerId, "owner", scope);
+    await authz.assignRole(ctx, studentId, "student", scope);
+    await authz.assignRole(ctx, guardianId, "guardian", scope);
+    await ctx.db.insert("guardianStudentLinks", {
+      classId,
+      guardianUserId: guardianId,
+      studentUserId: studentId,
+      createdAt: 1,
+      createdBy: ownerId,
+    });
+
+    return { classId, ownerId, studentId, guardianId };
+  });
+}
+
+function asOwner(test: ReturnType<typeof createConvexTest>, fixture: Fixture) {
+  return test.withIdentity({
+    subject: fixture.ownerId,
+    email: "teacher@example.com",
+    name: "Teacher",
+  });
+}
+
+function asStudent(test: ReturnType<typeof createConvexTest>, fixture: Fixture) {
+  return test.withIdentity({
+    subject: fixture.studentId,
+    email: "student@example.com",
+    name: "Student",
+  });
+}
+
+function asGuardian(test: ReturnType<typeof createConvexTest>, fixture: Fixture) {
+  return test.withIdentity({
+    subject: fixture.guardianId,
+    email: "guardian@example.com",
+    name: "Guardian",
+  });
+}
+
+function sampleSession() {
+  return buildQuickPresetSession(60, "#15803d");
+}
+
+describe("classroom screen authorization", () => {
+  it("allows read-only roles to query the live display bundle", async () => {
+    const test = createConvexTest();
+    const fixture = await seedFixture(test);
+    const student = asStudent(test, fixture);
+    const guardian = asGuardian(test, fixture);
+    const nowMinuteBucket = Math.floor(Date.now() / 60_000);
+
+    await expect(
+      student.query(api.classroomScreen.getDisplayBundle, {
+        classId: fixture.classId,
+        nowMinuteBucket,
+      }),
+    ).resolves.toMatchObject({
+      settings: expect.objectContaining({ classId: fixture.classId }),
+    });
+    await expect(
+      guardian.query(api.classroomScreen.getDisplayBundle, {
+        classId: fixture.classId,
+        nowMinuteBucket,
+      }),
+    ).resolves.toBeDefined();
+  });
+
+  it("rejects read-only roles for shared display session mutations", async () => {
+    const test = createConvexTest();
+    const fixture = await seedFixture(test);
+    const student = asStudent(test, fixture);
+    const guardian = asGuardian(test, fixture);
+    const session = sampleSession();
+
+    for (const client of [student, guardian]) {
+      await expect(
+        client.mutation(api.classroomScreen.startSession, {
+          classId: fixture.classId,
+          session,
+        }),
+      ).rejects.toThrow();
+      await expect(
+        client.mutation(api.classroomScreen.stopSession, { classId: fixture.classId }),
+      ).rejects.toThrow();
+      await expect(
+        client.mutation(api.classroomScreen.pauseSession, {
+          classId: fixture.classId,
+          remainingMs: 30_000,
+        }),
+      ).rejects.toThrow();
+      await expect(
+        client.mutation(api.classroomScreen.resumeSession, {
+          classId: fixture.classId,
+          remainingMs: 30_000,
+        }),
+      ).rejects.toThrow();
+      await expect(
+        client.mutation(api.classroomScreen.adjustSession, {
+          classId: fixture.classId,
+          deltaSeconds: 30,
+        }),
+      ).rejects.toThrow();
+      await expect(
+        client.mutation(api.classroomScreen.updateSession, {
+          classId: fixture.classId,
+          session,
+        }),
+      ).rejects.toThrow();
+      await expect(
+        client.mutation(api.classroomScreen.skipSessionSegment, { classId: fixture.classId }),
+      ).rejects.toThrow();
+      await expect(
+        client.mutation(api.classroomScreen.clearPushedLesson, { classId: fixture.classId }),
+      ).rejects.toThrow();
+    }
+  });
+
+  it("allows managers to control the shared display session", async () => {
+    const test = createConvexTest();
+    const fixture = await seedFixture(test);
+    const owner = asOwner(test, fixture);
+    const session = sampleSession();
+
+    await owner.mutation(api.classroomScreen.startSession, {
+      classId: fixture.classId,
+      session,
+    });
+
+    const bundle = await owner.query(api.classroomScreen.getDisplayBundle, {
+      classId: fixture.classId,
+      nowMinuteBucket: Math.floor(Date.now() / 60_000),
+    });
+    expect(bundle.displaySession.sessionJson).toBeDefined();
+
+    await owner.mutation(api.classroomScreen.pauseSession, {
+      classId: fixture.classId,
+      remainingMs: 45_000,
+    });
+    await owner.mutation(api.classroomScreen.resumeSession, {
+      classId: fixture.classId,
+      remainingMs: 45_000,
+    });
+    await owner.mutation(api.classroomScreen.adjustSession, {
+      classId: fixture.classId,
+      deltaSeconds: 15,
+    });
+    await owner.mutation(api.classroomScreen.skipSessionSegment, { classId: fixture.classId });
+    await owner.mutation(api.classroomScreen.stopSession, { classId: fixture.classId });
+
+    const cleared = await owner.query(api.classroomScreen.getDisplayBundle, {
+      classId: fixture.classId,
+      nowMinuteBucket: Math.floor(Date.now() / 60_000),
+    });
+    expect(cleared.displaySession.sessionJson).toBeUndefined();
+  });
+});
+
+describe("classroom screen current lesson", () => {
+  it("resolves the current lesson using the class timezone", async () => {
+    const test = createConvexTest();
+    const fixture = await seedFixture(test);
+    const owner = asOwner(test, fixture);
+    const nowMs = Date.parse("2026-08-29T09:03:00.000Z");
+
+    await test.run(async (ctx) => {
+      await ctx.db.patch(fixture.classId, { timezone: "Asia/Seoul" });
+      const now = Date.now();
+      const termId = await ctx.db.insert("timetableTerms", {
+        classId: fixture.classId,
+        name: "Semester 2",
+        kind: "semester",
+        startDateKey: "2026-08-20",
+        endDateKey: "2027-02-10",
+        days: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+        startTime: "08:00",
+        endTime: "21:00",
+        createdBy: fixture.ownerId,
+        createdAt: now,
+        updatedAt: now,
+      });
+      const slotId = await ctx.db.insert("timetableSlots", {
+        classId: fixture.classId,
+        termId,
+        day: "Saturday",
+        startTime: "16:00",
+        endTime: "20:30",
+        disabled: false,
+        createdAt: now,
+        updatedAt: now,
+      });
+      const subjectId = await ctx.db.insert("timetableSubjects", {
+        classId: fixture.classId,
+        name: "Math",
+        bgColor: "#111111",
+        textColor: "#ffffff",
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("timetableLessons", {
+        classId: fixture.classId,
+        termId,
+        slotId,
+        subjectId,
+        year: 2026,
+        weekNumber: 35,
+        complete: false,
+        links: [],
+        materials: [{ key: "m1", text: "Workbook", tags: [] }],
+        announcements: [{ key: "a1", text: "Bring scissors", tags: [] }],
+        agenda: [{ key: "g1", text: "Warm up", tags: [] }],
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const bundle = await owner.query(api.classroomScreen.getDisplayBundle, {
+      classId: fixture.classId,
+      nowMinuteBucket: Math.floor(nowMs / 60_000),
+    });
+
+    expect(bundle.currentSlot?.startTime).toBe("16:00");
+    expect(bundle.currentSlot?.endTime).toBe("20:30");
+    expect(bundle.currentLesson?.startTime).toBe("16:00");
+    expect(bundle.currentLesson?.endTime).toBe("20:30");
+    expect(bundle.currentLesson?.subjectName).toBe("Math");
+    expect(bundle.currentLesson?.materials).toHaveLength(1);
+    expect(bundle.currentLesson?.announcements).toHaveLength(1);
+    expect(bundle.currentLesson?.agenda).toHaveLength(1);
+  });
+});

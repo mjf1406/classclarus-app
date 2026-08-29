@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { CALENDAR_AUDIENCE_ROLES } from "../calendar/audience.js";
+import { MAX_ITEM_TEXT_LENGTH, MAX_SECTION_ITEMS } from "./sectionItems.js";
 import { MAX_SUBJECT_NAME_LENGTH, MAX_TERM_NAME_LENGTH, WEEKDAY_NAMES } from "./timetableSchema.js";
 
 export type TimetableFormMessages = {
@@ -75,12 +77,20 @@ export type TimetableSubjectFormMessages = {
   nameRequired: string;
   nameTooLong: string;
   colorRequired: string;
+  itemTextTooLong: string;
+  tooManyItems: string;
+  audienceRolesRequired: string;
+  audienceRoleInvalid: string;
 };
 
 export const TIMETABLE_SUBJECT_FORM_MESSAGES_EN: TimetableSubjectFormMessages = {
   nameRequired: TIMETABLE_FORM_MESSAGES_EN.nameRequired,
   nameTooLong: `Name must be at most ${MAX_SUBJECT_NAME_LENGTH} characters`,
   colorRequired: "Enter a valid color",
+  itemTextTooLong: `Item text must be at most ${MAX_ITEM_TEXT_LENGTH} characters`,
+  tooManyItems: `At most ${MAX_SECTION_ITEMS} items are allowed`,
+  audienceRolesRequired: "Select at least one audience",
+  audienceRoleInvalid: "Invalid audience role",
 };
 
 const hexColorSchema = (message: string) =>
@@ -88,6 +98,19 @@ const hexColorSchema = (message: string) =>
     .string()
     .trim()
     .regex(/^#[0-9A-Fa-f]{6}$/, message);
+
+const sectionItemFormSchema = (messages: TimetableSubjectFormMessages) =>
+  z.object({
+    key: z.string().min(1),
+    text: z.string().max(MAX_ITEM_TEXT_LENGTH, messages.itemTextTooLong),
+    tags: z.array(z.string()),
+  });
+
+const agendaItemFormSchema = (messages: TimetableSubjectFormMessages) =>
+  sectionItemFormSchema(messages).extend({
+    assignmentId: z.string().optional(),
+    taskId: z.string().optional(),
+  });
 
 export function createTimetableSubjectFormSchema(messages: TimetableSubjectFormMessages) {
   return z.object({
@@ -99,7 +122,26 @@ export function createTimetableSubjectFormSchema(messages: TimetableSubjectFormM
     bgColor: hexColorSchema(messages.colorRequired),
     textColor: hexColorSchema(messages.colorRequired),
     iconName: z.string().optional(),
-    defaultNotesJson: z.string().optional(),
+    defaultMaterials: z
+      .array(sectionItemFormSchema(messages))
+      .max(MAX_SECTION_ITEMS, messages.tooManyItems),
+    defaultAnnouncements: z
+      .array(sectionItemFormSchema(messages))
+      .max(MAX_SECTION_ITEMS, messages.tooManyItems),
+    defaultAgenda: z
+      .array(agendaItemFormSchema(messages))
+      .max(MAX_SECTION_ITEMS, messages.tooManyItems),
+    calendarAudienceRoles: z
+      .array(z.string())
+      .min(1, messages.audienceRolesRequired)
+      .superRefine((roles, ctx) => {
+        for (const role of roles) {
+          if (!(CALENDAR_AUDIENCE_ROLES as ReadonlyArray<string>).includes(role)) {
+            ctx.addIssue({ code: "custom", message: messages.audienceRoleInvalid });
+            return;
+          }
+        }
+      }),
   });
 }
 

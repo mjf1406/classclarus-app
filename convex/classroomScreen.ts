@@ -13,7 +13,23 @@ import { audioCuesValidator } from "./lib/classroomScreen/audioCuesSchema.js";
 import { DEFAULT_CLOCK_SETTINGS } from "./lib/classroomScreen/clockSettingsDefaults.js";
 import { normalizeEndTime, secondsUntilEndTime } from "./lib/classroomScreen/timerUtils.js";
 import { classMutation, classQuery } from "./lib/customFunctions.js";
-import { getIsoWeekYearAndNumber } from "./lib/timetable/timetableSchema.js";
+import { isValidTimeZone, utcMsToZonedParts } from "./lib/calendar/timeZone.js";
+import {
+  agendaDisplayItemValidator,
+  attachAgendaResourceNames,
+  stripAgendaItemReferences,
+  calendarAudienceRolesOrDefault,
+  sectionItemValidator,
+  type AgendaItem,
+} from "./lib/timetable/sectionItems.js";
+import {
+  lessonDateKeyFromSlot,
+  selectUpcomingLessonEvents,
+  upcomingLessonEventValidator,
+  type LessonEventSource,
+} from "./lib/timetable/lessonEvents.js";
+import { getIsoWeekYearAndNumberFromDateKey } from "./lib/timetable/timetableSchema.js";
+import { findCurrentSlot } from "./lib/classroomScreen/currentLesson.js";
 
 const MAX_NAME_LENGTH = 120;
 const MAX_TIMER_DURATION_SECONDS = 24 * 60 * 60;
@@ -101,29 +117,115 @@ const lessonDisplayValidator = v.object({
   subjectBgColor: v.string(),
   subjectTextColor: v.string(),
   subjectIconName: v.optional(v.string()),
-  notesJson: v.optional(v.string()),
+  startTime: v.optional(v.string()),
+  endTime: v.optional(v.string()),
+  materials: v.array(sectionItemValidator),
+  announcements: v.array(sectionItemValidator),
+  agenda: v.array(agendaDisplayItemValidator),
+  upcomingEvents: v.array(upcomingLessonEventValidator),
+  timeZone: v.string(),
 });
 
-const screenBundleValidator = v.object({
+const slotDisplayValidator = v.object({
+  _id: v.id("timetableSlots"),
+  day: v.string(),
+  startTime: v.string(),
+  endTime: v.string(),
+  disabled: v.boolean(),
+});
+
+function resolveClassTimeZone(classDoc: Doc<"classes"> | null): string {
+  return classDoc?.timezone && isValidTimeZone(classDoc.timezone) ? classDoc.timezone : "UTC";
+}
+
+async function loadClassCalendarEvents(
+  ctx: QueryCtx | MutationCtx,
+  classId: Id<"classes">,
+): Promise<{ timeZone: string; events: Array<LessonEventSource> }> {
+  const classDoc = await ctx.db.get("classes", classId);
+  const timeZone = resolveClassTimeZone(classDoc);
+  // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded calendar list
+  const events = (await ctx.db
+    .query("calendarEvents")
+    .withIndex("by_classId", (q) => q.eq("classId", classId))
+    .collect()) as Array<LessonEventSource>;
+  return { timeZone, events };
+}
+
+async function loadAgendaResourceNames(
+  ctx: QueryCtx | MutationCtx,
+  items: ReadonlyArray<AgendaItem> | undefined,
+) {
+  const agenda = items ?? [];
+  const assignments = new Map<string, string>();
+  const tasks = new Map<string, string>();
+  const assignmentIds = new Set(
+    agenda
+      .map((item) => item.assignmentId)
+      .filter((id): id is NonNullable<typeof id> => Boolean(id)),
+  );
+  const taskIds = new Set(
+    agenda.map((item) => item.taskId).filter((id): id is NonNullable<typeof id> => Boolean(id)),
+  );
+  for (const assignmentId of assignmentIds) {
+    const assignment = await ctx.db.get("assignments", assignmentId);
+    if (assignment) assignments.set(assignmentId, assignment.name);
+  }
+  for (const taskId of taskIds) {
+    const task = await ctx.db.get("tasks", taskId);
+    if (task) tasks.set(taskId, task.name);
+  }
+  const missingAssignmentIds = new Set([...assignmentIds].filter((id) => !assignments.has(id)));
+  const missingTaskIds = new Set([...taskIds].filter((id) => !tasks.has(id)));
+  const cleaned = stripAgendaItemReferences(agenda, {
+    assignmentIds: missingAssignmentIds,
+    taskIds: missingTaskIds,
+  });
+  return attachAgendaResourceNames(cleaned, { assignments, tasks });
+}
+
+async function mapLessonDisplay(
+  ctx: QueryCtx | MutationCtx,
+  lesson: Doc<"timetableLessons">,
+  subject: Doc<"timetableSubjects">,
+  slot: { day: string; startTime?: string; endTime?: string } | undefined,
+  timeZone: string,
+  events: Array<LessonEventSource>,
+) {
+  const dateKey = slot ? lessonDateKeyFromSlot(lesson.year, lesson.weekNumber, slot.day) : null;
+  return {
+    _id: lesson._id,
+    slotId: lesson.slotId,
+    subjectName: subject.name,
+    subjectBgColor: subject.bgColor,
+    subjectTextColor: subject.textColor,
+    subjectIconName: subject.iconName,
+    startTime: slot?.startTime,
+    endTime: slot?.endTime,
+    materials: lesson.materials ?? [],
+    announcements: lesson.announcements ?? [],
+    agenda: await loadAgendaResourceNames(ctx, lesson.agenda),
+    upcomingEvents: dateKey
+      ? selectUpcomingLessonEvents(
+          events,
+          dateKey,
+          timeZone,
+          calendarAudienceRolesOrDefault(subject.calendarAudienceRoles),
+        )
+      : [],
+    timeZone,
+  };
+}
+
+const displayBundleValidator = v.object({
   settings: settingsValidator,
   displaySession: displaySessionValidator,
-  timers: v.array(timerValidator),
-  audioFiles: v.array(audioFileValidator),
-  slots: v.array(
-    v.object({
-      _id: v.id("timetableSlots"),
-      day: v.string(),
-      startTime: v.string(),
-      endTime: v.string(),
-      disabled: v.boolean(),
-    }),
-  ),
-  lessons: v.array(lessonDisplayValidator),
-  disabledSlotIds: v.array(v.id("timetableSlots")),
   pushedLesson: v.union(lessonDisplayValidator, v.null()),
+  currentLesson: v.union(lessonDisplayValidator, v.null()),
+  currentSlot: v.union(slotDisplayValidator, v.null()),
 });
 
-type ScreenBundleDto = Infer<typeof screenBundleValidator>;
+type DisplayBundleDto = Infer<typeof displayBundleValidator>;
 
 function normalizeName(name: string): string {
   const trimmed = name.trim();
@@ -234,8 +336,18 @@ async function mapAudioFiles(ctx: QueryCtx | MutationCtx, classId: Id<"classes">
   return mapped.sort((a, b) => a.name.localeCompare(b.name) || a._creationTime - b._creationTime);
 }
 
-async function loadTimetableSnapshot(ctx: QueryCtx | MutationCtx, classId: Id<"classes">) {
-  const { year, weekNumber } = getIsoWeekYearAndNumber(new Date());
+async function loadCurrentLessonSnapshot(
+  ctx: QueryCtx | MutationCtx,
+  classId: Id<"classes">,
+  nowMs: number,
+): Promise<{
+  currentLesson: DisplayBundleDto["currentLesson"];
+  currentSlot: DisplayBundleDto["currentSlot"];
+}> {
+  const classDoc = await ctx.db.get("classes", classId);
+  const timeZone = resolveClassTimeZone(classDoc);
+  const todayKey = utcMsToZonedParts(nowMs, timeZone).dateKey;
+  const { year, weekNumber } = getIsoWeekYearAndNumberFromDateKey(todayKey);
 
   // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded list
   const terms = await ctx.db
@@ -244,9 +356,109 @@ async function loadTimetableSnapshot(ctx: QueryCtx | MutationCtx, classId: Id<"c
     .collect();
 
   const activeTerm =
-    terms.find(
-      (term) => term.startDateKey <= formatTodayKey() && term.endDateKey >= formatTodayKey(),
-    ) ??
+    terms.find((term) => term.startDateKey <= todayKey && term.endDateKey >= todayKey) ??
+    terms[0] ??
+    null;
+
+  if (!activeTerm) {
+    return { currentLesson: null, currentSlot: null };
+  }
+
+  // eslint-disable-next-line @convex-dev/no-collect-in-query -- term-bounded slots
+  const slots = await ctx.db
+    .query("timetableSlots")
+    .withIndex("by_termId", (q) => q.eq("termId", activeTerm._id))
+    .collect();
+
+  // eslint-disable-next-line @convex-dev/no-collect-in-query -- week-bounded disables
+  const disables = await ctx.db
+    .query("timetableSlotDisables")
+    .withIndex("by_classId", (q) => q.eq("classId", classId))
+    .collect();
+
+  const disabledSlotIds = disables
+    .filter((row) => row.year === year && row.weekNumber === weekNumber)
+    .map((row) => row.slotId);
+  const disabledSet = new Set(disabledSlotIds);
+  const globalDisabled = new Set(slots.filter((slot) => slot.disabled).map((slot) => slot._id));
+
+  const slotRows = slots.map((slot) => ({
+    _id: slot._id,
+    day: slot.day,
+    startTime: slot.startTime,
+    endTime: slot.endTime,
+    disabled: slot.disabled || disabledSet.has(slot._id) || globalDisabled.has(slot._id),
+  }));
+
+  const matchedSlot = findCurrentSlot(
+    slotRows.filter((slot) => !slot.disabled),
+    nowMs,
+    timeZone,
+  );
+
+  if (!matchedSlot) {
+    return { currentLesson: null, currentSlot: null };
+  }
+
+  const currentSlot = {
+    _id: matchedSlot._id as Id<"timetableSlots">,
+    day: matchedSlot.day,
+    startTime: matchedSlot.startTime,
+    endTime: matchedSlot.endTime,
+    disabled: matchedSlot.disabled ?? false,
+  };
+
+  // eslint-disable-next-line @convex-dev/no-collect-in-query -- week-bounded lessons
+  const lessonRows = await ctx.db
+    .query("timetableLessons")
+    .withIndex("by_termId_year_week", (q) =>
+      q.eq("termId", activeTerm._id).eq("year", year).eq("weekNumber", weekNumber),
+    )
+    .collect();
+
+  const lessonRow = lessonRows.find((lesson) => lesson.slotId === currentSlot._id);
+  if (!lessonRow) {
+    return { currentLesson: null, currentSlot };
+  }
+
+  const subject = await ctx.db.get("timetableSubjects", lessonRow.subjectId);
+  if (!subject) {
+    return { currentLesson: null, currentSlot };
+  }
+
+  const { events } = await loadClassCalendarEvents(ctx, classId);
+  return {
+    currentSlot,
+    currentLesson: await mapLessonDisplay(ctx, lessonRow, subject, currentSlot, timeZone, events),
+  };
+}
+
+const screenBundleValidator = v.object({
+  settings: settingsValidator,
+  displaySession: displaySessionValidator,
+  timers: v.array(timerValidator),
+  audioFiles: v.array(audioFileValidator),
+  slots: v.array(slotDisplayValidator),
+  lessons: v.array(lessonDisplayValidator),
+  disabledSlotIds: v.array(v.id("timetableSlots")),
+  pushedLesson: v.union(lessonDisplayValidator, v.null()),
+});
+
+type ScreenBundleDto = Infer<typeof screenBundleValidator>;
+
+async function loadTimetableSnapshot(ctx: QueryCtx | MutationCtx, classId: Id<"classes">) {
+  const { timeZone, events } = await loadClassCalendarEvents(ctx, classId);
+  const todayKey = utcMsToZonedParts(Date.now(), timeZone).dateKey;
+  const { year, weekNumber } = getIsoWeekYearAndNumberFromDateKey(todayKey);
+
+  // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded list
+  const terms = await ctx.db
+    .query("timetableTerms")
+    .withIndex("by_classId", (q) => q.eq("classId", classId))
+    .collect();
+
+  const activeTerm =
+    terms.find((term) => term.startDateKey <= todayKey && term.endDateKey >= todayKey) ??
     terms[0] ??
     null;
 
@@ -259,15 +471,7 @@ async function loadTimetableSnapshot(ctx: QueryCtx | MutationCtx, classId: Id<"c
         endTime: string;
         disabled: boolean;
       }>,
-      lessons: [] as Array<{
-        _id: Id<"timetableLessons">;
-        slotId: Id<"timetableSlots">;
-        subjectName: string;
-        subjectBgColor: string;
-        subjectTextColor: string;
-        subjectIconName?: string;
-        notesJson?: string;
-      }>,
+      lessons: [] as Array<Infer<typeof lessonDisplayValidator>>,
       disabledSlotIds: [] as Array<Id<"timetableSlots">>,
     };
   }
@@ -306,21 +510,23 @@ async function loadTimetableSnapshot(ctx: QueryCtx | MutationCtx, classId: Id<"c
   const disabledSet = new Set(disabledSlotIds);
   const globalDisabled = new Set(slots.filter((slot) => slot.disabled).map((slot) => slot._id));
 
-  const lessons = lessonRows.flatMap((lesson) => {
-    const subject = subjectById.get(lesson.subjectId);
-    if (!subject) return [];
-    return [
-      {
-        _id: lesson._id,
-        slotId: lesson.slotId,
-        subjectName: subject.name,
-        subjectBgColor: subject.bgColor,
-        subjectTextColor: subject.textColor,
-        subjectIconName: subject.iconName,
-        notesJson: lesson.notesJson,
-      },
-    ];
-  });
+  const slotById = new Map(slots.map((slot) => [slot._id, slot]));
+  const lessons = (
+    await Promise.all(
+      lessonRows.map(async (lesson) => {
+        const subject = subjectById.get(lesson.subjectId);
+        if (!subject) return null;
+        return await mapLessonDisplay(
+          ctx,
+          lesson,
+          subject,
+          slotById.get(lesson.slotId),
+          timeZone,
+          events,
+        );
+      }),
+    )
+  ).filter((lesson) => lesson !== null);
 
   return {
     slots: slots.map((slot) => ({
@@ -335,13 +541,6 @@ async function loadTimetableSnapshot(ctx: QueryCtx | MutationCtx, classId: Id<"c
   };
 }
 
-function formatTodayKey(date = new Date()): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
 async function mapPushedLesson(
   ctx: QueryCtx | MutationCtx,
   lessonId: Id<"timetableLessons"> | undefined,
@@ -351,15 +550,9 @@ async function mapPushedLesson(
   if (!lesson) return null;
   const subject = await ctx.db.get("timetableSubjects", lesson.subjectId);
   if (!subject) return null;
-  return {
-    _id: lesson._id,
-    slotId: lesson.slotId,
-    subjectName: subject.name,
-    subjectBgColor: subject.bgColor,
-    subjectTextColor: subject.textColor,
-    subjectIconName: subject.iconName,
-    notesJson: lesson.notesJson,
-  };
+  const slot = await ctx.db.get("timetableSlots", lesson.slotId);
+  const { timeZone, events } = await loadClassCalendarEvents(ctx, lesson.classId);
+  return await mapLessonDisplay(ctx, lesson, subject, slot ?? undefined, timeZone, events);
 }
 
 export const getSettings = classQuery({
@@ -379,6 +572,54 @@ export const getSettings = classQuery({
       updatedAt: 0,
     };
     return defaults;
+  },
+});
+
+export const getDisplayBundle = classQuery({
+  args: {
+    nowMinuteBucket: v.number(),
+  },
+  returns: displayBundleValidator,
+  handler: async (ctx, args): Promise<DisplayBundleDto> => {
+    await ctx.require("classroomScreen:read");
+    const classId = ctx.classDoc._id;
+
+    const settingsRow = await ctx.db
+      .query("classroomClockSettings")
+      .withIndex("by_classId", (q) => q.eq("classId", classId))
+      .unique();
+
+    const settings: ClockSettingsDto = settingsRow ?? {
+      classId,
+      ...DEFAULT_CLOCK_SETTINGS,
+      updatedAt: 0,
+    };
+
+    const displayRow = await ctx.db
+      .query("classroomDisplaySessions")
+      .withIndex("by_classId", (q) => q.eq("classId", classId))
+      .unique();
+
+    const displaySession: DisplaySessionDto = displayRow ?? {
+      classId,
+      paused: false,
+      updatedAt: 0,
+    };
+
+    const pushedLesson = await mapPushedLesson(ctx, displayRow?.pushedLessonId);
+    const { currentLesson, currentSlot } = await loadCurrentLessonSnapshot(
+      ctx,
+      classId,
+      args.nowMinuteBucket * 60_000,
+    );
+
+    return {
+      settings,
+      displaySession,
+      pushedLesson,
+      currentLesson,
+      currentSlot,
+    };
   },
 });
 
@@ -703,7 +944,7 @@ export const startSession = classMutation({
   args: { session: v.any() },
   returns: v.null(),
   handler: async (ctx, args) => {
-    await ctx.require("classroomScreen:read");
+    await ctx.require("classroomScreen:manage");
     const classId = ctx.classDoc._id;
     const parsed = parseSessionJson(args.session);
     if (!parsed) throw new Error("Invalid session payload");
@@ -723,7 +964,7 @@ export const stopSession = classMutation({
   args: {},
   returns: v.null(),
   handler: async (ctx) => {
-    await ctx.require("classroomScreen:read");
+    await ctx.require("classroomScreen:manage");
     await patchDisplaySession(ctx, ctx.classDoc._id, {
       sessionJson: undefined,
       endsAt: undefined,
@@ -738,7 +979,7 @@ export const pauseSession = classMutation({
   args: { remainingMs: v.number() },
   returns: v.null(),
   handler: async (ctx, args) => {
-    await ctx.require("classroomScreen:read");
+    await ctx.require("classroomScreen:manage");
     if (args.remainingMs < 0) throw new Error("Remaining time cannot be negative");
     await patchDisplaySession(ctx, ctx.classDoc._id, {
       paused: true,
@@ -753,7 +994,7 @@ export const resumeSession = classMutation({
   args: { remainingMs: v.number() },
   returns: v.null(),
   handler: async (ctx, args) => {
-    await ctx.require("classroomScreen:read");
+    await ctx.require("classroomScreen:manage");
     if (args.remainingMs < 0) throw new Error("Remaining time cannot be negative");
     await patchDisplaySession(ctx, ctx.classDoc._id, {
       paused: false,
@@ -768,7 +1009,7 @@ export const adjustSession = classMutation({
   args: { deltaSeconds: v.number() },
   returns: v.null(),
   handler: async (ctx, args) => {
-    await ctx.require("classroomScreen:read");
+    await ctx.require("classroomScreen:manage");
     const classId = ctx.classDoc._id;
     const session = await getOrCreateDisplaySession(ctx, classId);
 
@@ -793,7 +1034,7 @@ export const updateSession = classMutation({
   args: { session: v.any() },
   returns: v.null(),
   handler: async (ctx, args) => {
-    await ctx.require("classroomScreen:read");
+    await ctx.require("classroomScreen:manage");
     const parsed = parseSessionJson(args.session);
     if (!parsed) throw new Error("Invalid session payload");
 
@@ -808,7 +1049,7 @@ export const skipSessionSegment = classMutation({
   args: {},
   returns: v.null(),
   handler: async (ctx) => {
-    await ctx.require("classroomScreen:read");
+    await ctx.require("classroomScreen:manage");
     const classId = ctx.classDoc._id;
     const row = await getOrCreateDisplaySession(ctx, classId);
     const parsed = parseSessionJson(row.sessionJson);
@@ -843,7 +1084,7 @@ export const pushLessonToDisplay = classMutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    await ctx.require("classroomScreen:read");
+    await ctx.require("classroomScreen:manage");
     const lesson = await ctx.db.get("timetableLessons", args.lessonId);
     if (!lesson || lesson.classId !== ctx.classDoc._id) {
       throw new ConvexError({ code: "NOT_FOUND", message: "Lesson not found" });
@@ -861,7 +1102,7 @@ export const clearPushedLesson = classMutation({
   args: {},
   returns: v.null(),
   handler: async (ctx) => {
-    await ctx.require("classroomScreen:read");
+    await ctx.require("classroomScreen:manage");
     await patchDisplaySession(ctx, ctx.classDoc._id, {
       pushedLessonId: undefined,
       pushedUntil: undefined,

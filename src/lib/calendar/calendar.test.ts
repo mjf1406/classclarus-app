@@ -8,7 +8,10 @@ import {
   defaultEventFormValues,
   defaultTimedRange,
   endDateTimeFromStart,
+  eventStartDateKey,
   formatDateKeyLocalized,
+  formatDateKeyMonthDay,
+  formatEventTimeLabel,
   formatTimeHm,
   localDateToDateKey,
 } from "@/lib/calendar/calendar";
@@ -117,6 +120,55 @@ describe("formatDateKeyLocalized", () => {
     expect(en).toMatch(/2026/);
     expect(ja).toMatch(/2026/);
     expect(en).not.toBe(ja);
+  });
+});
+
+describe("eventStartDateKey", () => {
+  test("uses startDateKey for all-day events", () => {
+    expect(eventStartDateKey({ allDay: true, startDateKey: "2026-08-29" }, "UTC")).toBe(
+      "2026-08-29",
+    );
+  });
+
+  test("uses the zoned start time for timed events", () => {
+    expect(
+      eventStartDateKey({ allDay: false, startAt: Date.parse("2026-08-29T15:00:00.000Z") }, "UTC"),
+    ).toBe("2026-08-29");
+  });
+});
+
+describe("formatDateKeyMonthDay", () => {
+  test("returns month and day for a valid key", () => {
+    expect(formatDateKeyMonthDay("2026-08-29", "en-US")).toEqual({
+      month: "Aug",
+      day: "29",
+    });
+  });
+
+  test("returns null for an invalid key", () => {
+    expect(formatDateKeyMonthDay("nope", "en-US")).toBeNull();
+  });
+});
+
+describe("formatEventTimeLabel", () => {
+  const timedSameDay = {
+    allDay: false,
+    startAt: Date.parse("2026-08-29T09:00:00.000Z"),
+    endAt: Date.parse("2026-08-29T10:00:00.000Z"),
+  };
+
+  test("omits the date for same-day timed events by default", () => {
+    const label = formatEventTimeLabel(timedSameDay, "UTC", "en-US");
+    expect(label).not.toMatch(/Aug/);
+    expect(label).not.toMatch(/2026/);
+  });
+
+  test("includes the date for same-day timed events when requested", () => {
+    const label = formatEventTimeLabel(timedSameDay, "UTC", "en-US", { includeDate: true });
+    expect(label).toMatch(/Sat/);
+    expect(label).toMatch(/Aug/);
+    expect(label).toMatch(/29/);
+    expect(label).toMatch(/2026/);
   });
 });
 

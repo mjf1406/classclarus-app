@@ -10,6 +10,7 @@ import { classMutation, classQuery } from "./lib/customFunctions.js";
 import { getClassRoleForUser, listLinkedStudentsForGuardian } from "./lib/guardianLinks.js";
 import { normalizeOptionalDueDateKey } from "./lib/dueDateKey.js";
 import { rateLimiter } from "./lib/rateLimiter.js";
+import { stripAgendaTaskReferences } from "./lib/cleanup/timetableCleanup.js";
 import { deleteTaskWithCompletions } from "./lib/tasksCleanup.js";
 
 const MAX_NAME_LENGTH = 100;
@@ -543,6 +544,7 @@ export const remove = classMutation({
 
     const classId = ctx.classDoc._id;
     const existing = await requireTaskInClass(ctx, classId, args.taskId);
+    await stripAgendaTaskReferences(ctx, classId, args.taskId);
     await deleteTaskWithCompletions(ctx, args.taskId);
 
     await recordClassActivity(ctx, {

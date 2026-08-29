@@ -1,31 +1,36 @@
+import { useMemo } from "react";
 import { AwardIcon, FlagIcon, GiftIcon, TriangleAlertIcon, TrophyIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { DashboardSectionCard } from "@/components/dashboard/DashboardSectionCard";
+import { usePointsForAudience } from "@/hooks/points/usePointsForAudience";
+import { localDateKey } from "@/lib/attendance/dateKey";
 import { getRosterDisplayName, type RosterNameFormat } from "@/lib/roster/roster";
-import type { PointsBoardStudent } from "@/lib/points/points";
 import type { Id } from "../../../convex/_generated/dataModel";
 
 type DashboardPointsCardProps = {
   classId: Id<"classes">;
-  student: PointsBoardStudent | null;
+  studentUserId: Id<"users"> | null;
   nameFormat: RosterNameFormat;
-  isPending: boolean;
-  isError: boolean;
-  onRetry: () => void;
+  audiencePending: boolean;
 };
 
 export function DashboardPointsCard({
   classId,
-  student,
+  studentUserId,
   nameFormat,
-  isPending,
-  isError,
-  onRetry,
+  audiencePending,
 }: DashboardPointsCardProps) {
   const { t } = useTranslation("classes");
   const { t: tPoints } = useTranslation("points");
-  const empty = !isPending && !isError && !student;
+  const dateKey = useMemo(() => localDateKey(), []);
+  const query = usePointsForAudience(classId, dateKey);
+  const student = useMemo(
+    () => (query.data ?? []).find((row) => row.userId === studentUserId) ?? null,
+    [query.data, studentUserId],
+  );
+  const isPending = audiencePending || query.isPending;
+  const empty = !isPending && !query.isError && !student;
 
   const displayName = student
     ? getRosterDisplayName(student, t("unnamedMember"), nameFormat)
@@ -38,10 +43,10 @@ export function DashboardPointsCard({
       viewAllTo="/class/$classId/points"
       viewAllParams={{ classId }}
       isPending={isPending}
-      isError={isError}
+      isError={query.isError}
       errorTitle={t("dashboardLoadFailed")}
       errorDescription={t("dashboardLoadFailedDescription")}
-      onRetry={onRetry}
+      onRetry={() => void query.refetch()}
       empty={empty}
       emptyTitle={t("dashboardNoPointsTitle")}
       emptyDescription={t("dashboardNoPointsDescription")}

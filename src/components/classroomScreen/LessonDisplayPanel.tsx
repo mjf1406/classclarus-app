@@ -3,13 +3,22 @@ import { useTranslation } from "react-i18next";
 
 import { AnnouncementBody } from "@/components/announcements/AnnouncementBody";
 import { FontAwesomeIconFromId } from "@/components/icons/FontAwesomeIconFromId";
+import { TimetableAgendaItemView } from "@/components/timetable/TimetableAgendaItemView";
+import { TimetableTaggedText } from "@/components/timetable/TimetableTaggedText";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useAssignments } from "@/hooks/assignments/useAssignments";
 import type { ClassroomLessonDisplay } from "@/hooks/classroomScreen/useClassroomScreenQueries";
+import { useTasks } from "@/hooks/tasks/useTasks";
 import { DEFAULT_CLOCK_SETTINGS } from "@/lib/classroomScreen/clockSettings";
+import { formatEventTimeLabel } from "@/lib/calendar/calendar";
+import { toIntlLocale } from "@/lib/languages";
+import { findAgendaResourceName } from "@/lib/timetable/agendaItems";
 import { cn } from "@/lib/utils";
+import type { Id } from "../../../convex/_generated/dataModel";
 
 type LessonDisplayPanelProps = {
+  classId: Id<"classes">;
   lesson: ClassroomLessonDisplay | null;
   formattedDate: string;
   contentFontSize?: number;
@@ -24,6 +33,7 @@ type LessonDisplayPanelProps = {
 };
 
 export function LessonDisplayPanel({
+  classId,
   lesson,
   formattedDate,
   contentFontSize = DEFAULT_CLOCK_SETTINGS.displayContentFontSize,
@@ -36,7 +46,11 @@ export function LessonDisplayPanel({
   emptyDescription,
   className,
 }: LessonDisplayPanelProps) {
-  const { t } = useTranslation("classroomScreen");
+  const { t, i18n } = useTranslation("classroomScreen");
+  const { t: tTimetable } = useTranslation("timetable");
+  const assignments = useAssignments(classId);
+  const tasks = useTasks(classId);
+  const locale = toIntlLocale(i18n.language);
   const headingStyle = { fontSize: `${headingFontSize}px` };
   const bodyStyle = { fontSize: `${contentFontSize}px` };
   const bodyClassName =
@@ -46,17 +60,21 @@ export function LessonDisplayPanel({
     return (
       <div className={cn("flex h-full flex-col", className)}>
         <div
-          className="flex items-center gap-3 border-b p-6"
+          className="flex items-center gap-4 border-b p-6"
           style={{
             backgroundColor: lesson.subjectBgColor,
             color: lesson.subjectTextColor,
           }}
         >
           {lesson.subjectIconName ? (
-            <FontAwesomeIconFromId id={lesson.subjectIconName} className="size-8 shrink-0" />
+            <FontAwesomeIconFromId
+              id={lesson.subjectIconName}
+              className="shrink-0"
+              style={{ fontSize: `${Math.max(headingFontSize * 2.5, 96)}px` }}
+            />
           ) : (
             <span
-              className="size-4 shrink-0 rounded-full ring-2 ring-white/30"
+              className="size-24 shrink-0 rounded-full ring-2 ring-white/30"
               style={{ backgroundColor: lesson.subjectTextColor }}
             />
           )}
@@ -68,15 +86,41 @@ export function LessonDisplayPanel({
           </div>
         </div>
         <ScrollArea className="grow p-6">
-          {lesson.notesJson ? (
-            <div className={bodyClassName} style={bodyStyle}>
-              <AnnouncementBody bodyJson={lesson.notesJson} />
+          <div className="flex flex-col gap-6" style={bodyStyle}>
+            <LessonSection
+              title={tTimetable("materialsSection")}
+              empty={tTimetable("noMaterials")}
+              items={lesson.materials}
+            />
+            <div className="flex flex-col gap-2">
+              <h3 className="font-medium">{tTimetable("announcementsSection")}</h3>
+              {lesson.upcomingEvents.length === 0 ? (
+                <p className="text-muted-foreground">{tTimetable("noUpcomingEvents")}</p>
+              ) : (
+                <ol className="flex flex-col gap-1">
+                  {lesson.upcomingEvents.map((event, index) => (
+                    <li key={event._id}>
+                      {index + 1}. {event.title}
+                      {" — "}
+                      {formatEventTimeLabel(event, lesson.timeZone, locale, { includeDate: true })}
+                    </li>
+                  ))}
+                </ol>
+              )}
+              <LessonSection
+                items={lesson.announcements}
+                empty={tTimetable("noExtraAnnouncements")}
+              />
             </div>
-          ) : (
-            <p className="text-muted-foreground" style={bodyStyle}>
-              {t("noLessonNotes")}
-            </p>
-          )}
+            <LessonSection
+              title={tTimetable("agendaSection")}
+              empty={tTimetable("noAgenda")}
+              items={lesson.agenda}
+              classId={classId}
+              assignments={assignments.data}
+              tasks={tasks.data}
+            />
+          </div>
         </ScrollArea>
       </div>
     );
@@ -133,6 +177,60 @@ export function LessonDisplayPanel({
       <p className="mt-2 max-w-sm" style={bodyStyle}>
         {emptyDescription ?? t("noLessonScheduledDescription")}
       </p>
+    </div>
+  );
+}
+
+function LessonSection({
+  title,
+  empty,
+  items,
+  classId,
+  assignments,
+  tasks,
+}: {
+  title?: string;
+  empty: string;
+  items: Array<{
+    key: string;
+    text: string;
+    assignmentId?: string;
+    taskId?: string;
+    assignmentName?: string;
+    taskName?: string;
+  }>;
+  classId?: Id<"classes">;
+  assignments?: ReadonlyArray<{ _id: string; name: string }>;
+  tasks?: ReadonlyArray<{ _id: string; name: string }>;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      {title ? <h3 className="font-medium">{title}</h3> : null}
+      {items.length === 0 ? (
+        <p className="text-muted-foreground">{empty}</p>
+      ) : (
+        <ol className="flex flex-col gap-1">
+          {items.map((item, index) => (
+            <li key={item.key} className="flex gap-1">
+              <span className="shrink-0">{index + 1}.</span>
+              {classId ? (
+                <TimetableAgendaItemView
+                  classId={classId}
+                  text={item.text}
+                  assignmentId={item.assignmentId}
+                  taskId={item.taskId}
+                  assignmentName={
+                    item.assignmentName ?? findAgendaResourceName(assignments, item.assignmentId)
+                  }
+                  taskName={item.taskName ?? findAgendaResourceName(tasks, item.taskId)}
+                />
+              ) : (
+                <TimetableTaggedText text={item.text} />
+              )}
+            </li>
+          ))}
+        </ol>
+      )}
     </div>
   );
 }

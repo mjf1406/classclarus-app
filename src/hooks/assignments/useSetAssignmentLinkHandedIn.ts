@@ -83,6 +83,15 @@ export function useSetAssignmentLinkHandedIn() {
                       0,
                       Math.min(item.studentCount, item.handedInStudentCount + delta),
                     ),
+                    handedInStudentIds: (() => {
+                      const current = item.handedInStudentIds ?? [];
+                      if (willHaveHandedIn) {
+                        return current.includes(args.studentUserId)
+                          ? current
+                          : [...current, args.studentUserId];
+                      }
+                      return current.filter((id) => id !== args.studentUserId);
+                    })(),
                   }
                 : item,
             );

@@ -5,6 +5,7 @@ import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { toast } from "@/components/ui/toast-manager";
 import {
+  timetableTagsQueryKey,
   timetableTermsQueryKey,
   timetableWeekBundleQueryKey,
 } from "@/hooks/timetable/useTimetableQueries";
@@ -15,8 +16,10 @@ import {
   applyOptimisticUnlink,
   mirrorLessonsInBundle,
 } from "@/lib/timetable/slotLinksClient";
+import { toAgendaItems } from "@/lib/timetable/sectionItems";
 import type {
-  LessonLinkFormValues,
+  AgendaItemFormValues,
+  SectionItemFormValues,
   TimetableTermKind,
   TimetableWeekBundle,
 } from "@/lib/timetable/timetable";
@@ -50,6 +53,11 @@ export function useAddLessonToSlot() {
         const subject = old.subjects.find((s) => s._id === args.subjectId);
         if (!subject) return old;
         const now = Date.now();
+        const sections = {
+          materials: subject.defaultMaterials,
+          announcements: subject.defaultAnnouncements,
+          agenda: subject.defaultAgenda,
+        };
         const optimisticLesson = {
           _id: `optimistic:${args.slotId}-${args.subjectId}` as Id<"timetableLessons">,
           _creationTime: now,
@@ -60,11 +68,11 @@ export function useAddLessonToSlot() {
           year: args.year,
           weekNumber: args.weekNumber,
           complete: false,
-          links: [],
-          notesJson: subject.defaultNotesJson,
+          ...sections,
           createdAt: now,
           updatedAt: now,
           subject,
+          upcomingEvents: [] as TimetableWeekBundle["lessons"][number]["upcomingEvents"],
         };
         const withPrimary = { ...old, lessons: [...old.lessons, optimisticLesson] };
         return mirrorLessonsInBundle(withPrimary, args.slotId, args.year, args.weekNumber, {
@@ -72,8 +80,7 @@ export function useAddLessonToSlot() {
           sourceSlotId: args.slotId,
           subjectId: args.subjectId,
           complete: false,
-          links: [],
-          notesJson: subject.defaultNotesJson,
+          ...sections,
         });
       });
     },
@@ -125,7 +132,20 @@ export function useRemoveLesson() {
           lesson.slotId,
           lesson.year,
           lesson.weekNumber,
-          { type: "delete", sourceLesson: lesson },
+          {
+            type: "delete",
+            sourceLesson: {
+              _id: lesson._id,
+              slotId: lesson.slotId,
+              subjectId: lesson.subjectId,
+              year: lesson.year,
+              weekNumber: lesson.weekNumber,
+              complete: lesson.complete,
+              materials: lesson.materials,
+              announcements: lesson.announcements,
+              agenda: lesson.agenda,
+            },
+          },
         );
       });
     },
@@ -145,9 +165,10 @@ export type UpsertLessonArgs = {
   subjectId: Id<"timetableSubjects">;
   year: number;
   weekNumber: number;
-  notesJson?: string;
   complete: boolean;
-  links: Array<LessonLinkFormValues>;
+  materials: Array<SectionItemFormValues>;
+  announcements: Array<SectionItemFormValues>;
+  agenda: Array<AgendaItemFormValues>;
   lessonId?: Id<"timetableLessons">;
 };
 
@@ -165,12 +186,15 @@ export function useUpsertLesson() {
         subjectId: args.subjectId,
         year: args.year,
         weekNumber: args.weekNumber,
-        notesJson: args.notesJson,
         complete: args.complete,
-        links: args.links,
+        materials: args.materials,
+        announcements: args.announcements,
+        agenda: toAgendaItems(args.agenda),
       }),
-    queryKeys: (args: UpsertLessonArgs) =>
-      weekKeys(args.classId, args.termId, args.year, args.weekNumber),
+    queryKeys: (args: UpsertLessonArgs) => [
+      ...weekKeys(args.classId, args.termId, args.year, args.weekNumber),
+      timetableTagsQueryKey(args.classId),
+    ],
     applyOptimisticUpdate: (queryClient, args: UpsertLessonArgs) => {
       const key = timetableWeekBundleQueryKey(
         args.classId,
@@ -183,6 +207,7 @@ export function useUpsertLesson() {
         const subject = old.subjects.find((s) => s._id === args.subjectId);
         if (!subject) return old;
         const now = Date.now();
+        const agenda = toAgendaItems(args.agenda);
         const nextLessons = old.lessons.map((lesson) => {
           if (
             lesson._id === args.lessonId ||
@@ -190,9 +215,10 @@ export function useUpsertLesson() {
           ) {
             return {
               ...lesson,
-              notesJson: args.notesJson,
               complete: args.complete,
-              links: args.links,
+              materials: args.materials,
+              announcements: args.announcements,
+              agenda,
               updatedAt: now,
               subject,
             };
@@ -212,12 +238,14 @@ export function useUpsertLesson() {
             subjectId: args.subjectId,
             year: args.year,
             weekNumber: args.weekNumber,
-            notesJson: args.notesJson,
             complete: args.complete,
-            links: args.links,
+            materials: args.materials,
+            announcements: args.announcements,
+            agenda,
             createdAt: now,
             updatedAt: now,
             subject,
+            upcomingEvents: [],
           });
         }
         const updatedLesson = nextLessons.find(
@@ -231,14 +259,28 @@ export function useUpsertLesson() {
           args.year,
           args.weekNumber,
           hasMatch
-            ? { type: "update", sourceLesson: updatedLesson }
+            ? {
+                type: "update",
+                sourceLesson: {
+                  _id: updatedLesson._id,
+                  slotId: updatedLesson.slotId,
+                  subjectId: updatedLesson.subjectId,
+                  year: updatedLesson.year,
+                  weekNumber: updatedLesson.weekNumber,
+                  complete: updatedLesson.complete,
+                  materials: updatedLesson.materials,
+                  announcements: updatedLesson.announcements,
+                  agenda: updatedLesson.agenda,
+                },
+              }
             : {
                 type: "add",
                 sourceSlotId: args.slotId,
                 subjectId: args.subjectId,
-                notesJson: args.notesJson,
                 complete: args.complete,
-                links: args.links,
+                materials: args.materials,
+                announcements: args.announcements,
+                agenda,
               },
         );
       });
@@ -266,7 +308,10 @@ export function useCreateTimetableSubject() {
     bgColor: string;
     textColor: string;
     iconName?: string;
-    defaultNotesJson?: string;
+    defaultMaterials: Array<SectionItemFormValues>;
+    defaultAnnouncements: Array<SectionItemFormValues>;
+    defaultAgenda: Array<AgendaItemFormValues>;
+    calendarAudienceRoles: Array<string>;
   };
 
   return useOptimisticMutation({
@@ -277,9 +322,17 @@ export function useCreateTimetableSubject() {
         bgColor: args.bgColor,
         textColor: args.textColor,
         iconName: args.iconName,
-        defaultNotesJson: args.defaultNotesJson,
+        defaultMaterials: args.defaultMaterials,
+        defaultAnnouncements: args.defaultAnnouncements,
+        defaultAgenda: toAgendaItems(args.defaultAgenda),
+        calendarAudienceRoles: args.calendarAudienceRoles as Array<
+          "owner" | "teacher" | "assistant_teacher" | "student" | "guardian"
+        >,
       }),
-    queryKeys: (args: Args) => weekKeys(args.classId, args.termId, args.year, args.weekNumber),
+    queryKeys: (args: Args) => [
+      ...weekKeys(args.classId, args.termId, args.year, args.weekNumber),
+      timetableTagsQueryKey(args.classId),
+    ],
     applyOptimisticUpdate: (queryClient, args: Args) => {
       const key = timetableWeekBundleQueryKey(
         args.classId,
@@ -302,7 +355,10 @@ export function useCreateTimetableSubject() {
               bgColor: args.bgColor,
               textColor: args.textColor,
               iconName: args.iconName,
-              defaultNotesJson: args.defaultNotesJson,
+              defaultMaterials: args.defaultMaterials,
+              defaultAnnouncements: args.defaultAnnouncements,
+              defaultAgenda: toAgendaItems(args.defaultAgenda),
+              calendarAudienceRoles: args.calendarAudienceRoles,
               createdAt: now,
               updatedAt: now,
             },
@@ -334,7 +390,10 @@ export function useUpdateTimetableSubject() {
     bgColor: string;
     textColor: string;
     iconName?: string;
-    defaultNotesJson?: string;
+    defaultMaterials: Array<SectionItemFormValues>;
+    defaultAnnouncements: Array<SectionItemFormValues>;
+    defaultAgenda: Array<AgendaItemFormValues>;
+    calendarAudienceRoles: Array<string>;
   };
 
   return useOptimisticMutation({
@@ -346,9 +405,17 @@ export function useUpdateTimetableSubject() {
         bgColor: args.bgColor,
         textColor: args.textColor,
         iconName: args.iconName,
-        defaultNotesJson: args.defaultNotesJson,
+        defaultMaterials: args.defaultMaterials,
+        defaultAnnouncements: args.defaultAnnouncements,
+        defaultAgenda: toAgendaItems(args.defaultAgenda),
+        calendarAudienceRoles: args.calendarAudienceRoles as Array<
+          "owner" | "teacher" | "assistant_teacher" | "student" | "guardian"
+        >,
       }),
-    queryKeys: (args: Args) => weekKeys(args.classId, args.termId, args.year, args.weekNumber),
+    queryKeys: (args: Args) => [
+      ...weekKeys(args.classId, args.termId, args.year, args.weekNumber),
+      timetableTagsQueryKey(args.classId),
+    ],
     applyOptimisticUpdate: (queryClient, args: Args) => {
       const key = timetableWeekBundleQueryKey(
         args.classId,
@@ -364,7 +431,10 @@ export function useUpdateTimetableSubject() {
           bgColor: args.bgColor,
           textColor: args.textColor,
           iconName: args.iconName,
-          defaultNotesJson: args.defaultNotesJson,
+          defaultMaterials: args.defaultMaterials,
+          defaultAnnouncements: args.defaultAnnouncements,
+          defaultAgenda: toAgendaItems(args.defaultAgenda),
+          calendarAudienceRoles: args.calendarAudienceRoles,
           updatedAt: now,
         };
         return {

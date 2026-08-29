@@ -15,6 +15,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Trans, useTranslation } from "react-i18next";
 
 import { AnnouncementBody } from "@/components/announcements/AnnouncementBody";
+import { AssignmentGradingStatusBadge } from "@/components/assignments/AssignmentGradingStatusBadge";
 import { DataTableSortableHeader } from "@/components/feedback/DataTableSortableHeader";
 import { DeleteNamedCredenza } from "@/components/groups/DeleteNamedCredenza";
 import { GroupTeamFilterButtons } from "@/components/groups/GroupTeamFilterButtons";
@@ -37,6 +38,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAddAssignmentLink } from "@/hooks/assignments/useAddAssignmentLink";
 import { useAssignment } from "@/hooks/assignments/useAssignment";
+import { useAssignments } from "@/hooks/assignments/useAssignments";
 import { useCheckAssignmentLinkAccessibility } from "@/hooks/assignments/useCheckAssignmentLinkAccessibility";
 import { useReleasedAssignmentScore } from "@/hooks/assignments/useReleasedAssignmentScore";
 import { useRemoveAssignment } from "@/hooks/assignments/useRemoveAssignment";
@@ -57,6 +59,7 @@ import { useCurrentUser } from "@/hooks/user/useCurrentUser";
 import { formatLocalizedDateTime, formatLocalizedDueDate } from "@/i18n/formatDate";
 import { isSelfHosted } from "@/lib/selfHosted";
 import {
+  assignmentGradingStatusForStudent,
   isAssignmentPastDue,
   isClassAssignmentDetail,
   isPersonalAssignmentDetail,
@@ -877,6 +880,7 @@ function PersonalAssignmentDetailPage({ classId, assignmentId }: AssignmentDetai
     { gcTime: GC_TIME.stable },
   );
   const { data, isPending, isError, refetch } = useAssignment(classId, assignmentId);
+  const listQuery = useAssignments(classId);
   const { data: audienceData } = useExpectationsForAudience(classId);
   const addLink = useAddAssignmentLink();
   const removeLink = useRemoveAssignmentLink();
@@ -945,6 +949,12 @@ function PersonalAssignmentDetailPage({ classId, assignmentId }: AssignmentDetai
   const scoreDraft = useMemo(
     () => (scoresReleased ? draftFromScore(releasedScore ?? undefined) : null),
     [releasedScore, scoresReleased],
+  );
+
+  const listItem = listQuery.data?.find((item) => item._id === assignmentId);
+  const gradingStatus = assignmentGradingStatusForStudent(
+    listItem ?? { scoresReleased, viewerScoreStates: undefined },
+    activeStudent?.userId,
   );
 
   const linkedExpectations = useMemo(() => {
@@ -1045,6 +1055,12 @@ function PersonalAssignmentDetailPage({ classId, assignmentId }: AssignmentDetai
         <p className="text-sm text-muted-foreground">
           {tExpectations("personalStudentLabel", { name: activeName })}
         </p>
+      ) : null}
+
+      {gradingStatus ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <AssignmentGradingStatusBadge status={gradingStatus} />
+        </div>
       ) : null}
 
       {scoresReleased ? (

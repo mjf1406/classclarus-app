@@ -47,6 +47,10 @@ export function createClientTimetableSubjectFormSchema(t: TFunction<"timetable">
     nameRequired: t("validationNameRequired"),
     nameTooLong: t("validationNameTooLong"),
     colorRequired: t("validationColorRequired"),
+    itemTextTooLong: t("validationItemTextTooLong"),
+    tooManyItems: t("validationTooManyItems"),
+    audienceRolesRequired: t("validationAudienceRolesRequired"),
+    audienceRoleInvalid: t("validationAudienceRoleInvalid"),
   };
   return createTimetableSubjectFormSchema(messages);
 }

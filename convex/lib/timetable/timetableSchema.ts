@@ -2,7 +2,13 @@ import { v } from "convex/values";
 
 import type { Id } from "../../_generated/dataModel.js";
 import type { MutationCtx } from "../../_generated/server.js";
-import { compareDateKeys, isValidDateKey, isValidTimeHm } from "../calendar/dateKey.js";
+import {
+  compareDateKeys,
+  formatDateKey,
+  isValidDateKey,
+  isValidTimeHm,
+  parseDateKey,
+} from "../calendar/dateKey.js";
 
 export const MAX_TERM_NAME_LENGTH = 80;
 export const MAX_SUBJECT_NAME_LENGTH = 80;
@@ -230,12 +236,49 @@ export async function normalizeLessonLinks(
   return normalized;
 }
 
-export function getIsoWeekYearAndNumber(date: Date): { year: number; weekNumber: number } {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+export function weekdayNameFromDateKey(dateKey: string): WeekdayName {
+  const parsed = parseDateKey(dateKey);
+  if (!parsed) {
+    throw new Error("Invalid date");
+  }
+  const index = (new Date(Date.UTC(parsed.year, parsed.month - 1, parsed.day)).getUTCDay() + 6) % 7;
+  const name = WEEKDAY_NAMES[index];
+  if (!name) {
+    throw new Error("Invalid weekday");
+  }
+  return name;
+}
+
+export function getIsoWeekYearAndNumberFromDateKey(dateKey: string): {
+  year: number;
+  weekNumber: number;
+} {
+  const parsed = parseDateKey(dateKey);
+  if (!parsed) {
+    throw new Error("Invalid date");
+  }
+  const d = new Date(Date.UTC(parsed.year, parsed.month - 1, parsed.day));
   d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
   const weekNumber = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
   return { year: d.getUTCFullYear(), weekNumber };
+}
+
+export function getIsoWeekYearAndNumber(date: Date): { year: number; weekNumber: number } {
+  return getIsoWeekYearAndNumberFromDateKey(
+    formatDateKey(date.getFullYear(), date.getMonth() + 1, date.getDate()),
+  );
+}
+
+/** Inverse of `getIsoWeekYearAndNumber` for a Monday-based ISO week + weekday name. */
+export function dateKeyFromIsoWeek(year: number, weekNumber: number, weekday: WeekdayName): string {
+  const jan4 = Date.UTC(year, 0, 4);
+  const jan4Dow = new Date(jan4).getUTCDay() || 7;
+  const mondayWeek1 = jan4 - (jan4Dow - 1) * 86_400_000;
+  const weekdayOffset = WEEKDAY_NAMES.indexOf(weekday);
+  const utc = mondayWeek1 + (weekNumber - 1) * 7 * 86_400_000 + weekdayOffset * 86_400_000;
+  const next = new Date(utc);
+  return formatDateKey(next.getUTCFullYear(), next.getUTCMonth() + 1, next.getUTCDate());
 }
 
 export function parseDateKeyLocal(dateKey: string): Date {

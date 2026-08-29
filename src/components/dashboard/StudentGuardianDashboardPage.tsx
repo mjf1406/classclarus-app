@@ -1,27 +1,16 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { DashboardAssignersCard } from "@/components/dashboard/DashboardAssignersCard";
 import { DashboardAnnouncementsCard } from "@/components/dashboard/DashboardAnnouncementsCard";
+import { DashboardCurrentSubjectCard } from "@/components/dashboard/DashboardCurrentSubjectCard";
 import { DashboardEventsCard } from "@/components/dashboard/DashboardEventsCard";
 import { DashboardPointsCard } from "@/components/dashboard/DashboardPointsCard";
 import { DashboardRazCard } from "@/components/dashboard/DashboardRazCard";
 import { DashboardTasksCard } from "@/components/dashboard/DashboardTasksCard";
 import { PersonalStudentPicker } from "@/components/personal/PersonalStudentPicker";
-import { useRecentAnnouncements } from "@/hooks/announcements/useRecentAnnouncements";
-import { useCalendarEventsInRange } from "@/hooks/calendar/useCalendarEventsInRange";
-import { useDashboardAssignerSnapshot } from "@/hooks/dashboard/useDashboardAssignerSnapshot";
-import { usePointsForAudience } from "@/hooks/points/usePointsForAudience";
-import { useRazForAudience } from "@/hooks/raz/useRazForAudience";
 import { useSeatPersonalStudentsForAudience } from "@/hooks/assigners/useSeatPersonalStudentsForAudience";
-import { useTasks } from "@/hooks/tasks/useTasks";
 import { useAuthedQuery } from "@/hooks/useAuthedQuery";
-import { localDateKey } from "@/lib/attendance/dateKey";
-import {
-  dashboardEventRange,
-  recentDashboardTasks,
-  upcomingDashboardEvents,
-} from "@/lib/dashboard/dashboard";
 import { resolveRosterNameFormat } from "@/lib/roster/roster";
 import { isValidTimeZone } from "../../../convex/lib/calendar/timeZone";
 import { api } from "../../../convex/_generated/api";
@@ -33,12 +22,9 @@ type StudentGuardianDashboardPageProps = {
 };
 
 export function StudentGuardianDashboardPage({ classId }: StudentGuardianDashboardPageProps) {
-  const { t, i18n } = useTranslation("classes");
-  const nowMs = Date.now();
-  const dateKey = useMemo(() => localDateKey(), []);
-  const eventRange = useMemo(() => dashboardEventRange(nowMs), [nowMs]);
+  const { t } = useTranslation("classes");
 
-  const { data: classDoc } = useAuthedQuery(
+  const { data: classDoc, isPending: classPending } = useAuthedQuery(
     api.classes.get,
     { classId },
     { gcTime: GC_TIME.stable },
@@ -55,31 +41,7 @@ export function StudentGuardianDashboardPage({ classId }: StudentGuardianDashboa
   const nameFormat = resolveRosterNameFormat(classDoc ?? {});
   const timeZone =
     classDoc?.timezone && isValidTimeZone(classDoc.timezone) ? classDoc.timezone : "UTC";
-
-  const assignersQuery = useDashboardAssignerSnapshot(classId, activeStudentId);
-  const eventsQuery = useCalendarEventsInRange(
-    classId,
-    eventRange.rangeStartMs,
-    eventRange.rangeEndMs,
-  );
-  const tasksQuery = useTasks(classId);
-  const pointsQuery = usePointsForAudience(classId, dateKey);
-  const announcementsQuery = useRecentAnnouncements(classId);
-  const razQuery = useRazForAudience(classId);
-
-  const upcomingEvents = useMemo(
-    () => upcomingDashboardEvents(eventsQuery.data ?? [], nowMs, timeZone),
-    [eventsQuery.data, nowMs, timeZone],
-  );
-  const recentTasks = useMemo(() => recentDashboardTasks(tasksQuery.data ?? []), [tasksQuery.data]);
-  const activePointsStudent = useMemo(
-    () => (pointsQuery.data ?? []).find((student) => student.userId === activeStudentId) ?? null,
-    [activeStudentId, pointsQuery.data],
-  );
-  const activeRazStudent = useMemo(
-    () => (razQuery.data ?? []).find((student) => student.userId === activeStudentId) ?? null,
-    [activeStudentId, razQuery.data],
-  );
+  const audiencePending = studentsQuery.isPending;
 
   return (
     <div className="flex w-full flex-col gap-4 px-4 py-8 sm:px-8">
@@ -98,52 +60,25 @@ export function StudentGuardianDashboardPage({ classId }: StudentGuardianDashboa
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-2">
+        <DashboardCurrentSubjectCard classId={classId} studentUserId={activeStudentId} />
         <DashboardAssignersCard
           classId={classId}
-          snapshot={assignersQuery.data}
-          isPending={Boolean(activeStudentId) && assignersQuery.isPending}
-          isError={assignersQuery.isError}
-          onRetry={() => void assignersQuery.refetch()}
-        />
-        <DashboardEventsCard
-          classId={classId}
-          events={upcomingEvents}
-          timeZone={timeZone}
-          locale={i18n.language}
-          isPending={eventsQuery.isPending}
-          isError={eventsQuery.isError}
-          onRetry={() => void eventsQuery.refetch()}
-        />
-        <DashboardTasksCard
-          classId={classId}
-          tasks={recentTasks}
           studentUserId={activeStudentId}
-          isPending={tasksQuery.isPending}
-          isError={tasksQuery.isError}
-          onRetry={() => void tasksQuery.refetch()}
+          audiencePending={audiencePending}
         />
+        <DashboardEventsCard classId={classId} timeZone={timeZone} classPending={classPending} />
+        <DashboardTasksCard classId={classId} studentUserId={activeStudentId} />
         <DashboardPointsCard
           classId={classId}
-          student={activePointsStudent}
+          studentUserId={activeStudentId}
           nameFormat={nameFormat}
-          isPending={pointsQuery.isPending}
-          isError={pointsQuery.isError}
-          onRetry={() => void pointsQuery.refetch()}
+          audiencePending={audiencePending}
         />
-        <DashboardAnnouncementsCard
-          classId={classId}
-          announcements={announcementsQuery.data ?? []}
-          isPending={announcementsQuery.isPending}
-          isError={announcementsQuery.isError}
-          onRetry={() => void announcementsQuery.refetch()}
-        />
+        <DashboardAnnouncementsCard classId={classId} />
         <DashboardRazCard
           classId={classId}
-          student={activeRazStudent}
-          language={i18n.language}
-          isPending={razQuery.isPending}
-          isError={razQuery.isError}
-          onRetry={() => void razQuery.refetch()}
+          studentUserId={activeStudentId}
+          audiencePending={audiencePending}
         />
       </div>
     </div>

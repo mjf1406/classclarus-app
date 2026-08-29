@@ -11,6 +11,7 @@ import { getClassRoleForUser, listLinkedStudentsForGuardian } from "./lib/guardi
 import { normalizeOptionalDueDateKey } from "./lib/dueDateKey.js";
 import { rateLimiter } from "./lib/rateLimiter.js";
 import { deleteScoresForAssignment } from "./lib/assignmentScoresCleanup.js";
+import { stripAgendaResourceReferences } from "./lib/cleanup/timetableCleanup.js";
 import { deleteTaskWithCompletions } from "./lib/tasksCleanup.js";
 
 const MAX_NAME_LENGTH = 100;
@@ -93,15 +94,24 @@ const viewerReleasedScoreValidator = v.object({
   excused: v.boolean(),
 });
 
+const viewerScoreStateValidator = v.object({
+  studentUserId: v.id("users"),
+  graded: v.boolean(),
+  excused: v.boolean(),
+});
+
 const assignmentListItemValidator = v.object({
   ...assignmentBaseFields,
   handedInStudentCount: v.number(),
+  handedInStudentIds: v.array(v.id("users")),
   studentCount: v.number(),
   linkCount: v.number(),
   hasInstructions: v.boolean(),
   hasProcedure: v.boolean(),
   /** Personal audience only, when scoresReleased — scores for the viewer's students. */
   viewerReleasedScores: v.optional(v.array(viewerReleasedScoreValidator)),
+  /** Personal audience only — grading flags, never score values. */
+  viewerScoreStates: v.optional(v.array(viewerScoreStateValidator)),
 });
 
 const studentLinkValidator = v.object({
@@ -733,6 +743,18 @@ function hasProcedure(assignment: Doc<"assignments">): boolean {
   return assignment.procedureSteps.length > 0;
 }
 
+function isAssignmentScoreGraded(score: Doc<"assignmentScores">): boolean {
+  if (score.excused === true) return true;
+  if (score.totalPointsEarned !== undefined) return true;
+  if (!score.sectionScores) return false;
+  return score.sectionScores.some(
+    (section) =>
+      section.pointsEarned !== undefined ||
+      section.selectedLevelKey !== undefined ||
+      (section.checkedItemKeys !== undefined && section.checkedItemKeys.length > 0),
+  );
+}
+
 /**
  * List assignments for a class with hand-in stats scoped to the viewer's audience.
  */
@@ -776,15 +798,27 @@ export const list = classQuery({
             excused: boolean;
           }>
         | undefined;
-      if (audience.scope === "personal" && doc.scoresReleased === true) {
+      let viewerScoreStates:
+        | Array<{
+            studentUserId: Id<"users">;
+            graded: boolean;
+            excused: boolean;
+          }>
+        | undefined;
+      if (audience.scope === "personal") {
         // eslint-disable-next-line @convex-dev/no-collect-in-query -- assignment-scoped scores
         const scores = await ctx.db
           .query("assignmentScores")
           .withIndex("by_assignment", (q) => q.eq("assignmentId", doc._id))
           .collect();
-        viewerReleasedScores = scores
-          .filter((score) => studentSet.has(score.studentUserId))
-          .map((score) => ({
+        const audienceScores = scores.filter((score) => studentSet.has(score.studentUserId));
+        viewerScoreStates = audienceScores.map((score) => ({
+          studentUserId: score.studentUserId,
+          graded: isAssignmentScoreGraded(score),
+          excused: score.excused === true,
+        }));
+        if (doc.scoresReleased === true) {
+          viewerReleasedScores = audienceScores.map((score) => ({
             studentUserId: score.studentUserId,
             ...(score.totalPointsEarned !== undefined
               ? { totalPointsEarned: score.totalPointsEarned }
@@ -792,16 +826,19 @@ export const list = classQuery({
             ...(score.sectionScores !== undefined ? { sectionScores: score.sectionScores } : {}),
             excused: score.excused === true,
           }));
+        }
       }
 
       result.push({
         ...toPublicAssignmentBase(doc),
         handedInStudentCount: handedInStudents.size,
+        handedInStudentIds: [...handedInStudents],
         studentCount,
         linkCount: audienceLinks.length,
         hasInstructions: hasInstructions(doc),
         hasProcedure: hasProcedure(doc),
         ...(viewerReleasedScores !== undefined ? { viewerReleasedScores } : {}),
+        ...(viewerScoreStates !== undefined ? { viewerScoreStates } : {}),
       });
     }
     return result;
@@ -1173,6 +1210,11 @@ export const remove = classMutation({
       .query("tasks")
       .withIndex("by_assignmentId", (q) => q.eq("assignmentId", args.assignmentId))
       .collect();
+    const linkedTaskIds = linkedTasks.map((task) => task._id);
+    await stripAgendaResourceReferences(ctx, classId, {
+      assignmentIds: [args.assignmentId],
+      taskIds: linkedTaskIds,
+    });
     for (const task of linkedTasks) {
       await deleteTaskWithCompletions(ctx, task._id);
     }

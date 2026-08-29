@@ -33,6 +33,46 @@ export function isAssignmentPastDue(
   return isPastDue(dueDateKey, now);
 }
 
+/** True when this student has at least one handed-in link on the assignment. */
+export function isStudentAssignmentHandedIn(
+  assignment: {
+    handedInStudentIds?: readonly string[];
+    handedInStudentCount: number;
+    studentCount: number;
+  },
+  studentUserId: string,
+): boolean {
+  if (assignment.handedInStudentIds) {
+    return assignment.handedInStudentIds.includes(studentUserId);
+  }
+  return assignment.studentCount === 1 && assignment.handedInStudentCount > 0;
+}
+
+export type AssignmentViewerScoreState = {
+  studentUserId: string;
+  graded: boolean;
+  excused: boolean;
+};
+
+export type AssignmentGradingStatus = "notGraded" | "gradedNotReleased" | "released";
+
+/** Personal-audience grading badge. Undefined for staff (no viewerScoreStates). */
+export function assignmentGradingStatusForStudent(
+  assignment: {
+    scoresReleased: boolean;
+    viewerScoreStates?: readonly AssignmentViewerScoreState[];
+  },
+  studentUserId?: string,
+): AssignmentGradingStatus | undefined {
+  if (assignment.viewerScoreStates === undefined) return undefined;
+  if (assignment.scoresReleased) return "released";
+  if (studentUserId) {
+    const state = assignment.viewerScoreStates.find((row) => row.studentUserId === studentUserId);
+    return state?.graded ? "gradedNotReleased" : "notGraded";
+  }
+  return assignment.viewerScoreStates.some((row) => row.graded) ? "gradedNotReleased" : "notGraded";
+}
+
 export const MAX_ASSIGNMENT_NAME_LENGTH = 100;
 export const MAX_ASSIGNMENT_SUBJECT_LENGTH = 100;
 export const MAX_ASSIGNMENT_UNIT_LENGTH = 100;

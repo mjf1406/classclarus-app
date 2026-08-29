@@ -80,6 +80,13 @@ describe("currentLesson", () => {
     expect(findCurrentSlot(slots, thursday930)?._id).toBe("2");
   });
 
+  test("findCurrentSlot uses the class timezone instead of UTC", () => {
+    const slots = [{ _id: "sat", day: "Saturday", startTime: "16:00", endTime: "20:30" }];
+    const utcMorning = new Date("2026-08-29T09:03:00.000Z");
+    expect(findCurrentSlot(slots, utcMorning, "Asia/Seoul")?._id).toBe("sat");
+    expect(findCurrentSlot(slots, utcMorning, "UTC")).toBeNull();
+  });
+
   test("resolveCurrentLesson matches week lesson", () => {
     const slots = [{ _id: "slot1", day: "Thursday", startTime: "09:00", endTime: "09:30" }];
     const now = new Date("2026-01-15T09:10:00");

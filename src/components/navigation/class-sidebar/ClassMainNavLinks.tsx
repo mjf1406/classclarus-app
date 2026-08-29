@@ -472,6 +472,7 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
       {
         labelKey: "navGroupClassroom",
         routes: [
+          "/class/$classId/classroom-screen",
           "/class/$classId/groups",
           "/class/$classId/assigners/seats",
           "/class/$classId/assigners/random",

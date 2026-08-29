@@ -1,6 +1,6 @@
 import type { Id } from "../../../convex/_generated/dataModel";
 import type {
-  LessonLinkFormValues,
+  TimetableLesson,
   TimetableSlot,
   TimetableWeekBundle,
 } from "@/lib/timetable/timetable";
@@ -20,6 +20,40 @@ export function getMirrorTargetSlotIds(
   return getLinkedSlotIds(sourceSlotId, slots as Array<SlotLinkLike>);
 }
 
+function toLessonLinkLike(lesson: TimetableLesson): LessonLinkLike {
+  return {
+    _id: lesson._id,
+    slotId: lesson.slotId,
+    subjectId: lesson.subjectId,
+    year: lesson.year,
+    weekNumber: lesson.weekNumber,
+    complete: lesson.complete,
+    materials: lesson.materials,
+    announcements: lesson.announcements,
+    agenda: lesson.agenda,
+  };
+}
+
+function applyOpToLesson(
+  lesson: TimetableLesson,
+  op: {
+    materials: TimetableLesson["materials"];
+    announcements: TimetableLesson["announcements"];
+    agenda: TimetableLesson["agenda"];
+    complete: boolean;
+  },
+  now: number,
+): TimetableLesson {
+  return {
+    ...lesson,
+    materials: op.materials,
+    announcements: op.announcements,
+    agenda: op.agenda,
+    complete: op.complete,
+    updatedAt: now,
+  };
+}
+
 export function mirrorLessonsInBundle(
   bundle: TimetableWeekBundle,
   _sourceSlotId: Id<"timetableSlots">,
@@ -30,7 +64,7 @@ export function mirrorLessonsInBundle(
   const ops = buildMirrorLessonOps(
     change,
     bundle.slots as Array<SlotLinkLike>,
-    bundle.lessons as Array<LessonLinkLike>,
+    bundle.lessons.map(toLessonLinkLike),
     year,
     weekNumber,
   );
@@ -51,26 +85,20 @@ export function mirrorLessonsInBundle(
         subjectId: op.subjectId,
         year,
         weekNumber,
-        notesJson: op.notesJson,
         complete: op.complete,
-        links: op.links as Array<LessonLinkFormValues>,
+        materials: op.materials,
+        announcements: op.announcements,
+        agenda: op.agenda,
         createdAt: now,
         updatedAt: now,
         subject,
+        upcomingEvents: [],
       });
       continue;
     }
     if (op.op === "updateLesson") {
       nextLessons = nextLessons.map((lesson) =>
-        lesson._id === op.lessonId
-          ? {
-              ...lesson,
-              notesJson: op.notesJson,
-              complete: op.complete,
-              links: op.links as Array<LessonLinkFormValues>,
-              updatedAt: now,
-            }
-          : lesson,
+        lesson._id === op.lessonId ? applyOpToLesson(lesson, op, now) : lesson,
       );
       continue;
     }
@@ -91,7 +119,7 @@ export function applyOptimisticLinkMembership(
     sourceSlotId,
     selectedSlotIds,
     slots: bundle.slots as Array<SlotLinkLike>,
-    lessons: bundle.lessons as Array<LessonLinkLike>,
+    lessons: bundle.lessons.map(toLessonLinkLike),
     year,
     weekNumber,
   });
@@ -124,25 +152,19 @@ export function applyOptimisticLinkMembership(
             subjectId: op.subjectId,
             year,
             weekNumber,
-            notesJson: op.notesJson,
             complete: op.complete,
-            links: op.links as Array<LessonLinkFormValues>,
+            materials: op.materials,
+            announcements: op.announcements,
+            agenda: op.agenda,
             createdAt: now,
             updatedAt: now,
             subject,
+            upcomingEvents: [],
           },
         ];
       } else if (op.op === "updateLesson") {
         nextLessons = nextLessons.map((lesson) =>
-          lesson._id === op.lessonId
-            ? {
-                ...lesson,
-                notesJson: op.notesJson,
-                complete: op.complete,
-                links: op.links as Array<LessonLinkFormValues>,
-                updatedAt: now,
-              }
-            : lesson,
+          lesson._id === op.lessonId ? applyOpToLesson(lesson, op, now) : lesson,
         );
       }
     }

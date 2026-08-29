@@ -4,19 +4,35 @@ import type { Doc, Id } from "./_generated/dataModel.js";
 import type { MutationCtx } from "./_generated/server.js";
 import { recordClassActivity } from "./lib/activity/classActivity.js";
 import { classMutation, classQuery } from "./lib/auth/customFunctions.js";
+import { isValidTimeZone } from "./lib/calendar/timeZone.js";
 import {
-  lessonLinkValidator,
+  agendaItemValidator,
+  calendarAudienceRoleValidator,
+  collectItemTags,
+  copySubjectDefaults,
+  lessonSectionsEqual,
+  MAX_TAG_DICTIONARY,
+  normalizeAgendaItems,
+  normalizeCalendarAudienceRoles,
+  normalizeSectionItems,
+  sectionItemValidator,
+  upsertClassTags,
+} from "./lib/timetable/sectionItems.js";
+import {
+  lessonDateKeyFromSlot,
+  selectUpcomingLessonEvents,
+  upcomingLessonEventValidator,
+  type LessonEventSource,
+} from "./lib/timetable/lessonEvents.js";
+import {
   normalizeDateRange,
   normalizeDays,
   normalizeHexColor,
-  normalizeLessonLinks,
-  normalizeOptionalNotesJson,
   normalizeSlotTimes,
   normalizeSubjectName,
   normalizeTermName,
   normalizeTimeRange,
   termKindValidator,
-  type LessonLinkInput,
 } from "./lib/timetable/timetableSchema.js";
 import {
   timetableSlotFormSchemaEn,
@@ -75,7 +91,10 @@ const subjectValidator = v.object({
   bgColor: v.string(),
   textColor: v.string(),
   iconName: v.optional(v.string()),
-  defaultNotesJson: v.optional(v.string()),
+  defaultMaterials: v.array(sectionItemValidator),
+  defaultAnnouncements: v.array(sectionItemValidator),
+  defaultAgenda: v.array(agendaItemValidator),
+  calendarAudienceRoles: v.array(v.string()),
   createdAt: v.number(),
   updatedAt: v.number(),
 });
@@ -89,12 +108,14 @@ const lessonValidator = v.object({
   subjectId: v.id("timetableSubjects"),
   year: v.number(),
   weekNumber: v.number(),
-  notesJson: v.optional(v.string()),
   complete: v.boolean(),
-  links: v.array(lessonLinkValidator),
+  materials: v.array(sectionItemValidator),
+  announcements: v.array(sectionItemValidator),
+  agenda: v.array(agendaItemValidator),
   createdAt: v.number(),
   updatedAt: v.number(),
   subject: subjectValidator,
+  upcomingEvents: v.array(upcomingLessonEventValidator),
 });
 
 const weekBundleValidator = v.object({
@@ -185,6 +206,46 @@ async function listWeekLessonsForTerm(
     .collect();
 }
 
+function toSubjectDto(subject: Doc<"timetableSubjects">) {
+  return {
+    _id: subject._id,
+    _creationTime: subject._creationTime,
+    classId: subject.classId,
+    name: subject.name,
+    bgColor: subject.bgColor,
+    textColor: subject.textColor,
+    iconName: subject.iconName,
+    defaultMaterials: subject.defaultMaterials ?? [],
+    defaultAnnouncements: subject.defaultAnnouncements ?? [],
+    defaultAgenda: subject.defaultAgenda ?? [],
+    calendarAudienceRoles: subject.calendarAudienceRoles ?? ["student"],
+    createdAt: subject.createdAt,
+    updatedAt: subject.updatedAt,
+  };
+}
+
+function toLessonLinkLike(lesson: Doc<"timetableLessons">): LessonLinkLike {
+  return {
+    _id: lesson._id,
+    slotId: lesson.slotId,
+    subjectId: lesson.subjectId,
+    year: lesson.year,
+    weekNumber: lesson.weekNumber,
+    complete: lesson.complete,
+    materials: lesson.materials ?? [],
+    announcements: lesson.announcements ?? [],
+    agenda: lesson.agenda ?? [],
+  };
+}
+
+function lessonSectionsFromDoc(lesson: Doc<"timetableLessons">) {
+  return {
+    materials: lesson.materials ?? [],
+    announcements: lesson.announcements ?? [],
+    agenda: lesson.agenda ?? [],
+  };
+}
+
 async function applyMirrorLessonOps(
   ctx: MutationCtx,
   classId: Id<"classes">,
@@ -203,9 +264,11 @@ async function applyMirrorLessonOps(
         subjectId: op.subjectId,
         year,
         weekNumber,
-        notesJson: op.notesJson,
         complete: op.complete,
-        links: op.links,
+        links: [],
+        materials: op.materials,
+        announcements: op.announcements,
+        agenda: op.agenda,
         createdAt: now,
         updatedAt: now,
       });
@@ -213,9 +276,12 @@ async function applyMirrorLessonOps(
     }
     if (op.op === "updateLesson") {
       await ctx.db.patch("timetableLessons", op.lessonId, {
-        notesJson: op.notesJson,
         complete: op.complete,
-        links: op.links,
+        links: [],
+        materials: op.materials,
+        announcements: op.announcements,
+        agenda: op.agenda,
+        notesJson: undefined,
         updatedAt: now,
       });
       continue;
@@ -237,7 +303,7 @@ async function mirrorLessonChange(
   const ops = buildMirrorLessonOps(
     change,
     slots as Array<SlotLinkLike>,
-    lessons as Array<LessonLinkLike>,
+    lessons.map(toLessonLinkLike),
     year,
     weekNumber,
   );
@@ -280,7 +346,8 @@ export const getWeekBundle = classQuery({
       .withIndex("by_classId", (q) => q.eq("classId", ctx.classDoc._id))
       .collect();
 
-    const subjectById = new Map(subjects.map((s) => [s._id, s]));
+    const subjectDtos = subjects.map(toSubjectDto);
+    const subjectById = new Map(subjectDtos.map((s) => [s._id, s]));
 
     // eslint-disable-next-line @convex-dev/no-collect-in-query -- week-bounded lessons
     const lessonRows = await ctx.db
@@ -290,11 +357,58 @@ export const getWeekBundle = classQuery({
       )
       .collect();
 
+    const timeZone =
+      ctx.classDoc.timezone && isValidTimeZone(ctx.classDoc.timezone)
+        ? ctx.classDoc.timezone
+        : "UTC";
+    // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded calendar list
+    const calendarDocs = (await ctx.db
+      .query("calendarEvents")
+      .withIndex("by_classId", (q) => q.eq("classId", ctx.classDoc._id))
+      .collect()) as Array<LessonEventSource>;
+
+    const eventCache = new Map<string, ReturnType<typeof selectUpcomingLessonEvents>>();
+    const slotById = new Map(slots.map((slot) => [slot._id, slot]));
+
     const lessons = lessonRows
       .map((lesson) => {
         const subject = subjectById.get(lesson.subjectId);
         if (!subject) return null;
-        return { ...lesson, subject };
+        const slot = slotById.get(lesson.slotId);
+        const dateKey = slot
+          ? lessonDateKeyFromSlot(lesson.year, lesson.weekNumber, slot.day)
+          : null;
+        const cacheKey = `${dateKey ?? ""}|${subject.calendarAudienceRoles.join(",")}`;
+        let upcomingEvents = eventCache.get(cacheKey);
+        if (!upcomingEvents) {
+          upcomingEvents = dateKey
+            ? selectUpcomingLessonEvents(
+                calendarDocs,
+                dateKey,
+                timeZone,
+                subject.calendarAudienceRoles,
+              )
+            : [];
+          eventCache.set(cacheKey, upcomingEvents);
+        }
+        return {
+          _id: lesson._id,
+          _creationTime: lesson._creationTime,
+          classId: lesson.classId,
+          termId: lesson.termId,
+          slotId: lesson.slotId,
+          subjectId: lesson.subjectId,
+          year: lesson.year,
+          weekNumber: lesson.weekNumber,
+          complete: lesson.complete,
+          materials: lesson.materials ?? [],
+          announcements: lesson.announcements ?? [],
+          agenda: lesson.agenda ?? [],
+          createdAt: lesson.createdAt,
+          updatedAt: lesson.updatedAt,
+          subject,
+          upcomingEvents,
+        };
       })
       .filter((row): row is NonNullable<typeof row> => row !== null);
 
@@ -312,10 +426,33 @@ export const getWeekBundle = classQuery({
     return {
       term,
       slots,
-      subjects,
+      subjects: subjectDtos,
       lessons,
       disabledSlotIds,
     };
+  },
+});
+
+export const listTags = classQuery({
+  args: {},
+  returns: v.array(
+    v.object({
+      tag: v.string(),
+      display: v.string(),
+    }),
+  ),
+  handler: async (ctx) => {
+    await ctx.require("timetable:read");
+    // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded tag dictionary
+    const rows = await ctx.db
+      .query("timetableTags")
+      .withIndex("by_classId", (q) => q.eq("classId", ctx.classDoc._id))
+      .collect();
+    return rows
+      .slice()
+      .sort((a, b) => a.display.localeCompare(b.display))
+      .slice(0, MAX_TAG_DICTIONARY)
+      .map((row) => ({ tag: row.tag, display: row.display }));
   },
 });
 
@@ -653,17 +790,41 @@ export const createSubject = classMutation({
     bgColor: v.string(),
     textColor: v.string(),
     iconName: v.optional(v.string()),
-    defaultNotesJson: v.optional(v.string()),
+    defaultMaterials: v.optional(v.array(sectionItemValidator)),
+    defaultAnnouncements: v.optional(v.array(sectionItemValidator)),
+    defaultAgenda: v.optional(v.array(agendaItemValidator)),
+    calendarAudienceRoles: v.optional(v.array(calendarAudienceRoleValidator)),
   },
   returns: v.id("timetableSubjects"),
   handler: async (ctx, args) => {
     await ctx.require("timetable:manage");
-    const parsed = timetableSubjectFormSchemaEn.safeParse(args);
+    const parsed = timetableSubjectFormSchemaEn.safeParse({
+      name: args.name,
+      bgColor: args.bgColor,
+      textColor: args.textColor,
+      iconName: args.iconName,
+      defaultMaterials: args.defaultMaterials ?? [],
+      defaultAnnouncements: args.defaultAnnouncements ?? [],
+      defaultAgenda: args.defaultAgenda ?? [],
+      calendarAudienceRoles: args.calendarAudienceRoles ?? ["student"],
+    });
     if (!parsed.success) {
       throw new Error(parsed.error.issues[0]?.message ?? "Invalid input");
     }
     const name = normalizeSubjectName(parsed.data.name);
-    const defaultNotesJson = normalizeOptionalNotesJson(parsed.data.defaultNotesJson);
+    const defaultMaterials = normalizeSectionItems(parsed.data.defaultMaterials);
+    const defaultAnnouncements = normalizeSectionItems(parsed.data.defaultAnnouncements);
+    const defaultAgenda = await normalizeAgendaItems(
+      ctx,
+      ctx.classDoc._id,
+      parsed.data.defaultAgenda,
+    );
+    const calendarAudienceRoles = normalizeCalendarAudienceRoles(parsed.data.calendarAudienceRoles);
+    await upsertClassTags(ctx, ctx.classDoc._id, [
+      ...collectItemTags(defaultMaterials),
+      ...collectItemTags(defaultAnnouncements),
+      ...collectItemTags(defaultAgenda),
+    ]);
     const now = Date.now();
     const subjectId = await ctx.db.insert("timetableSubjects", {
       classId: ctx.classDoc._id,
@@ -671,7 +832,10 @@ export const createSubject = classMutation({
       bgColor: normalizeHexColor(parsed.data.bgColor, "#6366f1"),
       textColor: normalizeHexColor(parsed.data.textColor, "#ffffff"),
       iconName: parsed.data.iconName?.trim() || undefined,
-      ...(defaultNotesJson ? { defaultNotesJson } : {}),
+      defaultMaterials,
+      defaultAnnouncements,
+      defaultAgenda,
+      calendarAudienceRoles,
       createdAt: now,
       updatedAt: now,
     });
@@ -696,7 +860,10 @@ export const updateSubject = classMutation({
     bgColor: v.string(),
     textColor: v.string(),
     iconName: v.optional(v.string()),
-    defaultNotesJson: v.optional(v.string()),
+    defaultMaterials: v.optional(v.array(sectionItemValidator)),
+    defaultAnnouncements: v.optional(v.array(sectionItemValidator)),
+    defaultAgenda: v.optional(v.array(agendaItemValidator)),
+    calendarAudienceRoles: v.optional(v.array(calendarAudienceRoleValidator)),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -707,19 +874,38 @@ export const updateSubject = classMutation({
       bgColor: args.bgColor,
       textColor: args.textColor,
       iconName: args.iconName,
-      defaultNotesJson: args.defaultNotesJson,
+      defaultMaterials: args.defaultMaterials ?? [],
+      defaultAnnouncements: args.defaultAnnouncements ?? [],
+      defaultAgenda: args.defaultAgenda ?? [],
+      calendarAudienceRoles: args.calendarAudienceRoles ?? ["student"],
     });
     if (!parsed.success) {
       throw new Error(parsed.error.issues[0]?.message ?? "Invalid input");
     }
     const name = normalizeSubjectName(parsed.data.name);
-    const defaultNotesJson = normalizeOptionalNotesJson(parsed.data.defaultNotesJson);
+    const defaultMaterials = normalizeSectionItems(parsed.data.defaultMaterials);
+    const defaultAnnouncements = normalizeSectionItems(parsed.data.defaultAnnouncements);
+    const defaultAgenda = await normalizeAgendaItems(
+      ctx,
+      ctx.classDoc._id,
+      parsed.data.defaultAgenda,
+    );
+    const calendarAudienceRoles = normalizeCalendarAudienceRoles(parsed.data.calendarAudienceRoles);
+    await upsertClassTags(ctx, ctx.classDoc._id, [
+      ...collectItemTags(defaultMaterials),
+      ...collectItemTags(defaultAnnouncements),
+      ...collectItemTags(defaultAgenda),
+    ]);
     await ctx.db.patch("timetableSubjects", args.subjectId, {
       name,
       bgColor: normalizeHexColor(parsed.data.bgColor, "#6366f1"),
       textColor: normalizeHexColor(parsed.data.textColor, "#ffffff"),
       iconName: parsed.data.iconName?.trim() || undefined,
-      defaultNotesJson,
+      defaultMaterials,
+      defaultAnnouncements,
+      defaultAgenda,
+      calendarAudienceRoles,
+      defaultNotesJson: undefined,
       updatedAt: Date.now(),
     });
     await recordClassActivity(ctx, {
@@ -774,9 +960,10 @@ export const upsertLesson = classMutation({
     subjectId: v.id("timetableSubjects"),
     year: v.number(),
     weekNumber: v.number(),
-    notesJson: v.optional(v.string()),
     complete: v.boolean(),
-    links: v.array(lessonLinkValidator),
+    materials: v.array(sectionItemValidator),
+    announcements: v.array(sectionItemValidator),
+    agenda: v.array(agendaItemValidator),
   },
   returns: v.id("timetableLessons"),
   handler: async (ctx, args) => {
@@ -784,15 +971,18 @@ export const upsertLesson = classMutation({
     await assertTermBelongsToClass(ctx, ctx.classDoc._id, args.termId);
     const slot = await assertSlotBelongsToClass(ctx, ctx.classDoc._id, args.slotId);
     if (slot.termId !== args.termId) throw new Error("Slot does not belong to this term");
-    await assertSubjectBelongsToClass(ctx, ctx.classDoc._id, args.subjectId);
+    const subject = await assertSubjectBelongsToClass(ctx, ctx.classDoc._id, args.subjectId);
 
-    const notesJson = normalizeOptionalNotesJson(args.notesJson);
-    const links = await normalizeLessonLinks(
-      ctx,
-      ctx.classDoc._id,
-      args.links as Array<LessonLinkInput>,
-    );
+    const materials = normalizeSectionItems(args.materials);
+    const announcements = normalizeSectionItems(args.announcements);
+    const agenda = await normalizeAgendaItems(ctx, ctx.classDoc._id, args.agenda);
+    await upsertClassTags(ctx, ctx.classDoc._id, [
+      ...collectItemTags(materials),
+      ...collectItemTags(announcements),
+      ...collectItemTags(agenda),
+    ]);
     const now = Date.now();
+    const sections = { materials, announcements, agenda };
 
     // eslint-disable-next-line @convex-dev/no-collect-in-query -- slot-week lessons are few
     const existingRows = await ctx.db
@@ -804,21 +994,34 @@ export const upsertLesson = classMutation({
     const existing = existingRows.find((row) => row.subjectId === args.subjectId);
 
     if (existing) {
+      const contentChanged = !lessonSectionsEqual(lessonSectionsFromDoc(existing), sections);
       await ctx.db.patch("timetableLessons", existing._id, {
-        notesJson: notesJson || undefined,
         complete: args.complete,
-        links,
+        links: [],
+        notesJson: undefined,
+        ...sections,
         updatedAt: now,
       });
       await mirrorLessonChange(ctx, ctx.classDoc._id, args.termId, args.year, args.weekNumber, {
         type: "update",
         sourceLesson: {
-          ...existing,
-          notesJson: notesJson || undefined,
+          ...toLessonLinkLike(existing),
+          ...sections,
           complete: args.complete,
-          links,
         },
       });
+      if (contentChanged) {
+        await recordClassActivity(ctx, {
+          classId: ctx.classDoc._id,
+          actorUserId: ctx.userId,
+          action: "update",
+          resourceType: "timetableLesson",
+          resourceId: existing._id,
+          summary: `Updated timetable lesson for "${subject.name}"`,
+          summaryKey: "activitySummary_updatedTimetableLesson",
+          metadata: { name: subject.name },
+        });
+      }
       return existing._id;
     }
 
@@ -829,9 +1032,9 @@ export const upsertLesson = classMutation({
       subjectId: args.subjectId,
       year: args.year,
       weekNumber: args.weekNumber,
-      notesJson: notesJson || undefined,
       complete: args.complete,
-      links,
+      links: [],
+      ...sections,
       createdAt: now,
       updatedAt: now,
     });
@@ -839,9 +1042,18 @@ export const upsertLesson = classMutation({
       type: "add",
       sourceSlotId: args.slotId,
       subjectId: args.subjectId,
-      notesJson: notesJson || undefined,
       complete: args.complete,
-      links,
+      ...sections,
+    });
+    await recordClassActivity(ctx, {
+      classId: ctx.classDoc._id,
+      actorUserId: ctx.userId,
+      action: "write",
+      resourceType: "timetableLesson",
+      resourceId: lessonId,
+      summary: `Added timetable lesson for "${subject.name}"`,
+      summaryKey: "activitySummary_addedTimetableLesson",
+      metadata: { name: subject.name },
     });
     return lessonId;
   },
@@ -873,7 +1085,7 @@ export const addLessonToSlot = classMutation({
     const existing = existingRows.find((row) => row.subjectId === args.subjectId);
     if (existing) return existing._id;
 
-    const notesJson = normalizeOptionalNotesJson(subject.defaultNotesJson);
+    const sections = copySubjectDefaults(subject);
     const now = Date.now();
     const lessonId = await ctx.db.insert("timetableLessons", {
       classId: ctx.classDoc._id,
@@ -882,9 +1094,9 @@ export const addLessonToSlot = classMutation({
       subjectId: args.subjectId,
       year: args.year,
       weekNumber: args.weekNumber,
-      ...(notesJson ? { notesJson } : {}),
       complete: false,
       links: [],
+      ...sections,
       createdAt: now,
       updatedAt: now,
     });
@@ -892,9 +1104,18 @@ export const addLessonToSlot = classMutation({
       type: "add",
       sourceSlotId: args.slotId,
       subjectId: args.subjectId,
-      notesJson,
       complete: false,
-      links: [],
+      ...sections,
+    });
+    await recordClassActivity(ctx, {
+      classId: ctx.classDoc._id,
+      actorUserId: ctx.userId,
+      action: "write",
+      resourceType: "timetableLesson",
+      resourceId: lessonId,
+      summary: `Added timetable lesson for "${subject.name}"`,
+      summaryKey: "activitySummary_addedTimetableLesson",
+      metadata: { name: subject.name },
     });
     return lessonId;
   },
@@ -911,9 +1132,20 @@ export const removeLesson = classMutation({
     }
     await mirrorLessonChange(ctx, ctx.classDoc._id, lesson.termId, lesson.year, lesson.weekNumber, {
       type: "delete",
-      sourceLesson: lesson,
+      sourceLesson: toLessonLinkLike(lesson),
     });
     await ctx.db.delete("timetableLessons", args.lessonId);
+    const subject = await ctx.db.get("timetableSubjects", lesson.subjectId);
+    await recordClassActivity(ctx, {
+      classId: ctx.classDoc._id,
+      actorUserId: ctx.userId,
+      action: "delete",
+      resourceType: "timetableLesson",
+      resourceId: args.lessonId,
+      summary: `Removed timetable lesson for "${subject?.name ?? "subject"}"`,
+      summaryKey: "activitySummary_deletedTimetableLesson",
+      metadata: { name: subject?.name ?? "subject" },
+    });
     return null;
   },
 });
@@ -984,7 +1216,7 @@ export const syncSlotLinks = classMutation({
       sourceSlotId: args.sourceSlotId,
       selectedSlotIds: args.selectedSlotIds,
       slots: slots as Array<SlotLinkLike>,
-      lessons: lessons as Array<LessonLinkLike>,
+      lessons: lessons.map(toLessonLinkLike),
       year: args.year,
       weekNumber: args.weekNumber,
     });
@@ -1159,19 +1391,28 @@ export const importFromClass = classMutation({
           bgColor: subject.bgColor,
           textColor: subject.textColor,
           iconName: subject.iconName,
-          defaultNotesJson: subject.defaultNotesJson,
+          defaultMaterials: subject.defaultMaterials,
+          defaultAnnouncements: subject.defaultAnnouncements,
+          defaultAgenda: subject.defaultAgenda,
+          calendarAudienceRoles: subject.calendarAudienceRoles,
         })),
         existingSubjects.map((subject) => subject.name),
       );
       for (const subject of planned) {
-        const defaultNotesJson = normalizeOptionalNotesJson(subject.defaultNotesJson);
+        const defaultMaterials = normalizeSectionItems(subject.defaultMaterials);
+        const defaultAnnouncements = normalizeSectionItems(subject.defaultAnnouncements);
+        const defaultAgenda = await normalizeAgendaItems(ctx, targetClassId, subject.defaultAgenda);
+        const calendarAudienceRoles = normalizeCalendarAudienceRoles(subject.calendarAudienceRoles);
         await ctx.db.insert("timetableSubjects", {
           classId: targetClassId,
           name: normalizeSubjectName(subject.name),
           bgColor: normalizeHexColor(subject.bgColor, "#6366f1"),
           textColor: normalizeHexColor(subject.textColor, "#ffffff"),
           iconName: subject.iconName?.trim() || undefined,
-          ...(defaultNotesJson ? { defaultNotesJson } : {}),
+          defaultMaterials,
+          defaultAnnouncements,
+          defaultAgenda,
+          calendarAudienceRoles,
           createdAt: now,
           updatedAt: now,
         });

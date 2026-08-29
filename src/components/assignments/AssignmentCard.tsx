@@ -3,6 +3,7 @@ import { ClipboardPen, Eye, Pencil, Trash2 } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
+import { AssignmentGradingStatusBadge } from "@/components/assignments/AssignmentGradingStatusBadge";
 import { ActionMenu, type ActionMenuItem } from "@/components/ui/action-menu";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -21,7 +22,11 @@ import {
   formatScoreFraction,
   formatScorePercent,
 } from "@/lib/assignments/assignmentScores";
-import { isAssignmentPastDue, type AssignmentListItem } from "@/lib/assignments/assignments";
+import {
+  assignmentGradingStatusForStudent,
+  isAssignmentPastDue,
+  type AssignmentListItem,
+} from "@/lib/assignments/assignments";
 import { cn } from "@/lib/utils";
 import type { Id } from "../../../convex/_generated/dataModel";
 
@@ -169,6 +174,9 @@ export function AssignmentCard({ classId, assignment, onDelete }: AssignmentCard
           </p>
         ) : null}
         <div className="flex flex-wrap gap-1.5">
+          {personalView ? (
+            <AssignmentGradingStatusBadge status={assignmentGradingStatusForStudent(assignment)} />
+          ) : null}
           {assignment.hasInstructions ? (
             <Badge variant="secondary">{t("badgeInstructions")}</Badge>
           ) : null}

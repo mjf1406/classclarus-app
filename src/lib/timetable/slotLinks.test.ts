@@ -33,7 +33,9 @@ const lessons: Array<LessonLinkLike> = [
     year: 2026,
     weekNumber: 10,
     complete: false,
-    links: [],
+    materials: [],
+    announcements: [],
+    agenda: [],
   },
   {
     _id: lessonId("l-b-math"),
@@ -41,9 +43,10 @@ const lessons: Array<LessonLinkLike> = [
     subjectId: subjectId("math"),
     year: 2026,
     weekNumber: 10,
-    notesJson: '{"type":"doc"}',
     complete: true,
-    links: [{ key: "k1", kind: "url", url: "https://example.com" }],
+    materials: [{ key: "k1", text: "https://example.com", tags: [] }],
+    announcements: [],
+    agenda: [],
   },
 ];
 
@@ -66,7 +69,9 @@ describe("buildMirrorLessonOps", () => {
         sourceSlotId: slotId("a"),
         subjectId: subjectId("math"),
         complete: false,
-        links: [],
+        materials: [],
+        announcements: [],
+        agenda: [],
       },
       slots,
       lessons,
@@ -78,7 +83,9 @@ describe("buildMirrorLessonOps", () => {
         op: "updateLesson",
         lessonId: lessonId("l-b-math"),
         complete: false,
-        links: [],
+        materials: [],
+        announcements: [],
+        agenda: [],
       },
     ]);
   });

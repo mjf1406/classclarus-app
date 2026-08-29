@@ -1,11 +1,16 @@
 import { createLinkGroupId } from "./slotLinks.js";
 
+import type { AgendaItem, SectionItem } from "./sectionItems.js";
+
 export type ImportableSubject = {
   name: string;
   bgColor: string;
   textColor: string;
   iconName?: string;
-  defaultNotesJson?: string;
+  defaultMaterials?: Array<SectionItem>;
+  defaultAnnouncements?: Array<SectionItem>;
+  defaultAgenda?: Array<AgendaItem>;
+  calendarAudienceRoles?: Array<string>;
 };
 
 export type ImportableSlot = {

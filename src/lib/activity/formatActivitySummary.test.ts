@@ -14,6 +14,7 @@ const STRINGS: Record<string, string> = {
   activitySummary_setStudentLanguage: "Set student language to {{language}}",
   activitySummary_createdGroup: 'Created group "{{name}}"',
   activitySummary_createdCalendarEvent: 'Created calendar event "{{name}}"',
+  activitySummary_updatedTimetableLesson: 'Updated timetable lesson for "{{name}}"',
   activitySummary_setTimezone: "Set class time zone to {{timezone}}",
   activitySummary_viewedClass: 'Viewed class "{{name}}"',
   activitySummary_viewedActivityLog: "Viewed activity log",
@@ -119,5 +120,15 @@ describe("formatActivitySummary", () => {
         t,
       ),
     ).toBe('Created calendar event "Field trip"');
+    expect(
+      formatActivitySummary(
+        {
+          summary: 'Updated timetable lesson for "Math"',
+          summaryKey: "activitySummary_updatedTimetableLesson",
+          metadata: { name: "Math" },
+        },
+        t,
+      ),
+    ).toBe('Updated timetable lesson for "Math"');
   });
 });

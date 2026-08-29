@@ -30,6 +30,8 @@ type AssignmentInstructionsEditorProps = {
   className?: string;
   placeholder?: string;
   onSubmit?: () => void;
+  /** Fill the parent height and scroll the document instead of growing with content. */
+  fillHeight?: boolean;
 };
 
 export function AssignmentInstructionsEditor({
@@ -39,6 +41,7 @@ export function AssignmentInstructionsEditor({
   className,
   placeholder,
   onSubmit,
+  fillHeight = false,
 }: AssignmentInstructionsEditorProps) {
   const { t } = useTranslation("assignments");
   const onSubmitRef = useRef(onSubmit);
@@ -59,7 +62,11 @@ export function AssignmentInstructionsEditor({
     },
     editorProps: {
       attributes: {
-        class: announcementBodyClassName("min-h-40 px-3 py-2 focus:outline-none"),
+        class: announcementBodyClassName(
+          fillHeight
+            ? "min-h-full px-3 py-2 focus:outline-none"
+            : "min-h-40 px-3 py-2 focus:outline-none",
+        ),
       },
     },
   });
@@ -97,7 +104,13 @@ export function AssignmentInstructionsEditor({
 
   if (!editor) {
     return (
-      <div className={cn("min-h-52 rounded-lg border border-input bg-background", className)} />
+      <div
+        className={cn(
+          "min-h-52 rounded-lg border border-input bg-background",
+          fillHeight && "h-full min-h-0",
+          className,
+        )}
+      />
     );
   }
 
@@ -105,6 +118,7 @@ export function AssignmentInstructionsEditor({
     <div
       className={cn(
         "overflow-hidden rounded-lg border border-input bg-background focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50",
+        fillHeight && "flex h-full min-h-0 flex-col",
         disabled && "opacity-60",
         className,
       )}
@@ -112,7 +126,7 @@ export function AssignmentInstructionsEditor({
         handleNotesSubmitKeyDown(event, onSubmitRef.current, disabledRef.current);
       }}
     >
-      <div className="flex flex-wrap items-center gap-0.5 border-b border-border px-1 py-1">
+      <div className="flex shrink-0 flex-wrap items-center gap-0.5 border-b border-border px-1 py-1">
         <ToolbarButton
           label={t("toolbarBold")}
           active={editor.isActive("bold")}
@@ -178,7 +192,10 @@ export function AssignmentInstructionsEditor({
           <Link2 className="size-4" />
         </ToolbarButton>
       </div>
-      <EditorContent editor={editor} />
+      <EditorContent
+        editor={editor}
+        className={fillHeight ? "min-h-0 flex-1 overflow-y-auto" : undefined}
+      />
     </div>
   );
 }

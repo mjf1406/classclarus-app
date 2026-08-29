@@ -62,10 +62,41 @@ export function formatDateKeyLocalized(dateKey: string, locale: string): string 
   }).format(dateKeyToLocalDate(dateKey));
 }
 
+export function formatDateKeyMonthDay(
+  dateKey: string,
+  locale: string,
+): { month: string; day: string } | null {
+  if (!isValidDateKey(dateKey)) return null;
+  const date = dateKeyToLocalDate(dateKey);
+  return {
+    month: new Intl.DateTimeFormat(locale, { month: "short" }).format(date),
+    day: String(date.getDate()),
+  };
+}
+
+type EventStartSource = {
+  allDay: boolean;
+  startDateKey?: string;
+  startAt?: number;
+};
+
+/** Class-local date key for the event's start (all-day key or zoned timed start). */
+export function eventStartDateKey(event: EventStartSource, timeZone: string): string {
+  if (event.allDay) return event.startDateKey ?? "";
+  if (event.startAt === undefined) return "";
+  return utcMsToZonedParts(event.startAt, timeZone).dateKey;
+}
+
+type EventTimeLabelSource = EventStartSource & {
+  endDateKey?: string;
+  endAt?: number;
+};
+
 export function formatEventTimeLabel(
-  event: CalendarEvent,
+  event: EventTimeLabelSource,
   timeZone: string,
   locale: string,
+  options?: { includeDate?: boolean },
 ): string {
   if (event.allDay) {
     const start = event.startDateKey ?? "";
@@ -87,6 +118,16 @@ export function formatEventTimeLabel(
   const endTime = timeFmt.format(new Date(event.endAt));
   if (end.dateKey !== start.dateKey) {
     return `${formatDateKeyLocalized(start.dateKey, locale)} ${startTime} – ${formatDateKeyLocalized(end.dateKey, locale)} ${endTime}`;
+  }
+  if (options?.includeDate) {
+    const dateLabel = new Intl.DateTimeFormat(locale, {
+      weekday: "short",
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      timeZone,
+    }).format(new Date(event.startAt));
+    return `${dateLabel} ${startTime} – ${endTime}`;
   }
   return `${startTime} – ${endTime}`;
 }

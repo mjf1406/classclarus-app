@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "@tanstack/react-router";
-import { Maximize, Minimize, Music, Settings2, Timer } from "lucide-react";
+import { Maximize, Minimize } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { Clock } from "@/components/classroomScreen/Clock";
@@ -20,14 +19,17 @@ import {
   useClearPushedLesson,
   useClearQuickText,
 } from "@/hooks/classroomScreen/useClassroomScreenMutations";
-import { useClassroomScreenBundle } from "@/hooks/classroomScreen/useClassroomScreenQueries";
-import { DEFAULT_CLOCK_SETTINGS } from "@/lib/classroomScreen/clockSettings";
 import {
-  findSlotForLesson,
-  isEarlyPreviewSlot,
-  minutesUntilSlotStart,
-  resolveCurrentLessonDisplay,
-} from "@/lib/classroomScreen/currentLesson";
+  classroomMinuteBucket,
+  useClassroomAudioFiles,
+  useClassroomDisplayBundle,
+  useClassroomTimers,
+} from "@/hooks/classroomScreen/useClassroomScreenQueries";
+import {
+  formatLessonDisplayStatusLabel,
+  resolveLessonDisplayState,
+  resolveLessonDisplayStatus,
+} from "@/lib/classroomScreen/lessonDisplayState";
 import type { AudioCues } from "@/lib/classroomScreen/audioCues";
 import {
   DEFAULT_BG_TRANSITION,
@@ -35,10 +37,8 @@ import {
   type BgTransition,
 } from "@/lib/classroomScreen/bgTransitions";
 import type { TimerEndBehavior } from "@/lib/classroomScreen/activeSession";
-import {
-  formatPushOverrideRemainingSeconds,
-  isPushOverrideActive,
-} from "@/lib/classroomScreen/activeSession";
+import { isPushOverrideActive } from "@/lib/classroomScreen/activeSession";
+import { DEFAULT_CLOCK_SETTINGS } from "@/lib/classroomScreen/clockSettings";
 import { toIntlLocale } from "@/lib/languages";
 import { cn } from "@/lib/utils";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -54,8 +54,15 @@ export function ClassroomScreenPage({ classId }: ClassroomScreenPageProps) {
   const locale = toIntlLocale(i18n.language);
   const { can } = useCan();
   const canManageScreen = can("classroomScreen:manage");
-  const canOpenSettings = can("class:update") || canManageScreen;
-  const { data: bundle, isPending, isError, refetch } = useClassroomScreenBundle(classId);
+  const [minuteBucket, setMinuteBucket] = useState(() => classroomMinuteBucket());
+  const {
+    data: displayBundle,
+    isPending,
+    isError,
+    refetch,
+  } = useClassroomDisplayBundle(classId, minuteBucket);
+  const { data: timers } = useClassroomTimers(classId);
+  const { data: audioFiles } = useClassroomAudioFiles(classId);
   const clearPushedLesson = useClearPushedLesson();
   const clearQuickTextMutation = useClearQuickText();
 
@@ -72,18 +79,29 @@ export function ClassroomScreenPage({ classId }: ClassroomScreenPageProps) {
   }, []);
 
   useEffect(() => {
+    const syncMinuteBucket = () => {
+      const next = classroomMinuteBucket();
+      setMinuteBucket((current) => (current === next ? current : next));
+    };
+    syncMinuteBucket();
+    const interval = window.setInterval(syncMinuteBucket, 30_000);
+    return () => window.clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
     const onChange = () => setIsFullscreen(!!document.fullscreenElement);
     document.addEventListener("fullscreenchange", onChange);
     return () => document.removeEventListener("fullscreenchange", onChange);
   }, []);
 
   useEffect(() => {
-    if (!bundle?.displaySession.pushedLessonId) {
+    if (!canManageScreen) return;
+    if (!displayBundle?.displaySession.pushedLessonId) {
       clearedPushRef.current = false;
       return;
     }
 
-    const pushedUntil = bundle.displaySession.pushedUntil;
+    const pushedUntil = displayBundle.displaySession.pushedUntil;
     if (isPushOverrideActive(pushedUntil, now.getTime())) {
       clearedPushRef.current = false;
       return;
@@ -92,7 +110,7 @@ export function ClassroomScreenPage({ classId }: ClassroomScreenPageProps) {
     if (clearedPushRef.current) return;
     clearedPushRef.current = true;
     void clearPushedLesson.mutateAsync({ classId });
-  }, [bundle, classId, clearPushedLesson, now]);
+  }, [displayBundle, canManageScreen, classId, clearPushedLesson, now]);
 
   const toggleFullscreen = useCallback(async () => {
     if (!containerRef.current) return;
@@ -141,36 +159,16 @@ export function ClassroomScreenPage({ classId }: ClassroomScreenPageProps) {
     day: "numeric",
   });
 
-  const lessonState = useMemo(() => {
-    if (!bundle) {
-      return {
-        pushActive: false,
-        activeLesson: null as ReturnType<typeof resolveCurrentLessonDisplay>,
-        autoSlot: null as ReturnType<typeof findSlotForLesson>,
-        showLessonContent: false,
-        globalQuickText: null as string | null | undefined,
-      };
-    }
+  const lessonState = useMemo(
+    () => resolveLessonDisplayState(displayBundle, now),
+    [displayBundle, now],
+  );
 
-    const pushActive =
-      !!bundle.pushedLesson &&
-      isPushOverrideActive(bundle.displaySession.pushedUntil, now.getTime());
-
-    const autoLesson = resolveCurrentLessonDisplay(bundle, now);
-    const activeLesson = pushActive ? bundle.pushedLesson : autoLesson;
-    const showLessonContent = !!activeLesson;
-    const globalQuickText = !pushActive && !showLessonContent ? bundle.settings.quickText : null;
-
-    const autoSlot = autoLesson ? findSlotForLesson(bundle, autoLesson) : null;
-
-    return { pushActive, activeLesson, autoSlot, showLessonContent, globalQuickText };
-  }, [bundle, now]);
-
-  if (isPending && !bundle) {
+  if (isPending && !displayBundle) {
     return <Skeleton className="h-svh w-full rounded-none" />;
   }
 
-  if (isError || !bundle) {
+  if (isError || !displayBundle) {
     return (
       <div className="flex h-svh items-center justify-center p-8">
         <ErrorState card onRetry={() => void refetch()} description={t("loadFailed")} />
@@ -178,33 +176,17 @@ export function ClassroomScreenPage({ classId }: ClassroomScreenPageProps) {
     );
   }
 
-  const settings = bundle.settings;
+  const settings = displayBundle.settings;
   const bgTransition: BgTransition =
     settings.bgTransition && isBgTransition(settings.bgTransition)
       ? settings.bgTransition
       : DEFAULT_BG_TRANSITION;
 
-  const statusLabel = lessonState.pushActive
-    ? t("statusPushedLesson", {
-        remaining: (() => {
-          const secondsLeft = formatPushOverrideRemainingSeconds(
-            bundle.displaySession.pushedUntil!,
-            now.getTime(),
-          );
-          return secondsLeft >= 60
-            ? t("pushedRemainingMinutes", { count: Math.ceil(secondsLeft / 60) })
-            : t("pushedRemainingSeconds", { count: secondsLeft });
-        })(),
-      })
-    : lessonState.showLessonContent && lessonState.autoSlot
-      ? isEarlyPreviewSlot(lessonState.autoSlot, now)
-        ? t("statusUpcomingLesson", {
-            minutes: minutesUntilSlotStart(lessonState.autoSlot, now),
-          })
-        : t("statusCurrentLesson")
-      : lessonState.globalQuickText
-        ? t("statusQuickText")
-        : null;
+  const statusLabel = formatLessonDisplayStatusLabel(
+    resolveLessonDisplayStatus(lessonState, displayBundle.displaySession.pushedUntil, now),
+    t,
+    now,
+  );
 
   const quickTextTitle = settings.quickTextTitle?.trim() || t("statusQuickText");
 
@@ -213,8 +195,9 @@ export function ClassroomScreenPage({ classId }: ClassroomScreenPageProps) {
       <Clock
         classId={classId}
         isRunner
+        canControlSession={canManageScreen}
         compact
-        showTimeAdjust
+        showTimeAdjust={canManageScreen}
         fillWidth
         timeFormat={settings.timeFormat}
         clockSize={settings.clockSize}
@@ -229,6 +212,9 @@ export function ClassroomScreenPage({ classId }: ClassroomScreenPageProps) {
         overtimeAutoDismissSeconds={settings.overtimeAutoDismissSeconds ?? 0}
         bgTransition={bgTransition}
         globalAudioCues={settings.audioCues as AudioCues | undefined}
+        displaySession={displayBundle.displaySession}
+        timers={timers}
+        audioFiles={audioFiles}
       />
     </div>
   );
@@ -242,6 +228,7 @@ export function ClassroomScreenPage({ classId }: ClassroomScreenPageProps) {
       )}
     >
       <LessonDisplayPanel
+        classId={classId}
         lesson={lessonState.showLessonContent ? lessonState.activeLesson : null}
         formattedDate={formattedDate}
         contentFontSize={
@@ -253,7 +240,7 @@ export function ClassroomScreenPage({ classId }: ClassroomScreenPageProps) {
         quickText={lessonState.globalQuickText}
         quickTextTitle={quickTextTitle}
         onClearQuickText={
-          lessonState.globalQuickText
+          canManageScreen && lessonState.globalQuickText
             ? () => void clearQuickTextMutation.mutateAsync({ classId })
             : undefined
         }
@@ -309,39 +296,6 @@ export function ClassroomScreenPage({ classId }: ClassroomScreenPageProps) {
               <SelectItem value="horizontal">{t("layoutHorizontal")}</SelectItem>
             </SelectContent>
           </Select>
-          {canOpenSettings ? (
-            <Button
-              variant="outline"
-              size="icon"
-              title={t("settings")}
-              aria-label={t("settings")}
-              render={<Link to="/class/$classId/settings" params={{ classId }} target="_blank" />}
-            >
-              <Settings2 />
-            </Button>
-          ) : null}
-          {canManageScreen ? (
-            <>
-              <Button
-                variant="outline"
-                size="icon"
-                title={t("manageTimers")}
-                aria-label={t("manageTimers")}
-                render={<Link to="/class/$classId/timers" params={{ classId }} target="_blank" />}
-              >
-                <Timer />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                title={t("manageAudio")}
-                aria-label={t("manageAudio")}
-                render={<Link to="/class/$classId/audio" params={{ classId }} target="_blank" />}
-              >
-                <Music />
-              </Button>
-            </>
-          ) : null}
           <Button
             variant="outline"
             size="icon"

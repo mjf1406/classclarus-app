@@ -1,4 +1,10 @@
-import { getIsoWeekYearAndNumber, timeToMinutes } from "../timetable/timetableSchema.js";
+import { utcMsToZonedParts } from "../calendar/timeZone.js";
+import {
+  getIsoWeekYearAndNumber,
+  getIsoWeekYearAndNumberFromDateKey,
+  timeToMinutes,
+  weekdayNameFromDateKey,
+} from "../timetable/timetableSchema.js";
 
 export const DISPLAY_EARLY_MINUTES = 3;
 
@@ -21,8 +27,15 @@ export type LessonLike = {
     textColor: string;
     iconName?: string;
   } | null;
-  notesJson?: string;
 };
+
+function toNowMs(now: Date | number): number {
+  return typeof now === "number" ? now : now.getTime();
+}
+
+function toDate(now: Date | number): Date {
+  return typeof now === "number" ? new Date(now) : now;
+}
 
 export function getCurrentDayName(date: Date = new Date()): string {
   return date.toLocaleDateString("en-US", { weekday: "long" });
@@ -30,6 +43,42 @@ export function getCurrentDayName(date: Date = new Date()): string {
 
 export function getCurrentMinutesOfDay(date: Date = new Date()): number {
   return date.getHours() * 60 + date.getMinutes();
+}
+
+function clockInTimeZone(
+  now: Date | number,
+  timeZone: string,
+): { dayName: string; minutesOfDay: number; dateKey: string } {
+  const parts = utcMsToZonedParts(toNowMs(now), timeZone);
+  return {
+    dayName: weekdayNameFromDateKey(parts.dateKey),
+    minutesOfDay: parts.hour * 60 + parts.minute,
+    dateKey: parts.dateKey,
+  };
+}
+
+function resolveClock(
+  now: Date | number,
+  timeZone?: string,
+): { dayName: string; minutesOfDay: number } {
+  if (timeZone) {
+    return clockInTimeZone(now, timeZone);
+  }
+  const date = toDate(now);
+  return {
+    dayName: getCurrentDayName(date),
+    minutesOfDay: getCurrentMinutesOfDay(date),
+  };
+}
+
+function resolveIsoWeek(
+  now: Date | number,
+  timeZone?: string,
+): { year: number; weekNumber: number } {
+  if (timeZone) {
+    return getIsoWeekYearAndNumberFromDateKey(clockInTimeZone(now, timeZone).dateKey);
+  }
+  return getIsoWeekYearAndNumber(toDate(now));
 }
 
 function isActiveSlot(slot: SlotLike, dayName: string, currentMinutes: number) {
@@ -47,33 +96,44 @@ function isEarlyPreviewSlotAt(slot: SlotLike, dayName: string, currentMinutes: n
   return currentMinutes >= start - DISPLAY_EARLY_MINUTES && currentMinutes < start;
 }
 
-export function isEarlyPreviewSlot(slot: SlotLike, now: Date = new Date()): boolean {
-  const dayName = getCurrentDayName(now);
-  const currentMinutes = getCurrentMinutesOfDay(now);
-  return isEarlyPreviewSlotAt(slot, dayName, currentMinutes);
+export function isEarlyPreviewSlot(
+  slot: SlotLike,
+  now: Date | number = new Date(),
+  timeZone?: string,
+): boolean {
+  const { dayName, minutesOfDay } = resolveClock(now, timeZone);
+  return isEarlyPreviewSlotAt(slot, dayName, minutesOfDay);
 }
 
-export function minutesUntilSlotStart(slot: SlotLike, now: Date = new Date()): number {
+export function minutesUntilSlotStart(
+  slot: SlotLike,
+  now: Date | number = new Date(),
+  timeZone?: string,
+): number {
   const start = timeToMinutes(slot.startTime);
-  return Math.max(0, start - getCurrentMinutesOfDay(now));
+  return Math.max(0, start - resolveClock(now, timeZone).minutesOfDay);
 }
 
-export function findCurrentSlot(slots: SlotLike[], now: Date = new Date()): SlotLike | null {
-  const dayName = getCurrentDayName(now);
-  const currentMinutes = getCurrentMinutesOfDay(now);
+export function findCurrentSlot(
+  slots: SlotLike[],
+  now: Date | number = new Date(),
+  timeZone?: string,
+): SlotLike | null {
+  const { dayName, minutesOfDay } = resolveClock(now, timeZone);
 
-  const active = slots.find((slot) => isActiveSlot(slot, dayName, currentMinutes)) ?? null;
+  const active = slots.find((slot) => isActiveSlot(slot, dayName, minutesOfDay)) ?? null;
   if (active) return active;
 
-  return slots.find((slot) => isEarlyPreviewSlotAt(slot, dayName, currentMinutes)) ?? null;
+  return slots.find((slot) => isEarlyPreviewSlotAt(slot, dayName, minutesOfDay)) ?? null;
 }
 
 export function findLessonForSlot(
   slot: SlotLike,
   lessons: LessonLike[],
-  now: Date = new Date(),
+  now: Date | number = new Date(),
+  timeZone?: string,
 ): LessonLike | null {
-  const { year, weekNumber } = getIsoWeekYearAndNumber(now);
+  const { year, weekNumber } = resolveIsoWeek(now, timeZone);
 
   return (
     lessons.find(
@@ -87,12 +147,14 @@ export function resolveCurrentLesson(
   slots: SlotLike[],
   lessons: LessonLike[],
   disabledSlotIds: Set<string>,
-  now: Date = new Date(),
+  now: Date | number = new Date(),
+  timeZone?: string,
 ): LessonLike | null {
   const currentSlot = findCurrentSlot(
     slots.filter((slot) => !disabledSlotIds.has(slot._id)),
     now,
+    timeZone,
   );
   if (!currentSlot) return null;
-  return findLessonForSlot(currentSlot, lessons, now);
+  return findLessonForSlot(currentSlot, lessons, now, timeZone);
 }

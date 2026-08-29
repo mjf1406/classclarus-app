@@ -2,20 +2,14 @@ import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 
 import { DashboardSectionCard } from "@/components/dashboard/DashboardSectionCard";
+import { useDashboardAssignerSnapshot } from "@/hooks/dashboard/useDashboardAssignerSnapshot";
 import { formatLocalizedSeatChartHistoryDate } from "@/i18n/formatDate";
-import type { FunctionReturnType } from "convex/server";
-
-import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
-
-type AssignerSnapshot = FunctionReturnType<typeof api.dashboard.assignerSnapshotForAudience>;
 
 type DashboardAssignersCardProps = {
   classId: Id<"classes">;
-  snapshot: AssignerSnapshot | undefined;
-  isPending: boolean;
-  isError: boolean;
-  onRetry: () => void;
+  studentUserId: Id<"users"> | null;
+  audiencePending: boolean;
 };
 
 function AssignerRow({
@@ -48,17 +42,18 @@ function AssignerRow({
 
 export function DashboardAssignersCard({
   classId,
-  snapshot,
-  isPending,
-  isError,
-  onRetry,
+  studentUserId,
+  audiencePending,
 }: DashboardAssignersCardProps) {
   const { t } = useTranslation("classes");
   const { t: tAssigners } = useTranslation("assigners");
+  const query = useDashboardAssignerSnapshot(classId, studentUserId);
+  const snapshot = query.data;
+  const isPending = audiencePending || (studentUserId !== null && query.isPending);
 
   const hasSeat = snapshot?.seatCurrent != null;
   const hasAssignerRows = (snapshot?.assigners.length ?? 0) > 0;
-  const empty = !isPending && !isError && !hasSeat && !hasAssignerRows;
+  const empty = !isPending && !query.isError && !hasSeat && !hasAssignerRows;
 
   return (
     <DashboardSectionCard
@@ -67,10 +62,10 @@ export function DashboardAssignersCard({
       viewAllTo="/class/$classId/assigners/random"
       viewAllParams={{ classId }}
       isPending={isPending}
-      isError={isError}
+      isError={query.isError}
       errorTitle={t("dashboardLoadFailed")}
       errorDescription={t("dashboardLoadFailedDescription")}
-      onRetry={onRetry}
+      onRetry={() => void query.refetch()}
       empty={empty}
       emptyTitle={t("dashboardNoAssignersTitle")}
       emptyDescription={t("dashboardNoAssignersDescription")}

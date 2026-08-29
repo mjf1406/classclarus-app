@@ -1,6 +1,12 @@
 import { describe, expect, test } from "vite-plus/test";
 
-import { formatWeekdayHeader, formatWeekdayName, isEmptyNotesJson } from "@/lib/timetable/utils";
+import {
+  formatTimeString,
+  formatWeekdayHeader,
+  formatWeekdayName,
+  isEmptyNotesJson,
+  slotDurationMinutes,
+} from "@/lib/timetable/utils";
 
 describe("formatWeekdayName", () => {
   test("returns the English weekday name for en-US", () => {
@@ -40,6 +46,25 @@ describe("formatWeekdayHeader", () => {
 
   test("Traditional Chinese uses 日", () => {
     expect(formatWeekdayHeader("Monday", weekStart, "zh-Hant")).toBe("星期一 24日");
+  });
+});
+
+describe("formatTimeString", () => {
+  test("keeps 24-hour times unchanged", () => {
+    expect(formatTimeString("09:00")).toBe("09:00");
+    expect(formatTimeString("16:30", "24")).toBe("16:30");
+  });
+
+  test("formats 12-hour times with AM/PM", () => {
+    expect(formatTimeString("09:00", "12")).toBe("9:00 AM");
+    expect(formatTimeString("16:30", "12")).toBe("4:30 PM");
+  });
+});
+
+describe("slotDurationMinutes", () => {
+  test("returns the minute span between start and end", () => {
+    expect(slotDurationMinutes("09:00", "09:50")).toBe(50);
+    expect(slotDurationMinutes("16:00", "20:30")).toBe(270);
   });
 });
 

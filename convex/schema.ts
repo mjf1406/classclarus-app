@@ -1255,8 +1255,38 @@ const schema = defineSchema({
     bgColor: v.string(),
     textColor: v.string(),
     iconName: v.optional(v.string()),
-    /** TipTap JSON copied into a lesson when the subject is added to a slot. */
+    /** @deprecated Discarded by timetable section migration. */
     defaultNotesJson: v.optional(v.string()),
+    defaultMaterials: v.optional(
+      v.array(
+        v.object({
+          key: v.string(),
+          text: v.string(),
+          tags: v.array(v.string()),
+        }),
+      ),
+    ),
+    defaultAnnouncements: v.optional(
+      v.array(
+        v.object({
+          key: v.string(),
+          text: v.string(),
+          tags: v.array(v.string()),
+        }),
+      ),
+    ),
+    defaultAgenda: v.optional(
+      v.array(
+        v.object({
+          key: v.string(),
+          text: v.string(),
+          tags: v.array(v.string()),
+          assignmentId: v.optional(v.id("assignments")),
+          taskId: v.optional(v.id("tasks")),
+        }),
+      ),
+    ),
+    calendarAudienceRoles: v.optional(v.array(v.string())),
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_classId", ["classId"]),
@@ -1268,8 +1298,10 @@ const schema = defineSchema({
     subjectId: v.id("timetableSubjects"),
     year: v.number(),
     weekNumber: v.number(),
+    /** @deprecated Discarded by timetable section migration. */
     notesJson: v.optional(v.string()),
     complete: v.boolean(),
+    /** @deprecated Migrated into materials/agenda, then cleared. */
     links: v.array(
       v.object({
         key: v.string(),
@@ -1279,6 +1311,35 @@ const schema = defineSchema({
         assignmentId: v.optional(v.id("assignments")),
         taskId: v.optional(v.id("tasks")),
       }),
+    ),
+    materials: v.optional(
+      v.array(
+        v.object({
+          key: v.string(),
+          text: v.string(),
+          tags: v.array(v.string()),
+        }),
+      ),
+    ),
+    announcements: v.optional(
+      v.array(
+        v.object({
+          key: v.string(),
+          text: v.string(),
+          tags: v.array(v.string()),
+        }),
+      ),
+    ),
+    agenda: v.optional(
+      v.array(
+        v.object({
+          key: v.string(),
+          text: v.string(),
+          tags: v.array(v.string()),
+          assignmentId: v.optional(v.id("assignments")),
+          taskId: v.optional(v.id("tasks")),
+        }),
+      ),
     ),
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -1297,6 +1358,15 @@ const schema = defineSchema({
   })
     .index("by_slotId_year_week", ["slotId", "year", "weekNumber"])
     .index("by_classId", ["classId"]),
+  /** Class-wide hashtag dictionary for timetable materials/announcements/agenda. */
+  timetableTags: defineTable({
+    classId: v.id("classes"),
+    tag: v.string(),
+    display: v.string(),
+    updatedAt: v.number(),
+  })
+    .index("by_classId", ["classId"])
+    .index("by_classId_tag", ["classId", "tag"]),
   /** Per-class classroom screen clock settings (one row per class). */
   classroomClockSettings: defineTable({
     classId: v.id("classes"),

@@ -2,27 +2,19 @@ import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 
 import { DashboardSectionCard } from "@/components/dashboard/DashboardSectionCard";
+import { useRecentAnnouncements } from "@/hooks/announcements/useRecentAnnouncements";
 import { formatLocalizedDateTime } from "@/i18n/formatDate";
-import type { RecentAnnouncementList } from "@/lib/announcements/announcements";
 import type { Id } from "../../../convex/_generated/dataModel";
 
 type DashboardAnnouncementsCardProps = {
   classId: Id<"classes">;
-  announcements: RecentAnnouncementList;
-  isPending: boolean;
-  isError: boolean;
-  onRetry: () => void;
 };
 
-export function DashboardAnnouncementsCard({
-  classId,
-  announcements,
-  isPending,
-  isError,
-  onRetry,
-}: DashboardAnnouncementsCardProps) {
+export function DashboardAnnouncementsCard({ classId }: DashboardAnnouncementsCardProps) {
   const { t } = useTranslation("classes");
-  const empty = !isPending && !isError && announcements.length === 0;
+  const query = useRecentAnnouncements(classId);
+  const announcements = query.data ?? [];
+  const empty = !query.isPending && !query.isError && announcements.length === 0;
 
   return (
     <DashboardSectionCard
@@ -30,11 +22,11 @@ export function DashboardAnnouncementsCard({
       viewAllLabel={t("dashboardViewAll")}
       viewAllTo="/class/$classId/announcements"
       viewAllParams={{ classId }}
-      isPending={isPending}
-      isError={isError}
+      isPending={query.isPending}
+      isError={query.isError}
       errorTitle={t("dashboardLoadFailed")}
       errorDescription={t("dashboardLoadFailedDescription")}
-      onRetry={onRetry}
+      onRetry={() => void query.refetch()}
       empty={empty}
       emptyTitle={t("dashboardNoAnnouncementsTitle")}
       emptyDescription={t("dashboardNoAnnouncementsDescription")}

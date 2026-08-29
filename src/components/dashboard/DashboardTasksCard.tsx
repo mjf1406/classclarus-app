@@ -1,32 +1,26 @@
+import { useMemo } from "react";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 
 import { TaskCompletionStatusBadge } from "@/components/tasks/TaskCompletionStatusBadge";
 import { DashboardSectionCard } from "@/components/dashboard/DashboardSectionCard";
+import { useTasks } from "@/hooks/tasks/useTasks";
 import { formatLocalizedDateTime, formatLocalizedDueDate } from "@/i18n/formatDate";
-import { areAllStudentsCompleteOnTask, isTaskPastDue, type TaskListItem } from "@/lib/tasks/tasks";
+import { recentDashboardTasks } from "@/lib/dashboard/dashboard";
+import { areAllStudentsCompleteOnTask, isTaskPastDue } from "@/lib/tasks/tasks";
 import type { Id } from "../../../convex/_generated/dataModel";
 
 type DashboardTasksCardProps = {
   classId: Id<"classes">;
-  tasks: TaskListItem[];
   studentUserId: Id<"users"> | null;
-  isPending: boolean;
-  isError: boolean;
-  onRetry: () => void;
 };
 
-export function DashboardTasksCard({
-  classId,
-  tasks,
-  studentUserId,
-  isPending,
-  isError,
-  onRetry,
-}: DashboardTasksCardProps) {
+export function DashboardTasksCard({ classId, studentUserId }: DashboardTasksCardProps) {
   const { t } = useTranslation("classes");
   const { t: tTasks } = useTranslation("tasks");
-  const empty = !isPending && !isError && tasks.length === 0;
+  const query = useTasks(classId);
+  const tasks = useMemo(() => recentDashboardTasks(query.data ?? []), [query.data]);
+  const empty = !query.isPending && !query.isError && tasks.length === 0;
   const studentIds = studentUserId ? [studentUserId] : [];
 
   return (
@@ -35,11 +29,11 @@ export function DashboardTasksCard({
       viewAllLabel={t("dashboardViewAll")}
       viewAllTo="/class/$classId/tasks"
       viewAllParams={{ classId }}
-      isPending={isPending}
-      isError={isError}
+      isPending={query.isPending}
+      isError={query.isError}
       errorTitle={t("dashboardLoadFailed")}
       errorDescription={t("dashboardLoadFailedDescription")}
-      onRetry={onRetry}
+      onRetry={() => void query.refetch()}
       empty={empty}
       emptyTitle={t("dashboardNoTasksTitle")}
       emptyDescription={t("dashboardNoTasksDescription")}

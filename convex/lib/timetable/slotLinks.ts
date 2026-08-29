@@ -1,5 +1,5 @@
 import type { Id } from "../../_generated/dataModel.js";
-import type { LessonLinkInput } from "./timetableSchema.js";
+import type { AgendaItem, SectionItem } from "./sectionItems.js";
 
 export type SlotLinkLike = {
   _id: Id<"timetableSlots">;
@@ -12,9 +12,17 @@ export type LessonLinkLike = {
   subjectId: Id<"timetableSubjects">;
   year: number;
   weekNumber: number;
-  notesJson?: string;
   complete: boolean;
-  links: Array<LessonLinkInput>;
+  materials: Array<SectionItem>;
+  announcements: Array<SectionItem>;
+  agenda: Array<AgendaItem>;
+};
+
+export type LessonSectionFields = {
+  materials: Array<SectionItem>;
+  announcements: Array<SectionItem>;
+  agenda: Array<AgendaItem>;
+  complete: boolean;
 };
 
 export function createLinkGroupId(): string {
@@ -76,10 +84,7 @@ export type MirrorLessonAdd = {
   type: "add";
   sourceSlotId: Id<"timetableSlots">;
   subjectId: Id<"timetableSubjects">;
-  notesJson?: string;
-  complete: boolean;
-  links: Array<LessonLinkInput>;
-};
+} & LessonSectionFields;
 
 export type MirrorLessonUpdate = {
   type: "update";
@@ -94,21 +99,15 @@ export type MirrorLessonDelete = {
 export type MirrorLessonChange = MirrorLessonAdd | MirrorLessonUpdate | MirrorLessonDelete;
 
 export type MirrorLessonOp =
-  | {
+  | ({
       op: "createLesson";
       slotId: Id<"timetableSlots">;
       subjectId: Id<"timetableSubjects">;
-      notesJson?: string;
-      complete: boolean;
-      links: Array<LessonLinkInput>;
-    }
-  | {
+    } & LessonSectionFields)
+  | ({
       op: "updateLesson";
       lessonId: Id<"timetableLessons">;
-      notesJson?: string;
-      complete: boolean;
-      links: Array<LessonLinkInput>;
-    }
+    } & LessonSectionFields)
   | { op: "deleteLesson"; lessonId: Id<"timetableLessons"> };
 
 export function buildMirrorLessonOps(
@@ -138,18 +137,20 @@ export function buildMirrorLessonOps(
         ops.push({
           op: "updateLesson",
           lessonId: existing._id,
-          notesJson: change.notesJson,
+          materials: change.materials,
+          announcements: change.announcements,
+          agenda: change.agenda,
           complete: change.complete,
-          links: change.links,
         });
       } else {
         ops.push({
           op: "createLesson",
           slotId: targetSlotId,
           subjectId: change.subjectId,
-          notesJson: change.notesJson,
+          materials: change.materials,
+          announcements: change.announcements,
+          agenda: change.agenda,
           complete: change.complete,
-          links: change.links,
         });
       }
     }
@@ -172,9 +173,10 @@ export function buildMirrorLessonOps(
         ops.push({
           op: "updateLesson",
           lessonId: existing._id,
-          notesJson: sourceLesson.notesJson,
+          materials: sourceLesson.materials,
+          announcements: sourceLesson.announcements,
+          agenda: sourceLesson.agenda,
           complete: sourceLesson.complete,
-          links: sourceLesson.links,
         });
       }
     }
@@ -260,18 +262,20 @@ export function planLinkSlots({
         syncOps.push({
           op: "updateLesson",
           lessonId: existing._id,
-          notesJson: sourceLesson.notesJson,
+          materials: sourceLesson.materials,
+          announcements: sourceLesson.announcements,
+          agenda: sourceLesson.agenda,
           complete: sourceLesson.complete,
-          links: sourceLesson.links,
         });
       } else {
         syncOps.push({
           op: "createLesson",
           slotId: targetSlotId,
           subjectId: sourceLesson.subjectId,
-          notesJson: sourceLesson.notesJson,
+          materials: sourceLesson.materials,
+          announcements: sourceLesson.announcements,
+          agenda: sourceLesson.agenda,
           complete: sourceLesson.complete,
-          links: sourceLesson.links,
         });
       }
     }

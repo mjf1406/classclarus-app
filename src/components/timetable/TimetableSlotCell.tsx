@@ -248,7 +248,11 @@ function LessonChip({
 }) {
   const { t } = useTranslation("timetable");
   const subject = lesson.subject;
-  const hasLinks = lesson.links.length > 0;
+  const hasContent =
+    lesson.materials.length > 0 ||
+    lesson.announcements.length > 0 ||
+    lesson.agenda.length > 0 ||
+    lesson.upcomingEvents.length > 0;
 
   return (
     <button
@@ -270,7 +274,7 @@ function LessonChip({
         <Check className={cn("shrink-0", compact ? "h-3 w-3" : "h-4 w-4")} />
       ) : null}
       <span className="min-w-0 flex-1 truncate font-medium">{subject.name}</span>
-      {hasLinks ? (
+      {hasContent ? (
         <Link2 className={cn("shrink-0 opacity-80", compact ? "h-3 w-3" : "h-3.5 w-3.5")} />
       ) : null}
       {canManage ? (
