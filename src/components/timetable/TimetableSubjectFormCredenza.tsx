@@ -213,56 +213,37 @@ export function TimetableSubjectFormCredenza({
 
   return (
     <Credenza open={open} onOpenChange={onOpenChange}>
-      <CredenzaContent>
-        <CredenzaHeader>
+      <CredenzaContent className="flex h-[90dvh] min-h-0 w-full max-w-[calc(100%-2rem)] flex-col gap-4 overflow-hidden sm:w-[35vw] sm:max-w-[35vw]">
+        <CredenzaHeader className="shrink-0">
           <CredenzaTitle>{subject ? t("editSubjectTitle") : t("createSubjectTitle")}</CredenzaTitle>
           <CredenzaDescription>
             {subject ? t("editSubjectDescription") : t("createSubjectDescription")}
           </CredenzaDescription>
         </CredenzaHeader>
         <form
+          className="flex min-h-0 flex-1 flex-col overflow-hidden"
           onSubmit={(event) => {
             event.preventDefault();
             void form.handleSubmit();
           }}
           onKeyDown={submitOnModEnter}
         >
-          <CredenzaBody className="flex flex-col gap-4">
+          <CredenzaBody className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
             {submitError ? <p className="text-sm text-destructive">{submitError}</p> : null}
 
-            <form.Field name="name">
-              {(field) => {
-                const error = fieldErrorMessage(field.state.meta.errors);
-                return (
-                  <Field data-invalid={error ? true : undefined}>
-                    <FieldLabel htmlFor="subject-name">{t("subjectName")}</FieldLabel>
-                    <Input
-                      id="subject-name"
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(event) => field.handleChange(event.target.value)}
-                      onKeyDown={submitOnEnter}
-                      aria-invalid={error ? true : undefined}
-                    />
-                    {error ? <FieldError>{error}</FieldError> : null}
-                  </Field>
-                );
-              }}
-            </form.Field>
-
-            <div className="grid grid-cols-2 gap-3">
-              <form.Field name="bgColor">
+            <div className="grid gap-4 md:grid-cols-2">
+              <form.Field name="name">
                 {(field) => {
                   const error = fieldErrorMessage(field.state.meta.errors);
                   return (
-                    <Field data-invalid={error ? true : undefined}>
-                      <FieldLabel htmlFor="subject-bg">{t("backgroundColor")}</FieldLabel>
+                    <Field className="md:col-span-2" data-invalid={error ? true : undefined}>
+                      <FieldLabel htmlFor="subject-name">{t("subjectName")}</FieldLabel>
                       <Input
-                        id="subject-bg"
-                        type="color"
+                        id="subject-name"
                         value={field.state.value}
                         onBlur={field.handleBlur}
                         onChange={(event) => field.handleChange(event.target.value)}
+                        onKeyDown={submitOnEnter}
                         aria-invalid={error ? true : undefined}
                       />
                       {error ? <FieldError>{error}</FieldError> : null}
@@ -271,99 +252,121 @@ export function TimetableSubjectFormCredenza({
                 }}
               </form.Field>
 
-              <form.Field name="textColor">
+              <div className="grid grid-cols-2 gap-3">
+                <form.Field name="bgColor">
+                  {(field) => {
+                    const error = fieldErrorMessage(field.state.meta.errors);
+                    return (
+                      <Field data-invalid={error ? true : undefined}>
+                        <FieldLabel htmlFor="subject-bg">{t("backgroundColor")}</FieldLabel>
+                        <Input
+                          id="subject-bg"
+                          type="color"
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(event) => field.handleChange(event.target.value)}
+                          aria-invalid={error ? true : undefined}
+                        />
+                        {error ? <FieldError>{error}</FieldError> : null}
+                      </Field>
+                    );
+                  }}
+                </form.Field>
+
+                <form.Field name="textColor">
+                  {(field) => {
+                    const error = fieldErrorMessage(field.state.meta.errors);
+                    return (
+                      <Field data-invalid={error ? true : undefined}>
+                        <FieldLabel htmlFor="subject-text">{t("textColor")}</FieldLabel>
+                        <Input
+                          id="subject-text"
+                          type="color"
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(event) => field.handleChange(event.target.value)}
+                          aria-invalid={error ? true : undefined}
+                        />
+                        {error ? <FieldError>{error}</FieldError> : null}
+                      </Field>
+                    );
+                  }}
+                </form.Field>
+              </div>
+
+              <form.Field name="iconName">
                 {(field) => {
                   const error = fieldErrorMessage(field.state.meta.errors);
                   return (
                     <Field data-invalid={error ? true : undefined}>
-                      <FieldLabel htmlFor="subject-text">{t("textColor")}</FieldLabel>
-                      <Input
-                        id="subject-text"
-                        type="color"
-                        value={field.state.value}
-                        onBlur={field.handleBlur}
-                        onChange={(event) => field.handleChange(event.target.value)}
-                        aria-invalid={error ? true : undefined}
-                      />
+                      <FieldLabel>
+                        {t("subjectIcon")}
+                        <span className="font-normal text-muted-foreground">
+                          ({tCommon("optional")})
+                        </span>
+                      </FieldLabel>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <FontAwesomeIconPickerLazy
+                          value={faIcon}
+                          onChange={(icon) => {
+                            setFaIcon(icon);
+                            field.handleChange(iconDefinitionToId(icon));
+                          }}
+                          className="w-full max-w-[280px]"
+                        />
+                        {field.state.value ? (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setFaIcon(null);
+                              field.handleChange("");
+                            }}
+                          >
+                            {t("clearIcon")}
+                          </Button>
+                        ) : null}
+                      </div>
+                      {error ? <FieldError>{error}</FieldError> : null}
+                    </Field>
+                  );
+                }}
+              </form.Field>
+
+              <form.Field name="calendarAudienceRoles">
+                {(field) => {
+                  const error = fieldErrorMessage(field.state.meta.errors);
+                  return (
+                    <Field className="md:col-span-2" data-invalid={error ? true : undefined}>
+                      <FieldLabel>{t("calendarAudience")}</FieldLabel>
+                      <FieldDescription>{t("calendarAudienceDescription")}</FieldDescription>
+                      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-x-6">
+                        {CALENDAR_AUDIENCE_ROLES.map((role) => {
+                          const checked = field.state.value.includes(role);
+                          return (
+                            <label key={role} className="flex items-center gap-2 text-sm">
+                              <Checkbox
+                                checked={checked}
+                                onCheckedChange={(next) => {
+                                  field.handleChange(
+                                    next === true
+                                      ? [...field.state.value, role]
+                                      : field.state.value.filter((item) => item !== role),
+                                  );
+                                }}
+                              />
+                              {tClasses(ROLE_LABEL_KEYS[role])}
+                            </label>
+                          );
+                        })}
+                      </div>
                       {error ? <FieldError>{error}</FieldError> : null}
                     </Field>
                   );
                 }}
               </form.Field>
             </div>
-
-            <form.Field name="iconName">
-              {(field) => {
-                const error = fieldErrorMessage(field.state.meta.errors);
-                return (
-                  <Field data-invalid={error ? true : undefined}>
-                    <FieldLabel>
-                      {t("subjectIcon")}
-                      <span className="font-normal text-muted-foreground">
-                        ({tCommon("optional")})
-                      </span>
-                    </FieldLabel>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <FontAwesomeIconPickerLazy
-                        value={faIcon}
-                        onChange={(icon) => {
-                          setFaIcon(icon);
-                          field.handleChange(iconDefinitionToId(icon));
-                        }}
-                        className="w-full max-w-[280px]"
-                      />
-                      {field.state.value ? (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setFaIcon(null);
-                            field.handleChange("");
-                          }}
-                        >
-                          {t("clearIcon")}
-                        </Button>
-                      ) : null}
-                    </div>
-                    {error ? <FieldError>{error}</FieldError> : null}
-                  </Field>
-                );
-              }}
-            </form.Field>
-
-            <form.Field name="calendarAudienceRoles">
-              {(field) => {
-                const error = fieldErrorMessage(field.state.meta.errors);
-                return (
-                  <Field data-invalid={error ? true : undefined}>
-                    <FieldLabel>{t("calendarAudience")}</FieldLabel>
-                    <FieldDescription>{t("calendarAudienceDescription")}</FieldDescription>
-                    <div className="flex flex-col gap-2">
-                      {CALENDAR_AUDIENCE_ROLES.map((role) => {
-                        const checked = field.state.value.includes(role);
-                        return (
-                          <label key={role} className="flex items-center gap-2 text-sm">
-                            <Checkbox
-                              checked={checked}
-                              onCheckedChange={(next) => {
-                                field.handleChange(
-                                  next === true
-                                    ? [...field.state.value, role]
-                                    : field.state.value.filter((item) => item !== role),
-                                );
-                              }}
-                            />
-                            {tClasses(ROLE_LABEL_KEYS[role])}
-                          </label>
-                        );
-                      })}
-                    </div>
-                    {error ? <FieldError>{error}</FieldError> : null}
-                  </Field>
-                );
-              }}
-            </form.Field>
 
             <form.Field name="defaultMaterials">
               {(field) => (
@@ -410,7 +413,7 @@ export function TimetableSubjectFormCredenza({
               )}
             </form.Field>
           </CredenzaBody>
-          <CredenzaFooter>
+          <CredenzaFooter className="shrink-0">
             <CredenzaClose render={<Button type="button" variant="outline" />}>
               {t("cancel")}
             </CredenzaClose>
