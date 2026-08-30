@@ -4,7 +4,7 @@ import { ExternalLink } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { TimetableTaggedText } from "@/components/timetable/TimetableTaggedText";
-import { agendaNamedLinkLabel } from "@/lib/timetable/agendaItems";
+import { agendaNamedLinkLabel, agendaPrefaceText } from "@/lib/timetable/agendaItems";
 import type { Id } from "../../../convex/_generated/dataModel";
 
 const linkClassName =
@@ -13,6 +13,7 @@ const linkClassName =
 type TimetableAgendaItemViewProps = {
   classId: Id<"classes">;
   text: string;
+  preface?: string;
   assignmentId?: string;
   taskId?: string;
   assignmentName?: string;
@@ -24,6 +25,7 @@ type TimetableAgendaItemViewProps = {
 export function TimetableAgendaItemView({
   classId,
   text,
+  preface,
   assignmentId,
   taskId,
   assignmentName,
@@ -33,11 +35,13 @@ export function TimetableAgendaItemView({
 }: TimetableAgendaItemViewProps) {
   const { t } = useTranslation("timetable");
   const title = text.trim();
+  const prefaceLabel = agendaPrefaceText(preface);
 
   if (taskId) {
     const taskLabel = agendaNamedLinkLabel(taskName, title, t("linkKindTask"));
     return (
       <NamedResourceRow status={taskStatus}>
+        {prefaceLabel ? <span>{prefaceLabel}</span> : null}
         <TaskLink classId={classId} taskId={taskId}>
           {taskLabel}
         </TaskLink>
@@ -49,6 +53,7 @@ export function TimetableAgendaItemView({
     const assignmentLabel = agendaNamedLinkLabel(assignmentName, title, t("linkKindAssignment"));
     return (
       <NamedResourceRow status={assignmentStatus}>
+        {prefaceLabel ? <span>{prefaceLabel}</span> : null}
         <AssignmentLink classId={classId} assignmentId={assignmentId}>
           {assignmentLabel}
         </AssignmentLink>

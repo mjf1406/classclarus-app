@@ -7,6 +7,7 @@ import {
   classroomDisplayBundleQueryKey,
   classroomMinuteBucket,
   classroomScreenBundleQueryKey,
+  classroomRotationsQueryKey,
   classroomSettingsQueryKey,
   classroomTimersQueryKey,
   isClassroomDisplayBundleQueryKey,
@@ -25,6 +26,9 @@ describe("isClassroomDisplayBundleQueryKey", () => {
   it("does not match other classroom queries that share classId", () => {
     expect(isClassroomDisplayBundleQueryKey(classroomAudioQueryKey(classId), classId)).toBe(false);
     expect(isClassroomDisplayBundleQueryKey(classroomTimersQueryKey(classId), classId)).toBe(false);
+    expect(isClassroomDisplayBundleQueryKey(classroomRotationsQueryKey(classId), classId)).toBe(
+      false,
+    );
     expect(isClassroomDisplayBundleQueryKey(classroomSettingsQueryKey(classId), classId)).toBe(
       false,
     );

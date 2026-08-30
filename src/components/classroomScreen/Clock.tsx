@@ -24,6 +24,7 @@ import {
 import {
   type ClassroomAudioFile,
   type ClassroomDisplaySession,
+  type ClassroomRotation,
   type ClassroomTimer,
 } from "@/hooks/classroomScreen/useClassroomScreenQueries";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -34,18 +35,22 @@ import {
   appendTimerToSession,
   buildCustomTimerSession,
   buildQuickPresetSession,
+  buildRotationSession,
   formatCountdown,
   formatEndTimestamp,
   formatWallTime,
   getCurrentBgColor,
   getCurrentSegment,
+  getRotationEndTimes,
   hasUpcomingSegments,
   isLastSegment,
+  isRotationSession,
   parseSessionJson,
   remainingFromDisplaySession,
   resolveSegmentDuration,
   truncateUpcomingSegments,
   type ActiveSession,
+  type Segment,
   type TimerEndBehavior,
 } from "@/lib/classroomScreen/activeSession";
 import {
@@ -54,6 +59,7 @@ import {
   type BgTransition,
 } from "@/lib/classroomScreen/bgTransitions";
 import { getContrastTextColor, getOvertimeTextColor } from "@/lib/classroomScreen/colorContrast";
+import { DURATION_PRESETS } from "@/lib/classroomScreen/durationPresets";
 import { toIntlLocale } from "@/lib/languages";
 import { cn } from "@/lib/utils";
 
@@ -79,6 +85,7 @@ interface ClockProps {
   globalAudioCues?: AudioCues;
   displaySession?: ClassroomDisplaySession;
   timers?: ClassroomTimer[];
+  rotations?: ClassroomRotation[];
   audioFiles?: ClassroomAudioFile[];
 }
 
@@ -103,18 +110,6 @@ function formatDate(date: Date, locale: string): string {
 function digitWidthBenchmark(text: string): string {
   return text.replace(/\d/g, "0");
 }
-
-const DURATION_PRESETS = [
-  { unit: "seconds" as const, count: 10, seconds: 10 },
-  { unit: "seconds" as const, count: 30, seconds: 30 },
-  { unit: "minutes" as const, count: 1, seconds: 60 },
-  { unit: "minutes" as const, count: 5, seconds: 300 },
-  { unit: "minutes" as const, count: 10, seconds: 600 },
-  { unit: "minutes" as const, count: 15, seconds: 900 },
-  { unit: "minutes" as const, count: 20, seconds: 1200 },
-  { unit: "minutes" as const, count: 25, seconds: 1500 },
-  { unit: "minutes" as const, count: 30, seconds: 1800 },
-] as const;
 
 function DurationPresetButtons({
   onSelect,
@@ -147,7 +142,20 @@ function DurationPresetButtons({
   );
 }
 
-function QuickPickList({
+function segmentDisplayLabel(
+  segment: Segment,
+  t: (key: string, options?: Record<string, unknown>) => string,
+): string {
+  if (segment.kind === "work" && segment.round != null && segment.roundCount != null) {
+    return t("rotationSegmentLabel", { current: segment.round, total: segment.roundCount });
+  }
+  if (segment.kind === "transition") {
+    return t("transitionSegmentLabel");
+  }
+  return segment.label;
+}
+
+function QuickPickList<T extends { _id: string; name: string }>({
   title,
   items,
   onSelect,
@@ -156,8 +164,8 @@ function QuickPickList({
   emptyLabel,
 }: {
   title: string;
-  items: ClassroomTimer[] | undefined;
-  onSelect: (item: ClassroomTimer) => void;
+  items: T[] | undefined;
+  onSelect: (item: T) => void;
   largeControls?: boolean;
   loadingLabel: string;
   emptyLabel: string;
@@ -333,6 +341,7 @@ export function Clock({
   globalAudioCues,
   displaySession,
   timers,
+  rotations,
   audioFiles = [],
 }: ClockProps) {
   const { t, i18n } = useTranslation("classroomScreen");
@@ -473,6 +482,13 @@ export function Clock({
       void handleStartSession(buildCustomTimerSession(timer, globalAudioCues, timers ?? []));
     },
     [handleStartSession, globalAudioCues, timers],
+  );
+
+  const handleRotationSelect = useCallback(
+    (rotation: ClassroomRotation) => {
+      void handleStartSession(buildRotationSession(rotation, globalAudioCues));
+    },
+    [handleStartSession, globalAudioCues],
   );
 
   const handleQueueTimer = useCallback(
@@ -792,8 +808,11 @@ export function Clock({
   );
 
   const activeSegment = session ? getCurrentSegment(session) : null;
-  const upcomingSegments = session ? session.segments.slice(session.index + 1) : [];
-  const hasUpcoming = session ? hasUpcomingSegments(session) : false;
+  const activeIsRotationSegment =
+    activeSegment != null && (activeSegment.kind === "work" || activeSegment.kind === "transition");
+  const upcomingSegments =
+    session && !activeIsRotationSegment ? session.segments.slice(session.index + 1) : [];
+  const hasUpcoming = session && !activeIsRotationSegment ? hasUpcomingSegments(session) : false;
 
   const activeTopVisuals = session && activeSegment && (
     <>
@@ -802,7 +821,7 @@ export function Clock({
         {wallTimeElement}
       </div>
       <p className="font-medium" style={{ fontSize: `${timerTitleSize}px` }}>
-        {activeSegment.label}
+        {segmentDisplayLabel(activeSegment, t)}
       </p>
     </>
   );
@@ -814,6 +833,24 @@ export function Clock({
         <p className="font-mono tabular-nums">
           {t("endsAt")} {endsAt !== null ? formatEndTimestamp(endsAt, timeFormat, locale) : ""}
         </p>
+        {session &&
+        isRotationSession(session) &&
+        (endsAt !== null || (paused && pausedRemainingMs !== null))
+          ? getRotationEndTimes(
+              session,
+              endsAt ?? Date.now() + (pausedRemainingMs ?? remaining * 1000),
+            ).map((item) => (
+              <p
+                key={`${item.segmentIndex}-${item.endMs}`}
+                className={cn("font-mono tabular-nums text-sm", item.isCurrent && "font-medium")}
+              >
+                {item.round != null && item.roundCount != null
+                  ? t("rotationSegmentLabel", { current: item.round, total: item.roundCount })
+                  : item.label}{" "}
+                {formatEndTimestamp(item.endMs, timeFormat, locale)}
+              </p>
+            ))
+          : null}
         {upcomingSegments.length > 0 && (
           <div className="flex flex-col items-center gap-0.5 opacity-70">
             <div className="flex items-center gap-2">
@@ -833,7 +870,7 @@ export function Clock({
             </div>
             {upcomingSegments.map((seg, index) => (
               <p key={`${seg.label}-${index}`} className="font-mono tabular-nums text-sm">
-                {seg.label}
+                {segmentDisplayLabel(seg, t)}
               </p>
             ))}
           </div>
@@ -980,6 +1017,14 @@ export function Clock({
         largeControls={fillWidth}
         loadingLabel={t("loading")}
         emptyLabel={t("noSavedTimers")}
+      />
+      <QuickPickList
+        title={t("rotationsTitle")}
+        items={rotations}
+        onSelect={handleRotationSelect}
+        largeControls={fillWidth}
+        loadingLabel={t("loading")}
+        emptyLabel={t("noSavedRotations")}
       />
     </>
   ) : null;

@@ -24,6 +24,7 @@ type TimetableSectionListEditorProps<T extends SectionItemFormValues = SectionIt
   placeholder?: string;
   disabled?: boolean;
   renderControl?: (item: T, index: number) => ReactNode | null;
+  renderRowActions?: (item: T, index: number) => ReactNode;
   renderAdd?: (helpers: { addItem: () => void }) => ReactNode;
 };
 
@@ -42,6 +43,7 @@ export function TimetableSectionListEditor<
   placeholder,
   disabled = false,
   renderControl,
+  renderRowActions,
   renderAdd,
 }: TimetableSectionListEditorProps<T>) {
   const { t } = useTranslation("timetable");
@@ -140,16 +142,19 @@ export function TimetableSectionListEditor<
                 )}
               </div>
               {disabled ? null : (
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="icon"
-                  className="shrink-0"
-                  onClick={() => onChange(items.filter((_, itemIndex) => itemIndex !== index))}
-                  aria-label={t("removeItem")}
-                >
-                  <Trash2 />
-                </Button>
+                <>
+                  {renderRowActions?.(item, index)}
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="shrink-0"
+                    onClick={() => onChange(items.filter((_, itemIndex) => itemIndex !== index))}
+                    aria-label={t("removeItem")}
+                  >
+                    <Trash2 />
+                  </Button>
+                </>
               )}
             </div>
           </li>

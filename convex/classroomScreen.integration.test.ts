@@ -198,6 +198,160 @@ describe("classroom screen authorization", () => {
   });
 });
 
+const sampleRotation = {
+  name: "Stations",
+  rotationDurationSeconds: 300,
+  numberOfRotations: 4,
+  transitionDurationSeconds: 30,
+  rotationBgColor: "#1e40af",
+  transitionBgColor: "#6b7280",
+  finalTransition: false,
+};
+
+describe("classroom rotations", () => {
+  it("lets managers create, list, update, and delete rotations", async () => {
+    const test = createConvexTest();
+    const fixture = await seedFixture(test);
+    const owner = asOwner(test, fixture);
+
+    const rotationId = await owner.mutation(api.classroomScreen.createRotation, {
+      classId: fixture.classId,
+      ...sampleRotation,
+    });
+
+    const listed = await owner.query(api.classroomScreen.listRotations, {
+      classId: fixture.classId,
+    });
+    expect(listed).toHaveLength(1);
+    expect(listed[0]?._id).toBe(rotationId);
+    expect(listed[0]?.name).toBe("Stations");
+
+    await owner.mutation(api.classroomScreen.updateRotation, {
+      classId: fixture.classId,
+      rotationId,
+      ...sampleRotation,
+      name: "Centers",
+    });
+
+    const updated = await owner.query(api.classroomScreen.listRotations, {
+      classId: fixture.classId,
+    });
+    expect(updated[0]?.name).toBe("Centers");
+
+    await owner.mutation(api.classroomScreen.deleteRotation, {
+      classId: fixture.classId,
+      rotationId,
+    });
+    const afterDelete = await owner.query(api.classroomScreen.listRotations, {
+      classId: fixture.classId,
+    });
+    expect(afterDelete).toHaveLength(0);
+
+    const activity = await test.run(async (ctx) => {
+      return await ctx.db
+        .query("classActivityEvents")
+        .withIndex("by_class_resource_createdAt", (q) =>
+          q.eq("classId", fixture.classId).eq("resourceType", "classroomRotation"),
+        )
+        .collect();
+    });
+    expect(activity.map((event) => event.summaryKey)).toEqual(
+      expect.arrayContaining([
+        "activitySummary_createdRotation",
+        "activitySummary_updatedRotation",
+        "activitySummary_deletedRotation",
+      ]),
+    );
+  });
+
+  it("rejects read-only roles and isolates classes", async () => {
+    const test = createConvexTest();
+    const fixture = await seedFixture(test);
+    const owner = asOwner(test, fixture);
+    const student = asStudent(test, fixture);
+    const guardian = asGuardian(test, fixture);
+
+    const otherClassId = await test.run(async (ctx) => {
+      return await ctx.db.insert("classes", {
+        ownerId: fixture.ownerId,
+        name: "Other class",
+        year: 2026,
+        studentLanguage: "en",
+        updatedAt: 1,
+      });
+    });
+
+    const rotationId = await owner.mutation(api.classroomScreen.createRotation, {
+      classId: fixture.classId,
+      ...sampleRotation,
+    });
+
+    for (const client of [student, guardian]) {
+      await expect(
+        client.query(api.classroomScreen.listRotations, { classId: fixture.classId }),
+      ).resolves.toHaveLength(1);
+      await expect(
+        client.mutation(api.classroomScreen.createRotation, {
+          classId: fixture.classId,
+          ...sampleRotation,
+          name: "Blocked",
+        }),
+      ).rejects.toThrow();
+      await expect(
+        client.mutation(api.classroomScreen.updateRotation, {
+          classId: fixture.classId,
+          rotationId,
+          ...sampleRotation,
+          name: "Blocked",
+        }),
+      ).rejects.toThrow();
+      await expect(
+        client.mutation(api.classroomScreen.deleteRotation, {
+          classId: fixture.classId,
+          rotationId,
+        }),
+      ).rejects.toThrow();
+    }
+
+    await expect(
+      owner.mutation(api.classroomScreen.updateRotation, {
+        classId: otherClassId,
+        rotationId,
+        ...sampleRotation,
+        name: "Stolen",
+      }),
+    ).rejects.toThrow();
+  });
+
+  it("rejects invalid rotation input", async () => {
+    const test = createConvexTest();
+    const fixture = await seedFixture(test);
+    const owner = asOwner(test, fixture);
+
+    await expect(
+      owner.mutation(api.classroomScreen.createRotation, {
+        classId: fixture.classId,
+        ...sampleRotation,
+        name: "   ",
+      }),
+    ).rejects.toThrow();
+    await expect(
+      owner.mutation(api.classroomScreen.createRotation, {
+        classId: fixture.classId,
+        ...sampleRotation,
+        numberOfRotations: 0,
+      }),
+    ).rejects.toThrow();
+    await expect(
+      owner.mutation(api.classroomScreen.createRotation, {
+        classId: fixture.classId,
+        ...sampleRotation,
+        rotationBgColor: "blue",
+      }),
+    ).rejects.toThrow();
+  });
+});
+
 describe("classroom screen current lesson", () => {
   it("resolves the current lesson using the class timezone", async () => {
     const test = createConvexTest();
@@ -250,7 +404,7 @@ describe("classroom screen current lesson", () => {
         links: [],
         materials: [{ key: "m1", text: "Workbook", tags: [] }],
         announcements: [{ key: "a1", text: "Bring scissors", tags: [] }],
-        agenda: [{ key: "g1", text: "Warm up", tags: [] }],
+        agenda: [{ key: "g1", text: "Warm up", tags: [], preface: "Center #1:" }],
         createdAt: now,
         updatedAt: now,
       });
@@ -269,5 +423,6 @@ describe("classroom screen current lesson", () => {
     expect(bundle.currentLesson?.materials).toHaveLength(1);
     expect(bundle.currentLesson?.announcements).toHaveLength(1);
     expect(bundle.currentLesson?.agenda).toHaveLength(1);
+    expect(bundle.currentLesson?.agenda[0]?.preface).toBe("Center #1:");
   });
 });

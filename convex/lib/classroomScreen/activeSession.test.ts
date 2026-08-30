@@ -4,8 +4,11 @@ import {
   advanceSegment,
   buildCustomTimerSession,
   buildQuickPresetSession,
+  buildRotationSession,
   buildTimerChainSegments,
+  getRotationEndTimes,
   hasUpcomingSegments,
+  isRotationSession,
   parseSessionJson,
   remainingFromDisplaySession,
   truncateUpcomingSegments,
@@ -54,6 +57,102 @@ describe("activeSession", () => {
   test("parseSessionJson rejects invalid payloads", () => {
     expect(parseSessionJson(null)).toBeNull();
     expect(parseSessionJson({ index: 0 })).toBeNull();
+  });
+
+  test("buildRotationSession uses work then transition and omits a trailing transition", () => {
+    const session = buildRotationSession({
+      name: "Stations",
+      rotationDurationSeconds: 300,
+      numberOfRotations: 3,
+      transitionDurationSeconds: 30,
+      rotationBgColor: "#1e40af",
+      transitionBgColor: "#6b7280",
+    });
+
+    expect(isRotationSession(session)).toBe(true);
+    expect(session.segments.map((segment) => segment.kind)).toEqual([
+      "work",
+      "transition",
+      "work",
+      "transition",
+      "work",
+    ]);
+    expect(session.segments[0]?.round).toBe(1);
+    expect(session.segments[0]?.roundCount).toBe(3);
+    expect(session.segments[0]?.durationSeconds).toBe(300);
+    expect(session.segments[1]?.durationSeconds).toBe(30);
+  });
+
+  test("buildRotationSession can add a final transition and omits zero-duration transitions", () => {
+    const withFinal = buildRotationSession({
+      name: "Stations",
+      rotationDurationSeconds: 60,
+      numberOfRotations: 2,
+      transitionDurationSeconds: 15,
+      rotationBgColor: "#1e40af",
+      transitionBgColor: "#6b7280",
+      finalTransition: true,
+    });
+    expect(withFinal.segments.map((segment) => segment.kind)).toEqual([
+      "work",
+      "transition",
+      "work",
+      "transition",
+    ]);
+
+    const noTransition = buildRotationSession({
+      name: "Stations",
+      rotationDurationSeconds: 60,
+      numberOfRotations: 2,
+      transitionDurationSeconds: 0,
+      rotationBgColor: "#1e40af",
+      transitionBgColor: "#6b7280",
+      finalTransition: true,
+    });
+    expect(noTransition.segments.map((segment) => segment.kind)).toEqual(["work", "work"]);
+  });
+
+  test("buildRotationSession inherits audio cues segment then rotation then global", () => {
+    const session = buildRotationSession(
+      {
+        name: "Stations",
+        rotationDurationSeconds: 60,
+        numberOfRotations: 1,
+        transitionDurationSeconds: 0,
+        rotationBgColor: "#1e40af",
+        transitionBgColor: "#6b7280",
+        workCues: { segmentStart: { audioId: "work-start" } },
+        audioCues: {
+          segmentStart: { audioId: "rotation-start" },
+          segmentEnd: { audioId: "rot-end" },
+        },
+      },
+      { segmentStart: { audioId: "global-start" }, segmentEnd: { audioId: "global-end" } },
+    );
+
+    expect(session.segments[0]?.audioCues.segmentStart.audioId).toBe("work-start");
+    expect(session.segments[0]?.audioCues.segmentEnd.audioId).toBe("rot-end");
+  });
+
+  test("getRotationEndTimes projects work-round end times from the current segment", () => {
+    const session = buildRotationSession({
+      name: "Stations",
+      rotationDurationSeconds: 60,
+      numberOfRotations: 2,
+      transitionDurationSeconds: 30,
+      rotationBgColor: "#1e40af",
+      transitionBgColor: "#6b7280",
+    });
+    const currentEndsAt = 1_000_000;
+    const ends = getRotationEndTimes(session, currentEndsAt);
+
+    expect(ends).toHaveLength(2);
+    expect(ends[0]).toMatchObject({ endMs: currentEndsAt, isCurrent: true, round: 1 });
+    expect(ends[1]).toMatchObject({
+      endMs: currentEndsAt + 30_000 + 60_000,
+      isCurrent: false,
+      round: 2,
+    });
   });
 
   test("remainingFromDisplaySession respects pause", () => {

@@ -12,7 +12,9 @@ import {
 import { audioCuesValidator } from "./lib/classroomScreen/audioCuesSchema.js";
 import { DEFAULT_CLOCK_SETTINGS } from "./lib/classroomScreen/clockSettingsDefaults.js";
 import { normalizeEndTime, secondsUntilEndTime } from "./lib/classroomScreen/timerUtils.js";
+import { recordClassActivity } from "./lib/activity/classActivity.js";
 import { classMutation, classQuery } from "./lib/customFunctions.js";
+import { parseRotationInput } from "./lib/classroomScreen/rotationSchema.js";
 import { isValidTimeZone, utcMsToZonedParts } from "./lib/calendar/timeZone.js";
 import {
   agendaDisplayItemValidator,
@@ -75,6 +77,27 @@ const timerValidator = v.object({
   bgTransition: v.optional(v.string()),
   audioCues: audioCuesValidator,
   nextTimerId: v.optional(v.id("classroomTimers")),
+  sortOrder: v.number(),
+  createdBy: v.id("users"),
+  createdAt: v.number(),
+  updatedAt: v.number(),
+});
+
+const rotationValidator = v.object({
+  _id: v.id("classroomRotations"),
+  _creationTime: v.number(),
+  classId: v.id("classes"),
+  name: v.string(),
+  rotationDurationSeconds: v.number(),
+  numberOfRotations: v.number(),
+  transitionDurationSeconds: v.number(),
+  rotationBgColor: v.string(),
+  transitionBgColor: v.string(),
+  finalTransition: v.optional(v.boolean()),
+  bgTransition: v.optional(v.string()),
+  audioCues: audioCuesValidator,
+  workCues: audioCuesValidator,
+  transitionCues: audioCuesValidator,
   sortOrder: v.number(),
   createdBy: v.id("users"),
   createdAt: v.number(),
@@ -301,6 +324,18 @@ async function requireTimerInClass(
     throw new ConvexError({ code: "NOT_FOUND", message: "Timer not found" });
   }
   return timer;
+}
+
+async function requireRotationInClass(
+  ctx: QueryCtx | MutationCtx,
+  classId: Id<"classes">,
+  rotationId: Id<"classroomRotations">,
+) {
+  const rotation = await ctx.db.get("classroomRotations", rotationId);
+  if (!rotation || rotation.classId !== classId) {
+    throw new ConvexError({ code: "NOT_FOUND", message: "Rotation not found" });
+  }
+  return rotation;
 }
 
 async function requireAudioInClass(
@@ -689,6 +724,20 @@ export const listTimers = classQuery({
   },
 });
 
+export const listRotations = classQuery({
+  args: {},
+  returns: v.array(rotationValidator),
+  handler: async (ctx) => {
+    await ctx.require("classroomScreen:read");
+    // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded list
+    const rotations = await ctx.db
+      .query("classroomRotations")
+      .withIndex("by_classId", (q) => q.eq("classId", ctx.classDoc._id))
+      .collect();
+    return rotations.sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name));
+  },
+});
+
 export const listAudioFiles = classQuery({
   args: {},
   returns: v.array(audioFileValidator),
@@ -883,6 +932,167 @@ export const deleteTimer = classMutation({
     }
 
     await ctx.db.delete("classroomTimers", args.timerId);
+    return null;
+  },
+});
+
+export const createRotation = classMutation({
+  args: {
+    name: v.string(),
+    rotationDurationSeconds: v.number(),
+    numberOfRotations: v.number(),
+    transitionDurationSeconds: v.number(),
+    rotationBgColor: v.string(),
+    transitionBgColor: v.string(),
+    finalTransition: v.optional(v.boolean()),
+    bgTransition: v.optional(v.string()),
+    audioCues: audioCuesValidator,
+    workCues: audioCuesValidator,
+    transitionCues: audioCuesValidator,
+  },
+  returns: v.id("classroomRotations"),
+  handler: async (ctx, args) => {
+    await ctx.require("classroomScreen:manage");
+    const classId = ctx.classDoc._id;
+    const parsed = parseRotationInput({
+      name: args.name,
+      rotationDurationSeconds: args.rotationDurationSeconds,
+      numberOfRotations: args.numberOfRotations,
+      transitionDurationSeconds: args.transitionDurationSeconds,
+      rotationBgColor: args.rotationBgColor,
+      transitionBgColor: args.transitionBgColor,
+      finalTransition: args.finalTransition ?? false,
+      bgTransition: args.bgTransition,
+      audioCues: args.audioCues,
+      workCues: args.workCues,
+      transitionCues: args.transitionCues,
+    });
+
+    // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded list
+    const existing = await ctx.db
+      .query("classroomRotations")
+      .withIndex("by_classId", (q) => q.eq("classId", classId))
+      .collect();
+    const sortOrder = existing.reduce((max, rotation) => Math.max(max, rotation.sortOrder), -1) + 1;
+    const now = Date.now();
+
+    const rotationId = await ctx.db.insert("classroomRotations", {
+      classId,
+      name: parsed.name,
+      rotationDurationSeconds: parsed.rotationDurationSeconds,
+      numberOfRotations: parsed.numberOfRotations,
+      transitionDurationSeconds: parsed.transitionDurationSeconds,
+      rotationBgColor: parsed.rotationBgColor,
+      transitionBgColor: parsed.transitionBgColor,
+      finalTransition: parsed.finalTransition,
+      bgTransition: parsed.bgTransition,
+      audioCues: parsed.audioCues,
+      workCues: parsed.workCues,
+      transitionCues: parsed.transitionCues,
+      sortOrder,
+      createdBy: ctx.userId,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    await recordClassActivity(ctx, {
+      classId,
+      actorUserId: ctx.userId,
+      action: "write",
+      resourceType: "classroomRotation",
+      resourceId: rotationId,
+      summary: `Created rotation "${parsed.name}"`,
+      summaryKey: "activitySummary_createdRotation",
+      metadata: { name: parsed.name },
+    });
+
+    return rotationId;
+  },
+});
+
+export const updateRotation = classMutation({
+  args: {
+    rotationId: v.id("classroomRotations"),
+    name: v.string(),
+    rotationDurationSeconds: v.number(),
+    numberOfRotations: v.number(),
+    transitionDurationSeconds: v.number(),
+    rotationBgColor: v.string(),
+    transitionBgColor: v.string(),
+    finalTransition: v.optional(v.boolean()),
+    bgTransition: v.optional(v.union(v.string(), v.null())),
+    audioCues: audioCuesValidator,
+    workCues: audioCuesValidator,
+    transitionCues: audioCuesValidator,
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await ctx.require("classroomScreen:manage");
+    const classId = ctx.classDoc._id;
+    const rotation = await requireRotationInClass(ctx, classId, args.rotationId);
+    const parsed = parseRotationInput({
+      name: args.name,
+      rotationDurationSeconds: args.rotationDurationSeconds,
+      numberOfRotations: args.numberOfRotations,
+      transitionDurationSeconds: args.transitionDurationSeconds,
+      rotationBgColor: args.rotationBgColor,
+      transitionBgColor: args.transitionBgColor,
+      finalTransition: args.finalTransition ?? false,
+      bgTransition: args.bgTransition === null ? undefined : args.bgTransition,
+      audioCues: args.audioCues,
+      workCues: args.workCues,
+      transitionCues: args.transitionCues,
+    });
+
+    await ctx.db.patch("classroomRotations", rotation._id, {
+      name: parsed.name,
+      rotationDurationSeconds: parsed.rotationDurationSeconds,
+      numberOfRotations: parsed.numberOfRotations,
+      transitionDurationSeconds: parsed.transitionDurationSeconds,
+      rotationBgColor: parsed.rotationBgColor,
+      transitionBgColor: parsed.transitionBgColor,
+      finalTransition: parsed.finalTransition,
+      bgTransition: parsed.bgTransition,
+      audioCues: parsed.audioCues,
+      workCues: parsed.workCues,
+      transitionCues: parsed.transitionCues,
+      updatedAt: Date.now(),
+    });
+
+    await recordClassActivity(ctx, {
+      classId,
+      actorUserId: ctx.userId,
+      action: "update",
+      resourceType: "classroomRotation",
+      resourceId: rotation._id,
+      summary: `Updated rotation "${parsed.name}"`,
+      summaryKey: "activitySummary_updatedRotation",
+      metadata: { name: parsed.name },
+    });
+    return null;
+  },
+});
+
+export const deleteRotation = classMutation({
+  args: { rotationId: v.id("classroomRotations") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await ctx.require("classroomScreen:manage");
+    const classId = ctx.classDoc._id;
+    const rotation = await requireRotationInClass(ctx, classId, args.rotationId);
+    const name = rotation.name;
+    await ctx.db.delete("classroomRotations", args.rotationId);
+
+    await recordClassActivity(ctx, {
+      classId,
+      actorUserId: ctx.userId,
+      action: "delete",
+      resourceType: "classroomRotation",
+      resourceId: args.rotationId,
+      summary: `Deleted rotation "${name}"`,
+      summaryKey: "activitySummary_deletedRotation",
+      metadata: { name },
+    });
     return null;
   },
 });

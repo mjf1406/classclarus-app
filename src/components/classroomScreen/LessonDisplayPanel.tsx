@@ -194,6 +194,7 @@ function LessonSection({
   items: Array<{
     key: string;
     text: string;
+    preface?: string;
     assignmentId?: string;
     taskId?: string;
     assignmentName?: string;
@@ -217,6 +218,7 @@ function LessonSection({
                 <TimetableAgendaItemView
                   classId={classId}
                   text={item.text}
+                  preface={item.preface}
                   assignmentId={item.assignmentId}
                   taskId={item.taskId}
                   assignmentName={

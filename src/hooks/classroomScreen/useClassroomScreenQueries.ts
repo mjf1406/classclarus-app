@@ -11,6 +11,9 @@ export type ClassroomDisplayBundle = FunctionReturnType<
 >;
 export type ClassroomScreenBundle = FunctionReturnType<typeof api.classroomScreen.getScreenBundle>;
 export type ClassroomTimer = ClassroomScreenBundle["timers"][number];
+export type ClassroomRotation = FunctionReturnType<
+  typeof api.classroomScreen.listRotations
+>[number];
 export type ClassroomAudioFile = ClassroomScreenBundle["audioFiles"][number];
 export type ClassroomClockSettings = ClassroomDisplayBundle["settings"];
 export type ClassroomDisplaySession = ClassroomDisplayBundle["displaySession"];
@@ -62,6 +65,17 @@ export function classroomTimersQueryKey(classId: Id<"classes">) {
   return classroomTimersQueryOptions(classId).queryKey;
 }
 
+export function classroomRotationsQueryOptions(classId: Id<"classes">) {
+  return {
+    ...convexQuery(api.classroomScreen.listRotations, { classId }),
+    gcTime: GC_TIME.stable,
+  };
+}
+
+export function classroomRotationsQueryKey(classId: Id<"classes">) {
+  return classroomRotationsQueryOptions(classId).queryKey;
+}
+
 export function classroomAudioQueryOptions(classId: Id<"classes">) {
   return {
     ...convexQuery(api.classroomScreen.listAudioFiles, { classId }),
@@ -104,6 +118,12 @@ export function useClassroomScreenBundle(classId: Id<"classes"> | undefined) {
 
 export function useClassroomTimers(classId: Id<"classes"> | undefined) {
   return useAuthedQuery(api.classroomScreen.listTimers, classId ? { classId } : "skip", {
+    gcTime: GC_TIME.stable,
+  });
+}
+
+export function useClassroomRotations(classId: Id<"classes"> | undefined) {
+  return useAuthedQuery(api.classroomScreen.listRotations, classId ? { classId } : "skip", {
     gcTime: GC_TIME.stable,
   });
 }

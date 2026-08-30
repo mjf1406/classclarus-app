@@ -31,6 +31,7 @@ export const agendaItemValidator = v.object({
   tags: v.array(v.string()),
   assignmentId: v.optional(v.id("assignments")),
   taskId: v.optional(v.id("tasks")),
+  preface: v.optional(v.string()),
 });
 
 export const agendaDisplayItemValidator = v.object({
@@ -39,6 +40,7 @@ export const agendaDisplayItemValidator = v.object({
   tags: v.array(v.string()),
   assignmentId: v.optional(v.id("assignments")),
   taskId: v.optional(v.id("tasks")),
+  preface: v.optional(v.string()),
   assignmentName: v.optional(v.string()),
   taskName: v.optional(v.string()),
 });
@@ -60,6 +62,7 @@ export type SectionItem = {
 export type AgendaItem = SectionItem & {
   assignmentId?: Id<"assignments">;
   taskId?: Id<"tasks">;
+  preface?: string;
 };
 
 export type AgendaDisplayItem = AgendaItem & {
@@ -106,6 +109,7 @@ export function stripAgendaItemReferences(
       tags: item.tags,
       ...(assignmentId ? { assignmentId } : {}),
       ...(taskId ? { taskId } : {}),
+      ...prefaceFields(item.preface),
     });
   }
   return result;
@@ -123,7 +127,8 @@ export function agendaItemsChanged(
       item.key !== next.key ||
       item.text !== next.text ||
       item.assignmentId !== next.assignmentId ||
-      item.taskId !== next.taskId
+      item.taskId !== next.taskId ||
+      item.preface !== next.preface
     );
   });
 }
@@ -131,6 +136,7 @@ export function agendaItemsChanged(
 export type AgendaItemInput = SectionItem & {
   assignmentId?: string;
   taskId?: string;
+  preface?: string;
 };
 
 export function exclusiveAgendaLinkIds(item: {
@@ -142,6 +148,19 @@ export function exclusiveAgendaLinkIds(item: {
   return {};
 }
 
+export function prefaceFields(preface: string | undefined): { preface?: string } {
+  return preface ? { preface } : {};
+}
+
+export function normalizePreface(preface: string | undefined): string | undefined {
+  const trimmed = preface?.trim() ?? "";
+  if (!trimmed) return undefined;
+  if (trimmed.length > MAX_ITEM_TEXT_LENGTH) {
+    throw new Error(`Item text must be at most ${MAX_ITEM_TEXT_LENGTH} characters`);
+  }
+  return trimmed;
+}
+
 export function toAgendaItems(items: ReadonlyArray<AgendaItemInput>): Array<AgendaItem> {
   return items.map((item) => ({
     key: item.key,
@@ -151,6 +170,7 @@ export function toAgendaItems(items: ReadonlyArray<AgendaItemInput>): Array<Agen
       ...(item.assignmentId ? { assignmentId: item.assignmentId as Id<"assignments"> } : {}),
       ...(item.taskId ? { taskId: item.taskId as Id<"tasks"> } : {}),
     }),
+    ...prefaceFields(item.preface?.trim()),
   }));
 }
 
@@ -282,6 +302,7 @@ export async function normalizeAgendaItems(
       tags: normalizeStoredTags(text, item.tags),
       ...(item.assignmentId ? { assignmentId: item.assignmentId } : {}),
       ...(item.taskId ? { taskId: item.taskId } : {}),
+      ...prefaceFields(normalizePreface(item.preface)),
     });
   }
   return normalized;

@@ -23,6 +23,7 @@ import {
   classroomMinuteBucket,
   useClassroomAudioFiles,
   useClassroomDisplayBundle,
+  useClassroomRotations,
   useClassroomTimers,
 } from "@/hooks/classroomScreen/useClassroomScreenQueries";
 import {
@@ -62,6 +63,7 @@ export function ClassroomScreenPage({ classId }: ClassroomScreenPageProps) {
     refetch,
   } = useClassroomDisplayBundle(classId, minuteBucket);
   const { data: timers } = useClassroomTimers(classId);
+  const { data: rotations } = useClassroomRotations(classId);
   const { data: audioFiles } = useClassroomAudioFiles(classId);
   const clearPushedLesson = useClearPushedLesson();
   const clearQuickTextMutation = useClearQuickText();
@@ -214,6 +216,7 @@ export function ClassroomScreenPage({ classId }: ClassroomScreenPageProps) {
         globalAudioCues={settings.audioCues as AudioCues | undefined}
         displaySession={displayBundle.displaySession}
         timers={timers}
+        rotations={rotations}
         audioFiles={audioFiles}
       />
     </div>

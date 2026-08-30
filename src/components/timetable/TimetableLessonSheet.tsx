@@ -16,6 +16,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { TimetableAgendaAddMenu } from "@/components/timetable/TimetableAgendaAddMenu";
 import { TimetableAgendaItemView } from "@/components/timetable/TimetableAgendaItemView";
+import { TimetableAgendaPrefaceButton } from "@/components/timetable/TimetableAgendaPrefaceButton";
 import { TimetableSectionListEditor } from "@/components/timetable/TimetableSectionListEditor";
 import { TimetableTaggedText } from "@/components/timetable/TimetableTaggedText";
 import { useAssignments } from "@/hooks/assignments/useAssignments";
@@ -201,12 +202,28 @@ export function TimetableLessonSheet({
                         <TimetableAgendaItemView
                           classId={classId}
                           text={item.text}
+                          preface={item.preface}
                           assignmentId={item.assignmentId}
                           taskId={item.taskId}
                           assignmentName={findAgendaResourceName(assignments, item.assignmentId)}
                           taskName={findAgendaResourceName(tasks, item.taskId)}
                         />
                       </div>
+                    );
+                  }}
+                  renderRowActions={(item, index) => {
+                    if (agendaItemKind(item) === "text") return null;
+                    return (
+                      <TimetableAgendaPrefaceButton
+                        preface={item.preface}
+                        onChange={(preface) => {
+                          setAgenda(
+                            agenda.map((row, rowIndex) =>
+                              rowIndex === index ? { ...row, preface } : row,
+                            ),
+                          );
+                        }}
+                      />
                     );
                   }}
                 />
@@ -316,6 +333,7 @@ function ReadOnlyAgenda({
           <TimetableAgendaItemView
             classId={classId}
             text={item.text}
+            preface={item.preface}
             assignmentId={item.assignmentId}
             taskId={item.taskId}
             assignmentName={findAgendaResourceName(assignments, item.assignmentId)}

@@ -9,11 +9,13 @@ import type { ActiveSession } from "../../../convex/lib/classroomScreen/activeSe
 import type { AudioCues } from "../../../convex/lib/classroomScreen/audioCues";
 import {
   classroomAudioQueryKey,
+  classroomRotationsQueryKey,
   classroomSettingsQueryKey,
   classroomTimersQueryKey,
   isClassroomDisplayBundleQueryKey,
   type ClassroomAudioFile,
   type ClassroomDisplayBundle,
+  type ClassroomRotation,
   type ClassroomTimer,
 } from "@/hooks/classroomScreen/useClassroomScreenQueries";
 import { useOptimisticMutation } from "@/hooks/useOptimisticMutation";
@@ -51,6 +53,10 @@ function timerKeys(classId: Id<"classes">) {
   return [classroomTimersQueryKey(classId)];
 }
 
+function rotationKeys(classId: Id<"classes">) {
+  return [classroomRotationsQueryKey(classId)];
+}
+
 function audioKeys(classId: Id<"classes">) {
   return [classroomAudioQueryKey(classId)];
 }
@@ -69,6 +75,16 @@ function patchTimers(
   patch: (timers: ClassroomTimer[]) => ClassroomTimer[],
 ) {
   queryClient.setQueryData<ClassroomTimer[]>(classroomTimersQueryKey(classId), (old) =>
+    old ? patch(old) : old,
+  );
+}
+
+function patchRotations(
+  queryClient: QueryClient,
+  classId: Id<"classes">,
+  patch: (rotations: ClassroomRotation[]) => ClassroomRotation[],
+) {
+  queryClient.setQueryData<ClassroomRotation[]>(classroomRotationsQueryKey(classId), (old) =>
     old ? patch(old) : old,
   );
 }
@@ -171,6 +187,96 @@ export function useUpdateClassroomTimer() {
     },
     onError: (error) => {
       showMutationError(messageFromError(error, t("timerSaveError")));
+    },
+  });
+}
+
+export function useCreateClassroomRotation() {
+  const mutationFn = useConvexMutation(api.classroomScreen.createRotation);
+
+  return useOptimisticMutation({
+    mutationFn,
+    queryKeys: (args) => rotationKeys(args.classId),
+    applyOptimisticUpdate: (queryClient, args) => {
+      const now = Date.now();
+      patchRotations(queryClient, args.classId, (rotations) => [
+        ...rotations,
+        {
+          _id: `optimistic:${now}` as Id<"classroomRotations">,
+          _creationTime: now,
+          classId: args.classId,
+          name: args.name,
+          rotationDurationSeconds: args.rotationDurationSeconds,
+          numberOfRotations: args.numberOfRotations,
+          transitionDurationSeconds: args.transitionDurationSeconds,
+          rotationBgColor: args.rotationBgColor,
+          transitionBgColor: args.transitionBgColor,
+          finalTransition: args.finalTransition,
+          bgTransition: args.bgTransition,
+          audioCues: args.audioCues,
+          workCues: args.workCues,
+          transitionCues: args.transitionCues,
+          sortOrder: rotations.length,
+          createdBy: "" as Id<"users">,
+          createdAt: now,
+          updatedAt: now,
+        },
+      ]);
+    },
+  });
+}
+
+export function useUpdateClassroomRotation() {
+  const mutationFn = useConvexMutation(api.classroomScreen.updateRotation);
+
+  return useOptimisticMutation({
+    mutationFn,
+    queryKeys: (args) => rotationKeys(args.classId),
+    applyOptimisticUpdate: (queryClient, args) => {
+      patchRotations(queryClient, args.classId, (rotations) =>
+        rotations.map((rotation) =>
+          rotation._id === args.rotationId
+            ? {
+                ...rotation,
+                name: args.name,
+                rotationDurationSeconds: args.rotationDurationSeconds,
+                numberOfRotations: args.numberOfRotations,
+                transitionDurationSeconds: args.transitionDurationSeconds,
+                rotationBgColor: args.rotationBgColor,
+                transitionBgColor: args.transitionBgColor,
+                finalTransition: args.finalTransition ?? rotation.finalTransition,
+                bgTransition:
+                  args.bgTransition === null
+                    ? undefined
+                    : args.bgTransition !== undefined
+                      ? args.bgTransition
+                      : rotation.bgTransition,
+                audioCues: args.audioCues ?? rotation.audioCues,
+                workCues: args.workCues ?? rotation.workCues,
+                transitionCues: args.transitionCues ?? rotation.transitionCues,
+                updatedAt: Date.now(),
+              }
+            : rotation,
+        ),
+      );
+    },
+  });
+}
+
+export function useDeleteClassroomRotation() {
+  const { t } = useTranslation("classroomScreen");
+  const mutationFn = useConvexMutation(api.classroomScreen.deleteRotation);
+
+  return useOptimisticMutation({
+    mutationFn,
+    queryKeys: (args) => rotationKeys(args.classId),
+    applyOptimisticUpdate: (queryClient, args) => {
+      patchRotations(queryClient, args.classId, (rotations) =>
+        rotations.filter((rotation) => rotation._id !== args.rotationId),
+      );
+    },
+    onError: (error) => {
+      showMutationError(messageFromError(error, t("rotationDeleteError")));
     },
   });
 }

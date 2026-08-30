@@ -5,6 +5,7 @@ import {
   appendAgendaItems,
   agendaItemKind,
   agendaNamedLinkLabel,
+  agendaPrefaceText,
   createAssignmentAgendaItem,
   createTaskAgendaItem,
   createTextAgendaItem,
@@ -166,5 +167,11 @@ describe("agenda resource labels", () => {
     expect(agendaNamedLinkLabel(" Quiz ", "snapshot", "Assignment")).toBe("Quiz");
     expect(agendaNamedLinkLabel(undefined, " snapshot ", "Assignment")).toBe("snapshot");
     expect(agendaNamedLinkLabel("  ", "  ", "Assignment")).toBe("Assignment");
+  });
+
+  test("returns trimmed preface text and ignores blanks", () => {
+    expect(agendaPrefaceText("  Center #1:  ")).toBe("Center #1:");
+    expect(agendaPrefaceText("   ")).toBeUndefined();
+    expect(agendaPrefaceText(undefined)).toBeUndefined();
   });
 });

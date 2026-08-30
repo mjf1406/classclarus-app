@@ -33,6 +33,7 @@ type BreadcrumbTarget =
   | { kind: "timetable" }
   | { kind: "classroomScreen" }
   | { kind: "timers" }
+  | { kind: "rotations" }
   | { kind: "audio" }
   | { kind: "announcements" }
   | { kind: "tasks" }
@@ -95,6 +96,9 @@ function breadcrumbTarget(pathname: string, classId: string): BreadcrumbTarget {
   }
   if (pathname === `${base}/timers` || pathname.startsWith(`${base}/timers/`)) {
     return { kind: "timers" };
+  }
+  if (pathname === `${base}/rotations` || pathname.startsWith(`${base}/rotations/`)) {
+    return { kind: "rotations" };
   }
   if (pathname === `${base}/audio` || pathname.startsWith(`${base}/audio/`)) {
     return { kind: "audio" };
@@ -717,46 +721,49 @@ export function ClassBreadcrumb({ classDoc }: ClassBreadcrumbProps) {
             ? tClassroomScreen("nav")
             : target.kind === "timers"
               ? tClassroomScreen("timersTitle")
-              : target.kind === "audio"
-                ? tClassroomScreen("audioTitle")
-                : target.kind === "announcements"
-                  ? tAnnouncements("nav")
-                  : target.kind === "tasks" || target.kind === "taskDetail"
-                    ? tTasks("nav")
-                    : target.kind === "assignments" ||
-                        target.kind === "assignmentNew" ||
-                        target.kind === "assignmentDetail" ||
-                        target.kind === "assignmentEdit" ||
-                        target.kind === "assignmentGrade" ||
-                        target.kind === "assignmentTasks"
-                      ? tAssignments("nav")
-                      : target.kind === "points"
-                        ? tPoints("nav")
-                        : target.kind === "behaviors"
-                          ? tBehaviors("nav")
-                          : target.kind === "rewards"
-                            ? tRewards("nav")
-                            : target.kind === "expectations" || target.kind === "expectationDetail"
-                              ? tExpectations("nav")
-                              : target.kind === "raz" || target.kind === "razInitialLevels"
-                                ? tRaz("nav")
-                                : target.kind === "assignersSeats" ||
-                                    target.kind === "seatLayoutDetail" ||
-                                    target.kind === "seatChartDetail"
-                                  ? tAssigners("navSeats")
-                                  : target.kind === "assignersRandom"
-                                    ? tAssigners("navRandom")
-                                    : target.kind === "assignersEquitable" ||
-                                        target.kind === "assignersEquitableNew" ||
-                                        target.kind === "equitableAssignerDetail" ||
-                                        target.kind === "equitableAssignerEdit" ||
-                                        target.kind === "equitableAssignerManual"
-                                      ? tAssigners("navEquitable")
-                                      : target.kind === "studentWorkGradeScales"
-                                        ? tStudentWork("navGradeScales")
-                                        : target.kind === "studentWorkGradedSubjects"
-                                          ? tStudentWork("navGradedSubjects")
-                                          : t(target.key);
+              : target.kind === "rotations"
+                ? tClassroomScreen("rotationsTitle")
+                : target.kind === "audio"
+                  ? tClassroomScreen("audioTitle")
+                  : target.kind === "announcements"
+                    ? tAnnouncements("nav")
+                    : target.kind === "tasks" || target.kind === "taskDetail"
+                      ? tTasks("nav")
+                      : target.kind === "assignments" ||
+                          target.kind === "assignmentNew" ||
+                          target.kind === "assignmentDetail" ||
+                          target.kind === "assignmentEdit" ||
+                          target.kind === "assignmentGrade" ||
+                          target.kind === "assignmentTasks"
+                        ? tAssignments("nav")
+                        : target.kind === "points"
+                          ? tPoints("nav")
+                          : target.kind === "behaviors"
+                            ? tBehaviors("nav")
+                            : target.kind === "rewards"
+                              ? tRewards("nav")
+                              : target.kind === "expectations" ||
+                                  target.kind === "expectationDetail"
+                                ? tExpectations("nav")
+                                : target.kind === "raz" || target.kind === "razInitialLevels"
+                                  ? tRaz("nav")
+                                  : target.kind === "assignersSeats" ||
+                                      target.kind === "seatLayoutDetail" ||
+                                      target.kind === "seatChartDetail"
+                                    ? tAssigners("navSeats")
+                                    : target.kind === "assignersRandom"
+                                      ? tAssigners("navRandom")
+                                      : target.kind === "assignersEquitable" ||
+                                          target.kind === "assignersEquitableNew" ||
+                                          target.kind === "equitableAssignerDetail" ||
+                                          target.kind === "equitableAssignerEdit" ||
+                                          target.kind === "equitableAssignerManual"
+                                        ? tAssigners("navEquitable")
+                                        : target.kind === "studentWorkGradeScales"
+                                          ? tStudentWork("navGradeScales")
+                                          : target.kind === "studentWorkGradedSubjects"
+                                            ? tStudentWork("navGradedSubjects")
+                                            : t(target.key);
 
   return (
     <Breadcrumb aria-label={t("breadcrumb")} className="min-w-0">

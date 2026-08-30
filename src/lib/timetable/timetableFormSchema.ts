@@ -1,6 +1,7 @@
 import type { TFunction } from "i18next";
 
 import {
+  createAgendaPrefaceSchema,
   createTimetableLinkSlotsFormSchema,
   createTimetableSlotFormSchema,
   createTimetableSubjectFormSchema,
@@ -53,4 +54,10 @@ export function createClientTimetableSubjectFormSchema(t: TFunction<"timetable">
     audienceRoleInvalid: t("validationAudienceRoleInvalid"),
   };
   return createTimetableSubjectFormSchema(messages);
+}
+
+export function createClientAgendaPrefaceSchema(t: TFunction<"timetable">) {
+  return createAgendaPrefaceSchema({
+    itemTextTooLong: t("validationItemTextTooLong"),
+  });
 }

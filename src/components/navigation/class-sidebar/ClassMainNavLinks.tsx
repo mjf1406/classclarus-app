@@ -20,6 +20,7 @@ import {
   ExternalLink,
   Monitor,
   Music,
+  Repeat,
   Scale,
   SmilePlus,
   Settings2,
@@ -76,7 +77,7 @@ type NavItem = {
 };
 
 export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
-  const { t } = useTranslation("classes");
+  const { t, i18n } = useTranslation("classes");
   const { t: tAnnouncements } = useTranslation("announcements");
   const { t: tAttendance } = useTranslation("attendance");
   const { t: tCalendar } = useTranslation("calendar");
@@ -364,6 +365,12 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
       permission: "classroomScreen:manage",
     },
     {
+      title: tClassroomScreen("rotationsTitle"),
+      icon: Repeat,
+      to: "/class/$classId/rotations",
+      permission: "classroomScreen:manage",
+    },
+    {
       title: tClassroomScreen("audioTitle"),
       icon: Music,
       to: "/class/$classId/audio",
@@ -397,7 +404,9 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
   const visiblePeopleItems = peopleItems.filter((item) => can(item.permission));
   const visibleAssignersItems = assignersItems.filter((item) => can(item.permission));
   const visibleStudentWorkItems = studentWorkItems.filter((item) => can(item.permission));
-  const visibleManageItems = manageItems.filter((item) => can(item.permission));
+  const visibleManageItems = manageItems
+    .filter((item) => can(item.permission))
+    .sort((a, b) => a.title.localeCompare(b.title, i18n.language));
 
   const renderFlatItem = (item: NavItem) => {
     const href = pathFor(item.to, classId);

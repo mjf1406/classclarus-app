@@ -1,7 +1,7 @@
 import { type AudioCues, resolveAudioCues, type ResolvedAudioCues } from "./audioCues.js";
 import { secondsUntilEndTime } from "./timerUtils.js";
 
-export type SegmentKind = "timer";
+export type SegmentKind = "timer" | "work" | "transition";
 
 export type Segment = {
   kind: SegmentKind;
@@ -10,6 +10,8 @@ export type Segment = {
   bgColor: string;
   audioCues: ResolvedAudioCues;
   endTime?: string;
+  round?: number;
+  roundCount?: number;
 };
 
 export type ActiveSession = {
@@ -31,6 +33,20 @@ export type TimerDoc = {
   bgTransition?: string;
   audioCues?: AudioCues;
   nextTimerId?: string;
+};
+
+export type RotationDoc = {
+  name: string;
+  rotationDurationSeconds: number;
+  numberOfRotations: number;
+  transitionDurationSeconds: number;
+  rotationBgColor: string;
+  transitionBgColor: string;
+  finalTransition?: boolean;
+  bgTransition?: string;
+  audioCues?: AudioCues;
+  workCues?: AudioCues;
+  transitionCues?: AudioCues;
 };
 
 export function getCurrentSegment(session: ActiveSession): Segment {
@@ -169,6 +185,99 @@ export function buildCustomTimerSession(
     bgTransition: timer.bgTransition,
     audioCues: sessionCues,
   };
+}
+
+export function buildRotationSession(rotation: RotationDoc, globalCues?: AudioCues): ActiveSession {
+  const segments: Segment[] = [];
+  const transitionSeconds = rotation.transitionDurationSeconds;
+  const finalTransition = rotation.finalTransition ?? false;
+  const sessionCues = resolveAudioCues(rotation.audioCues, globalCues);
+
+  for (let i = 1; i <= rotation.numberOfRotations; i++) {
+    const workSegment = buildSegment(
+      "work",
+      `Rotation ${i} of ${rotation.numberOfRotations}`,
+      rotation.rotationDurationSeconds,
+      rotation.rotationBgColor,
+      undefined,
+      rotation.workCues,
+      rotation.audioCues,
+      globalCues,
+    );
+    workSegment.round = i;
+    workSegment.roundCount = rotation.numberOfRotations;
+    segments.push(workSegment);
+
+    const isLastRotation = i === rotation.numberOfRotations;
+    const shouldAddTransition = !isLastRotation || finalTransition;
+
+    if (shouldAddTransition && transitionSeconds > 0) {
+      segments.push(
+        buildSegment(
+          "transition",
+          "Transition",
+          transitionSeconds,
+          rotation.transitionBgColor,
+          undefined,
+          rotation.transitionCues,
+          rotation.audioCues,
+          globalCues,
+        ),
+      );
+    }
+  }
+
+  return {
+    name: rotation.name,
+    segments,
+    index: 0,
+    bgTransition: rotation.bgTransition,
+    audioCues: sessionCues,
+  };
+}
+
+export function isRotationSession(session: ActiveSession): boolean {
+  return session.segments.some((segment) => segment.kind === "work");
+}
+
+export type RotationEndTime = {
+  label: string;
+  endMs: number;
+  segmentIndex: number;
+  isCurrent: boolean;
+  round?: number;
+  roundCount?: number;
+};
+
+export function getRotationEndTimes(
+  session: ActiveSession,
+  currentEndsAtMs: number,
+): RotationEndTime[] {
+  const segmentEndMs = new Array<number>(session.segments.length);
+  segmentEndMs[session.index] = currentEndsAtMs;
+
+  for (let i = session.index + 1; i < session.segments.length; i++) {
+    segmentEndMs[i] = segmentEndMs[i - 1]! + session.segments[i]!.durationSeconds * 1000;
+  }
+
+  for (let i = session.index - 1; i >= 0; i--) {
+    segmentEndMs[i] = segmentEndMs[i + 1]! - session.segments[i + 1]!.durationSeconds * 1000;
+  }
+
+  return session.segments.flatMap((segment, segmentIndex) => {
+    if (segment.kind !== "work") return [];
+
+    return [
+      {
+        label: segment.label,
+        endMs: segmentEndMs[segmentIndex]!,
+        segmentIndex,
+        isCurrent: segmentIndex === session.index,
+        round: segment.round,
+        roundCount: segment.roundCount,
+      },
+    ];
+  });
 }
 
 export function isLastSegment(session: ActiveSession): boolean {

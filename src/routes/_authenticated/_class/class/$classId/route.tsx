@@ -12,6 +12,7 @@ import {
   ClassSidebarSkeleton,
 } from "@/components/navigation/class-sidebar/ClassLayoutSkeleton";
 import { ClassAppSidebar } from "@/components/navigation/class-sidebar/ClassSidebar";
+import { ClassroomTimerShortcutsPopover } from "@/components/classroomScreen/ClassroomTimerShortcutsPopover";
 import { ClassBreadcrumb } from "@/components/navigation/class-sidebar/ClassBreadcrumb";
 import { FeedbackNavButton } from "@/components/navigation/FeedbackNavButton";
 import { NotificationInboxButton } from "@/components/notifications/NotificationInboxButton";
@@ -97,6 +98,7 @@ export const Route = createFileRoute("/_authenticated/_class/class/$classId")({
                 {classDoc ? <ClassBreadcrumb classDoc={classDoc} /> : <ClassBreadcrumbSkeleton />}
               </div>
               <div className="flex shrink-0 items-center gap-2">
+                {classDoc ? <ClassroomTimerShortcutsPopover classId={classDoc._id} /> : null}
                 <NotificationInboxButton />
                 <FeedbackNavButton />
                 {presenceEnabled && classDoc ? <ClassPresenceChip /> : null}

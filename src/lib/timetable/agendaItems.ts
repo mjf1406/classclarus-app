@@ -134,3 +134,8 @@ export function agendaNamedLinkLabel(
   if (text) return text;
   return fallback;
 }
+
+export function agendaPrefaceText(preface: string | undefined): string | undefined {
+  const trimmed = preface?.trim();
+  return trimmed ? trimmed : undefined;
+}

@@ -1,12 +1,14 @@
 import { describe, expect, test } from "vite-plus/test";
 
 import {
+  agendaItemsChanged,
   attachAgendaResourceNames,
   collectItemTags,
   exclusiveAgendaLinkIds,
   extractHashtags,
   isValidTag,
   migrateLegacyLinks,
+  normalizePreface,
   normalizeSectionItems,
   normalizeTag,
   splitTextWithUrls,
@@ -130,6 +132,36 @@ describe("toAgendaItems", () => {
       { key: "asg", text: "Quiz", tags: [], assignmentId },
     ]);
   });
+
+  test("keeps trimmed preface and omits a blank one", () => {
+    const taskId = "tasks:1" as Id<"tasks">;
+    expect(
+      toAgendaItems([
+        { key: "with", text: "Warm-up", tags: [], taskId, preface: "  Center #1:  " },
+        { key: "blank", text: "Quiz", tags: [], preface: "   " },
+      ]),
+    ).toEqual([
+      { key: "with", text: "Warm-up", tags: [], taskId, preface: "Center #1:" },
+      { key: "blank", text: "Quiz", tags: [] },
+    ]);
+  });
+});
+
+describe("normalizePreface", () => {
+  test("trims text and drops blanks", () => {
+    expect(normalizePreface("  Center #1:  ")).toBe("Center #1:");
+    expect(normalizePreface("   ")).toBeUndefined();
+    expect(normalizePreface(undefined)).toBeUndefined();
+  });
+});
+
+describe("agendaItemsChanged", () => {
+  test("detects a preface change", () => {
+    const before = [{ key: "a", text: "Quiz", tags: [], preface: "Center #1:" }];
+    const after = [{ key: "a", text: "Quiz", tags: [], preface: "Center #2:" }];
+    expect(agendaItemsChanged(before, after)).toBe(true);
+    expect(agendaItemsChanged(before, before)).toBe(false);
+  });
 });
 
 describe("stripAgendaItemReferences", () => {
@@ -151,6 +183,15 @@ describe("stripAgendaItemReferences", () => {
     ]);
   });
 
+  test("keeps preface when a remaining reference is left", () => {
+    expect(
+      stripAgendaItemReferences(
+        [{ key: "both", text: "Do this", tags: [], assignmentId, taskId, preface: "Center #1:" }],
+        { assignmentIds: new Set([assignmentId]) },
+      ),
+    ).toEqual([{ key: "both", text: "Do this", tags: [], taskId, preface: "Center #1:" }]);
+  });
+
   test("drops items that have no text after the last reference is removed", () => {
     expect(
       stripAgendaItemReferences([{ key: "t", text: "   ", tags: [], taskId }], {
@@ -167,7 +208,7 @@ describe("attachAgendaResourceNames", () => {
     expect(
       attachAgendaResourceNames(
         [
-          { key: "both", text: "Do this", tags: [], assignmentId, taskId },
+          { key: "both", text: "Do this", tags: [], assignmentId, taskId, preface: "Center #1:" },
           { key: "text", text: "Note", tags: [] },
         ],
         {
@@ -182,6 +223,7 @@ describe("attachAgendaResourceNames", () => {
         tags: [],
         assignmentId,
         taskId,
+        preface: "Center #1:",
         assignmentName: "Quiz",
         taskName: "Warm-up",
       },

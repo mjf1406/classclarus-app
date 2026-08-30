@@ -102,6 +102,7 @@ import type * as lib_classroomScreen_audioCuesSchema from "../lib/classroomScree
 import type * as lib_classroomScreen_bgTransitions from "../lib/classroomScreen/bgTransitions.js";
 import type * as lib_classroomScreen_clockSettingsDefaults from "../lib/classroomScreen/clockSettingsDefaults.js";
 import type * as lib_classroomScreen_currentLesson from "../lib/classroomScreen/currentLesson.js";
+import type * as lib_classroomScreen_rotationSchema from "../lib/classroomScreen/rotationSchema.js";
 import type * as lib_classroomScreen_timerUtils from "../lib/classroomScreen/timerUtils.js";
 import type * as lib_cleanup_announcementsCleanup from "../lib/cleanup/announcementsCleanup.js";
 import type * as lib_cleanup_assignmentScoresCleanup from "../lib/cleanup/assignmentScoresCleanup.js";
@@ -361,6 +362,7 @@ declare const fullApi: ApiFromModules<{
   "lib/classroomScreen/bgTransitions": typeof lib_classroomScreen_bgTransitions;
   "lib/classroomScreen/clockSettingsDefaults": typeof lib_classroomScreen_clockSettingsDefaults;
   "lib/classroomScreen/currentLesson": typeof lib_classroomScreen_currentLesson;
+  "lib/classroomScreen/rotationSchema": typeof lib_classroomScreen_rotationSchema;
   "lib/classroomScreen/timerUtils": typeof lib_classroomScreen_timerUtils;
   "lib/cleanup/announcementsCleanup": typeof lib_cleanup_announcementsCleanup;
   "lib/cleanup/assignmentScoresCleanup": typeof lib_cleanup_assignmentScoresCleanup;

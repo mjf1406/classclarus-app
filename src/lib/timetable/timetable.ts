@@ -23,6 +23,7 @@ export type SectionItemFormValues = {
 export type AgendaItemFormValues = SectionItemFormValues & {
   assignmentId?: string;
   taskId?: string;
+  preface?: string;
 };
 
 export const COMPACT_SLOT_MAX_MINUTES = 20;

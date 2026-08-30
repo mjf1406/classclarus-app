@@ -27,6 +27,15 @@ export async function deleteClassroomScreenForClass(
   }
 
   // eslint-disable-next-line @convex-dev/no-collect-in-query -- class-scoped cleanup
+  const rotations = await ctx.db
+    .query("classroomRotations")
+    .withIndex("by_classId", (q) => q.eq("classId", classId))
+    .collect();
+  for (const rotation of rotations) {
+    await ctx.db.delete("classroomRotations", rotation._id);
+  }
+
+  // eslint-disable-next-line @convex-dev/no-collect-in-query -- class-scoped cleanup
   const audioFiles = await ctx.db
     .query("classroomAudioFiles")
     .withIndex("by_classId", (q) => q.eq("classId", classId))

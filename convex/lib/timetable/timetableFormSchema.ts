@@ -110,7 +110,16 @@ const agendaItemFormSchema = (messages: TimetableSubjectFormMessages) =>
   sectionItemFormSchema(messages).extend({
     assignmentId: z.string().optional(),
     taskId: z.string().optional(),
+    preface: z.string().trim().max(MAX_ITEM_TEXT_LENGTH, messages.itemTextTooLong).optional(),
   });
+
+export function createAgendaPrefaceSchema(
+  messages: Pick<TimetableSubjectFormMessages, "itemTextTooLong">,
+) {
+  return z.object({
+    preface: z.string().trim().max(MAX_ITEM_TEXT_LENGTH, messages.itemTextTooLong),
+  });
+}
 
 export function createTimetableSubjectFormSchema(messages: TimetableSubjectFormMessages) {
   return z.object({
