@@ -162,6 +162,7 @@ import type * as lib_points_notifyPointsBadgeAlert from "../lib/points/notifyPoi
 import type * as lib_points_pointsBadgeAlert from "../lib/points/pointsBadgeAlert.js";
 import type * as lib_points_pointsBadgeAlertSchema from "../lib/points/pointsBadgeAlertSchema.js";
 import type * as lib_points_pointsBadgeWindow from "../lib/points/pointsBadgeWindow.js";
+import type * as lib_points_pointsLedger from "../lib/points/pointsLedger.js";
 import type * as lib_points_pointsRoster from "../lib/points/pointsRoster.js";
 import type * as lib_pointsBadgeWindow from "../lib/pointsBadgeWindow.js";
 import type * as lib_pointsCleanup from "../lib/pointsCleanup.js";
@@ -424,6 +425,7 @@ declare const fullApi: ApiFromModules<{
   "lib/points/pointsBadgeAlert": typeof lib_points_pointsBadgeAlert;
   "lib/points/pointsBadgeAlertSchema": typeof lib_points_pointsBadgeAlertSchema;
   "lib/points/pointsBadgeWindow": typeof lib_points_pointsBadgeWindow;
+  "lib/points/pointsLedger": typeof lib_points_pointsLedger;
   "lib/points/pointsRoster": typeof lib_points_pointsRoster;
   "lib/pointsBadgeWindow": typeof lib_pointsBadgeWindow;
   "lib/pointsCleanup": typeof lib_pointsCleanup;

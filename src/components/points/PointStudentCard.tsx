@@ -2,6 +2,7 @@ import {
   CheckCircle2Icon,
   CheckSquareIcon,
   FlagIcon,
+  HistoryIcon,
   TriangleAlertIcon,
   TrophyIcon,
   Undo2Icon,
@@ -40,6 +41,7 @@ type PointStudentCardProps = {
   onMarkAbsent: () => void;
   onMarkPresent: () => void;
   onUndoPoints: () => void | Promise<void>;
+  onViewHistory: () => void;
 };
 
 export function PointStudentCard({
@@ -57,6 +59,7 @@ export function PointStudentCard({
   onMarkAbsent,
   onMarkPresent,
   onUndoPoints,
+  onViewHistory,
 }: PointStudentCardProps) {
   const { t } = useTranslation("points");
   const { t: tClasses } = useTranslation("classes");
@@ -97,6 +100,14 @@ export function PointStudentCard({
 
   const menuItems = useMemo<Array<ActionMenuItem>>(() => {
     const items: Array<ActionMenuItem> = [
+      {
+        id: "history",
+        label: t("menuViewHistory"),
+        icon: <HistoryIcon />,
+        permission: "points:manage",
+        group: "history",
+        onSelect: onViewHistory,
+      },
       {
         id: "select",
         label: t("menuSelectStudent"),
@@ -170,6 +181,7 @@ export function PointStudentCard({
     onMarkPresent,
     onUndoPoints,
     onUndoWarning,
+    onViewHistory,
     t,
   ]);
 

@@ -162,6 +162,9 @@ export function classRouteFromPathname(pathname: string, classId: string): Class
   if (rest === "/assignments" || rest.startsWith("/assignments/")) {
     return "/class/$classId/assignments";
   }
+  if (rest === "/points" || rest.startsWith("/points/")) {
+    return "/class/$classId/points";
+  }
   if (rest === "/expectations" || rest.startsWith("/expectations/")) {
     return "/class/$classId/expectations";
   }

@@ -9,9 +9,9 @@ import {
 import { pointsForAudienceQueryOptions } from "@/hooks/points/usePointsForAudience";
 import { pointsBoardQueryOptions } from "@/hooks/points/usePointsBoard";
 import { awaitPreloadQuery, preloadQuery } from "@/lib/routing/routePreload";
-import type { Id } from "../../../../../../convex/_generated/dataModel";
+import type { Id } from "../../../../../../../convex/_generated/dataModel";
 
-export const Route = createFileRoute("/_authenticated/_class/class/$classId/points")({
+export const Route = createFileRoute("/_authenticated/_class/class/$classId/points/")({
   loader: async ({ context, params }) => {
     if (!context.auth.isAuthenticated) {
       return;

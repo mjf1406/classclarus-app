@@ -1,3 +1,4 @@
+import { useNavigate } from "@tanstack/react-router";
 import { CircleCheckBigIcon, UsersIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -82,6 +83,7 @@ export function PointsPage({ classId }: PointsPageProps) {
 
 function StaffPointsPage({ classId }: PointsPageProps) {
   const { t } = useTranslation("points");
+  const navigate = useNavigate();
   const { can, isPending: permissionsPending } = useCan();
   const canManageAttendance = !permissionsPending && can("attendance:manage");
   const dateKey = useMemo(() => localDateKey(), []);
@@ -370,6 +372,12 @@ function StaffPointsPage({ classId }: PointsPageProps) {
                     }
                   })
               }
+              onViewHistory={() => {
+                void navigate({
+                  to: "/class/$classId/points/$studentUserId",
+                  params: { classId, studentUserId: student.userId },
+                });
+              }}
             />
           ))}
         </div>

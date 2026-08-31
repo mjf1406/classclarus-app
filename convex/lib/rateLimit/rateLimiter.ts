@@ -167,6 +167,7 @@ const rateLimits = {
   pointsApplyBehaviors: { kind: "token bucket" as const, rate: 240, period: HOUR, capacity: 60 },
   pointsRedeemRewards: { kind: "token bucket" as const, rate: 240, period: HOUR, capacity: 60 },
   pointsUndoLastAction: { kind: "token bucket" as const, rate: 240, period: HOUR, capacity: 60 },
+  pointsDeleteLedgerEntry: { kind: "token bucket" as const, rate: 240, period: HOUR, capacity: 60 },
   pointsGiveWarning: { kind: "token bucket" as const, rate: 240, period: HOUR, capacity: 60 },
   pointsUndoWarning: { kind: "token bucket" as const, rate: 240, period: HOUR, capacity: 60 },
   pointsClearWarnings: { kind: "token bucket" as const, rate: 120, period: HOUR, capacity: 40 },

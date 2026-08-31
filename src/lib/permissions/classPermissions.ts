@@ -29,6 +29,7 @@ export {
   isJoinCodeRole,
   isPermissionOverrideTargetRole,
   isStrictlyBelow,
+  isTeacherPlusRole,
   permissionsForRole,
   pickHighestClassRole,
   SUSPEND_PERMISSION_BY_ROLE,

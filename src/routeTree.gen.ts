@@ -44,7 +44,6 @@ import { Route as AuthenticatedClassClassClassIdGroupsRouteImport } from "./rout
 import { Route as AuthenticatedClassClassClassIdGuardiansRouteImport } from "./routes/_authenticated/_class/class/$classId/guardians";
 import { Route as AuthenticatedClassClassClassIdInvitationsRouteImport } from "./routes/_authenticated/_class/class/$classId/invitations";
 import { Route as AuthenticatedClassClassClassIdPermissionsRouteImport } from "./routes/_authenticated/_class/class/$classId/permissions";
-import { Route as AuthenticatedClassClassClassIdPointsRouteImport } from "./routes/_authenticated/_class/class/$classId/points";
 import { Route as AuthenticatedClassClassClassIdRewardsRouteImport } from "./routes/_authenticated/_class/class/$classId/rewards";
 import { Route as AuthenticatedClassClassClassIdRotationsRouteImport } from "./routes/_authenticated/_class/class/$classId/rotations";
 import { Route as AuthenticatedClassClassClassIdSettingsRouteImport } from "./routes/_authenticated/_class/class/$classId/settings";
@@ -59,6 +58,8 @@ import { Route as AuthenticatedClassClassClassIdAssignmentsNewRouteImport } from
 import { Route as AuthenticatedClassClassClassIdCalendarIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/calendar/index";
 import { Route as AuthenticatedClassClassClassIdExpectationsIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/expectations/index";
 import { Route as AuthenticatedClassClassClassIdExpectationsExpectationIdRouteImport } from "./routes/_authenticated/_class/class/$classId/expectations/$expectationId";
+import { Route as AuthenticatedClassClassClassIdPointsIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/points/index";
+import { Route as AuthenticatedClassClassClassIdPointsStudentUserIdRouteImport } from "./routes/_authenticated/_class/class/$classId/points/$studentUserId";
 import { Route as AuthenticatedClassClassClassIdRazIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/raz/index";
 import { Route as AuthenticatedClassClassClassIdRazInitialLevelsRouteImport } from "./routes/_authenticated/_class/class/$classId/raz/initial-levels";
 import { Route as AuthenticatedClassClassClassIdTasksIndexRouteImport } from "./routes/_authenticated/_class/class/$classId/tasks/index";
@@ -280,12 +281,6 @@ const AuthenticatedClassClassClassIdPermissionsRoute =
     path: "/permissions",
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
   } as any);
-const AuthenticatedClassClassClassIdPointsRoute =
-  AuthenticatedClassClassClassIdPointsRouteImport.update({
-    id: "/points",
-    path: "/points",
-    getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
-  } as any);
 const AuthenticatedClassClassClassIdRewardsRoute =
   AuthenticatedClassClassClassIdRewardsRouteImport.update({
     id: "/rewards",
@@ -368,6 +363,18 @@ const AuthenticatedClassClassClassIdExpectationsExpectationIdRoute =
   AuthenticatedClassClassClassIdExpectationsExpectationIdRouteImport.update({
     id: "/expectations/$expectationId",
     path: "/expectations/$expectationId",
+    getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
+  } as any);
+const AuthenticatedClassClassClassIdPointsIndexRoute =
+  AuthenticatedClassClassClassIdPointsIndexRouteImport.update({
+    id: "/points/",
+    path: "/points/",
+    getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
+  } as any);
+const AuthenticatedClassClassClassIdPointsStudentUserIdRoute =
+  AuthenticatedClassClassClassIdPointsStudentUserIdRouteImport.update({
+    id: "/points/$studentUserId",
+    path: "/points/$studentUserId",
     getParentRoute: () => AuthenticatedClassClassClassIdRouteRoute,
   } as any);
 const AuthenticatedClassClassClassIdRazIndexRoute =
@@ -624,7 +631,6 @@ export interface FileRoutesByFullPath {
   "/class/$classId/guardians": typeof AuthenticatedClassClassClassIdGuardiansRoute;
   "/class/$classId/invitations": typeof AuthenticatedClassClassClassIdInvitationsRoute;
   "/class/$classId/permissions": typeof AuthenticatedClassClassClassIdPermissionsRoute;
-  "/class/$classId/points": typeof AuthenticatedClassClassClassIdPointsRoute;
   "/class/$classId/rewards": typeof AuthenticatedClassClassClassIdRewardsRoute;
   "/class/$classId/rotations": typeof AuthenticatedClassClassClassIdRotationsRoute;
   "/class/$classId/settings": typeof AuthenticatedClassClassClassIdSettingsRoute;
@@ -636,12 +642,14 @@ export interface FileRoutesByFullPath {
   "/class/$classId/announcements/$announcementId": typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute;
   "/class/$classId/assignments/new": typeof AuthenticatedClassClassClassIdAssignmentsNewRoute;
   "/class/$classId/expectations/$expectationId": typeof AuthenticatedClassClassClassIdExpectationsExpectationIdRoute;
+  "/class/$classId/points/$studentUserId": typeof AuthenticatedClassClassClassIdPointsStudentUserIdRoute;
   "/class/$classId/raz/initial-levels": typeof AuthenticatedClassClassClassIdRazInitialLevelsRoute;
   "/class/$classId/tasks/$taskId": typeof AuthenticatedClassClassClassIdTasksTaskIdRoute;
   "/class/$classId/announcements/": typeof AuthenticatedClassClassClassIdAnnouncementsIndexRoute;
   "/class/$classId/assignments/": typeof AuthenticatedClassClassClassIdAssignmentsIndexRoute;
   "/class/$classId/calendar/": typeof AuthenticatedClassClassClassIdCalendarIndexRoute;
   "/class/$classId/expectations/": typeof AuthenticatedClassClassClassIdExpectationsIndexRoute;
+  "/class/$classId/points/": typeof AuthenticatedClassClassClassIdPointsIndexRoute;
   "/class/$classId/raz/": typeof AuthenticatedClassClassClassIdRazIndexRoute;
   "/class/$classId/tasks/": typeof AuthenticatedClassClassClassIdTasksIndexRoute;
   "/class/$classId/timetable/": typeof AuthenticatedClassClassClassIdTimetableIndexRoute;
@@ -707,7 +715,6 @@ export interface FileRoutesByTo {
   "/class/$classId/guardians": typeof AuthenticatedClassClassClassIdGuardiansRoute;
   "/class/$classId/invitations": typeof AuthenticatedClassClassClassIdInvitationsRoute;
   "/class/$classId/permissions": typeof AuthenticatedClassClassClassIdPermissionsRoute;
-  "/class/$classId/points": typeof AuthenticatedClassClassClassIdPointsRoute;
   "/class/$classId/rewards": typeof AuthenticatedClassClassClassIdRewardsRoute;
   "/class/$classId/rotations": typeof AuthenticatedClassClassClassIdRotationsRoute;
   "/class/$classId/settings": typeof AuthenticatedClassClassClassIdSettingsRoute;
@@ -718,12 +725,14 @@ export interface FileRoutesByTo {
   "/class/$classId/announcements/$announcementId": typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute;
   "/class/$classId/assignments/new": typeof AuthenticatedClassClassClassIdAssignmentsNewRoute;
   "/class/$classId/expectations/$expectationId": typeof AuthenticatedClassClassClassIdExpectationsExpectationIdRoute;
+  "/class/$classId/points/$studentUserId": typeof AuthenticatedClassClassClassIdPointsStudentUserIdRoute;
   "/class/$classId/raz/initial-levels": typeof AuthenticatedClassClassClassIdRazInitialLevelsRoute;
   "/class/$classId/tasks/$taskId": typeof AuthenticatedClassClassClassIdTasksTaskIdRoute;
   "/class/$classId/announcements": typeof AuthenticatedClassClassClassIdAnnouncementsIndexRoute;
   "/class/$classId/assignments": typeof AuthenticatedClassClassClassIdAssignmentsIndexRoute;
   "/class/$classId/calendar": typeof AuthenticatedClassClassClassIdCalendarIndexRoute;
   "/class/$classId/expectations": typeof AuthenticatedClassClassClassIdExpectationsIndexRoute;
+  "/class/$classId/points": typeof AuthenticatedClassClassClassIdPointsIndexRoute;
   "/class/$classId/raz": typeof AuthenticatedClassClassClassIdRazIndexRoute;
   "/class/$classId/tasks": typeof AuthenticatedClassClassClassIdTasksIndexRoute;
   "/class/$classId/timetable": typeof AuthenticatedClassClassClassIdTimetableIndexRoute;
@@ -796,7 +805,6 @@ export interface FileRoutesById {
   "/_authenticated/_class/class/$classId/guardians": typeof AuthenticatedClassClassClassIdGuardiansRoute;
   "/_authenticated/_class/class/$classId/invitations": typeof AuthenticatedClassClassClassIdInvitationsRoute;
   "/_authenticated/_class/class/$classId/permissions": typeof AuthenticatedClassClassClassIdPermissionsRoute;
-  "/_authenticated/_class/class/$classId/points": typeof AuthenticatedClassClassClassIdPointsRoute;
   "/_authenticated/_class/class/$classId/rewards": typeof AuthenticatedClassClassClassIdRewardsRoute;
   "/_authenticated/_class/class/$classId/rotations": typeof AuthenticatedClassClassClassIdRotationsRoute;
   "/_authenticated/_class/class/$classId/settings": typeof AuthenticatedClassClassClassIdSettingsRoute;
@@ -808,12 +816,14 @@ export interface FileRoutesById {
   "/_authenticated/_class/class/$classId/announcements/$announcementId": typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute;
   "/_authenticated/_class/class/$classId/assignments/new": typeof AuthenticatedClassClassClassIdAssignmentsNewRoute;
   "/_authenticated/_class/class/$classId/expectations/$expectationId": typeof AuthenticatedClassClassClassIdExpectationsExpectationIdRoute;
+  "/_authenticated/_class/class/$classId/points/$studentUserId": typeof AuthenticatedClassClassClassIdPointsStudentUserIdRoute;
   "/_authenticated/_class/class/$classId/raz/initial-levels": typeof AuthenticatedClassClassClassIdRazInitialLevelsRoute;
   "/_authenticated/_class/class/$classId/tasks/$taskId": typeof AuthenticatedClassClassClassIdTasksTaskIdRoute;
   "/_authenticated/_class/class/$classId/announcements/": typeof AuthenticatedClassClassClassIdAnnouncementsIndexRoute;
   "/_authenticated/_class/class/$classId/assignments/": typeof AuthenticatedClassClassClassIdAssignmentsIndexRoute;
   "/_authenticated/_class/class/$classId/calendar/": typeof AuthenticatedClassClassClassIdCalendarIndexRoute;
   "/_authenticated/_class/class/$classId/expectations/": typeof AuthenticatedClassClassClassIdExpectationsIndexRoute;
+  "/_authenticated/_class/class/$classId/points/": typeof AuthenticatedClassClassClassIdPointsIndexRoute;
   "/_authenticated/_class/class/$classId/raz/": typeof AuthenticatedClassClassClassIdRazIndexRoute;
   "/_authenticated/_class/class/$classId/tasks/": typeof AuthenticatedClassClassClassIdTasksIndexRoute;
   "/_authenticated/_class/class/$classId/timetable/": typeof AuthenticatedClassClassClassIdTimetableIndexRoute;
@@ -883,7 +893,6 @@ export interface FileRouteTypes {
     | "/class/$classId/guardians"
     | "/class/$classId/invitations"
     | "/class/$classId/permissions"
-    | "/class/$classId/points"
     | "/class/$classId/rewards"
     | "/class/$classId/rotations"
     | "/class/$classId/settings"
@@ -895,12 +904,14 @@ export interface FileRouteTypes {
     | "/class/$classId/announcements/$announcementId"
     | "/class/$classId/assignments/new"
     | "/class/$classId/expectations/$expectationId"
+    | "/class/$classId/points/$studentUserId"
     | "/class/$classId/raz/initial-levels"
     | "/class/$classId/tasks/$taskId"
     | "/class/$classId/announcements/"
     | "/class/$classId/assignments/"
     | "/class/$classId/calendar/"
     | "/class/$classId/expectations/"
+    | "/class/$classId/points/"
     | "/class/$classId/raz/"
     | "/class/$classId/tasks/"
     | "/class/$classId/timetable/"
@@ -966,7 +977,6 @@ export interface FileRouteTypes {
     | "/class/$classId/guardians"
     | "/class/$classId/invitations"
     | "/class/$classId/permissions"
-    | "/class/$classId/points"
     | "/class/$classId/rewards"
     | "/class/$classId/rotations"
     | "/class/$classId/settings"
@@ -977,12 +987,14 @@ export interface FileRouteTypes {
     | "/class/$classId/announcements/$announcementId"
     | "/class/$classId/assignments/new"
     | "/class/$classId/expectations/$expectationId"
+    | "/class/$classId/points/$studentUserId"
     | "/class/$classId/raz/initial-levels"
     | "/class/$classId/tasks/$taskId"
     | "/class/$classId/announcements"
     | "/class/$classId/assignments"
     | "/class/$classId/calendar"
     | "/class/$classId/expectations"
+    | "/class/$classId/points"
     | "/class/$classId/raz"
     | "/class/$classId/tasks"
     | "/class/$classId/timetable"
@@ -1054,7 +1066,6 @@ export interface FileRouteTypes {
     | "/_authenticated/_class/class/$classId/guardians"
     | "/_authenticated/_class/class/$classId/invitations"
     | "/_authenticated/_class/class/$classId/permissions"
-    | "/_authenticated/_class/class/$classId/points"
     | "/_authenticated/_class/class/$classId/rewards"
     | "/_authenticated/_class/class/$classId/rotations"
     | "/_authenticated/_class/class/$classId/settings"
@@ -1066,12 +1077,14 @@ export interface FileRouteTypes {
     | "/_authenticated/_class/class/$classId/announcements/$announcementId"
     | "/_authenticated/_class/class/$classId/assignments/new"
     | "/_authenticated/_class/class/$classId/expectations/$expectationId"
+    | "/_authenticated/_class/class/$classId/points/$studentUserId"
     | "/_authenticated/_class/class/$classId/raz/initial-levels"
     | "/_authenticated/_class/class/$classId/tasks/$taskId"
     | "/_authenticated/_class/class/$classId/announcements/"
     | "/_authenticated/_class/class/$classId/assignments/"
     | "/_authenticated/_class/class/$classId/calendar/"
     | "/_authenticated/_class/class/$classId/expectations/"
+    | "/_authenticated/_class/class/$classId/points/"
     | "/_authenticated/_class/class/$classId/raz/"
     | "/_authenticated/_class/class/$classId/tasks/"
     | "/_authenticated/_class/class/$classId/timetable/"
@@ -1364,13 +1377,6 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof AuthenticatedClassClassClassIdPermissionsRouteImport;
       parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
     };
-    "/_authenticated/_class/class/$classId/points": {
-      id: "/_authenticated/_class/class/$classId/points";
-      path: "/points";
-      fullPath: "/class/$classId/points";
-      preLoaderRoute: typeof AuthenticatedClassClassClassIdPointsRouteImport;
-      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
-    };
     "/_authenticated/_class/class/$classId/rewards": {
       id: "/_authenticated/_class/class/$classId/rewards";
       path: "/rewards";
@@ -1467,6 +1473,20 @@ declare module "@tanstack/react-router" {
       path: "/expectations/$expectationId";
       fullPath: "/class/$classId/expectations/$expectationId";
       preLoaderRoute: typeof AuthenticatedClassClassClassIdExpectationsExpectationIdRouteImport;
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
+    };
+    "/_authenticated/_class/class/$classId/points/": {
+      id: "/_authenticated/_class/class/$classId/points/";
+      path: "/points";
+      fullPath: "/class/$classId/points/";
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdPointsIndexRouteImport;
+      parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
+    };
+    "/_authenticated/_class/class/$classId/points/$studentUserId": {
+      id: "/_authenticated/_class/class/$classId/points/$studentUserId";
+      path: "/points/$studentUserId";
+      fullPath: "/class/$classId/points/$studentUserId";
+      preLoaderRoute: typeof AuthenticatedClassClassClassIdPointsStudentUserIdRouteImport;
       parentRoute: typeof AuthenticatedClassClassClassIdRouteRoute;
     };
     "/_authenticated/_class/class/$classId/raz/": {
@@ -1791,7 +1811,6 @@ interface AuthenticatedClassClassClassIdRouteRouteChildren {
   AuthenticatedClassClassClassIdGuardiansRoute: typeof AuthenticatedClassClassClassIdGuardiansRoute;
   AuthenticatedClassClassClassIdInvitationsRoute: typeof AuthenticatedClassClassClassIdInvitationsRoute;
   AuthenticatedClassClassClassIdPermissionsRoute: typeof AuthenticatedClassClassClassIdPermissionsRoute;
-  AuthenticatedClassClassClassIdPointsRoute: typeof AuthenticatedClassClassClassIdPointsRoute;
   AuthenticatedClassClassClassIdRewardsRoute: typeof AuthenticatedClassClassClassIdRewardsRoute;
   AuthenticatedClassClassClassIdRotationsRoute: typeof AuthenticatedClassClassClassIdRotationsRoute;
   AuthenticatedClassClassClassIdSettingsRoute: typeof AuthenticatedClassClassClassIdSettingsRoute;
@@ -1803,12 +1822,14 @@ interface AuthenticatedClassClassClassIdRouteRouteChildren {
   AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute: typeof AuthenticatedClassClassClassIdAnnouncementsAnnouncementIdRoute;
   AuthenticatedClassClassClassIdAssignmentsNewRoute: typeof AuthenticatedClassClassClassIdAssignmentsNewRoute;
   AuthenticatedClassClassClassIdExpectationsExpectationIdRoute: typeof AuthenticatedClassClassClassIdExpectationsExpectationIdRoute;
+  AuthenticatedClassClassClassIdPointsStudentUserIdRoute: typeof AuthenticatedClassClassClassIdPointsStudentUserIdRoute;
   AuthenticatedClassClassClassIdRazInitialLevelsRoute: typeof AuthenticatedClassClassClassIdRazInitialLevelsRoute;
   AuthenticatedClassClassClassIdTasksTaskIdRoute: typeof AuthenticatedClassClassClassIdTasksTaskIdRoute;
   AuthenticatedClassClassClassIdAnnouncementsIndexRoute: typeof AuthenticatedClassClassClassIdAnnouncementsIndexRoute;
   AuthenticatedClassClassClassIdAssignmentsIndexRoute: typeof AuthenticatedClassClassClassIdAssignmentsIndexRoute;
   AuthenticatedClassClassClassIdCalendarIndexRoute: typeof AuthenticatedClassClassClassIdCalendarIndexRoute;
   AuthenticatedClassClassClassIdExpectationsIndexRoute: typeof AuthenticatedClassClassClassIdExpectationsIndexRoute;
+  AuthenticatedClassClassClassIdPointsIndexRoute: typeof AuthenticatedClassClassClassIdPointsIndexRoute;
   AuthenticatedClassClassClassIdRazIndexRoute: typeof AuthenticatedClassClassClassIdRazIndexRoute;
   AuthenticatedClassClassClassIdTasksIndexRoute: typeof AuthenticatedClassClassClassIdTasksIndexRoute;
   AuthenticatedClassClassClassIdTimetableIndexRoute: typeof AuthenticatedClassClassClassIdTimetableIndexRoute;
@@ -1854,7 +1875,6 @@ const AuthenticatedClassClassClassIdRouteRouteChildren: AuthenticatedClassClassC
     AuthenticatedClassClassClassIdGuardiansRoute: AuthenticatedClassClassClassIdGuardiansRoute,
     AuthenticatedClassClassClassIdInvitationsRoute: AuthenticatedClassClassClassIdInvitationsRoute,
     AuthenticatedClassClassClassIdPermissionsRoute: AuthenticatedClassClassClassIdPermissionsRoute,
-    AuthenticatedClassClassClassIdPointsRoute: AuthenticatedClassClassClassIdPointsRoute,
     AuthenticatedClassClassClassIdRewardsRoute: AuthenticatedClassClassClassIdRewardsRoute,
     AuthenticatedClassClassClassIdRotationsRoute: AuthenticatedClassClassClassIdRotationsRoute,
     AuthenticatedClassClassClassIdSettingsRoute: AuthenticatedClassClassClassIdSettingsRoute,
@@ -1870,6 +1890,8 @@ const AuthenticatedClassClassClassIdRouteRouteChildren: AuthenticatedClassClassC
       AuthenticatedClassClassClassIdAssignmentsNewRoute,
     AuthenticatedClassClassClassIdExpectationsExpectationIdRoute:
       AuthenticatedClassClassClassIdExpectationsExpectationIdRoute,
+    AuthenticatedClassClassClassIdPointsStudentUserIdRoute:
+      AuthenticatedClassClassClassIdPointsStudentUserIdRoute,
     AuthenticatedClassClassClassIdRazInitialLevelsRoute:
       AuthenticatedClassClassClassIdRazInitialLevelsRoute,
     AuthenticatedClassClassClassIdTasksTaskIdRoute: AuthenticatedClassClassClassIdTasksTaskIdRoute,
@@ -1881,6 +1903,7 @@ const AuthenticatedClassClassClassIdRouteRouteChildren: AuthenticatedClassClassC
       AuthenticatedClassClassClassIdCalendarIndexRoute,
     AuthenticatedClassClassClassIdExpectationsIndexRoute:
       AuthenticatedClassClassClassIdExpectationsIndexRoute,
+    AuthenticatedClassClassClassIdPointsIndexRoute: AuthenticatedClassClassClassIdPointsIndexRoute,
     AuthenticatedClassClassClassIdRazIndexRoute: AuthenticatedClassClassClassIdRazIndexRoute,
     AuthenticatedClassClassClassIdTasksIndexRoute: AuthenticatedClassClassClassIdTasksIndexRoute,
     AuthenticatedClassClassClassIdTimetableIndexRoute:

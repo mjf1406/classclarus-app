@@ -6,6 +6,7 @@ import {
   grantablePermissionGroups,
   isGrantableClassPermission,
   isPermissionOverrideTargetRole,
+  isTeacherPlusRole,
   permissionsForRole,
 } from "./authzModel";
 
@@ -98,5 +99,17 @@ describe("permission override helpers", () => {
     expect(effectivePermissionEnabled(false, "allow")).toBe(true);
     expect(effectivePermissionEnabled(true, null)).toBe(true);
     expect(effectivePermissionEnabled(false, null)).toBe(false);
+  });
+});
+
+describe("isTeacherPlusRole", () => {
+  test("includes owner and teacher only", () => {
+    expect(isTeacherPlusRole("owner")).toBe(true);
+    expect(isTeacherPlusRole("teacher")).toBe(true);
+    expect(isTeacherPlusRole("assistant_teacher")).toBe(false);
+    expect(isTeacherPlusRole("student")).toBe(false);
+    expect(isTeacherPlusRole("guardian")).toBe(false);
+    expect(isTeacherPlusRole(null)).toBe(false);
+    expect(isTeacherPlusRole(undefined)).toBe(false);
   });
 });

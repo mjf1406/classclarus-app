@@ -267,6 +267,12 @@ export function pickHighestClassRole(roleNames: Array<string>): ClassRole | null
   return best;
 }
 
+/** Owner and teacher — not assistant teacher, student, or guardian. */
+export function isTeacherPlusRole(role: ClassRole | null | undefined): boolean {
+  if (!role) return false;
+  return CLASS_ROLE_RANK[role] >= CLASS_ROLE_RANK.teacher;
+}
+
 /** Which permission gates suspending a member, based on the target's role. */
 export const SUSPEND_PERMISSION_BY_ROLE = {
   owner: null,

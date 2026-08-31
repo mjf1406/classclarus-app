@@ -4,7 +4,7 @@ import { APP_CONFIG } from "./appConfig.js";
 import { components } from "./_generated/api.js";
 import type { Doc, Id } from "./_generated/dataModel.js";
 import { query, type MutationCtx, type QueryCtx } from "./_generated/server.js";
-import { classScope } from "./lib/authzModel.js";
+import { classScope, isTeacherPlusRole } from "./lib/authzModel.js";
 import {
   getNewestActivityRevision,
   LEDGER_REVISION_RESOURCE_TYPES,
@@ -30,6 +30,11 @@ import {
 } from "./lib/points/notifyPointsBadgeAlert.js";
 import { resolvePointsBadgeAlerts } from "./lib/points/pointsBadgeAlert.js";
 import {
+  activityRevisionValidator,
+  ledgerPageValidator,
+  loadStudentPointsLedger,
+} from "./lib/points/pointsLedger.js";
+import {
   applyBehaviorPointsDelta,
   applyRewardPointsDelta,
   ensureRosterPointCounters,
@@ -54,8 +59,6 @@ const POINTS_PUBLIC_SLUG_MAX_LENGTH = 29;
 const MAX_STUDENTS_PER_APPLY = 200;
 const MAX_ITEMS_PER_APPLY = 50;
 const MAX_APPLICATION_NOTE_LENGTH = 500;
-const DEFAULT_LEDGER_LIMIT = 40;
-const MAX_LEDGER_LIMIT = 100;
 
 function normalizeOptionalApplicationNote(note: string | undefined): string | undefined {
   if (note === undefined) return undefined;
@@ -145,7 +148,7 @@ async function listStudentUserIds(
 }
 
 async function requireStudentInClass(
-  ctx: MutationCtx,
+  ctx: QueryCtx | MutationCtx,
   classId: Id<"classes">,
   studentUserId: Id<"users">,
 ): Promise<void> {
@@ -431,40 +434,6 @@ export const forAudience = classQuery({
   },
 });
 
-const ledgerBehaviorItemValidator = v.object({
-  kind: v.literal("behavior"),
-  id: v.id("behaviorApplications"),
-  at: v.number(),
-  name: v.optional(v.string()),
-  pointsApplied: v.number(),
-  quantity: v.number(),
-  note: v.optional(v.string()),
-});
-
-const ledgerRewardItemValidator = v.object({
-  kind: v.literal("reward"),
-  id: v.id("rewardPurchases"),
-  at: v.number(),
-  name: v.optional(v.string()),
-  pointsCost: v.number(),
-  quantity: v.number(),
-});
-
-const ledgerWarningItemValidator = v.object({
-  kind: v.literal("warning"),
-  id: v.id("studentWarningEvents"),
-  at: v.number(),
-  dateKey: v.string(),
-});
-
-const activityRevisionValidator = v.union(
-  v.object({
-    eventId: v.id("classActivityEvents"),
-    createdAt: v.number(),
-  }),
-  v.null(),
-);
-
 /** Live revision tip for personal points ledger (cheap indexed activity head). */
 export const ledgerRevisionForAudience = classQuery({
   args: {
@@ -486,154 +455,42 @@ export const ledgerForAudience = classQuery({
     beforeTimestamp: v.optional(v.number()),
     limit: v.optional(v.number()),
   },
-  returns: v.object({
-    items: v.array(
-      v.union(ledgerBehaviorItemValidator, ledgerRewardItemValidator, ledgerWarningItemValidator),
-    ),
-    nextBeforeTimestamp: v.optional(v.number()),
-    revision: activityRevisionValidator,
-  }),
+  returns: ledgerPageValidator,
   handler: async (ctx, args) => {
     await ctx.require("points:read");
     const classId = ctx.classDoc._id;
     await assertPersonalStudentAccess(ctx, classId, args.studentUserId);
+    return await loadStudentPointsLedger(ctx, classId, args.studentUserId, args);
+  },
+});
 
-    const limit = Math.min(
-      Math.max(1, Math.floor(args.limit ?? DEFAULT_LEDGER_LIMIT)),
-      MAX_LEDGER_LIMIT,
-    );
-    const beforeTimestamp = args.beforeTimestamp;
-    const revision = await getNewestActivityRevision(ctx, classId, LEDGER_REVISION_RESOURCE_TYPES);
+/** Live revision tip for staff student points history. */
+export const ledgerRevisionForStudent = classQuery({
+  args: {
+    studentUserId: v.id("users"),
+  },
+  returns: activityRevisionValidator,
+  handler: async (ctx, args) => {
+    await ctx.require("points:manage");
+    const classId = ctx.classDoc._id;
+    await requireStudentInClass(ctx, classId, args.studentUserId);
+    return await getNewestActivityRevision(ctx, classId, LEDGER_REVISION_RESOURCE_TYPES);
+  },
+});
 
-    const behaviorRows =
-      beforeTimestamp === undefined
-        ? await ctx.db
-            .query("behaviorApplications")
-            .withIndex("by_classId_student_awardedAt", (q) =>
-              q.eq("classId", classId).eq("studentUserId", args.studentUserId),
-            )
-            .order("desc")
-            .take(limit)
-        : await ctx.db
-            .query("behaviorApplications")
-            .withIndex("by_classId_student_awardedAt", (q) =>
-              q
-                .eq("classId", classId)
-                .eq("studentUserId", args.studentUserId)
-                .lt("awardedAt", beforeTimestamp),
-            )
-            .order("desc")
-            .take(limit);
-
-    const rewardRows =
-      beforeTimestamp === undefined
-        ? await ctx.db
-            .query("rewardPurchases")
-            .withIndex("by_classId_student_purchasedAt", (q) =>
-              q.eq("classId", classId).eq("studentUserId", args.studentUserId),
-            )
-            .order("desc")
-            .take(limit)
-        : await ctx.db
-            .query("rewardPurchases")
-            .withIndex("by_classId_student_purchasedAt", (q) =>
-              q
-                .eq("classId", classId)
-                .eq("studentUserId", args.studentUserId)
-                .lt("purchasedAt", beforeTimestamp),
-            )
-            .order("desc")
-            .take(limit);
-
-    const warningRows =
-      beforeTimestamp === undefined
-        ? await ctx.db
-            .query("studentWarningEvents")
-            .withIndex("by_classId_student_createdAt", (q) =>
-              q.eq("classId", classId).eq("studentUserId", args.studentUserId),
-            )
-            .order("desc")
-            .take(limit)
-        : await ctx.db
-            .query("studentWarningEvents")
-            .withIndex("by_classId_student_createdAt", (q) =>
-              q
-                .eq("classId", classId)
-                .eq("studentUserId", args.studentUserId)
-                .lt("createdAt", beforeTimestamp),
-            )
-            .order("desc")
-            .take(limit);
-
-    type MergedItem =
-      | {
-          kind: "behavior";
-          id: Id<"behaviorApplications">;
-          at: number;
-          name?: string;
-          pointsApplied: number;
-          quantity: number;
-          note?: string;
-        }
-      | {
-          kind: "reward";
-          id: Id<"rewardPurchases">;
-          at: number;
-          name?: string;
-          pointsCost: number;
-          quantity: number;
-        }
-      | {
-          kind: "warning";
-          id: Id<"studentWarningEvents">;
-          at: number;
-          dateKey: string;
-        };
-
-    const merged: MergedItem[] = [];
-
-    for (const row of behaviorRows) {
-      const behavior = await ctx.db.get("behaviors", row.behaviorId);
-      merged.push({
-        kind: "behavior",
-        id: row._id,
-        at: row.awardedAt,
-        ...(behavior?.name ? { name: behavior.name } : {}),
-        pointsApplied: row.pointsApplied,
-        quantity: ledgerQuantity(row.quantity),
-        ...(row.note ? { note: row.note } : {}),
-      });
-    }
-
-    for (const row of rewardRows) {
-      const reward = await ctx.db.get("rewards", row.rewardId);
-      merged.push({
-        kind: "reward",
-        id: row._id,
-        at: row.purchasedAt,
-        ...(reward?.name ? { name: reward.name } : {}),
-        pointsCost: row.pointsCost,
-        quantity: ledgerQuantity(row.quantity),
-      });
-    }
-
-    for (const row of warningRows) {
-      merged.push({
-        kind: "warning",
-        id: row._id,
-        at: row.createdAt,
-        dateKey: row.dateKey,
-      });
-    }
-
-    merged.sort((a, b) => b.at - a.at);
-    const items = merged.slice(0, limit);
-
-    return {
-      items,
-      revision,
-      ...(items.length === limit ? { nextBeforeTimestamp: items[items.length - 1]?.at } : {}),
-    };
+/** Newest-first points ledger for one class student (staff). */
+export const ledgerForStudent = classQuery({
+  args: {
+    studentUserId: v.id("users"),
+    beforeTimestamp: v.optional(v.number()),
+    limit: v.optional(v.number()),
+  },
+  returns: ledgerPageValidator,
+  handler: async (ctx, args) => {
+    await ctx.require("points:manage");
+    const classId = ctx.classDoc._id;
+    await requireStudentInClass(ctx, classId, args.studentUserId);
+    return await loadStudentPointsLedger(ctx, classId, args.studentUserId, args);
   },
 });
 
@@ -1089,6 +946,80 @@ export const undoLastPointsAction = classMutation({
     }
 
     return { kind: "none" as const };
+  },
+});
+
+export const deleteLedgerEntry = classMutation({
+  args: {
+    entry: v.union(
+      v.object({
+        kind: v.literal("behavior"),
+        entryId: v.id("behaviorApplications"),
+      }),
+      v.object({
+        kind: v.literal("reward"),
+        entryId: v.id("rewardPurchases"),
+      }),
+    ),
+  },
+  returns: v.object({
+    kind: v.union(v.literal("behavior"), v.literal("reward")),
+    studentUserId: v.id("users"),
+  }),
+  handler: async (ctx, args) => {
+    await rateLimiter.limit(ctx, "pointsDeleteLedgerEntry", { key: ctx.userId, throws: true });
+    await ctx.require("points:manage");
+    const classId = ctx.classDoc._id;
+    const actorRole = await getClassRoleForUser(ctx, ctx.userId, classScope(classId));
+    if (!isTeacherPlusRole(actorRole)) {
+      throw new Error("Only teachers can delete points history");
+    }
+
+    if (args.entry.kind === "behavior") {
+      const row = await ctx.db.get("behaviorApplications", args.entry.entryId);
+      if (!row || row.classId !== classId) {
+        throw new Error("Entry not found");
+      }
+      await requireStudentInClass(ctx, classId, row.studentUserId);
+      await applyBehaviorPointsDelta(ctx, classId, row.studentUserId, row.pointsApplied, -1);
+      await ctx.db.delete("behaviorApplications", row._id);
+      await recordClassActivity(ctx, {
+        classId,
+        actorUserId: ctx.userId,
+        action: "delete",
+        resourceType: "behaviorApplication",
+        resourceId: row._id,
+        summary: "Deleted a points history entry",
+        summaryKey: "activitySummary_deletedPointsLedgerEntry",
+        metadata: {
+          kind: "behavior",
+          studentUserId: row.studentUserId,
+        },
+      });
+      return { kind: "behavior" as const, studentUserId: row.studentUserId };
+    }
+
+    const row = await ctx.db.get("rewardPurchases", args.entry.entryId);
+    if (!row || row.classId !== classId) {
+      throw new Error("Entry not found");
+    }
+    await requireStudentInClass(ctx, classId, row.studentUserId);
+    await applyRewardPointsDelta(ctx, classId, row.studentUserId, row.pointsCost, -1);
+    await ctx.db.delete("rewardPurchases", row._id);
+    await recordClassActivity(ctx, {
+      classId,
+      actorUserId: ctx.userId,
+      action: "delete",
+      resourceType: "rewardPurchase",
+      resourceId: row._id,
+      summary: "Deleted a points history entry",
+      summaryKey: "activitySummary_deletedPointsLedgerEntry",
+      metadata: {
+        kind: "reward",
+        studentUserId: row.studentUserId,
+      },
+    });
+    return { kind: "reward" as const, studentUserId: row.studentUserId };
   },
 });
 
