@@ -225,7 +225,9 @@ import type * as lib_timetable_importFromClass from "../lib/timetable/importFrom
 import type * as lib_timetable_lessonEvents from "../lib/timetable/lessonEvents.js";
 import type * as lib_timetable_sectionItems from "../lib/timetable/sectionItems.js";
 import type * as lib_timetable_sectionMigration from "../lib/timetable/sectionMigration.js";
+import type * as lib_timetable_slotDisableScope from "../lib/timetable/slotDisableScope.js";
 import type * as lib_timetable_slotLinks from "../lib/timetable/slotLinks.js";
+import type * as lib_timetable_slotTiming from "../lib/timetable/slotTiming.js";
 import type * as lib_timetable_timetableFormSchema from "../lib/timetable/timetableFormSchema.js";
 import type * as lib_timetable_timetableSchema from "../lib/timetable/timetableSchema.js";
 import type * as lib_trial from "../lib/trial.js";
@@ -485,7 +487,9 @@ declare const fullApi: ApiFromModules<{
   "lib/timetable/lessonEvents": typeof lib_timetable_lessonEvents;
   "lib/timetable/sectionItems": typeof lib_timetable_sectionItems;
   "lib/timetable/sectionMigration": typeof lib_timetable_sectionMigration;
+  "lib/timetable/slotDisableScope": typeof lib_timetable_slotDisableScope;
   "lib/timetable/slotLinks": typeof lib_timetable_slotLinks;
+  "lib/timetable/slotTiming": typeof lib_timetable_slotTiming;
   "lib/timetable/timetableFormSchema": typeof lib_timetable_timetableFormSchema;
   "lib/timetable/timetableSchema": typeof lib_timetable_timetableSchema;
   "lib/trial": typeof lib_trial;

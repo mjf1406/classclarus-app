@@ -44,7 +44,9 @@ type TimetableSlotCellProps = {
   onDeleteSlot?: () => void;
   onLinkSlot?: () => void;
   onUnlinkSlot?: () => void;
-  onToggleWeekDisable?: () => void;
+  onDisableSlot?: () => void;
+  onEnableSlot?: () => void;
+  isElapsed?: boolean;
 };
 
 export function TimetableSlotCell({
@@ -61,7 +63,9 @@ export function TimetableSlotCell({
   onDeleteSlot,
   onLinkSlot,
   onUnlinkSlot,
-  onToggleWeekDisable,
+  onDisableSlot,
+  onEnableSlot,
+  isElapsed = false,
 }: TimetableSlotCellProps) {
   const { t } = useTranslation("timetable");
   const duration = slotDurationMinutes(slot.startTime, slot.endTime);
@@ -69,7 +73,8 @@ export function TimetableSlotCell({
   const isDisabled = slot.disabled || isDisabledForWeek;
   const isLinked = Boolean(slot.linkGroupId);
   const showActions =
-    canManage && (onEditSlot || onDeleteSlot || onLinkSlot || onUnlinkSlot || onToggleWeekDisable);
+    canManage &&
+    (onEditSlot || onDeleteSlot || onLinkSlot || onUnlinkSlot || onDisableSlot || onEnableSlot);
 
   return (
     <div
@@ -80,8 +85,10 @@ export function TimetableSlotCell({
           : isLinked
             ? "border-primary/50 bg-card text-card-foreground ring-1 ring-primary/20 hover:bg-accent"
             : "border-primary/30 bg-card text-card-foreground hover:bg-accent",
+        isElapsed && !isDisabled ? "opacity-50" : null,
       )}
     >
+      {isElapsed ? <span className="sr-only">{t("pastSlot")}</span> : null}
       {!compact ? (
         <SlotTimeLabel
           startTime={slot.startTime}
@@ -185,19 +192,16 @@ export function TimetableSlotCell({
                 {t("unlinkSlotAction")}
               </DropdownMenuItem>
             ) : null}
-            {onToggleWeekDisable ? (
-              <DropdownMenuItem onClick={onToggleWeekDisable}>
-                {isDisabledForWeek ? (
-                  <>
-                    <SquareCheck className="h-4 w-4" />
-                    {t("enableSlotThisWeek")}
-                  </>
-                ) : (
-                  <>
-                    <SquareX className="h-4 w-4" />
-                    {t("disableSlotThisWeek")}
-                  </>
-                )}
+            {onDisableSlot ? (
+              <DropdownMenuItem onClick={onDisableSlot}>
+                <SquareX className="h-4 w-4" />
+                {t("disableSlotAction")}
+              </DropdownMenuItem>
+            ) : null}
+            {onEnableSlot ? (
+              <DropdownMenuItem onClick={onEnableSlot}>
+                <SquareCheck className="h-4 w-4" />
+                {t("enableSlotAction")}
               </DropdownMenuItem>
             ) : null}
             {onDeleteSlot ? (
@@ -217,11 +221,7 @@ function SubjectLabel({ subject }: { subject: TimetableSubject }) {
   return (
     <span className="flex min-w-0 items-center gap-2">
       {subject.iconName ? (
-        <FontAwesomeIconFromId
-          id={subject.iconName}
-          className="h-4 w-4 shrink-0"
-          style={{ color: subject.textColor }}
-        />
+        <FontAwesomeIconFromId id={subject.iconName} className="h-4 w-4 shrink-0 text-foreground" />
       ) : (
         <span
           className="size-2 shrink-0 rounded-full"
@@ -252,7 +252,8 @@ function LessonChip({
     lesson.materials.length > 0 ||
     lesson.announcements.length > 0 ||
     lesson.agenda.length > 0 ||
-    lesson.upcomingEvents.length > 0;
+    lesson.upcomingEvents.length > 0 ||
+    (Boolean(lesson.lessonUrl) && (canManage || lesson.lessonUrlShared === true));
 
   return (
     <button

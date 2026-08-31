@@ -28,6 +28,8 @@ import {
   normalizeDateRange,
   normalizeDays,
   normalizeHexColor,
+  normalizeOptionalLessonUrl,
+  weekBundleVisibleLessonUrl,
   normalizeSlotTimes,
   normalizeSubjectName,
   normalizeTermName,
@@ -35,10 +37,20 @@ import {
   termKindValidator,
 } from "./lib/timetable/timetableSchema.js";
 import {
+  timetableLessonFormSchemaEn,
   timetableSlotFormSchemaEn,
   timetableSubjectFormSchemaEn,
   timetableTermFormSchemaEn,
 } from "./lib/timetable/timetableFormSchema.js";
+import {
+  applySlotDisableChange,
+  isSlotDisableScope,
+  isWeekdayName,
+  isoWeekKey,
+  listIsoWeeksForWeekdayInRange,
+  type IsoWeek,
+  type SlotDisableScope,
+} from "./lib/timetable/slotDisableScope.js";
 import {
   buildMirrorLessonOps,
   planRepairGroupAfterSlotDelete,
@@ -112,6 +124,8 @@ const lessonValidator = v.object({
   materials: v.array(sectionItemValidator),
   announcements: v.array(sectionItemValidator),
   agenda: v.array(agendaItemValidator),
+  lessonUrl: v.optional(v.string()),
+  lessonUrlShared: v.boolean(),
   createdAt: v.number(),
   updatedAt: v.number(),
   subject: subjectValidator,
@@ -235,6 +249,8 @@ function toLessonLinkLike(lesson: Doc<"timetableLessons">): LessonLinkLike {
     materials: lesson.materials ?? [],
     announcements: lesson.announcements ?? [],
     agenda: lesson.agenda ?? [],
+    lessonUrl: lesson.lessonUrl,
+    lessonUrlShared: lesson.lessonUrlShared === true,
   };
 }
 
@@ -269,6 +285,8 @@ async function applyMirrorLessonOps(
         materials: op.materials,
         announcements: op.announcements,
         agenda: op.agenda,
+        lessonUrl: op.lessonUrl,
+        lessonUrlShared: op.lessonUrlShared === true,
         createdAt: now,
         updatedAt: now,
       });
@@ -281,6 +299,8 @@ async function applyMirrorLessonOps(
         materials: op.materials,
         announcements: op.announcements,
         agenda: op.agenda,
+        lessonUrl: op.lessonUrl,
+        lessonUrlShared: op.lessonUrlShared === true,
         notesJson: undefined,
         updatedAt: now,
       });
@@ -332,6 +352,7 @@ export const getWeekBundle = classQuery({
   returns: weekBundleValidator,
   handler: async (ctx, args) => {
     await ctx.require("timetable:read");
+    const canManageTimetable = await ctx.can("timetable:manage");
     const term = await assertTermBelongsToClass(ctx, ctx.classDoc._id, args.termId);
 
     // eslint-disable-next-line @convex-dev/no-collect-in-query -- term-bounded slots
@@ -404,6 +425,8 @@ export const getWeekBundle = classQuery({
           materials: lesson.materials ?? [],
           announcements: lesson.announcements ?? [],
           agenda: lesson.agenda ?? [],
+          lessonUrl: weekBundleVisibleLessonUrl(lesson, canManageTimetable),
+          lessonUrlShared: lesson.lessonUrlShared === true,
           createdAt: lesson.createdAt,
           updatedAt: lesson.updatedAt,
           subject,
@@ -964,6 +987,8 @@ export const upsertLesson = classMutation({
     materials: v.array(sectionItemValidator),
     announcements: v.array(sectionItemValidator),
     agenda: v.array(agendaItemValidator),
+    lessonUrl: v.optional(v.string()),
+    lessonUrlShared: v.optional(v.boolean()),
   },
   returns: v.id("timetableLessons"),
   handler: async (ctx, args) => {
@@ -973,16 +998,29 @@ export const upsertLesson = classMutation({
     if (slot.termId !== args.termId) throw new Error("Slot does not belong to this term");
     const subject = await assertSubjectBelongsToClass(ctx, ctx.classDoc._id, args.subjectId);
 
-    const materials = normalizeSectionItems(args.materials);
-    const announcements = normalizeSectionItems(args.announcements);
-    const agenda = await normalizeAgendaItems(ctx, ctx.classDoc._id, args.agenda);
+    const parsed = timetableLessonFormSchemaEn.safeParse({
+      complete: args.complete,
+      lessonUrl: args.lessonUrl ?? "",
+      lessonUrlShared: args.lessonUrlShared === true,
+      materials: args.materials,
+      announcements: args.announcements,
+      agenda: args.agenda,
+    });
+    if (!parsed.success) {
+      throw new Error(parsed.error.issues[0]?.message ?? "Invalid input");
+    }
+    const materials = normalizeSectionItems(parsed.data.materials);
+    const announcements = normalizeSectionItems(parsed.data.announcements);
+    const agenda = await normalizeAgendaItems(ctx, ctx.classDoc._id, parsed.data.agenda);
+    const lessonUrl = normalizeOptionalLessonUrl(parsed.data.lessonUrl);
+    const lessonUrlShared = parsed.data.lessonUrlShared;
     await upsertClassTags(ctx, ctx.classDoc._id, [
       ...collectItemTags(materials),
       ...collectItemTags(announcements),
       ...collectItemTags(agenda),
     ]);
     const now = Date.now();
-    const sections = { materials, announcements, agenda };
+    const sections = { materials, announcements, agenda, lessonUrl, lessonUrlShared };
 
     // eslint-disable-next-line @convex-dev/no-collect-in-query -- slot-week lessons are few
     const existingRows = await ctx.db
@@ -994,7 +1032,10 @@ export const upsertLesson = classMutation({
     const existing = existingRows.find((row) => row.subjectId === args.subjectId);
 
     if (existing) {
-      const contentChanged = !lessonSectionsEqual(lessonSectionsFromDoc(existing), sections);
+      const contentChanged =
+        !lessonSectionsEqual(lessonSectionsFromDoc(existing), sections) ||
+        (existing.lessonUrl ?? undefined) !== (lessonUrl ?? undefined) ||
+        (existing.lessonUrlShared === true) !== lessonUrlShared;
       await ctx.db.patch("timetableLessons", existing._id, {
         complete: args.complete,
         links: [],
@@ -1150,38 +1191,168 @@ export const removeLesson = classMutation({
   },
 });
 
-export const toggleSlotDisabledForWeek = classMutation({
+const DISABLE_SCOPE_SUMMARY: Record<SlotDisableScope, string> = {
+  thisWeek: "this week",
+  fromWeek: "this week and future weeks",
+  allWeeks: "all weeks",
+};
+
+async function listSlotDisableRows(
+  ctx: MutationCtx,
+  slotId: Id<"timetableSlots">,
+): Promise<Array<Doc<"timetableSlotDisables">>> {
+  // eslint-disable-next-line @convex-dev/no-collect-in-query -- slot-bounded disable rows
+  return await ctx.db
+    .query("timetableSlotDisables")
+    .withIndex("by_slotId_year_week", (q) => q.eq("slotId", slotId))
+    .collect();
+}
+
+async function writeSlotDisableState(
+  ctx: MutationCtx,
+  classId: Id<"classes">,
+  slot: Doc<"timetableSlots">,
+  next: { globallyDisabled: boolean; disabledWeeks: Array<IsoWeek> },
+): Promise<void> {
+  const now = Date.now();
+  if (slot.disabled !== next.globallyDisabled) {
+    await ctx.db.patch("timetableSlots", slot._id, {
+      disabled: next.globallyDisabled,
+      updatedAt: now,
+    });
+  }
+
+  const existingRows = await listSlotDisableRows(ctx, slot._id);
+  const nextKeys = new Set(next.disabledWeeks.map(isoWeekKey));
+  const existingByKey = new Map(
+    existingRows.map((row) => [isoWeekKey({ year: row.year, weekNumber: row.weekNumber }), row]),
+  );
+
+  for (const [key, row] of existingByKey) {
+    if (!nextKeys.has(key)) {
+      await ctx.db.delete("timetableSlotDisables", row._id);
+    }
+  }
+
+  for (const week of next.disabledWeeks) {
+    if (existingByKey.has(isoWeekKey(week))) continue;
+    await ctx.db.insert("timetableSlotDisables", {
+      classId,
+      slotId: slot._id,
+      year: week.year,
+      weekNumber: week.weekNumber,
+      createdAt: now,
+    });
+  }
+}
+
+export const setSlotsDisabled = classMutation({
   args: {
-    slotId: v.id("timetableSlots"),
+    termId: v.id("timetableTerms"),
     year: v.number(),
     weekNumber: v.number(),
     disabled: v.boolean(),
+    scope: v.union(v.literal("thisWeek"), v.literal("fromWeek"), v.literal("allWeeks")),
+    slotId: v.optional(v.id("timetableSlots")),
+    day: v.optional(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
     await ctx.require("timetable:manage");
-    await assertSlotBelongsToClass(ctx, ctx.classDoc._id, args.slotId);
-
-    const existing = await ctx.db
-      .query("timetableSlotDisables")
-      .withIndex("by_slotId_year_week", (q) =>
-        q.eq("slotId", args.slotId).eq("year", args.year).eq("weekNumber", args.weekNumber),
-      )
-      .unique();
-
-    if (args.disabled) {
-      if (!existing) {
-        await ctx.db.insert("timetableSlotDisables", {
-          classId: ctx.classDoc._id,
-          slotId: args.slotId,
-          year: args.year,
-          weekNumber: args.weekNumber,
-          createdAt: Date.now(),
-        });
-      }
-    } else if (existing) {
-      await ctx.db.delete("timetableSlotDisables", existing._id);
+    const term = await assertTermBelongsToClass(ctx, ctx.classDoc._id, args.termId);
+    if (!isSlotDisableScope(args.scope)) {
+      throw new Error("Invalid disable range");
     }
+    if ((args.slotId && args.day) || (!args.slotId && !args.day)) {
+      throw new Error("Choose a slot or a day");
+    }
+    if (args.weekNumber < 1 || args.weekNumber > 53) {
+      throw new Error("Invalid week");
+    }
+
+    const slots = await listTermSlots(ctx, args.termId);
+    const selected: IsoWeek = { year: args.year, weekNumber: args.weekNumber };
+    let targetSlots: Array<Doc<"timetableSlots">>;
+    let dayName: string;
+
+    if (args.slotId) {
+      const slot = await assertSlotBelongsToClass(ctx, ctx.classDoc._id, args.slotId);
+      if (slot.termId !== args.termId) {
+        throw new Error("Slot does not belong to this term");
+      }
+      targetSlots = [slot];
+      dayName = slot.day;
+    } else {
+      if (!args.day || !isWeekdayName(args.day) || !term.days.includes(args.day)) {
+        throw new Error("Day is not in this term");
+      }
+      dayName = args.day;
+      targetSlots = slots.filter((slot) => slot.day === args.day);
+    }
+
+    if (targetSlots.length === 0) {
+      return null;
+    }
+
+    for (const slot of targetSlots) {
+      if (!isWeekdayName(slot.day)) continue;
+      const termWeeks = listIsoWeeksForWeekdayInRange(term.startDateKey, term.endDateKey, slot.day);
+      const existingRows = await listSlotDisableRows(ctx, slot._id);
+      const next = applySlotDisableChange(
+        {
+          globallyDisabled: slot.disabled,
+          disabledWeeks: existingRows.map((row) => ({
+            year: row.year,
+            weekNumber: row.weekNumber,
+          })),
+        },
+        termWeeks,
+        selected,
+        args.scope,
+        args.disabled,
+      );
+      await writeSlotDisableState(ctx, ctx.classDoc._id, slot, next);
+    }
+
+    const scopeLabel = DISABLE_SCOPE_SUMMARY[args.scope];
+    const firstSlot = targetSlots[0]!;
+    if (args.day) {
+      await recordClassActivity(ctx, {
+        classId: ctx.classDoc._id,
+        actorUserId: ctx.userId,
+        action: "update",
+        resourceType: "timetableSlot",
+        resourceId: firstSlot._id,
+        summary: args.disabled
+          ? `Disabled timetable slots on ${dayName} (${scopeLabel})`
+          : `Enabled timetable slots on ${dayName} (${scopeLabel})`,
+        summaryKey: args.disabled
+          ? "activitySummary_disabledTimetableDay"
+          : "activitySummary_enabledTimetableDay",
+        metadata: { day: dayName, scope: args.scope },
+      });
+    } else {
+      await recordClassActivity(ctx, {
+        classId: ctx.classDoc._id,
+        actorUserId: ctx.userId,
+        action: "update",
+        resourceType: "timetableSlot",
+        resourceId: firstSlot._id,
+        summary: args.disabled
+          ? `Disabled timetable slot ${firstSlot.startTime}–${firstSlot.endTime} on ${dayName} (${scopeLabel})`
+          : `Enabled timetable slot ${firstSlot.startTime}–${firstSlot.endTime} on ${dayName} (${scopeLabel})`,
+        summaryKey: args.disabled
+          ? "activitySummary_disabledTimetableSlot"
+          : "activitySummary_enabledTimetableSlot",
+        metadata: {
+          day: dayName,
+          startTime: firstSlot.startTime,
+          endTime: firstSlot.endTime,
+          scope: args.scope,
+        },
+      });
+    }
+
     return null;
   },
 });

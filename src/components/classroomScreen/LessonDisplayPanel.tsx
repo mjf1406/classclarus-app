@@ -1,4 +1,4 @@
-import { X } from "lucide-react";
+import { ExternalLink, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { AnnouncementBody } from "@/components/announcements/AnnouncementBody";
@@ -16,6 +16,7 @@ import { toIntlLocale } from "@/lib/languages";
 import { findAgendaResourceName } from "@/lib/timetable/agendaItems";
 import { cn } from "@/lib/utils";
 import type { Id } from "../../../convex/_generated/dataModel";
+import { isValidHttpUrl } from "../../../convex/lib/timetable/timetableSchema";
 
 type LessonDisplayPanelProps = {
   classId: Id<"classes">;
@@ -87,6 +88,17 @@ export function LessonDisplayPanel({
         </div>
         <ScrollArea className="grow p-6">
           <div className="flex flex-col gap-6" style={bodyStyle}>
+            {lesson.lessonUrl && isValidHttpUrl(lesson.lessonUrl) ? (
+              <a
+                href={lesson.lessonUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 font-medium text-primary underline-offset-4 hover:underline"
+              >
+                <ExternalLink className="h-4 w-4" />
+                {tTimetable("openLessonUrl")}
+              </a>
+            ) : null}
             <LessonSection
               title={tTimetable("materialsSection")}
               empty={tTimetable("noMaterials")}

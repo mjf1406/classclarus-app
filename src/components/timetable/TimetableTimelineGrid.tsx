@@ -1,7 +1,15 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { MoreHorizontal, SquareCheck, SquareX } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { TimetableSlotCell } from "@/components/timetable/TimetableSlotCell";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   type TimetableLesson,
   type TimetableSlot,
@@ -22,6 +30,8 @@ import {
   timeToMinutes,
   weekdayFromDate,
 } from "@/lib/timetable/utils";
+import { isSlotElapsed } from "../../../convex/lib/timetable/slotTiming";
+import { isWeekdayName } from "../../../convex/lib/timetable/slotDisableScope";
 import { cn } from "@/lib/utils";
 import type { Id } from "../../../convex/_generated/dataModel";
 
@@ -41,7 +51,14 @@ type TimetableTimelineGridProps = {
   onDeleteSlot: (slot: TimetableSlot) => void;
   onLinkSlot: (slot: TimetableSlot) => void;
   onUnlinkSlot: (slot: TimetableSlot) => void;
-  onToggleWeekDisable: (slotId: Id<"timetableSlots">, disabled: boolean) => void;
+  onDisableSlot: (slot: TimetableSlot) => void;
+  onEnableSlot: (slot: TimetableSlot) => void;
+  onDisableDay: (day: string) => void;
+  onEnableDay: (day: string) => void;
+  year: number;
+  weekNumber: number;
+  nowMs: number;
+  timeZone: string;
 };
 
 export function TimetableTimelineGrid({
@@ -60,7 +77,14 @@ export function TimetableTimelineGrid({
   onDeleteSlot,
   onLinkSlot,
   onUnlinkSlot,
-  onToggleWeekDisable,
+  onDisableSlot,
+  onEnableSlot,
+  onDisableDay,
+  onEnableDay,
+  year,
+  weekNumber,
+  nowMs,
+  timeZone,
 }: TimetableTimelineGridProps) {
   const { t } = useTranslation("timetable");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -169,13 +193,40 @@ export function TimetableTimelineGrid({
           {displayDays.map((day) => (
             <div
               key={day}
-              className="border-r px-3 py-2.5 text-center text-sm font-medium last:border-r-0"
+              className="relative border-r px-3 py-2.5 pr-8 text-center text-sm font-medium last:border-r-0"
             >
               {view === "week"
                 ? formatWeekdayHeader(day, weekStart, locale)
                 : currentDate
                   ? formatDayDate(currentDate, locale)
                   : formatWeekdayName(day, locale)}
+              {canManage ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    render={
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-1 right-1 h-6 w-6"
+                        aria-label={t("dayActions")}
+                      />
+                    }
+                  >
+                    <MoreHorizontal className="h-3.5 w-3.5" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => onDisableDay(day)}>
+                      <SquareX className="h-4 w-4" />
+                      {t("disableDayAction")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onEnableDay(day)}>
+                      <SquareCheck className="h-4 w-4" />
+                      {t("enableDayAction")}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : null}
             </div>
           ))}
         </div>
@@ -254,10 +305,18 @@ export function TimetableTimelineGrid({
                         onUnlinkSlot={
                           canManage && slot.linkGroupId ? () => onUnlinkSlot(slot) : undefined
                         }
-                        onToggleWeekDisable={
-                          canManage
-                            ? () => onToggleWeekDisable(slot._id, !disabledSet.has(slot._id))
-                            : undefined
+                        onDisableSlot={canManage ? () => onDisableSlot(slot) : undefined}
+                        onEnableSlot={canManage ? () => onEnableSlot(slot) : undefined}
+                        isElapsed={
+                          isWeekdayName(slot.day) &&
+                          isSlotElapsed({
+                            day: slot.day,
+                            endTime: slot.endTime,
+                            year,
+                            weekNumber,
+                            nowMs,
+                            timeZone,
+                          })
                         }
                       />
                     </div>

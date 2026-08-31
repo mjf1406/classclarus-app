@@ -4,6 +4,10 @@ import { useTranslation } from "react-i18next";
 import { getRouteApi } from "@tanstack/react-router";
 
 import { DeleteNamedCredenza } from "@/components/groups/DeleteNamedCredenza";
+import {
+  TimetableDisableScopeCredenza,
+  type TimetableDisableTarget,
+} from "@/components/timetable/TimetableDisableScopeCredenza";
 import { TimetableImportCredenza } from "@/components/timetable/TimetableImportCredenza";
 import { TimetableLessonSheet } from "@/components/timetable/TimetableLessonSheet";
 import { TimetableLinkSlotsCredenza } from "@/components/timetable/TimetableLinkSlotsCredenza";
@@ -34,7 +38,6 @@ import {
   useRemoveLesson,
   useRemoveTimetableSlot,
   useRemoveTimetableSubject,
-  useToggleSlotDisabledForWeek,
   useUnlinkSlot,
 } from "@/hooks/timetable/useTimetableMutations";
 import { useTimetableTerms, useTimetableWeekBundle } from "@/hooks/timetable/useTimetableQueries";
@@ -64,9 +67,13 @@ import {
   getYearAndWeekNumber,
   weekOverlapsTerm,
 } from "@/lib/timetable/utils";
+import { useAuthedQuery } from "@/hooks/useAuthedQuery";
 import { isOptimisticId } from "@/lib/optimistic";
+import { GC_TIME } from "@/lib/queryCache";
 import { toIntlLocale } from "@/lib/languages";
+import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
+import { isValidTimeZone } from "../../../convex/lib/calendar/timeZone";
 
 const timetableRouteApi = getRouteApi("/_authenticated/_class/class/$classId/timetable/");
 
@@ -104,6 +111,21 @@ export function TimetablePage({ classId }: TimetablePageProps) {
   const [activeLesson, setActiveLesson] = useState<TimetableLesson | null>(null);
   const [lessonSheetOpen, setLessonSheetOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [disableTarget, setDisableTarget] = useState<TimetableDisableTarget | null>(null);
+  const [nowMs, setNowMs] = useState(() => Date.now());
+
+  const { data: classDoc } = useAuthedQuery(
+    api.classes.get,
+    { classId },
+    { gcTime: GC_TIME.stable },
+  );
+  const timeZone =
+    classDoc?.timezone && isValidTimeZone(classDoc.timezone) ? classDoc.timezone : "UTC";
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNowMs(Date.now()), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const selectedTerm = useMemo(
     () => terms?.find((term: TimetableTerm) => term._id === selectedTermId) ?? terms?.[0],
@@ -159,7 +181,6 @@ export function TimetablePage({ classId }: TimetablePageProps) {
 
   const addLesson = useAddLessonToSlot();
   const removeLesson = useRemoveLesson();
-  const toggleDisable = useToggleSlotDisabledForWeek();
   const removeSubject = useRemoveTimetableSubject();
   const removeSlot = useRemoveTimetableSlot();
   const unlinkSlot = useUnlinkSlot();
@@ -436,16 +457,14 @@ export function TimetablePage({ classId }: TimetablePageProps) {
                   slotId: slot._id,
                 })
               }
-              onToggleWeekDisable={(slotId, disabled) =>
-                void toggleDisable.mutateAsync({
-                  classId,
-                  termId: selectedTerm._id,
-                  year,
-                  weekNumber,
-                  slotId,
-                  disabled,
-                })
-              }
+              onDisableSlot={(slot) => setDisableTarget({ kind: "slot", slot, disabled: true })}
+              onEnableSlot={(slot) => setDisableTarget({ kind: "slot", slot, disabled: false })}
+              onDisableDay={(day) => setDisableTarget({ kind: "day", day, disabled: true })}
+              onEnableDay={(day) => setDisableTarget({ kind: "day", day, disabled: false })}
+              year={year}
+              weekNumber={weekNumber}
+              nowMs={nowMs}
+              timeZone={timeZone}
             />
           ) : null}
         </div>
@@ -561,6 +580,17 @@ export function TimetablePage({ classId }: TimetablePageProps) {
               });
               setDeletingSlot(null);
             }}
+          />
+          <TimetableDisableScopeCredenza
+            open={disableTarget !== null}
+            onOpenChange={(open) => {
+              if (!open) setDisableTarget(null);
+            }}
+            classId={classId}
+            termId={selectedTerm._id}
+            year={year}
+            weekNumber={weekNumber}
+            target={disableTarget}
           />
           <TimetableLessonSheet
             open={lessonSheetOpen}

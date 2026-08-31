@@ -72,6 +72,13 @@ function prepareParams(
   if (params.day) {
     params.day = formatWeekdayName(params.day, toIntlLocale(i18n.language));
   }
+  if (params.scope === "thisWeek") {
+    params.scope = t("activityScopeThisWeek");
+  } else if (params.scope === "fromWeek") {
+    params.scope = t("activityScopeFromWeek");
+  } else if (params.scope === "allWeeks") {
+    params.scope = t("activityScopeAllWeeks");
+  }
 
   return params;
 }

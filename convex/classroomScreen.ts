@@ -30,7 +30,10 @@ import {
   upcomingLessonEventValidator,
   type LessonEventSource,
 } from "./lib/timetable/lessonEvents.js";
-import { getIsoWeekYearAndNumberFromDateKey } from "./lib/timetable/timetableSchema.js";
+import {
+  classroomVisibleLessonUrl,
+  getIsoWeekYearAndNumberFromDateKey,
+} from "./lib/timetable/timetableSchema.js";
 import { findCurrentSlot } from "./lib/classroomScreen/currentLesson.js";
 
 const MAX_NAME_LENGTH = 120;
@@ -146,6 +149,7 @@ const lessonDisplayValidator = v.object({
   announcements: v.array(sectionItemValidator),
   agenda: v.array(agendaDisplayItemValidator),
   upcomingEvents: v.array(upcomingLessonEventValidator),
+  lessonUrl: v.optional(v.string()),
   timeZone: v.string(),
 });
 
@@ -228,6 +232,7 @@ async function mapLessonDisplay(
     materials: lesson.materials ?? [],
     announcements: lesson.announcements ?? [],
     agenda: await loadAgendaResourceNames(ctx, lesson.agenda),
+    lessonUrl: classroomVisibleLessonUrl(lesson),
     upcomingEvents: dateKey
       ? selectUpcomingLessonEvents(
           events,

@@ -86,6 +86,37 @@ describe("buildMirrorLessonOps", () => {
         materials: [],
         announcements: [],
         agenda: [],
+        lessonUrl: undefined,
+        lessonUrlShared: undefined,
+      },
+    ]);
+  });
+
+  test("mirrors an optional lesson URL onto linked slots", () => {
+    const ops = buildMirrorLessonOps(
+      {
+        type: "update",
+        sourceLesson: {
+          ...lessons[0]!,
+          lessonUrl: "https://docs.google.com/presentation/d/abc",
+          lessonUrlShared: true,
+        },
+      },
+      slots,
+      lessons,
+      2026,
+      10,
+    );
+    expect(ops).toEqual([
+      {
+        op: "updateLesson",
+        lessonId: lessonId("l-b-math"),
+        complete: false,
+        materials: [],
+        announcements: [],
+        agenda: [],
+        lessonUrl: "https://docs.google.com/presentation/d/abc",
+        lessonUrlShared: true,
       },
     ]);
   });

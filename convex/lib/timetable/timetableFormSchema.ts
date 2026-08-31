@@ -2,7 +2,14 @@ import { z } from "zod";
 
 import { CALENDAR_AUDIENCE_ROLES } from "../calendar/audience.js";
 import { MAX_ITEM_TEXT_LENGTH, MAX_SECTION_ITEMS } from "./sectionItems.js";
-import { MAX_SUBJECT_NAME_LENGTH, MAX_TERM_NAME_LENGTH, WEEKDAY_NAMES } from "./timetableSchema.js";
+import {
+  isValidHttpUrl,
+  MAX_LESSON_URL_LENGTH,
+  MAX_SUBJECT_NAME_LENGTH,
+  MAX_TERM_NAME_LENGTH,
+  WEEKDAY_NAMES,
+} from "./timetableSchema.js";
+import { SLOT_DISABLE_SCOPES } from "./slotDisableScope.js";
 
 export type TimetableFormMessages = {
   nameRequired: string;
@@ -154,16 +161,80 @@ export function createTimetableSubjectFormSchema(messages: TimetableSubjectFormM
   });
 }
 
+export type TimetableLessonFormMessages = {
+  itemTextTooLong: string;
+  tooManyItems: string;
+  lessonUrlInvalid: string;
+  lessonUrlTooLong: string;
+};
+
+export const TIMETABLE_LESSON_FORM_MESSAGES_EN: TimetableLessonFormMessages = {
+  itemTextTooLong: TIMETABLE_SUBJECT_FORM_MESSAGES_EN.itemTextTooLong,
+  tooManyItems: TIMETABLE_SUBJECT_FORM_MESSAGES_EN.tooManyItems,
+  lessonUrlInvalid: "Enter a valid http(s) URL",
+  lessonUrlTooLong: `URL must be at most ${MAX_LESSON_URL_LENGTH} characters`,
+};
+
+export function createTimetableLessonFormSchema(messages: TimetableLessonFormMessages) {
+  const subjectMessages: TimetableSubjectFormMessages = {
+    ...TIMETABLE_SUBJECT_FORM_MESSAGES_EN,
+    itemTextTooLong: messages.itemTextTooLong,
+    tooManyItems: messages.tooManyItems,
+  };
+  return z.object({
+    complete: z.boolean(),
+    lessonUrlShared: z.boolean(),
+    lessonUrl: z
+      .string()
+      .trim()
+      .max(MAX_LESSON_URL_LENGTH, messages.lessonUrlTooLong)
+      .refine((value) => value.length === 0 || isValidHttpUrl(value), messages.lessonUrlInvalid),
+    materials: z
+      .array(sectionItemFormSchema(subjectMessages))
+      .max(MAX_SECTION_ITEMS, messages.tooManyItems),
+    announcements: z
+      .array(sectionItemFormSchema(subjectMessages))
+      .max(MAX_SECTION_ITEMS, messages.tooManyItems),
+    agenda: z
+      .array(agendaItemFormSchema(subjectMessages))
+      .max(MAX_SECTION_ITEMS, messages.tooManyItems),
+  });
+}
+
+export type TimetableDisableScopeFormMessages = {
+  scopeRequired: string;
+};
+
+export const TIMETABLE_DISABLE_SCOPE_FORM_MESSAGES_EN: TimetableDisableScopeFormMessages = {
+  scopeRequired: "Choose a range",
+};
+
+export function createTimetableDisableScopeFormSchema(messages: TimetableDisableScopeFormMessages) {
+  return z.object({
+    scope: z.enum(SLOT_DISABLE_SCOPES, { error: messages.scopeRequired }),
+  });
+}
+
 export const timetableTermFormSchemaEn = createTimetableTermFormSchema(TIMETABLE_FORM_MESSAGES_EN);
 export const timetableSlotFormSchemaEn = createTimetableSlotFormSchema(TIMETABLE_FORM_MESSAGES_EN);
 export const timetableSubjectFormSchemaEn = createTimetableSubjectFormSchema(
   TIMETABLE_SUBJECT_FORM_MESSAGES_EN,
+);
+export const timetableLessonFormSchemaEn = createTimetableLessonFormSchema(
+  TIMETABLE_LESSON_FORM_MESSAGES_EN,
+);
+export const timetableDisableScopeFormSchemaEn = createTimetableDisableScopeFormSchema(
+  TIMETABLE_DISABLE_SCOPE_FORM_MESSAGES_EN,
 );
 
 export type TimetableTermFormValues = z.infer<ReturnType<typeof createTimetableTermFormSchema>>;
 export type TimetableSlotFormValues = z.infer<ReturnType<typeof createTimetableSlotFormSchema>>;
 export type TimetableSubjectFormValues = z.infer<
   ReturnType<typeof createTimetableSubjectFormSchema>
+>;
+export type TimetableLessonFormValues = z.infer<ReturnType<typeof createTimetableLessonFormSchema>>;
+export type TimetableDisableScopeFormValues = z.infer<
+  ReturnType<typeof createTimetableDisableScopeFormSchema>
 >;
 
 export type TimetableTermKindForm = "quarter" | "semester" | "trimester" | "year" | "custom";

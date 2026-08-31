@@ -986,7 +986,10 @@ export function SeatLayoutEditorPage({ classId, layoutId }: SeatLayoutEditorPage
               <HelpTip title={t("multiSelectHint")} description={t("deleteKeyHint")} />
             ) : null}
           </div>
-          {canManage ? <p className="text-sm text-muted-foreground">{saveLabel}</p> : null}
+          <p className="text-sm text-muted-foreground">
+            {canManage ? `${saveLabel} · ` : null}
+            {t("layoutNeighborsHelp")}
+          </p>
         </div>
         {canManage ? (
           <div className="flex shrink-0 flex-col gap-1.5 sm:items-end">

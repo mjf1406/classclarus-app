@@ -35,6 +35,7 @@ import { findAgendaResourceName } from "@/lib/timetable/agendaItems";
 import { slotDurationMinutes } from "@/lib/timetable/utils";
 import { areAllStudentsCompleteOnTask, isTaskPastDue, type TaskListItem } from "@/lib/tasks/tasks";
 import type { Id } from "../../../convex/_generated/dataModel";
+import { isValidHttpUrl } from "../../../convex/lib/timetable/timetableSchema";
 
 type DashboardCurrentSubjectCardProps = {
   classId: Id<"classes">;
@@ -142,6 +143,16 @@ export function DashboardCurrentSubjectCard({
                 ) : null}
               </div>
             </div>
+            {lesson.lessonUrl && isValidHttpUrl(lesson.lessonUrl) ? (
+              <a
+                href={lesson.lessonUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm text-primary underline-offset-4 hover:underline"
+              >
+                {tTimetable("openLessonUrl")}
+              </a>
+            ) : null}
             <Tabs
               value={tab}
               onValueChange={(value) => {

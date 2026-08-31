@@ -1349,6 +1349,10 @@ const schema = defineSchema({
         }),
       ),
     ),
+    /** Optional slide deck or other lesson page. */
+    lessonUrl: v.optional(v.string()),
+    /** When true, the classroom screen shows the lesson URL to other class roles. */
+    lessonUrlShared: v.optional(v.boolean()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

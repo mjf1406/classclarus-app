@@ -12,6 +12,10 @@ import {
 import { useOptimisticMutation } from "@/hooks/useOptimisticMutation";
 import { messageFromError } from "@/lib/errors/convexError";
 import {
+  weekIsInScope,
+  type SlotDisableScope,
+} from "../../../convex/lib/timetable/slotDisableScope";
+import {
   applyOptimisticLinkMembership,
   applyOptimisticUnlink,
   mirrorLessonsInBundle,
@@ -73,6 +77,8 @@ export function useAddLessonToSlot() {
           updatedAt: now,
           subject,
           upcomingEvents: [] as TimetableWeekBundle["lessons"][number]["upcomingEvents"],
+          lessonUrl: undefined,
+          lessonUrlShared: false,
         };
         const withPrimary = { ...old, lessons: [...old.lessons, optimisticLesson] };
         return mirrorLessonsInBundle(withPrimary, args.slotId, args.year, args.weekNumber, {
@@ -144,6 +150,8 @@ export function useRemoveLesson() {
               materials: lesson.materials,
               announcements: lesson.announcements,
               agenda: lesson.agenda,
+              lessonUrl: lesson.lessonUrl,
+              lessonUrlShared: lesson.lessonUrlShared,
             },
           },
         );
@@ -169,6 +177,8 @@ export type UpsertLessonArgs = {
   materials: Array<SectionItemFormValues>;
   announcements: Array<SectionItemFormValues>;
   agenda: Array<AgendaItemFormValues>;
+  lessonUrl?: string;
+  lessonUrlShared?: boolean;
   lessonId?: Id<"timetableLessons">;
 };
 
@@ -190,6 +200,8 @@ export function useUpsertLesson() {
         materials: args.materials,
         announcements: args.announcements,
         agenda: toAgendaItems(args.agenda),
+        lessonUrl: args.lessonUrl,
+        lessonUrlShared: args.lessonUrlShared === true,
       }),
     queryKeys: (args: UpsertLessonArgs) => [
       ...weekKeys(args.classId, args.termId, args.year, args.weekNumber),
@@ -219,6 +231,8 @@ export function useUpsertLesson() {
               materials: args.materials,
               announcements: args.announcements,
               agenda,
+              lessonUrl: args.lessonUrl,
+              lessonUrlShared: args.lessonUrlShared === true,
               updatedAt: now,
               subject,
             };
@@ -242,6 +256,8 @@ export function useUpsertLesson() {
             materials: args.materials,
             announcements: args.announcements,
             agenda,
+            lessonUrl: args.lessonUrl,
+            lessonUrlShared: args.lessonUrlShared === true,
             createdAt: now,
             updatedAt: now,
             subject,
@@ -271,6 +287,8 @@ export function useUpsertLesson() {
                   materials: updatedLesson.materials,
                   announcements: updatedLesson.announcements,
                   agenda: updatedLesson.agenda,
+                  lessonUrl: updatedLesson.lessonUrl,
+                  lessonUrlShared: updatedLesson.lessonUrlShared,
                 },
               }
             : {
@@ -281,6 +299,8 @@ export function useUpsertLesson() {
                 materials: args.materials,
                 announcements: args.announcements,
                 agenda,
+                lessonUrl: args.lessonUrl,
+                lessonUrlShared: args.lessonUrlShared === true,
               },
         );
       });
@@ -504,42 +524,132 @@ export function useRemoveTimetableSubject() {
   });
 }
 
-export function useToggleSlotDisabledForWeek() {
+export type SetSlotsDisabledArgs = {
+  classId: Id<"classes">;
+  termId: Id<"timetableTerms">;
+  year: number;
+  weekNumber: number;
+  disabled: boolean;
+  scope: SlotDisableScope;
+  slotId?: Id<"timetableSlots">;
+  day?: string;
+};
+
+function applyOptimisticDisableToBundle(
+  bundle: TimetableWeekBundle,
+  args: SetSlotsDisabledArgs,
+  bundleWeek: { year: number; weekNumber: number },
+): TimetableWeekBundle {
+  const slotIds = new Set(
+    args.slotId
+      ? [args.slotId]
+      : bundle.slots.filter((slot) => slot.day === args.day).map((slot) => slot._id),
+  );
+  if (slotIds.size === 0) return bundle;
+
+  const weekAffected = weekIsInScope(bundleWeek, args, args.scope);
+  const nextSlots =
+    args.scope === "allWeeks" || (!args.disabled && bundle.slots.some((slot) => slot.disabled))
+      ? bundle.slots.map((slot) =>
+          slotIds.has(slot._id)
+            ? {
+                ...slot,
+                disabled: args.scope === "allWeeks" ? args.disabled : false,
+              }
+            : slot,
+        )
+      : bundle.slots;
+
+  const set = new Set(bundle.disabledSlotIds);
+  if (weekAffected) {
+    for (const slotId of slotIds) {
+      if (args.disabled) set.add(slotId);
+      else set.delete(slotId);
+    }
+  }
+
+  return { ...bundle, slots: nextSlots, disabledSlotIds: [...set] };
+}
+
+export function useSetSlotsDisabled() {
   const { t } = useTranslation("timetable");
   const { t: tCommon } = useTranslation("common");
-  const mutationFn = useConvexMutation(api.timetable.toggleSlotDisabledForWeek);
+  const mutationFn = useConvexMutation(api.timetable.setSlotsDisabled);
 
   return useOptimisticMutation({
-    mutationFn: (args: {
-      classId: Id<"classes">;
-      termId: Id<"timetableTerms">;
-      year: number;
-      weekNumber: number;
-      slotId: Id<"timetableSlots">;
-      disabled: boolean;
-    }) =>
+    mutationFn: (args: SetSlotsDisabledArgs) =>
       mutationFn({
         classId: args.classId,
-        slotId: args.slotId,
+        termId: args.termId,
         year: args.year,
         weekNumber: args.weekNumber,
         disabled: args.disabled,
+        scope: args.scope,
+        slotId: args.slotId,
+        day: args.day,
       }),
-    queryKeys: (args) => weekKeys(args.classId, args.termId, args.year, args.weekNumber),
-    applyOptimisticUpdate: (queryClient, args) => {
-      const key = timetableWeekBundleQueryKey(
+    queryKeys: (args, queryClient) => {
+      const current = timetableWeekBundleQueryKey(
         args.classId,
         args.termId,
         args.year,
         args.weekNumber,
       );
-      queryClient.setQueryData<TimetableWeekBundle>(key, (old) => {
+      const extra = queryClient
+        .getQueryCache()
+        .getAll()
+        .filter((query) => {
+          const data = query.state.data;
+          return (
+            data !== undefined &&
+            typeof data === "object" &&
+            data !== null &&
+            "disabledSlotIds" in data &&
+            "term" in data &&
+            (data as TimetableWeekBundle).term._id === args.termId
+          );
+        })
+        .map((query) => query.queryKey);
+      return [current, ...extra.filter((key) => key !== current)];
+    },
+    applyOptimisticUpdate: (queryClient, args) => {
+      const currentKey = timetableWeekBundleQueryKey(
+        args.classId,
+        args.termId,
+        args.year,
+        args.weekNumber,
+      );
+      queryClient.setQueryData<TimetableWeekBundle>(currentKey, (old) => {
         if (!old) return old;
-        const set = new Set(old.disabledSlotIds);
-        if (args.disabled) set.add(args.slotId);
-        else set.delete(args.slotId);
-        return { ...old, disabledSlotIds: [...set] };
+        return applyOptimisticDisableToBundle(old, args, {
+          year: args.year,
+          weekNumber: args.weekNumber,
+        });
       });
+
+      for (const query of queryClient.getQueryCache().getAll()) {
+        if (query.queryKey === currentKey) continue;
+        const data = query.state.data;
+        if (
+          data === undefined ||
+          typeof data !== "object" ||
+          data === null ||
+          !("disabledSlotIds" in data) ||
+          !("term" in data) ||
+          (data as TimetableWeekBundle).term._id !== args.termId
+        ) {
+          continue;
+        }
+        const bundle = data as TimetableWeekBundle;
+        const lessonWeek = bundle.lessons[0];
+        const bundleWeek = lessonWeek
+          ? { year: lessonWeek.year, weekNumber: lessonWeek.weekNumber }
+          : { year: args.year, weekNumber: args.weekNumber };
+        queryClient.setQueryData<TimetableWeekBundle>(query.queryKey, (old) => {
+          if (!old) return old;
+          return applyOptimisticDisableToBundle(old, args, bundleWeek);
+        });
+      }
     },
     onError: (error) => {
       toast.add({

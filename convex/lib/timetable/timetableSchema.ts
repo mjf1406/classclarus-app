@@ -13,6 +13,7 @@ import {
 export const MAX_TERM_NAME_LENGTH = 80;
 export const MAX_SUBJECT_NAME_LENGTH = 80;
 export const MAX_LESSON_LINKS = 10;
+export const MAX_LESSON_URL_LENGTH = 2000;
 export const MAX_NOTES_JSON_LENGTH = 50_000;
 
 export const termKindValidator = v.union(
@@ -164,13 +165,43 @@ export function normalizeSlotTimes(
   return normalizeTimeRange(startTime, endTime);
 }
 
-function isValidHttpUrl(value: string): boolean {
+export function isValidHttpUrl(value: string): boolean {
   try {
     const url = new URL(value);
     return url.protocol === "http:" || url.protocol === "https:";
   } catch {
     return false;
   }
+}
+
+export function normalizeOptionalLessonUrl(value: string | undefined): string | undefined {
+  const trimmed = value?.trim() ?? "";
+  if (!trimmed) return undefined;
+  if (trimmed.length > MAX_LESSON_URL_LENGTH) {
+    throw new Error(`URL must be at most ${MAX_LESSON_URL_LENGTH} characters`);
+  }
+  if (!isValidHttpUrl(trimmed)) {
+    throw new Error("Enter a valid http(s) URL");
+  }
+  return trimmed;
+}
+
+export function isLessonUrlShared(lesson: { lessonUrlShared?: boolean }): boolean {
+  return lesson.lessonUrlShared === true;
+}
+
+export function classroomVisibleLessonUrl(lesson: {
+  lessonUrl?: string;
+  lessonUrlShared?: boolean;
+}): string | undefined {
+  return isLessonUrlShared(lesson) ? lesson.lessonUrl : undefined;
+}
+
+export function weekBundleVisibleLessonUrl(
+  lesson: { lessonUrl?: string; lessonUrlShared?: boolean },
+  canManageTimetable: boolean,
+): string | undefined {
+  return canManageTimetable || isLessonUrlShared(lesson) ? lesson.lessonUrl : undefined;
 }
 
 export async function normalizeLessonLinks(

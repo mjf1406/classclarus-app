@@ -26,6 +26,11 @@ const STRINGS: Record<string, string> = {
     'Moved {{count}} students from group "{{name}}" to ungrouped',
   activitySummary_createdTeamInGroups: 'Created team "{{name}}" in {{count}} groups',
   activitySummary_copiedTeamToGroup: 'Copied team "{{name}}" to another group',
+  activitySummary_disabledTimetableSlot:
+    "Disabled timetable slot {{startTime}}–{{endTime}} on {{day}} ({{scope}})",
+  activityScopeThisWeek: "this week",
+  activityScopeFromWeek: "this week and future weeks",
+  activityScopeAllWeeks: "all weeks",
   ...ROLE_LABELS,
 };
 
@@ -130,5 +135,23 @@ describe("formatActivitySummary", () => {
         t,
       ),
     ).toBe('Updated timetable lesson for "Math"');
+  });
+
+  test("formats a scoped timetable disable with a translated range", () => {
+    expect(
+      formatActivitySummary(
+        {
+          summary: "Disabled timetable slot 09:00–10:00 on Monday (this week)",
+          summaryKey: "activitySummary_disabledTimetableSlot",
+          metadata: {
+            day: "Monday",
+            startTime: "09:00",
+            endTime: "10:00",
+            scope: "thisWeek",
+          },
+        },
+        t,
+      ),
+    ).toBe("Disabled timetable slot 09:00–10:00 on Monday (this week)");
   });
 });

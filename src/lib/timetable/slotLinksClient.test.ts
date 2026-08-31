@@ -49,6 +49,8 @@ function lesson(
     materials,
     announcements: [],
     agenda: [],
+    lessonUrl: undefined,
+    lessonUrlShared: false,
     createdAt: 1,
     updatedAt: 1,
     subject: subject(),

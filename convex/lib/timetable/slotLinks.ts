@@ -16,6 +16,8 @@ export type LessonLinkLike = {
   materials: Array<SectionItem>;
   announcements: Array<SectionItem>;
   agenda: Array<AgendaItem>;
+  lessonUrl?: string;
+  lessonUrlShared?: boolean;
 };
 
 export type LessonSectionFields = {
@@ -23,6 +25,8 @@ export type LessonSectionFields = {
   announcements: Array<SectionItem>;
   agenda: Array<AgendaItem>;
   complete: boolean;
+  lessonUrl?: string;
+  lessonUrlShared?: boolean;
 };
 
 export function createLinkGroupId(): string {
@@ -141,6 +145,8 @@ export function buildMirrorLessonOps(
           announcements: change.announcements,
           agenda: change.agenda,
           complete: change.complete,
+          lessonUrl: change.lessonUrl,
+          lessonUrlShared: change.lessonUrlShared,
         });
       } else {
         ops.push({
@@ -151,6 +157,8 @@ export function buildMirrorLessonOps(
           announcements: change.announcements,
           agenda: change.agenda,
           complete: change.complete,
+          lessonUrl: change.lessonUrl,
+          lessonUrlShared: change.lessonUrlShared,
         });
       }
     }
@@ -177,6 +185,8 @@ export function buildMirrorLessonOps(
           announcements: sourceLesson.announcements,
           agenda: sourceLesson.agenda,
           complete: sourceLesson.complete,
+          lessonUrl: sourceLesson.lessonUrl,
+          lessonUrlShared: sourceLesson.lessonUrlShared,
         });
       }
     }
@@ -266,6 +276,8 @@ export function planLinkSlots({
           announcements: sourceLesson.announcements,
           agenda: sourceLesson.agenda,
           complete: sourceLesson.complete,
+          lessonUrl: sourceLesson.lessonUrl,
+          lessonUrlShared: sourceLesson.lessonUrlShared,
         });
       } else {
         syncOps.push({
@@ -276,6 +288,8 @@ export function planLinkSlots({
           announcements: sourceLesson.announcements,
           agenda: sourceLesson.agenda,
           complete: sourceLesson.complete,
+          lessonUrl: sourceLesson.lessonUrl,
+          lessonUrlShared: sourceLesson.lessonUrlShared,
         });
       }
     }
