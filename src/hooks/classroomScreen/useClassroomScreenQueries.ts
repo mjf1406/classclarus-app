@@ -1,3 +1,4 @@
+import { keepPreviousData } from "@tanstack/react-query";
 import { convexQuery } from "@convex-dev/react-query";
 
 import { api } from "../../../convex/_generated/api";
@@ -30,6 +31,9 @@ export function classroomDisplayBundleQueryOptions(
   return {
     ...convexQuery(api.classroomScreen.getDisplayBundle, { classId, nowMinuteBucket }),
     gcTime: GC_TIME.realtime,
+    // Minute-bucket is in the query key so the server can pick the current lesson
+    // without Date.now(). Keep the last bundle on screen while the next minute loads.
+    placeholderData: keepPreviousData,
   };
 }
 
@@ -105,7 +109,7 @@ export function useClassroomDisplayBundle(
   return useAuthedQuery(
     api.classroomScreen.getDisplayBundle,
     classId ? { classId, nowMinuteBucket } : "skip",
-    { gcTime: GC_TIME.realtime },
+    { gcTime: GC_TIME.realtime, placeholderData: keepPreviousData },
   );
 }
 

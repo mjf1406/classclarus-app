@@ -59,9 +59,13 @@ export function ClassroomScreenPage({ classId }: ClassroomScreenPageProps) {
   const {
     data: displayBundle,
     isPending,
-    isError,
     refetch,
   } = useClassroomDisplayBundle(classId, minuteBucket);
+  const lastDisplayBundleRef = useRef(displayBundle);
+  if (displayBundle) {
+    lastDisplayBundleRef.current = displayBundle;
+  }
+  const shownDisplayBundle = displayBundle ?? lastDisplayBundleRef.current;
   const { data: timers } = useClassroomTimers(classId);
   const { data: rotations } = useClassroomRotations(classId);
   const { data: audioFiles } = useClassroomAudioFiles(classId);
@@ -98,12 +102,12 @@ export function ClassroomScreenPage({ classId }: ClassroomScreenPageProps) {
 
   useEffect(() => {
     if (!canManageScreen) return;
-    if (!displayBundle?.displaySession.pushedLessonId) {
+    if (!shownDisplayBundle?.displaySession.pushedLessonId) {
       clearedPushRef.current = false;
       return;
     }
 
-    const pushedUntil = displayBundle.displaySession.pushedUntil;
+    const pushedUntil = shownDisplayBundle.displaySession.pushedUntil;
     if (isPushOverrideActive(pushedUntil, now.getTime())) {
       clearedPushRef.current = false;
       return;
@@ -112,7 +116,7 @@ export function ClassroomScreenPage({ classId }: ClassroomScreenPageProps) {
     if (clearedPushRef.current) return;
     clearedPushRef.current = true;
     void clearPushedLesson.mutateAsync({ classId });
-  }, [displayBundle, canManageScreen, classId, clearPushedLesson, now]);
+  }, [shownDisplayBundle, canManageScreen, classId, clearPushedLesson, now]);
 
   const toggleFullscreen = useCallback(async () => {
     if (!containerRef.current) return;
@@ -162,15 +166,15 @@ export function ClassroomScreenPage({ classId }: ClassroomScreenPageProps) {
   });
 
   const lessonState = useMemo(
-    () => resolveLessonDisplayState(displayBundle, now),
-    [displayBundle, now],
+    () => resolveLessonDisplayState(shownDisplayBundle, now),
+    [shownDisplayBundle, now],
   );
 
-  if (isPending && !displayBundle) {
+  if (isPending && !shownDisplayBundle) {
     return <Skeleton className="h-svh w-full rounded-none" />;
   }
 
-  if (isError || !displayBundle) {
+  if (!shownDisplayBundle) {
     return (
       <div className="flex h-svh items-center justify-center p-8">
         <ErrorState card onRetry={() => void refetch()} description={t("loadFailed")} />
@@ -178,14 +182,14 @@ export function ClassroomScreenPage({ classId }: ClassroomScreenPageProps) {
     );
   }
 
-  const settings = displayBundle.settings;
+  const settings = shownDisplayBundle.settings;
   const bgTransition: BgTransition =
     settings.bgTransition && isBgTransition(settings.bgTransition)
       ? settings.bgTransition
       : DEFAULT_BG_TRANSITION;
 
   const statusLabel = formatLessonDisplayStatusLabel(
-    resolveLessonDisplayStatus(lessonState, displayBundle.displaySession.pushedUntil, now),
+    resolveLessonDisplayStatus(lessonState, shownDisplayBundle.displaySession.pushedUntil, now),
     t,
     now,
   );
@@ -214,7 +218,7 @@ export function ClassroomScreenPage({ classId }: ClassroomScreenPageProps) {
         overtimeAutoDismissSeconds={settings.overtimeAutoDismissSeconds ?? 0}
         bgTransition={bgTransition}
         globalAudioCues={settings.audioCues as AudioCues | undefined}
-        displaySession={displayBundle.displaySession}
+        displaySession={shownDisplayBundle.displaySession}
         timers={timers}
         rotations={rotations}
         audioFiles={audioFiles}

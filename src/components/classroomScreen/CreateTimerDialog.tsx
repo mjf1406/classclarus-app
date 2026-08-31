@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { AudioCuesEditor } from "@/components/classroomScreen/AudioCuesEditor";
@@ -46,6 +46,7 @@ import {
   secondsToDurationParts,
   secondsUntilEndTime,
 } from "@/lib/classroomScreen/timerUtils";
+import { messageFromError } from "@/lib/errors/convexError";
 
 interface CreateTimerDialogProps {
   classId: Id<"classes">;
@@ -74,6 +75,8 @@ export function CreateTimerDialog({ classId, open, onOpenChange, timer }: Create
   const { data: timersData } = useClassroomTimers(classId);
   const createTimer = useCreateClassroomTimer();
   const updateTimer = useUpdateClassroomTimer();
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const skipNextResetRef = useRef(false);
 
   const audioFiles = audioData ?? [];
   const allTimers = timersData ?? [];
@@ -98,6 +101,12 @@ export function CreateTimerDialog({ classId, open, onOpenChange, timer }: Create
 
   useEffect(() => {
     if (!open) return;
+    if (skipNextResetRef.current) {
+      skipNextResetRef.current = false;
+      return;
+    }
+
+    setSubmitError(null);
 
     if (timer) {
       setName(timer.name);
@@ -149,16 +158,23 @@ export function CreateTimerDialog({ classId, open, onOpenChange, timer }: Create
           : (nextTimerId as Id<"classroomTimers">),
     };
 
-    if (isEditing && timer) {
-      await updateTimer.mutateAsync({
-        ...sharedPayload,
-        timerId: timer._id,
-      });
-    } else {
-      await createTimer.mutateAsync(sharedPayload);
-    }
-
+    setSubmitError(null);
     onOpenChange(false);
+
+    try {
+      if (isEditing && timer) {
+        await updateTimer.mutateAsync({
+          ...sharedPayload,
+          timerId: timer._id,
+        });
+      } else {
+        await createTimer.mutateAsync(sharedPayload);
+      }
+    } catch (error) {
+      skipNextResetRef.current = true;
+      onOpenChange(true);
+      setSubmitError(messageFromError(error, t("timerSaveError")));
+    }
   };
 
   const isSubmitting = createTimer.isPending || updateTimer.isPending;
@@ -266,6 +282,12 @@ export function CreateTimerDialog({ classId, open, onOpenChange, timer }: Create
               />
             </OptionalCollapsible>
           </div>
+
+          {submitError ? (
+            <p className="text-sm text-destructive" role="alert">
+              {submitError}
+            </p>
+          ) : null}
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

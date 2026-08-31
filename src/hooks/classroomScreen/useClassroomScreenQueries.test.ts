@@ -1,10 +1,11 @@
-import { QueryClient } from "@tanstack/react-query";
+import { QueryClient, keepPreviousData } from "@tanstack/react-query";
 import { describe, expect, it } from "vite-plus/test";
 
 import type { Id } from "../../../convex/_generated/dataModel";
 import {
   classroomAudioQueryKey,
   classroomDisplayBundleQueryKey,
+  classroomDisplayBundleQueryOptions,
   classroomMinuteBucket,
   classroomScreenBundleQueryKey,
   classroomRotationsQueryKey,
@@ -13,7 +14,9 @@ import {
   isClassroomDisplayBundleQueryKey,
   type ClassroomAudioFile,
   type ClassroomDisplayBundle,
+  type ClassroomTimer,
 } from "@/hooks/classroomScreen/useClassroomScreenQueries";
+import { applyOptimisticTimerCreate } from "@/hooks/classroomScreen/useClassroomScreenMutations";
 
 const classId = "k5760dnm43rwxxy6gseazphqts8bek0s" as Id<"classes">;
 
@@ -103,5 +106,57 @@ describe("display bundle optimistic patch isolation", () => {
       classroomDisplayBundleQueryKey(classId, bucket),
     );
     expect(bundleCache?.settings.clockSize).toBe(120);
+  });
+});
+
+describe("classroomDisplayBundleQueryOptions", () => {
+  it("keeps the previous bundle while the minute bucket query key changes", () => {
+    const options = classroomDisplayBundleQueryOptions(classId, classroomMinuteBucket());
+    expect(options.placeholderData).toBe(keepPreviousData);
+  });
+});
+
+describe("applyOptimisticTimerCreate", () => {
+  it("seeds the timer list when the cache is empty so create paints immediately", () => {
+    const queryClient = new QueryClient();
+    applyOptimisticTimerCreate(queryClient, {
+      classId,
+      name: "Quiz",
+      durationSeconds: 300,
+      bgColor: "#15803d",
+    });
+
+    const cached = queryClient.getQueryData<ClassroomTimer[]>(classroomTimersQueryKey(classId));
+    expect(cached).toHaveLength(1);
+    expect(cached?.[0]?.name).toBe("Quiz");
+    expect(cached?.[0]?._id).toMatch(/^optimistic:/);
+  });
+
+  it("appends after existing timers", () => {
+    const queryClient = new QueryClient();
+    const existing = {
+      _id: "existingTimer" as Id<"classroomTimers">,
+      _creationTime: 1,
+      classId,
+      name: "Warm-up",
+      durationSeconds: 60,
+      bgColor: "#000000",
+      sortOrder: 0,
+      createdBy: "user123" as Id<"users">,
+      createdAt: 1,
+      updatedAt: 1,
+    } satisfies ClassroomTimer;
+    queryClient.setQueryData(classroomTimersQueryKey(classId), [existing]);
+
+    applyOptimisticTimerCreate(queryClient, {
+      classId,
+      name: "Quiz",
+      durationSeconds: 300,
+      bgColor: "#15803d",
+    });
+
+    const cached = queryClient.getQueryData<ClassroomTimer[]>(classroomTimersQueryKey(classId));
+    expect(cached?.map((timer) => timer.name)).toEqual(["Warm-up", "Quiz"]);
+    expect(cached?.[1]?.sortOrder).toBe(1);
   });
 });

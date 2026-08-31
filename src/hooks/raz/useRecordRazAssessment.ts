@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { resolveRazAutoManualStatus } from "../../../convex/lib/razAutoRti";
+import { nextRazManualStatusAfterAssessment } from "../../../convex/lib/razAutoRti";
 import { toast } from "@/components/ui/toast-manager";
 import { razAssessmentsQueryKey } from "@/hooks/raz/useRazAssessments";
 import { razInitialLevelsQueryKey } from "@/hooks/raz/useRazInitialLevels";
@@ -59,11 +59,12 @@ export function useRecordRazAssessment() {
         if (!old) return old;
         return old.map((row) => {
           if (row.studentUserId !== args.studentUserId) return row;
-          const autoStatus = resolveRazAutoManualStatus({
+          const nextManualStatus = nextRazManualStatusAfterAssessment({
             level: args.level,
             result: args.result,
             previousResult: row.lastAssessmentResult,
             priorAssessments,
+            currentManualStatus: row.manualStatus,
           });
           return {
             ...row,
@@ -71,7 +72,7 @@ export function useRecordRazAssessment() {
             lastAssessedAt: args.assessedAt,
             lastAssessmentResult: args.result,
             scheduleAnchorAt: args.assessedAt,
-            manualStatus: autoStatus ?? row.manualStatus,
+            manualStatus: nextManualStatus,
           };
         });
       });

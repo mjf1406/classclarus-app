@@ -61,6 +61,7 @@ import { useClassMemberCounts } from "@/hooks/members/useClassMemberCounts";
 import { useCan } from "@/hooks/permissions/useCan";
 import type { ClassDoc } from "@/lib/classes/classes";
 import { pathFor, type ClassNavTo } from "@/lib/classes/classRoutes";
+import { toIntlLocale } from "@/lib/languages";
 import type { MemberListRole } from "@/lib/members/members";
 import type { ClassPermission } from "@/lib/permissions/classPermissions";
 import { cn } from "@/lib/utils";
@@ -406,7 +407,7 @@ export function ClassNavMain({ classDoc }: { classDoc: ClassDoc }) {
   const visibleStudentWorkItems = studentWorkItems.filter((item) => can(item.permission));
   const visibleManageItems = manageItems
     .filter((item) => can(item.permission))
-    .sort((a, b) => a.title.localeCompare(b.title, i18n.language));
+    .sort((a, b) => a.title.localeCompare(b.title, toIntlLocale(i18n.language)));
 
   const renderFlatItem = (item: NavItem) => {
     const href = pathFor(item.to, classId);

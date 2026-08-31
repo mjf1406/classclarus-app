@@ -8,7 +8,7 @@ import { classScope } from "./lib/authzModel.js";
 import { recordClassActivity } from "./lib/classActivity.js";
 import { classMutation, classQuery } from "./lib/customFunctions.js";
 import { assertPersonalStudentAccess, resolvePersonalStudentIds } from "./lib/guardianLinks.js";
-import { resolveRazAutoManualStatus } from "./lib/razAutoRti.js";
+import { nextRazManualStatusAfterAssessment } from "./lib/razAutoRti.js";
 import { isRazLevel } from "./lib/razLevels.js";
 import { rateLimiter } from "./lib/rateLimiter.js";
 import { resolveUserImageUrl } from "./lib/userImage.js";
@@ -474,11 +474,12 @@ export const recordAssessment = classMutation({
       }
     }
 
-    const autoStatus = resolveRazAutoManualStatus({
+    const nextManualStatus = nextRazManualStatusAfterAssessment({
       level: args.level,
       result: args.result,
       previousResult,
       priorAssessments,
+      currentManualStatus: levelRow.manualStatus,
     });
 
     const now = Date.now();
@@ -498,7 +499,7 @@ export const recordAssessment = classMutation({
 
     await ctx.db.patch("razStudentLevels", levelRow._id, {
       currentLevel: args.level,
-      ...(autoStatus !== null ? { manualStatus: autoStatus } : {}),
+      manualStatus: nextManualStatus ?? undefined,
       updatedAt: now,
       updatedBy: ctx.userId,
     });
@@ -524,8 +525,8 @@ export const recordAssessment = classMutation({
         targetUserId: args.studentUserId,
         readAccuracy: String(args.readAccuracy),
         respondScore: String(args.respondScore),
-        ...(autoStatus === "rti" ? { autoRti: "true" } : {}),
-        ...(autoStatus === "ineligible" ? { autoIneligible: "true" } : {}),
+        ...(nextManualStatus === "rti" ? { autoRti: "true" } : {}),
+        ...(nextManualStatus === "ineligible" ? { autoIneligible: "true" } : {}),
       },
     });
 

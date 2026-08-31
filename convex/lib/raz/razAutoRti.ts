@@ -51,6 +51,8 @@ export function shouldAutoSetRazIneligible(args: {
   return countRazZ2Passes(args.priorAssessments) + 1 >= RAZ_INELIGIBLE_Z2_PASS_COUNT;
 }
 
+export type RazStoredManualStatus = "rti" | "pending" | "ineligible";
+
 /**
  * Manual status to apply after recording an assessment, or null to leave
  * the existing override unchanged.
@@ -67,5 +69,29 @@ export function resolveRazAutoManualStatus(args: {
   if (shouldAutoSetRazIneligible(args)) return "ineligible";
   if (isRazZ2Pass(args.level, args.result)) return null;
   if (shouldAutoSetRazRti(args.result, args.previousResult)) return "rti";
+  return null;
+}
+
+/**
+ * Stored manual status after recording an assessment.
+ *
+ * Pending is a temporary "scores not entered yet" flag, so it always
+ * clears back to Auto unless auto-RTI or auto-ineligible applies.
+ * RTI and ineligible stay until a teacher clears them (or auto-status
+ * replaces them).
+ */
+export function nextRazManualStatusAfterAssessment(args: {
+  level: string;
+  result: RazAssessmentResult;
+  previousResult: RazAssessmentResult | null | undefined;
+  priorAssessments: ReadonlyArray<RazAssessmentLevelResult>;
+  currentManualStatus: RazStoredManualStatus | null | undefined;
+}): RazAutoManualStatus | null {
+  const autoStatus = resolveRazAutoManualStatus(args);
+  if (autoStatus !== null) return autoStatus;
+  if (args.currentManualStatus === "pending") return null;
+  if (args.currentManualStatus === "rti" || args.currentManualStatus === "ineligible") {
+    return args.currentManualStatus;
+  }
   return null;
 }

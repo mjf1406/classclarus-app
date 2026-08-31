@@ -3,6 +3,7 @@ import { describe, expect, test } from "vite-plus/test";
 import {
   countRazZ2Passes,
   isRazZ2Pass,
+  nextRazManualStatusAfterAssessment,
   RAZ_INELIGIBLE_Z2_PASS_COUNT,
   resolveRazAutoManualStatus,
   shouldAutoSetRazIneligible,
@@ -185,5 +186,83 @@ describe("resolveRazAutoManualStatus", () => {
         priorAssessments: [],
       }),
     ).toBeNull();
+  });
+});
+
+describe("nextRazManualStatusAfterAssessment", () => {
+  test("clears pending back to Auto when auto-status does not apply", () => {
+    expect(
+      nextRazManualStatusAfterAssessment({
+        level: "B",
+        result: "level_up",
+        previousResult: "stay",
+        priorAssessments: [],
+        currentManualStatus: "pending",
+      }),
+    ).toBeNull();
+  });
+
+  test("pending becomes RTI when auto-RTI applies", () => {
+    expect(
+      nextRazManualStatusAfterAssessment({
+        level: "B",
+        result: "level_down",
+        previousResult: "stay",
+        priorAssessments: [],
+        currentManualStatus: "pending",
+      }),
+    ).toBe("rti");
+  });
+
+  test("leaves RTI unchanged when auto-status does not apply", () => {
+    expect(
+      nextRazManualStatusAfterAssessment({
+        level: "B",
+        result: "level_up",
+        previousResult: "stay",
+        priorAssessments: [],
+        currentManualStatus: "rti",
+      }),
+    ).toBe("rti");
+  });
+
+  test("leaves ineligible unchanged when auto-status does not apply", () => {
+    expect(
+      nextRazManualStatusAfterAssessment({
+        level: "B",
+        result: "level_up",
+        previousResult: "stay",
+        priorAssessments: [],
+        currentManualStatus: "ineligible",
+      }),
+    ).toBe("ineligible");
+  });
+
+  test("leaves Auto unchanged when auto-status does not apply", () => {
+    expect(
+      nextRazManualStatusAfterAssessment({
+        level: "B",
+        result: "level_up",
+        previousResult: "stay",
+        priorAssessments: [],
+        currentManualStatus: null,
+      }),
+    ).toBeNull();
+  });
+
+  test("pending becomes ineligible on the seventh Z2 pass", () => {
+    const sixPasses = Array.from({ length: RAZ_INELIGIBLE_Z2_PASS_COUNT - 1 }, () => ({
+      level: "Z2" as const,
+      result: "stay" as const,
+    }));
+    expect(
+      nextRazManualStatusAfterAssessment({
+        level: "Z2",
+        result: "stay",
+        previousResult: "stay",
+        priorAssessments: sixPasses,
+        currentManualStatus: "pending",
+      }),
+    ).toBe("ineligible");
   });
 });

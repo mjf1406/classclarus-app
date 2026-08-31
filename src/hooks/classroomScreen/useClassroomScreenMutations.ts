@@ -21,6 +21,7 @@ import {
 import { useOptimisticMutation } from "@/hooks/useOptimisticMutation";
 import { toast } from "@/components/ui/toast-manager";
 import { messageFromError } from "@/lib/errors/convexError";
+import { randomClientId } from "@/lib/optimistic";
 
 function showMutationError(message: string) {
   toast.add({ type: "error", title: message });
@@ -51,6 +52,47 @@ function displayBundleKeys(classId: Id<"classes">) {
 
 function timerKeys(classId: Id<"classes">) {
   return [classroomTimersQueryKey(classId)];
+}
+
+type CreateClassroomTimerArgs = {
+  classId: Id<"classes">;
+  name: string;
+  durationSeconds: number;
+  bgColor: string;
+  endTime?: string;
+  bgTransition?: string;
+  audioCues?: ClassroomTimer["audioCues"];
+  nextTimerId?: Id<"classroomTimers">;
+};
+
+/** Appends a client timer so create paints before Convex round-trip. Seeds `[]` if the list cache is empty. */
+export function applyOptimisticTimerCreate(
+  queryClient: QueryClient,
+  args: CreateClassroomTimerArgs,
+  now = Date.now(),
+): void {
+  queryClient.setQueryData<ClassroomTimer[]>(classroomTimersQueryKey(args.classId), (old) => {
+    const timers = old ?? [];
+    return [
+      ...timers,
+      {
+        _id: `optimistic:${randomClientId()}` as Id<"classroomTimers">,
+        _creationTime: now,
+        classId: args.classId,
+        name: args.name,
+        durationSeconds: args.durationSeconds,
+        bgColor: args.bgColor,
+        endTime: args.endTime,
+        bgTransition: args.bgTransition,
+        audioCues: args.audioCues,
+        nextTimerId: args.nextTimerId,
+        sortOrder: timers.length,
+        createdBy: `optimistic:${randomClientId()}` as Id<"users">,
+        createdAt: now,
+        updatedAt: now,
+      },
+    ];
+  });
 }
 
 function rotationKeys(classId: Id<"classes">) {
@@ -120,42 +162,18 @@ export function useUpsertClassroomSettings() {
 }
 
 export function useCreateClassroomTimer() {
-  const { t } = useTranslation("classroomScreen");
   const mutationFn = useConvexMutation(api.classroomScreen.createTimer);
 
   return useOptimisticMutation({
     mutationFn,
     queryKeys: (args) => timerKeys(args.classId),
     applyOptimisticUpdate: (queryClient, args) => {
-      const now = Date.now();
-      patchTimers(queryClient, args.classId, (timers) => [
-        ...timers,
-        {
-          _id: `optimistic:${now}` as Id<"classroomTimers">,
-          _creationTime: now,
-          classId: args.classId,
-          name: args.name,
-          durationSeconds: args.durationSeconds,
-          bgColor: args.bgColor,
-          endTime: args.endTime,
-          bgTransition: args.bgTransition,
-          audioCues: args.audioCues,
-          nextTimerId: args.nextTimerId,
-          sortOrder: timers.length,
-          createdBy: "" as Id<"users">,
-          createdAt: now,
-          updatedAt: now,
-        },
-      ]);
-    },
-    onError: (error) => {
-      showMutationError(messageFromError(error, t("timerSaveError")));
+      applyOptimisticTimerCreate(queryClient, args);
     },
   });
 }
 
 export function useUpdateClassroomTimer() {
-  const { t } = useTranslation("classroomScreen");
   const mutationFn = useConvexMutation(api.classroomScreen.updateTimer);
 
   return useOptimisticMutation({
@@ -184,9 +202,6 @@ export function useUpdateClassroomTimer() {
             : timer,
         ),
       );
-    },
-    onError: (error) => {
-      showMutationError(messageFromError(error, t("timerSaveError")));
     },
   });
 }
