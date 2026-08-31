@@ -28,6 +28,7 @@ const LONG_PRESS_MOVE_PX = 8;
 
 type PointStudentCardProps = {
   student: PointsBoardStudent;
+  compactName: string;
   nameFormat: RosterNameFormat;
   selectMode: boolean;
   selected: boolean;
@@ -46,6 +47,7 @@ type PointStudentCardProps = {
 
 export function PointStudentCard({
   student,
+  compactName,
   nameFormat,
   selectMode,
   selected,
@@ -63,12 +65,7 @@ export function PointStudentCard({
 }: PointStudentCardProps) {
   const { t } = useTranslation("points");
   const { t: tClasses } = useTranslation("classes");
-  // Points cards always show first name only (hide surname for denser grid).
-  const displayName = getRosterDisplayName(
-    { ...student, lastName: undefined },
-    tClasses("unnamedMember"),
-    nameFormat,
-  );
+  const displayName = getRosterDisplayName(student, tClasses("unnamedMember"), nameFormat);
   const absent = isAbsentStudent(student);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -255,7 +252,7 @@ export function PointStudentCard({
         }}
       >
         <span className="line-clamp-2 text-sm leading-tight font-semibold tracking-tight break-words">
-          {displayName}
+          {compactName}
         </span>
         {metaLine ? (
           <span className="mt-0.5 line-clamp-2 text-xs leading-tight text-muted-foreground">

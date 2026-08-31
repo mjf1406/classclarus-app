@@ -7,8 +7,7 @@ export const TASK_STUDENT_GRID_CLASS =
   "grid w-fit max-w-full gap-1.5 [grid-template-columns:repeat(3,minmax(0,6.5rem))] sm:gap-2";
 
 type TaskStudentCompletionCardProps = {
-  firstName: string;
-  lastName?: string;
+  name: string;
   completed: boolean;
   disabled: boolean;
   ariaLabel: string;
@@ -16,8 +15,7 @@ type TaskStudentCompletionCardProps = {
 };
 
 export function TaskStudentCompletionCard({
-  firstName,
-  lastName,
+  name,
   completed,
   disabled,
   ariaLabel,
@@ -43,18 +41,8 @@ export function TaskStudentCompletionCard({
         <Check className="absolute top-1 left-1 size-3" strokeWidth={3} aria-hidden />
       ) : null}
       <span className="line-clamp-2 text-xs leading-tight font-semibold tracking-tight break-words sm:text-sm">
-        {firstName}
+        {name}
       </span>
-      {lastName ? (
-        <span
-          className={cn(
-            "mt-0.5 line-clamp-1 text-xs leading-tight",
-            completed ? "text-primary-foreground/80" : "text-muted-foreground",
-          )}
-        >
-          {lastName}
-        </span>
-      ) : null}
     </button>
   );
 }

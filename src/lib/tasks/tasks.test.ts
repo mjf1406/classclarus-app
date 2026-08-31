@@ -10,7 +10,6 @@ import {
   partitionTasksByArchive,
   sortTaskStudents,
   sortTasksByProcedureStep,
-  taskStudentCardNames,
   type TaskAssignmentGroup,
   type TaskListItem,
 } from "@/lib/tasks/tasks";
@@ -275,26 +274,6 @@ describe("computeTaskGroupCompletionStats", () => {
       ungroupedLabel: "Ungrouped",
     });
     expect(stats).toEqual([]);
-  });
-});
-
-describe("taskStudentCardNames", () => {
-  test("uses roster first and last when both are set", () => {
-    expect(
-      taskStudentCardNames(
-        { userId: "u1" as Id<"users">, firstName: "Ada", lastName: "Lovelace", name: "Other" },
-        "Unnamed",
-      ),
-    ).toEqual({ firstName: "Ada", lastName: "Lovelace" });
-  });
-
-  test("falls back to display name when roster names are empty", () => {
-    expect(
-      taskStudentCardNames(
-        { userId: "u1" as Id<"users">, name: "Ada Lovelace", email: "ada@example.com" },
-        "Unnamed",
-      ),
-    ).toEqual({ firstName: "Ada Lovelace" });
   });
 });
 

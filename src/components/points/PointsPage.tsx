@@ -52,7 +52,7 @@ import {
   type PointsSortDirection,
   type PointsSortKey,
 } from "@/lib/points/points";
-import { resolveRosterNameFormat } from "@/lib/roster/roster";
+import { compactRosterDisplayNames, resolveRosterNameFormat } from "@/lib/roster/roster";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { toast } from "@/components/ui/toast-manager";
@@ -83,6 +83,8 @@ export function PointsPage({ classId }: PointsPageProps) {
 
 function StaffPointsPage({ classId }: PointsPageProps) {
   const { t } = useTranslation("points");
+  const { t: tClasses } = useTranslation("classes");
+  const unnamed = tClasses("unnamedMember");
   const navigate = useNavigate();
   const { can, isPending: permissionsPending } = useCan();
   const canManageAttendance = !permissionsPending && can("attendance:manage");
@@ -128,6 +130,10 @@ function StaffPointsPage({ classId }: PointsPageProps) {
   const purchaseLimits = useRewardPurchaseLimits(classId, applyTargetIds, applyOpen);
 
   const nameFormat = resolveRosterNameFormat(classDoc ?? {});
+  const compactNames = useMemo(
+    () => compactRosterDisplayNames(data ?? [], unnamed, nameFormat),
+    [data, nameFormat, unnamed],
+  );
   const membershipByUserId = useMemo(
     () => (groupsBoard ? buildMembershipIndex(groupsBoard) : {}),
     [groupsBoard],
@@ -309,6 +315,7 @@ function StaffPointsPage({ classId }: PointsPageProps) {
             <PointStudentCard
               key={student.userId}
               student={student}
+              compactName={compactNames.get(student.userId) ?? unnamed}
               nameFormat={nameFormat}
               selectMode={selectMode}
               selected={selectedIds.has(student.userId)}

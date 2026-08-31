@@ -2,7 +2,7 @@ import type { FunctionReturnType } from "convex/server";
 
 import { isPastDue } from "@/lib/dueDate/dueDateKey";
 import { collectStudentsInGroup, type GroupsBoard } from "@/lib/groups/groups";
-import { studentCardNames, type StudentRosterEntry } from "@/lib/roster/roster";
+import type { StudentRosterEntry } from "@/lib/roster/roster";
 
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -291,9 +291,6 @@ export function computeTaskGroupCompletionStats(args: {
 
   return rows;
 }
-
-/** First name for the grid card; last name only when roster first+last are both set. */
-export const taskStudentCardNames = studentCardNames;
 
 export type TaskStudentSortKey = "firstName" | "lastName" | "rosterNumber" | "done";
 export const TASK_STUDENT_SORT_KEYS = [

@@ -38,9 +38,9 @@ import {
 import { localDateKey } from "@/lib/attendance/dateKey";
 import { buildMembershipIndex } from "@/lib/groups/groupTeamFilters";
 import {
+  compactRosterDisplayNames,
   getRosterDisplayName,
   resolveRosterNameFormat,
-  studentCardNames,
   type StudentRosterEntry,
 } from "@/lib/roster/roster";
 import { api } from "../../../convex/_generated/api";
@@ -100,6 +100,10 @@ function StaffAttendancePage({ classId }: AttendancePageProps) {
         rosterNameSpace: classDoc?.rosterNameSpace,
       }),
     [classDoc?.rosterNameOrder, classDoc?.rosterNameSpace],
+  );
+  const compactNames = useMemo(
+    () => compactRosterDisplayNames(students ?? [], unnamed, nameFormat),
+    [nameFormat, students, unnamed],
   );
 
   const membershipByUserId = useMemo(
@@ -226,7 +230,7 @@ function StaffAttendancePage({ classId }: AttendancePageProps) {
         <ul className={ATTENDANCE_STUDENT_GRID_CLASS}>
           {filtered.map((student) => {
             const status = draft[student.userId] ?? "present";
-            const names = studentCardNames(student, unnamed);
+            const compactName = compactNames.get(student.userId) ?? unnamed;
             const displayName = getRosterDisplayName(student, unnamed, nameFormat);
             const statusLabel =
               status === "present"
@@ -239,8 +243,7 @@ function StaffAttendancePage({ classId }: AttendancePageProps) {
             return (
               <li key={student.userId}>
                 <AttendanceStudentCard
-                  firstName={names.firstName}
-                  lastName={names.lastName}
+                  name={compactName}
                   status={status}
                   ariaLabel={t("cycleStatusAria", { name: displayName, status: statusLabel })}
                   onCycle={() => handleCycle(student)}

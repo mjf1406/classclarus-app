@@ -127,23 +127,122 @@ export function getRosterDisplayName(
   );
 }
 
-/** First name for compact square cards; last name only when roster first+last are both set. */
-export function studentCardNames(
-  student: Pick<StudentRosterEntry, "userId" | "firstName" | "lastName" | "name" | "email">,
+export type CompactRosterStudent = Pick<
+  StudentRosterEntry,
+  "userId" | "firstName" | "lastName" | "name" | "email"
+>;
+
+const graphemeSegmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
+
+function nfcTrim(value: string | undefined): string {
+  return value?.trim().normalize("NFC") ?? "";
+}
+
+/** True when the surname has letters and every letter is Latin script. */
+function isLatinScriptSurname(surname: string): boolean {
+  let sawLetter = false;
+  for (const ch of surname) {
+    if (/\p{L}/u.test(ch)) {
+      sawLetter = true;
+      if (!/\p{Script=Latin}/u.test(ch)) return false;
+    }
+  }
+  return sawLetter;
+}
+
+function letterGraphemes(value: string): string[] {
+  const letters: string[] = [];
+  for (const { segment } of graphemeSegmenter.segment(value)) {
+    if (/\p{L}/u.test(segment)) letters.push(segment);
+  }
+  return letters;
+}
+
+function lettersEqual(left: readonly string[], right: readonly string[]): boolean {
+  if (left.length !== right.length) return false;
+  return left.every((letter, index) => letter === right[index]);
+}
+
+/** Shortest letter prefix that differs from another surname; 1 when they match. */
+function distinguishingPrefixLength(letters: readonly string[], other: readonly string[]): number {
+  const max = Math.max(letters.length, other.length);
+  for (let index = 0; index < max; index++) {
+    if (letters[index] !== other[index]) return index + 1;
+  }
+  return 1;
+}
+
+function latinSurnamePrefixLength(
+  letters: readonly string[],
+  peers: readonly (readonly string[])[],
+): number {
+  let needed = 1;
+  for (const other of peers) {
+    if (lettersEqual(letters, other)) continue;
+    needed = Math.max(needed, distinguishingPrefixLength(letters, other));
+  }
+  return Math.min(needed, letters.length);
+}
+
+/**
+ * Compact given names for square cards, disambiguated from the full roster.
+ * Unique given names stay as-is. Latin-script surname collisions become
+ * `Alex K.`, or a longer prefix (`Alex Ki.`) when initials also match.
+ * Identical full names keep the shortest Latin label. Non-Latin or
+ * mixed-script collisions use the full roster name.
+ */
+export function compactRosterDisplayNames(
+  students: readonly CompactRosterStudent[],
   unnamedFallback: string,
-): { firstName: string; lastName?: string } {
-  const first = student.firstName?.trim() ?? "";
-  const last = student.lastName?.trim() ?? "";
-  if (first && last) {
-    return { firstName: first, lastName: last };
+  format: RosterNameFormat = DEFAULT_ROSTER_NAME_FORMAT,
+): Map<Id<"users">, string> {
+  const givenCounts = new Map<string, number>();
+  const parsed = students.map((student) => {
+    const givenName = nfcTrim(student.firstName);
+    const lastName = nfcTrim(student.lastName);
+    const latinLetters =
+      lastName && isLatinScriptSurname(lastName) ? letterGraphemes(lastName) : undefined;
+    if (givenName) {
+      givenCounts.set(givenName, (givenCounts.get(givenName) ?? 0) + 1);
+    }
+    return { student, givenName, lastName, latinLetters };
+  });
+
+  const latinPeersByGiven = new Map<string, string[][]>();
+  for (const { givenName, latinLetters } of parsed) {
+    if (!givenName || !latinLetters || latinLetters.length === 0) continue;
+    if ((givenCounts.get(givenName) ?? 0) <= 1) continue;
+    const peers = latinPeersByGiven.get(givenName);
+    if (peers) peers.push(latinLetters);
+    else latinPeersByGiven.set(givenName, [latinLetters]);
   }
-  if (first) {
-    return { firstName: first };
+
+  const result = new Map<Id<"users">, string>();
+  for (const { student, givenName, lastName, latinLetters } of parsed) {
+    if (!givenName) {
+      result.set(student.userId, getRosterDisplayName(student, unnamedFallback, format));
+      continue;
+    }
+    const colliding = (givenCounts.get(givenName) ?? 0) > 1;
+    if (!colliding) {
+      result.set(student.userId, givenName);
+      continue;
+    }
+    if (latinLetters && latinLetters.length > 0) {
+      const prefixLength = latinSurnamePrefixLength(
+        latinLetters,
+        latinPeersByGiven.get(givenName) ?? [],
+      );
+      result.set(student.userId, `${givenName} ${latinLetters.slice(0, prefixLength).join("")}.`);
+      continue;
+    }
+    if (lastName) {
+      result.set(student.userId, getRosterDisplayName(student, unnamedFallback, format));
+      continue;
+    }
+    result.set(student.userId, givenName);
   }
-  if (last) {
-    return { firstName: last };
-  }
-  return { firstName: getRosterDisplayName(student, unnamedFallback) };
+  return result;
 }
 
 export function genderLabelKey(gender: GenderOption): `gender_${GenderOption}` {

@@ -41,6 +41,7 @@ import { formatLocalizedDateTime, formatLocalizedDueDate } from "@/i18n/formatDa
 import { buildMembershipIndex } from "@/lib/groups/groupTeamFilters";
 import { collectAllStudents, sortStudents } from "@/lib/groups/groups";
 import {
+  compactRosterDisplayNames,
   getRosterDisplayName,
   resolveRosterNameFormat,
   type StudentRosterEntry,
@@ -54,7 +55,6 @@ import {
   nextTaskStudentSortState,
   sortTaskStudents,
   TASK_STUDENT_SORT_KEYS,
-  taskStudentCardNames,
   type TaskDetailClass,
   type TaskDetailPersonal,
   type TaskStudentSortKey,
@@ -174,6 +174,11 @@ function StaffTaskDetailPage({ classId, taskId }: TaskDetailPageProps) {
       role: "student" as const,
     }));
   }, [groupsBoard, nameFormat, roster]);
+
+  const compactNames = useMemo(
+    () => compactRosterDisplayNames(students, unnamed, nameFormat),
+    [nameFormat, students, unnamed],
+  );
 
   const membershipByUserId = useMemo(
     () => (groupsBoard ? buildMembershipIndex(groupsBoard) : {}),
@@ -337,13 +342,12 @@ function StaffTaskDetailPage({ classId, taskId }: TaskDetailPageProps) {
         <ul className={TASK_STUDENT_GRID_CLASS}>
           {sorted.map((student) => {
             const completed = completedSet.has(student.userId);
-            const names = taskStudentCardNames(student, unnamed);
+            const compactName = compactNames.get(student.userId) ?? unnamed;
             const displayName = getRosterDisplayName(student, unnamed, nameFormat);
             return (
               <li key={student.userId}>
                 <TaskStudentCompletionCard
-                  firstName={names.firstName}
-                  lastName={names.lastName}
+                  name={compactName}
                   completed={completed}
                   disabled={!canComplete}
                   ariaLabel={t("completeAria", { name: displayName })}

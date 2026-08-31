@@ -8,8 +8,7 @@ export const ATTENDANCE_STUDENT_GRID_CLASS =
   "grid w-fit max-w-full gap-1.5 [grid-template-columns:repeat(3,minmax(0,6.5rem))] sm:gap-2";
 
 type AttendanceStudentCardProps = {
-  firstName: string;
-  lastName?: string;
+  name: string;
   status: AttendanceDraftStatus;
   ariaLabel: string;
   onCycle: () => void;
@@ -22,13 +21,6 @@ const STATUS_CARD_CLASS: Record<AttendanceDraftStatus, string> = {
   late: "border-amber-600 bg-amber-600 text-white hover:bg-amber-600/90",
 };
 
-const STATUS_LAST_NAME_CLASS: Record<AttendanceDraftStatus, string> = {
-  unset: "text-muted-foreground",
-  present: "text-white/80",
-  absent: "text-destructive-foreground/80",
-  late: "text-white/80",
-};
-
 const STATUS_ICON = {
   present: Check,
   absent: X,
@@ -36,8 +28,7 @@ const STATUS_ICON = {
 } as const;
 
 export function AttendanceStudentCard({
-  firstName,
-  lastName,
+  name,
   status,
   ariaLabel,
   onCycle,
@@ -58,18 +49,8 @@ export function AttendanceStudentCard({
     >
       {Icon ? <Icon className="absolute top-1 left-1 size-3" strokeWidth={3} aria-hidden /> : null}
       <span className="line-clamp-2 text-xs leading-tight font-semibold tracking-tight break-words sm:text-sm">
-        {firstName}
+        {name}
       </span>
-      {lastName ? (
-        <span
-          className={cn(
-            "mt-0.5 line-clamp-1 text-xs leading-tight",
-            STATUS_LAST_NAME_CLASS[status],
-          )}
-        >
-          {lastName}
-        </span>
-      ) : null}
     </button>
   );
 }
