@@ -123,6 +123,7 @@ export async function countStudentWarningsInBadgeWindow(
     now,
     classDoc.timezone,
     resolvePointsBadgeWindow(classDoc.warningWindowAmount, classDoc.warningWindowUnit),
+    classDoc.pointsBadgeWeekStartDay,
   );
   return await countWarningsInWindow(
     ctx,
@@ -143,6 +144,7 @@ export async function countStudentMinusesInBadgeWindow(
     now,
     classDoc.timezone,
     resolvePointsBadgeWindow(classDoc.minusWindowAmount, classDoc.minusWindowUnit),
+    classDoc.pointsBadgeWeekStartDay,
   );
   return await countMinusesInWindow(ctx, classDoc._id, studentUserId, window.startMs, window.endMs);
 }
@@ -178,6 +180,7 @@ export async function maybeNotifyPointsBadgeAlert(
         : args.classDoc.minusWindowAmount,
       args.metric === "warning" ? args.classDoc.warningWindowUnit : args.classDoc.minusWindowUnit,
     ),
+    args.classDoc.pointsBadgeWeekStartDay,
   );
 
   for (const alert of crossed) {

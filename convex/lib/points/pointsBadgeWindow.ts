@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 
-import { getTimeZoneOffsetMs, isValidTimeZone, utcMsToZonedParts } from "../calendar/timeZone.js";
+import { addDaysToDateKey, parseDateKey } from "../calendar/dateKey.js";
+import { isValidTimeZone, startOfZonedDayUtc, utcMsToZonedParts } from "../calendar/timeZone.js";
 import { ledgerQuantity } from "./pointsRoster.js";
 
 export const pointsBadgeWindowUnitValidator = v.union(
@@ -9,7 +10,26 @@ export const pointsBadgeWindowUnitValidator = v.union(
   v.literal("month"),
 );
 
+export const pointsBadgeWeekStartDayValidator = v.union(
+  v.literal("sunday"),
+  v.literal("monday"),
+  v.literal("tuesday"),
+  v.literal("wednesday"),
+  v.literal("thursday"),
+  v.literal("friday"),
+  v.literal("saturday"),
+);
+
 export type PointsBadgeWindowUnit = "day" | "week" | "month";
+
+export type PointsBadgeWeekStartDay =
+  | "sunday"
+  | "monday"
+  | "tuesday"
+  | "wednesday"
+  | "thursday"
+  | "friday"
+  | "saturday";
 
 export type PointsBadgeWindow = {
   amount: number;
@@ -22,12 +42,30 @@ export type PointsBadgeLookback = {
 };
 
 const UNITS = new Set<string>(["day", "week", "month"]);
-const MS_PER_DAY = 86_400_000;
+export const POINTS_BADGE_WEEK_START_DAYS: Array<PointsBadgeWeekStartDay> = [
+  "sunday",
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+];
+const WEEK_START_DAYS = new Set<string>(POINTS_BADGE_WEEK_START_DAYS);
+const WEEKDAY_INDEX: Record<PointsBadgeWeekStartDay, number> = {
+  sunday: 0,
+  monday: 1,
+  tuesday: 2,
+  wednesday: 3,
+  thursday: 4,
+  friday: 5,
+  saturday: 6,
+};
+
 export const MIN_POINTS_BADGE_WINDOW_AMOUNT = 1;
 export const MAX_POINTS_BADGE_WINDOW_AMOUNT = 90;
 export const DEFAULT_POINTS_BADGE_WINDOW: PointsBadgeWindow = { amount: 1, unit: "day" };
-
-const DATE_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
+export const DEFAULT_POINTS_BADGE_WEEK_START_DAY: PointsBadgeWeekStartDay = "monday";
 
 export function daysInPointsBadgeWindow(amount: number, unit: PointsBadgeWindowUnit): number {
   if (unit === "week") return amount * 7;
@@ -53,6 +91,16 @@ export function resolvePointsBadgeWindow(
   return { amount: resolvedAmount, unit: resolvedUnit as PointsBadgeWindowUnit };
 }
 
+/** Resolve stored/optional week-start day; invalid values fall back to Monday. */
+export function resolvePointsBadgeWeekStartDay(
+  day: PointsBadgeWeekStartDay | undefined,
+): PointsBadgeWeekStartDay {
+  if (day !== undefined && WEEK_START_DAYS.has(day)) {
+    return day;
+  }
+  return DEFAULT_POINTS_BADGE_WEEK_START_DAY;
+}
+
 /** Validate mutation input; throws on invalid amount/unit. */
 export function normalizePointsBadgeWindow(
   amount: number,
@@ -73,29 +121,29 @@ export function normalizePointsBadgeWindow(
   return { amount, unit };
 }
 
-function parseDateKey(dateKey: string): { year: number; month: number; day: number } {
-  if (!DATE_KEY_RE.test(dateKey)) {
+/** Validate mutation input; throws on invalid weekday. */
+export function normalizePointsBadgeWeekStartDay(
+  day: PointsBadgeWeekStartDay,
+): PointsBadgeWeekStartDay {
+  if (!WEEK_START_DAYS.has(day)) {
+    throw new Error("Week start day must be a weekday");
+  }
+  return day;
+}
+
+function weekdayIndexFromDateKey(dateKey: string): number {
+  const parsed = parseDateKey(dateKey);
+  if (!parsed) {
     throw new Error("Invalid date key");
   }
-  const year = Number(dateKey.slice(0, 4));
-  const month = Number(dateKey.slice(5, 7)) - 1;
-  const day = Number(dateKey.slice(8, 10));
-  return { year, month, day };
+  return new Date(Date.UTC(parsed.year, parsed.month - 1, parsed.day)).getUTCDay();
 }
 
-/** Local midnight of `dateKey` as UTC ms (`timeZoneOffsetMinutes` = `Date#getTimezoneOffset()`). */
-function utcMsFromLocalDateKey(dateKey: string, timeZoneOffsetMinutes: number): number {
-  const { year, month, day } = parseDateKey(dateKey);
-  return Date.UTC(year, month, day) + timeZoneOffsetMinutes * 60_000;
-}
-
-/**
- * `Date#getTimezoneOffset()` minutes for `pointsBadgeLookbackWindow`:
- * UTC minus zoned local, matching the points board client offset.
- */
-export function pointsBadgeTimeZoneOffsetMinutes(timeZone: string, utcMs: number): number {
-  const zone = isValidTimeZone(timeZone) ? timeZone : "UTC";
-  return -getTimeZoneOffsetMs(zone, utcMs) / 60_000;
+export function startOfWeekDateKey(dateKey: string, weekStartDay: PointsBadgeWeekStartDay): string {
+  const current = weekdayIndexFromDateKey(dateKey);
+  const start = WEEKDAY_INDEX[weekStartDay];
+  const daysBack = (current - start + 7) % 7;
+  return addDaysToDateKey(dateKey, -daysBack);
 }
 
 /** Lookback ending on the zoned calendar day that contains `utcMs`. */
@@ -103,29 +151,43 @@ export function pointsBadgeLookbackForTimeZone(
   utcMs: number,
   timeZone: string | undefined,
   window: PointsBadgeWindow,
+  weekStartDay?: PointsBadgeWeekStartDay,
 ): PointsBadgeLookback {
   const zone = timeZone && isValidTimeZone(timeZone) ? timeZone : "UTC";
   const { dateKey } = utcMsToZonedParts(utcMs, zone);
-  return pointsBadgeLookbackWindow(dateKey, pointsBadgeTimeZoneOffsetMinutes(zone, utcMs), window);
+  return pointsBadgeLookbackWindow(dateKey, zone, window, weekStartDay);
 }
 
 /**
- * Lookback from local “today” (`dateKey`): `1 day` = that day only;
- * `3 days` = today + prior 2 local days; week/month multiply by 7/30.
+ * Lookback from class-local “today” (`dateKey`): `1 day` = that day only;
+ * `3 days` = today + prior 2 local days; `month` multiplies by 30.
+ * `week` aligns to `weekStartDay` (default Monday): current partial week
+ * plus `amount - 1` prior full weeks, through the end of `dateKey`.
  */
 export function pointsBadgeLookbackWindow(
   dateKey: string,
-  timeZoneOffsetMinutes: number,
+  timeZone: string | undefined,
   window: PointsBadgeWindow,
+  weekStartDay?: PointsBadgeWeekStartDay,
 ): PointsBadgeLookback {
-  if (!Number.isFinite(timeZoneOffsetMinutes)) {
-    throw new Error("Invalid timezone offset");
+  if (!parseDateKey(dateKey)) {
+    throw new Error("Invalid date key");
   }
-  const days = daysInPointsBadgeWindow(window.amount, window.unit);
-  const todayStartMs = utcMsFromLocalDateKey(dateKey, timeZoneOffsetMinutes);
+  const zone = timeZone && isValidTimeZone(timeZone) ? timeZone : "UTC";
+  const resolvedWeekStart = resolvePointsBadgeWeekStartDay(weekStartDay);
+
+  let startDateKey: string;
+  if (window.unit === "week") {
+    const currentWeekStart = startOfWeekDateKey(dateKey, resolvedWeekStart);
+    startDateKey = addDaysToDateKey(currentWeekStart, -7 * (window.amount - 1));
+  } else {
+    const days = daysInPointsBadgeWindow(window.amount, window.unit);
+    startDateKey = addDaysToDateKey(dateKey, -(days - 1));
+  }
+
   return {
-    startMs: todayStartMs - (days - 1) * MS_PER_DAY,
-    endMs: todayStartMs + MS_PER_DAY,
+    startMs: startOfZonedDayUtc(startDateKey, zone),
+    endMs: startOfZonedDayUtc(addDaysToDateKey(dateKey, 1), zone),
   };
 }
 

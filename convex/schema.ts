@@ -112,7 +112,8 @@ const schema = defineSchema({
     rosterNameSpace: v.optional(v.boolean()),
     /**
      * Lookback for the points-board warning badge (default 1 day).
-     * Amount × unit (day / week×7 / month×30) ending on the board dateKey.
+     * Amount × unit (day / week aligned to pointsBadgeWeekStartDay / month×30)
+     * ending on the board dateKey.
      */
     warningWindowAmount: v.optional(v.number()),
     warningWindowUnit: v.optional(v.union(v.literal("day"), v.literal("week"), v.literal("month"))),
@@ -121,6 +122,21 @@ const schema = defineSchema({
      */
     minusWindowAmount: v.optional(v.number()),
     minusWindowUnit: v.optional(v.union(v.literal("day"), v.literal("week"), v.literal("month"))),
+    /**
+     * First weekday for warning/minus lookbacks when the unit is week.
+     * Defaults to Monday when unset.
+     */
+    pointsBadgeWeekStartDay: v.optional(
+      v.union(
+        v.literal("sunday"),
+        v.literal("monday"),
+        v.literal("tuesday"),
+        v.literal("wednesday"),
+        v.literal("thursday"),
+        v.literal("friday"),
+        v.literal("saturday"),
+      ),
+    ),
     /**
      * Custom teacher notifications when a student's warning/minus count in the
      * matching lookback window reaches a configured number. Each item is

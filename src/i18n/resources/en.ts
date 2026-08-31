@@ -906,6 +906,17 @@ const en = {
     pointsBadgeWindowsTitle: "Points board badges",
     pointsBadgeWindowsDescription:
       "How far back warning and minus badges count, and when teachers are notified.",
+    pointsBadgeWeekStartLabel: "Week starts on",
+    pointsBadgeWeekStartDescription:
+      "Weekly lookbacks reset on this day for warnings and removed points.",
+    pointsBadgeWeekStartAria: "Week start day",
+    pointsBadgeWeekStartDay_sunday: "Sunday",
+    pointsBadgeWeekStartDay_monday: "Monday",
+    pointsBadgeWeekStartDay_tuesday: "Tuesday",
+    pointsBadgeWeekStartDay_wednesday: "Wednesday",
+    pointsBadgeWeekStartDay_thursday: "Thursday",
+    pointsBadgeWeekStartDay_friday: "Friday",
+    pointsBadgeWeekStartDay_saturday: "Saturday",
     pointsBadgeWarningsSection: "Warnings",
     pointsBadgeRemovingPointsSection: "Removing points",
     pointsBadgeWarningWindowLabel: "Warning lookback",

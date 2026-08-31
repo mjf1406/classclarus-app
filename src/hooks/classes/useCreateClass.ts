@@ -52,6 +52,7 @@ export function useCreateClass() {
         warningWindowUnit: "day",
         minusWindowAmount: 1,
         minusWindowUnit: "day",
+        pointsBadgeWeekStartDay: "monday",
         warningAlerts: [],
         minusAlerts: [],
         updatedAt: now,

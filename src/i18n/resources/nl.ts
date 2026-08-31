@@ -921,6 +921,17 @@ const nl = {
     pointsBadgeWindowsTitle: "Puntenbord-badges",
     pointsBadgeWindowsDescription:
       "Hoe ver terug waarschuwings- en min-badges op het puntenbord tellen.",
+    pointsBadgeWeekStartLabel: "Week begint op",
+    pointsBadgeWeekStartDescription:
+      "Wekelijkse periodes worden op deze dag gereset voor waarschuwingen en afgetrokken punten.",
+    pointsBadgeWeekStartAria: "Eerste dag van de week",
+    pointsBadgeWeekStartDay_sunday: "Zondag",
+    pointsBadgeWeekStartDay_monday: "Maandag",
+    pointsBadgeWeekStartDay_tuesday: "Dinsdag",
+    pointsBadgeWeekStartDay_wednesday: "Woensdag",
+    pointsBadgeWeekStartDay_thursday: "Donderdag",
+    pointsBadgeWeekStartDay_friday: "Vrijdag",
+    pointsBadgeWeekStartDay_saturday: "Zaterdag",
     pointsBadgeWarningsSection: "Waarschuwingen",
     pointsBadgeRemovingPointsSection: "Punten aftrekken",
     pointsBadgeWarningWindowLabel: "Waarschuwingsperiode",

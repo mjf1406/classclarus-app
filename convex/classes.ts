@@ -22,9 +22,13 @@ import {
   resolvePointsBadgeAlerts,
 } from "./lib/points/pointsBadgeAlert.js";
 import {
+  normalizePointsBadgeWeekStartDay,
   normalizePointsBadgeWindow,
+  pointsBadgeWeekStartDayValidator,
   pointsBadgeWindowUnitValidator,
+  resolvePointsBadgeWeekStartDay,
   resolvePointsBadgeWindow,
+  type PointsBadgeWeekStartDay,
   type PointsBadgeWindowUnit,
 } from "./lib/pointsBadgeWindow.js";
 import { resolveUserImageUrl } from "./lib/userImage.js";
@@ -69,6 +73,7 @@ const classValidator = v.object({
   warningWindowUnit: pointsBadgeWindowUnitValidator,
   minusWindowAmount: v.number(),
   minusWindowUnit: pointsBadgeWindowUnitValidator,
+  pointsBadgeWeekStartDay: pointsBadgeWeekStartDayValidator,
   warningAlerts: pointsBadgeAlertsValidator,
   minusAlerts: pointsBadgeAlertsValidator,
   pointsPublicEnabled: v.optional(v.boolean()),
@@ -110,6 +115,7 @@ type ClassPublicDefaults = {
   warningWindowUnit: PointsBadgeWindowUnit;
   minusWindowAmount: number;
   minusWindowUnit: PointsBadgeWindowUnit;
+  pointsBadgeWeekStartDay: PointsBadgeWeekStartDay;
   warningAlerts: Array<{ count: number; action: string }>;
   minusAlerts: Array<{ count: number; action: string }>;
 };
@@ -119,6 +125,7 @@ function resolvePointsBadgeWindowFields(classDoc: Doc<"classes">): {
   warningWindowUnit: PointsBadgeWindowUnit;
   minusWindowAmount: number;
   minusWindowUnit: PointsBadgeWindowUnit;
+  pointsBadgeWeekStartDay: PointsBadgeWeekStartDay;
   warningAlerts: Array<{ count: number; action: string }>;
   minusAlerts: Array<{ count: number; action: string }>;
 } {
@@ -132,6 +139,7 @@ function resolvePointsBadgeWindowFields(classDoc: Doc<"classes">): {
     warningWindowUnit: warning.unit,
     minusWindowAmount: minus.amount,
     minusWindowUnit: minus.unit,
+    pointsBadgeWeekStartDay: resolvePointsBadgeWeekStartDay(classDoc.pointsBadgeWeekStartDay),
     warningAlerts: resolvePointsBadgeAlerts(classDoc.warningAlerts),
     minusAlerts: resolvePointsBadgeAlerts(classDoc.minusAlerts),
   };
@@ -548,6 +556,7 @@ export const setPointsBadgeWindows = classMutation({
     warningWindowUnit: pointsBadgeWindowUnitValidator,
     minusWindowAmount: v.number(),
     minusWindowUnit: pointsBadgeWindowUnitValidator,
+    pointsBadgeWeekStartDay: pointsBadgeWeekStartDayValidator,
     warningAlerts: pointsBadgeAlertsValidator,
     minusAlerts: pointsBadgeAlertsValidator,
   },
@@ -557,6 +566,7 @@ export const setPointsBadgeWindows = classMutation({
     await ctx.require("class:update");
     const warning = normalizePointsBadgeWindow(args.warningWindowAmount, args.warningWindowUnit);
     const minus = normalizePointsBadgeWindow(args.minusWindowAmount, args.minusWindowUnit);
+    const pointsBadgeWeekStartDay = normalizePointsBadgeWeekStartDay(args.pointsBadgeWeekStartDay);
     const warningAlerts = normalizePointsBadgeAlerts(args.warningAlerts);
     const minusAlerts = normalizePointsBadgeAlerts(args.minusAlerts);
     await ctx.db.patch("classes", ctx.classDoc._id, {
@@ -564,6 +574,7 @@ export const setPointsBadgeWindows = classMutation({
       warningWindowUnit: warning.unit,
       minusWindowAmount: minus.amount,
       minusWindowUnit: minus.unit,
+      pointsBadgeWeekStartDay,
       warningAlerts,
       minusAlerts,
       updatedAt: Date.now(),
@@ -585,6 +596,7 @@ export const setPointsBadgeWindows = classMutation({
         warningWindowUnit: warning.unit,
         minusWindowAmount: String(minus.amount),
         minusWindowUnit: minus.unit,
+        pointsBadgeWeekStartDay,
         warningAlerts: warningAlerts.map((alert) => `${alert.count}:${alert.action}`).join("; "),
         minusAlerts: minusAlerts.map((alert) => `${alert.count}:${alert.action}`).join("; "),
       },

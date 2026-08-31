@@ -927,6 +927,17 @@ const de = {
     pointsBadgeWindowsTitle: "Punkte-Board-Badges",
     pointsBadgeWindowsDescription:
       "Wie weit zur?ck Verwarnungs- und Minus-Badges auf dem Punkte-Board z?hlen.",
+    pointsBadgeWeekStartLabel: "Woche beginnt am",
+    pointsBadgeWeekStartDescription:
+      "Woechentliche Zeiträume setzen an diesem Tag für Verwarnungen und abgezogene Punkte zurück.",
+    pointsBadgeWeekStartAria: "Wochenbeginn",
+    pointsBadgeWeekStartDay_sunday: "Sonntag",
+    pointsBadgeWeekStartDay_monday: "Montag",
+    pointsBadgeWeekStartDay_tuesday: "Dienstag",
+    pointsBadgeWeekStartDay_wednesday: "Mittwoch",
+    pointsBadgeWeekStartDay_thursday: "Donnerstag",
+    pointsBadgeWeekStartDay_friday: "Freitag",
+    pointsBadgeWeekStartDay_saturday: "Samstag",
     pointsBadgeWarningsSection: "Verwarnungen",
     pointsBadgeRemovingPointsSection: "Punkte abziehen",
     pointsBadgeWarningWindowLabel: "Verwarnungs-Zeitraum",

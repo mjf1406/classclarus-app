@@ -920,6 +920,17 @@ const ru = {
     pointsBadgeWindowsTitle: "Значки доски баллов",
     pointsBadgeWindowsDescription:
       "За какой период считаются значки предупреждений и минусов на доске баллов.",
+    pointsBadgeWeekStartLabel: "Неделя начинается в",
+    pointsBadgeWeekStartDescription:
+      "Недельные периоды сбрасываются в этот день для предупреждений и снятых баллов.",
+    pointsBadgeWeekStartAria: "День начала недели",
+    pointsBadgeWeekStartDay_sunday: "Воскресенье",
+    pointsBadgeWeekStartDay_monday: "Понедельник",
+    pointsBadgeWeekStartDay_tuesday: "Вторник",
+    pointsBadgeWeekStartDay_wednesday: "Среда",
+    pointsBadgeWeekStartDay_thursday: "Четверг",
+    pointsBadgeWeekStartDay_friday: "Пятница",
+    pointsBadgeWeekStartDay_saturday: "Суббота",
     pointsBadgeWarningsSection: "Предупреждения",
     pointsBadgeRemovingPointsSection: "Снятие баллов",
     pointsBadgeWarningWindowLabel: "Период предупреждений",

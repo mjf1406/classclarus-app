@@ -10,7 +10,10 @@ import { useOptimisticMutation } from "@/hooks/useOptimisticMutation";
 import type { ClassPublic } from "@/lib/classes/classes";
 import { messageFromError } from "@/lib/errors/convexError";
 import { patchDoc } from "@/lib/optimistic";
-import type { PointsBadgeWindowUnit } from "@/lib/points/pointsBadgeWindow";
+import type {
+  PointsBadgeWeekStartDay,
+  PointsBadgeWindowUnit,
+} from "@/lib/points/pointsBadgeWindow";
 
 type ClassDoc = Doc<"classes">;
 
@@ -20,6 +23,7 @@ type SetPointsBadgeWindowsArgs = {
   warningWindowUnit: PointsBadgeWindowUnit;
   minusWindowAmount: number;
   minusWindowUnit: PointsBadgeWindowUnit;
+  pointsBadgeWeekStartDay: PointsBadgeWeekStartDay;
   warningAlerts: Array<{ count: number; action: string }>;
   minusAlerts: Array<{ count: number; action: string }>;
 };
@@ -41,6 +45,7 @@ export function useSetPointsBadgeWindows() {
         warningWindowUnit: args.warningWindowUnit,
         minusWindowAmount: args.minusWindowAmount,
         minusWindowUnit: args.minusWindowUnit,
+        pointsBadgeWeekStartDay: args.pointsBadgeWeekStartDay,
         warningAlerts: args.warningAlerts,
         minusAlerts: args.minusAlerts,
         updatedAt: now,

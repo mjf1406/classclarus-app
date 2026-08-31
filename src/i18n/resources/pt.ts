@@ -919,6 +919,17 @@ const pt = {
     pointsBadgeWindowsTitle: "Emblemas do quadro de pontos",
     pointsBadgeWindowsDescription:
       "At? onde os emblemas de aviso e menos contam no quadro de pontos.",
+    pointsBadgeWeekStartLabel: "A semana começa em",
+    pointsBadgeWeekStartDescription:
+      "Os períodos semanais recomeçam neste dia para avisos e pontos retirados.",
+    pointsBadgeWeekStartAria: "Dia de início da semana",
+    pointsBadgeWeekStartDay_sunday: "Domingo",
+    pointsBadgeWeekStartDay_monday: "Segunda-feira",
+    pointsBadgeWeekStartDay_tuesday: "Terça-feira",
+    pointsBadgeWeekStartDay_wednesday: "Quarta-feira",
+    pointsBadgeWeekStartDay_thursday: "Quinta-feira",
+    pointsBadgeWeekStartDay_friday: "Sexta-feira",
+    pointsBadgeWeekStartDay_saturday: "Sábado",
     pointsBadgeWarningsSection: "Avisos",
     pointsBadgeRemovingPointsSection: "Remover pontos",
     pointsBadgeWarningWindowLabel: "Per?odo de avisos",

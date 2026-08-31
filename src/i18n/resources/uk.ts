@@ -917,6 +917,17 @@ const uk = {
     pointsBadgeWindowsTitle: "Значки дошки балів",
     pointsBadgeWindowsDescription:
       "За який період рахуються значки попереджень і мінусів на дошці балів.",
+    pointsBadgeWeekStartLabel: "Тиждень починається в",
+    pointsBadgeWeekStartDescription:
+      "Тижневі періоди скидаються цього дня для попереджень і знятих балів.",
+    pointsBadgeWeekStartAria: "День початку тижня",
+    pointsBadgeWeekStartDay_sunday: "Неділя",
+    pointsBadgeWeekStartDay_monday: "Понеділок",
+    pointsBadgeWeekStartDay_tuesday: "Вівторок",
+    pointsBadgeWeekStartDay_wednesday: "Середа",
+    pointsBadgeWeekStartDay_thursday: "Четвер",
+    pointsBadgeWeekStartDay_friday: "П’ятниця",
+    pointsBadgeWeekStartDay_saturday: "Субота",
     pointsBadgeWarningsSection: "Попередження",
     pointsBadgeRemovingPointsSection: "Зняття балів",
     pointsBadgeWarningWindowLabel: "Період попереджень",

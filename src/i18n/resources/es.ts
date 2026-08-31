@@ -923,6 +923,17 @@ const es = {
     pointsBadgeWindowsTitle: "Insignias del tablero de puntos",
     pointsBadgeWindowsDescription:
       "Hasta cuándo cuentan las insignias de advertencia y menos en el tablero de puntos.",
+    pointsBadgeWeekStartLabel: "La semana empieza el",
+    pointsBadgeWeekStartDescription:
+      "Los recuentos semanales se reinician este día para advertencias y puntos quitados.",
+    pointsBadgeWeekStartAria: "Día de inicio de la semana",
+    pointsBadgeWeekStartDay_sunday: "Domingo",
+    pointsBadgeWeekStartDay_monday: "Lunes",
+    pointsBadgeWeekStartDay_tuesday: "Martes",
+    pointsBadgeWeekStartDay_wednesday: "Miércoles",
+    pointsBadgeWeekStartDay_thursday: "Jueves",
+    pointsBadgeWeekStartDay_friday: "Viernes",
+    pointsBadgeWeekStartDay_saturday: "Sábado",
     pointsBadgeWarningsSection: "Advertencias",
     pointsBadgeRemovingPointsSection: "Quitar puntos",
     pointsBadgeWarningWindowLabel: "Periodo de advertencias",

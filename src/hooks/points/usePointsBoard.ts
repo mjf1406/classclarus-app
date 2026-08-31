@@ -1,5 +1,5 @@
 import { convexQuery } from "@convex-dev/react-query";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useConvexMutation } from "@convex-dev/react-query";
 
 import { api } from "../../../convex/_generated/api";
@@ -8,15 +8,10 @@ import { useAuthedQuery } from "@/hooks/useAuthedQuery";
 import { localDateKey } from "@/lib/attendance/dateKey";
 import { GC_TIME } from "@/lib/queryCache";
 
-export function pointsBoardTimeZoneOffsetMinutes(): number {
-  return new Date().getTimezoneOffset();
-}
-
 export function pointsBoardQueryKey(classId: Id<"classes">, dateKey: string) {
   return convexQuery(api.points.board, {
     classId,
     dateKey,
-    timeZoneOffsetMinutes: pointsBoardTimeZoneOffsetMinutes(),
   }).queryKey;
 }
 
@@ -24,18 +19,12 @@ export function pointsBoardQueryOptions(classId: Id<"classes">, dateKey: string 
   return convexQuery(api.points.board, {
     classId,
     dateKey,
-    timeZoneOffsetMinutes: pointsBoardTimeZoneOffsetMinutes(),
   });
 }
 
 /** gcTime: GC_TIME.realtime — same as roster/attendance; Convex keeps the live query fresh while mounted. */
 export function usePointsBoard(classId: Id<"classes">, dateKey: string) {
-  const timeZoneOffsetMinutes = useMemo(() => pointsBoardTimeZoneOffsetMinutes(), []);
-  return useAuthedQuery(
-    api.points.board,
-    { classId, dateKey, timeZoneOffsetMinutes },
-    { gcTime: GC_TIME.realtime },
-  );
+  return useAuthedQuery(api.points.board, { classId, dateKey }, { gcTime: GC_TIME.realtime });
 }
 
 /** Idempotent backfill of missing roster point counters once per class mount. */

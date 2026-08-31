@@ -1,13 +1,18 @@
 import { describe, expect, test } from "vite-plus/test";
 
+import { startOfZonedDayUtc } from "../calendar/timeZone";
 import {
   aggregateMinusCountsByStudent,
   aggregateWarningCountsByStudent,
   daysInPointsBadgeWindow,
+  isTimestampInPointsBadgeWindow,
+  normalizePointsBadgeWeekStartDay,
   normalizePointsBadgeWindow,
   pointsBadgeLookbackForTimeZone,
   pointsBadgeLookbackWindow,
+  resolvePointsBadgeWeekStartDay,
   resolvePointsBadgeWindow,
+  startOfWeekDateKey,
 } from "./pointsBadgeWindow";
 
 describe("pointsBadgeWindow", () => {
@@ -30,26 +35,139 @@ describe("pointsBadgeWindow", () => {
     expect(() => normalizePointsBadgeWindow(91, "day")).toThrow(/at most/);
   });
 
-  test("1 day lookback is local dateKey day only", () => {
-    const offset = -540; // UTC+9
-    const window = pointsBadgeLookbackWindow("2026-08-09", offset, { amount: 1, unit: "day" });
-    // Local 2026-08-09 00:00 UTC+9 = 2026-08-08 15:00 UTC
+  test("resolvePointsBadgeWeekStartDay defaults to Monday", () => {
+    expect(resolvePointsBadgeWeekStartDay(undefined)).toBe("monday");
+    expect(resolvePointsBadgeWeekStartDay("saturday")).toBe("saturday");
+    expect(resolvePointsBadgeWeekStartDay("notaday" as "monday")).toBe("monday");
+  });
+
+  test("normalizePointsBadgeWeekStartDay validates mutation input", () => {
+    expect(normalizePointsBadgeWeekStartDay("sunday")).toBe("sunday");
+    expect(() => normalizePointsBadgeWeekStartDay("notaday" as "monday")).toThrow(/weekday/);
+  });
+
+  test("startOfWeekDateKey snaps back to the configured weekday", () => {
+    expect(startOfWeekDateKey("2026-08-09", "monday")).toBe("2026-08-03");
+    expect(startOfWeekDateKey("2026-08-03", "monday")).toBe("2026-08-03");
+    expect(startOfWeekDateKey("2026-08-09", "sunday")).toBe("2026-08-09");
+    expect(startOfWeekDateKey("2026-08-09", "saturday")).toBe("2026-08-08");
+    expect(startOfWeekDateKey("2026-08-05", "wednesday")).toBe("2026-08-05");
+  });
+
+  test("1 day lookback is the class-local dateKey day only", () => {
+    const window = pointsBadgeLookbackWindow("2026-08-09", "Asia/Seoul", {
+      amount: 1,
+      unit: "day",
+    });
     expect(window.startMs).toBe(Date.UTC(2026, 7, 8, 15, 0));
     expect(window.endMs).toBe(Date.UTC(2026, 7, 9, 15, 0));
   });
 
   test("3 day lookback includes prior local days", () => {
-    const offset = 0;
-    const window = pointsBadgeLookbackWindow("2026-08-09", offset, { amount: 3, unit: "day" });
+    const window = pointsBadgeLookbackWindow("2026-08-09", "UTC", { amount: 3, unit: "day" });
     expect(window.startMs).toBe(Date.UTC(2026, 7, 7, 0, 0));
     expect(window.endMs).toBe(Date.UTC(2026, 7, 10, 0, 0));
   });
 
-  test("1 week lookback is 7 local days", () => {
-    const offset = 0;
-    const window = pointsBadgeLookbackWindow("2026-08-09", offset, { amount: 1, unit: "week" });
+  test("1 month lookback is 30 local days", () => {
+    const window = pointsBadgeLookbackWindow("2026-08-09", "UTC", { amount: 1, unit: "month" });
+    expect(window.startMs).toBe(Date.UTC(2026, 6, 11, 0, 0));
+    expect(window.endMs).toBe(Date.UTC(2026, 7, 10, 0, 0));
+  });
+
+  test("1 week lookback on Sunday is the Monday-aligned week", () => {
+    const window = pointsBadgeLookbackWindow("2026-08-09", "UTC", { amount: 1, unit: "week" });
     expect(window.startMs).toBe(Date.UTC(2026, 7, 3, 0, 0));
     expect(window.endMs).toBe(Date.UTC(2026, 7, 10, 0, 0));
+  });
+
+  test("1 week lookback on Wednesday starts Monday, not six days back", () => {
+    const window = pointsBadgeLookbackWindow("2026-08-05", "UTC", { amount: 1, unit: "week" });
+    expect(window.startMs).toBe(Date.UTC(2026, 7, 3, 0, 0));
+    expect(window.endMs).toBe(Date.UTC(2026, 7, 6, 0, 0));
+  });
+
+  test("1 week lookback on the reset day is that day only", () => {
+    const window = pointsBadgeLookbackWindow(
+      "2026-08-03",
+      "UTC",
+      { amount: 1, unit: "week" },
+      "monday",
+    );
+    expect(window.startMs).toBe(Date.UTC(2026, 7, 3, 0, 0));
+    expect(window.endMs).toBe(Date.UTC(2026, 7, 4, 0, 0));
+  });
+
+  test("1 week lookback with Saturday start snaps to Saturday", () => {
+    const window = pointsBadgeLookbackWindow(
+      "2026-08-09",
+      "UTC",
+      { amount: 1, unit: "week" },
+      "saturday",
+    );
+    expect(window.startMs).toBe(Date.UTC(2026, 7, 8, 0, 0));
+    expect(window.endMs).toBe(Date.UTC(2026, 7, 10, 0, 0));
+  });
+
+  test("1 week lookback with Sunday start resets on Sunday", () => {
+    const window = pointsBadgeLookbackWindow(
+      "2026-08-09",
+      "UTC",
+      { amount: 1, unit: "week" },
+      "sunday",
+    );
+    expect(window.startMs).toBe(Date.UTC(2026, 7, 9, 0, 0));
+    expect(window.endMs).toBe(Date.UTC(2026, 7, 10, 0, 0));
+  });
+
+  test("2 week lookback includes the prior full aligned week", () => {
+    const window = pointsBadgeLookbackWindow(
+      "2026-08-05",
+      "UTC",
+      { amount: 2, unit: "week" },
+      "monday",
+    );
+    expect(window.startMs).toBe(Date.UTC(2026, 6, 27, 0, 0));
+    expect(window.endMs).toBe(Date.UTC(2026, 7, 6, 0, 0));
+  });
+
+  test("week boundaries include the reset instant and exclude the next midnight", () => {
+    const window = pointsBadgeLookbackWindow(
+      "2026-08-05",
+      "UTC",
+      { amount: 1, unit: "week" },
+      "monday",
+    );
+    expect(isTimestampInPointsBadgeWindow(Date.UTC(2026, 7, 3, 0, 0), window)).toBe(true);
+    expect(isTimestampInPointsBadgeWindow(Date.UTC(2026, 7, 2, 23, 59, 59, 999), window)).toBe(
+      false,
+    );
+    expect(isTimestampInPointsBadgeWindow(Date.UTC(2026, 7, 5, 23, 59, 59, 999), window)).toBe(
+      true,
+    );
+    expect(isTimestampInPointsBadgeWindow(Date.UTC(2026, 7, 6, 0, 0), window)).toBe(false);
+  });
+
+  test("week lookback uses class timezone midnights", () => {
+    const window = pointsBadgeLookbackWindow(
+      "2026-08-05",
+      "Asia/Seoul",
+      { amount: 1, unit: "week" },
+      "monday",
+    );
+    expect(window.startMs).toBe(Date.UTC(2026, 7, 2, 15, 0));
+    expect(window.endMs).toBe(Date.UTC(2026, 7, 5, 15, 0));
+  });
+
+  test("week lookback spans a DST change with zoned midnights", () => {
+    const window = pointsBadgeLookbackWindow(
+      "2026-03-11",
+      "America/New_York",
+      { amount: 2, unit: "week" },
+      "monday",
+    );
+    expect(window.startMs).toBe(startOfZonedDayUtc("2026-03-02", "America/New_York"));
+    expect(window.endMs).toBe(startOfZonedDayUtc("2026-03-12", "America/New_York"));
   });
 
   test("pointsBadgeLookbackForTimeZone uses the zoned calendar day", () => {
@@ -59,8 +177,20 @@ describe("pointsBadgeWindow", () => {
     expect(window.endMs).toBe(Date.UTC(2026, 7, 9, 15, 0));
   });
 
+  test("pointsBadgeLookbackForTimeZone aligns weeks to the class start day", () => {
+    const utcMs = Date.UTC(2026, 7, 5, 12, 0);
+    const window = pointsBadgeLookbackForTimeZone(
+      utcMs,
+      "UTC",
+      { amount: 1, unit: "week" },
+      "monday",
+    );
+    expect(window.startMs).toBe(Date.UTC(2026, 7, 3, 0, 0));
+    expect(window.endMs).toBe(Date.UTC(2026, 7, 6, 0, 0));
+  });
+
   test("aggregateWarningCountsByStudent counts in window", () => {
-    const window = pointsBadgeLookbackWindow("2026-08-09", 0, { amount: 1, unit: "day" });
+    const window = pointsBadgeLookbackWindow("2026-08-09", "UTC", { amount: 1, unit: "day" });
     const counts = aggregateWarningCountsByStudent(
       [
         { studentUserId: "a", createdAt: Date.UTC(2026, 7, 9, 10, 0) },
@@ -75,7 +205,7 @@ describe("pointsBadgeWindow", () => {
   });
 
   test("aggregateMinusCountsByStudent sums quantity on negative apps", () => {
-    const window = pointsBadgeLookbackWindow("2026-08-09", 0, { amount: 1, unit: "day" });
+    const window = pointsBadgeLookbackWindow("2026-08-09", "UTC", { amount: 1, unit: "day" });
     const counts = aggregateMinusCountsByStudent(
       [
         {

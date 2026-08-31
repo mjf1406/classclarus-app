@@ -47,10 +47,13 @@ import { useFileBytes } from "@/hooks/files/useFileBytes";
 import type { ClassFormValues } from "@/lib/classes/classFormSchema";
 import type { AppLanguage } from "@/lib/languages";
 import {
+  isPointsBadgeWeekStartDay,
   isPointsBadgeWindowUnit,
   MAX_POINTS_BADGE_WINDOW_AMOUNT,
   MIN_POINTS_BADGE_WINDOW_AMOUNT,
+  POINTS_BADGE_WEEK_START_DAYS,
   POINTS_BADGE_WINDOW_UNITS,
+  type PointsBadgeWeekStartDay,
   type PointsBadgeWindowUnit,
 } from "@/lib/points/pointsBadgeWindow";
 import {
@@ -100,6 +103,49 @@ function BannerPreview({ fileId }: { fileId: Id<"files"> }) {
       alt={t("bannerPreviewAlt")}
       className="aspect-[3/1] w-full rounded-lg object-cover"
     />
+  );
+}
+
+function PointsBadgeWeekStartField({
+  value,
+  disabled,
+  onChange,
+}: {
+  value: PointsBadgeWeekStartDay;
+  disabled: boolean;
+  onChange: (day: PointsBadgeWeekStartDay) => void;
+}) {
+  const { t } = useTranslation("classes");
+  return (
+    <Field>
+      <FieldLabel htmlFor="points-badge-week-start">{t("pointsBadgeWeekStartLabel")}</FieldLabel>
+      <p className="mt-1 text-sm text-muted-foreground">{t("pointsBadgeWeekStartDescription")}</p>
+      <Select
+        value={value}
+        disabled={disabled}
+        onValueChange={(next) => {
+          if (next == null || !isPointsBadgeWeekStartDay(next)) return;
+          onChange(next);
+        }}
+      >
+        <SelectTrigger
+          id="points-badge-week-start"
+          className="mt-2 w-44"
+          aria-label={t("pointsBadgeWeekStartAria")}
+        >
+          <SelectValue>{t(`pointsBadgeWeekStartDay_${value}`)}</SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            {POINTS_BADGE_WEEK_START_DAYS.map((day) => (
+              <SelectItem key={day} value={day}>
+                {t(`pointsBadgeWeekStartDay_${day}`)}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        </SelectContent>
+      </Select>
+    </Field>
   );
 }
 
@@ -309,6 +355,7 @@ export function ClassSettingsPage({ classId }: ClassSettingsPageProps) {
     warningWindowUnit?: PointsBadgeWindowUnit;
     minusWindowAmount?: number;
     minusWindowUnit?: PointsBadgeWindowUnit;
+    pointsBadgeWeekStartDay?: PointsBadgeWeekStartDay;
     warningAlerts?: PointsBadgeAlert[];
     minusAlerts?: PointsBadgeAlert[];
   }) => {
@@ -318,6 +365,7 @@ export function ClassSettingsPage({ classId }: ClassSettingsPageProps) {
       warningWindowUnit: patch.warningWindowUnit ?? classDoc.warningWindowUnit,
       minusWindowAmount: patch.minusWindowAmount ?? classDoc.minusWindowAmount,
       minusWindowUnit: patch.minusWindowUnit ?? classDoc.minusWindowUnit,
+      pointsBadgeWeekStartDay: patch.pointsBadgeWeekStartDay ?? classDoc.pointsBadgeWeekStartDay,
       warningAlerts: patch.warningAlerts ?? classDoc.warningAlerts,
       minusAlerts: patch.minusAlerts ?? classDoc.minusAlerts,
     };
@@ -326,6 +374,7 @@ export function ClassSettingsPage({ classId }: ClassSettingsPageProps) {
       next.warningWindowUnit === classDoc.warningWindowUnit &&
       next.minusWindowAmount === classDoc.minusWindowAmount &&
       next.minusWindowUnit === classDoc.minusWindowUnit &&
+      next.pointsBadgeWeekStartDay === classDoc.pointsBadgeWeekStartDay &&
       pointsBadgeAlertsEqual(next.warningAlerts, classDoc.warningAlerts) &&
       pointsBadgeAlertsEqual(next.minusAlerts, classDoc.minusAlerts)
     ) {
@@ -453,6 +502,13 @@ export function ClassSettingsPage({ classId }: ClassSettingsPageProps) {
                 <CardDescription>{t("pointsBadgeWarningWindowDescription")}</CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col gap-5">
+                <PointsBadgeWeekStartField
+                  value={classDoc.pointsBadgeWeekStartDay}
+                  disabled={!canUpdateClass || setPointsBadgeWindows.isPending}
+                  onChange={(pointsBadgeWeekStartDay) =>
+                    savePointsBadgeWindows({ pointsBadgeWeekStartDay })
+                  }
+                />
                 <PointsBadgeLookbackField
                   amount={classDoc.warningWindowAmount}
                   unit={classDoc.warningWindowUnit}

@@ -926,6 +926,17 @@ const it = {
     pointsBadgeWindowsTitle: "Badge della lavagna punti",
     pointsBadgeWindowsDescription:
       "Quanto indietro contano i badge di avviso e meno sulla lavagna punti.",
+    pointsBadgeWeekStartLabel: "La settimana inizia il",
+    pointsBadgeWeekStartDescription:
+      "I periodi settimanali si azzerano in questo giorno per avvisi e punti tolti.",
+    pointsBadgeWeekStartAria: "Giorno di inizio settimana",
+    pointsBadgeWeekStartDay_sunday: "Domenica",
+    pointsBadgeWeekStartDay_monday: "Lunedì",
+    pointsBadgeWeekStartDay_tuesday: "Martedì",
+    pointsBadgeWeekStartDay_wednesday: "Mercoledì",
+    pointsBadgeWeekStartDay_thursday: "Giovedì",
+    pointsBadgeWeekStartDay_friday: "Venerdì",
+    pointsBadgeWeekStartDay_saturday: "Sabato",
     pointsBadgeWarningsSection: "Avvisi",
     pointsBadgeRemovingPointsSection: "Rimozione punti",
     pointsBadgeWarningWindowLabel: "Periodo avvisi",

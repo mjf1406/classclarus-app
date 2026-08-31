@@ -934,6 +934,17 @@ const fr = {
     pointsBadgeWindowsTitle: "Badges du tableau de points",
     pointsBadgeWindowsDescription:
       "Jusqu’où les badges d’avertissement et de moins comptent sur le tableau de points.",
+    pointsBadgeWeekStartLabel: "La semaine commence le",
+    pointsBadgeWeekStartDescription:
+      "Les périodes hebdomadaires se réinitialisent ce jour pour les avertissements et les points retirés.",
+    pointsBadgeWeekStartAria: "Jour de début de semaine",
+    pointsBadgeWeekStartDay_sunday: "Dimanche",
+    pointsBadgeWeekStartDay_monday: "Lundi",
+    pointsBadgeWeekStartDay_tuesday: "Mardi",
+    pointsBadgeWeekStartDay_wednesday: "Mercredi",
+    pointsBadgeWeekStartDay_thursday: "Jeudi",
+    pointsBadgeWeekStartDay_friday: "Vendredi",
+    pointsBadgeWeekStartDay_saturday: "Samedi",
     pointsBadgeWarningsSection: "Avertissements",
     pointsBadgeRemovingPointsSection: "Retrait de points",
     pointsBadgeWarningWindowLabel: "Période des avertissements",

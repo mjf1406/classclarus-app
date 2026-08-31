@@ -20,6 +20,7 @@ import {
   aggregateMinusCountsByStudent,
   aggregateWarningCountsByStudent,
   pointsBadgeLookbackWindow,
+  resolvePointsBadgeWeekStartDay,
   resolvePointsBadgeWindow,
 } from "./lib/pointsBadgeWindow.js";
 import {
@@ -178,15 +179,12 @@ async function loadBadgeCountsForClass(
   ctx: QueryCtx,
   classDoc: Doc<"classes">,
   dateKey: string,
-  timeZoneOffsetMinutes: number,
 ): Promise<{
   warningByStudent: Map<Id<"users">, number>;
   minusByStudent: Map<Id<"users">, number>;
 }> {
-  if (!Number.isFinite(timeZoneOffsetMinutes)) {
-    throw new Error("Invalid timezone offset");
-  }
   const classId = classDoc._id;
+  const weekStartDay = resolvePointsBadgeWeekStartDay(classDoc.pointsBadgeWeekStartDay);
   const warningWindow = resolvePointsBadgeWindow(
     classDoc.warningWindowAmount,
     classDoc.warningWindowUnit,
@@ -195,8 +193,18 @@ async function loadBadgeCountsForClass(
     classDoc.minusWindowAmount,
     classDoc.minusWindowUnit,
   );
-  const warningLookback = pointsBadgeLookbackWindow(dateKey, timeZoneOffsetMinutes, warningWindow);
-  const minusLookback = pointsBadgeLookbackWindow(dateKey, timeZoneOffsetMinutes, minusWindow);
+  const warningLookback = pointsBadgeLookbackWindow(
+    dateKey,
+    classDoc.timezone,
+    warningWindow,
+    weekStartDay,
+  );
+  const minusLookback = pointsBadgeLookbackWindow(
+    dateKey,
+    classDoc.timezone,
+    minusWindow,
+    weekStartDay,
+  );
 
   // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded warning ledger
   const warningEvents = await ctx.db
@@ -218,7 +226,6 @@ async function loadBadgeCountsForClass(
 export const board = classQuery({
   args: {
     dateKey: v.string(),
-    timeZoneOffsetMinutes: v.number(),
   },
   returns: v.array(boardStudentValidator),
   handler: async (ctx, args) => {
@@ -247,7 +254,6 @@ export const board = classQuery({
       ctx,
       ctx.classDoc,
       args.dateKey,
-      args.timeZoneOffsetMinutes,
     );
 
     const entries: Array<{
@@ -323,7 +329,6 @@ export const board = classQuery({
 export const forAudience = classQuery({
   args: {
     dateKey: v.string(),
-    timeZoneOffsetMinutes: v.number(),
   },
   returns: v.array(boardStudentValidator),
   handler: async (ctx, args) => {
@@ -351,7 +356,6 @@ export const forAudience = classQuery({
       ctx,
       ctx.classDoc,
       args.dateKey,
-      args.timeZoneOffsetMinutes,
     );
 
     const entries: Array<{
