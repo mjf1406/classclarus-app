@@ -1215,6 +1215,8 @@ const nl = {
     activitySummary_setTimezone: "Tijdzone van de klas ingesteld op {{timezone}}",
     activitySummary_setUpcomingAnnouncementEventLimit:
       "Aankomende mededelingsevenementen ingesteld op {{count}}",
+    activitySummary_setDisplaySectionHeadingFontSize:
+      "Kopgrootte van secties bijgewerkt naar {{size}} px",
     activitySummary_createdCalendarEvent: 'Agenda-evenement "{{name}}" aangemaakt',
     activitySummary_updatedCalendarEvent: 'Agenda-evenement "{{name}}" bijgewerkt',
     activitySummary_deletedCalendarEvent: 'Agenda-evenement "{{name}}" verwijderd',
@@ -3741,9 +3743,10 @@ const nl = {
     timerEndBehaviorReturn: "Terug naar de klok",
     displayContentTitle: "Weergave-inhoud",
     displayContentDescription:
-      "Lettergrootte van de lesinhoud op het scherm. De titelgrootte wordt live bijgewerkt op open schermen.",
+      "Lettergrootte van de lesinhoud op het scherm. Titel- en sectiekopgrootte worden live bijgewerkt op open schermen.",
     displayBodyFontSizeLabel: "Tekstgrootte",
     displayHeadingFontSizeLabel: "Titelgrootte",
+    displaySectionHeadingFontSizeLabel: "Sectiekopgrootte",
     saveClockSettings: "Klokinstellingen opslaan",
     sizeTiny: "Miniem",
     sizeExtraSmall: "Zeer klein",

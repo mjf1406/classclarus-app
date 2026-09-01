@@ -1226,6 +1226,8 @@ const de = {
     activitySummary_setTimezone: "Klassenzeitzone auf {{timezone}} gesetzt",
     activitySummary_setUpcomingAnnouncementEventLimit:
       "Bevorstehende Ankündigungstermine auf {{count}} gesetzt",
+    activitySummary_setDisplaySectionHeadingFontSize:
+      "Abschnittsüberschrift auf {{size}} px aktualisiert",
     activitySummary_createdCalendarEvent: 'Kalenderereignis "{{name}}" erstellt',
     activitySummary_updatedCalendarEvent: 'Kalenderereignis "{{name}}" aktualisiert',
     activitySummary_deletedCalendarEvent: 'Kalenderereignis "{{name}}" gelöscht',
@@ -3770,9 +3772,10 @@ const de = {
     timerEndBehaviorReturn: "Zur Uhr zurückkehren",
     displayContentTitle: "Anzeigeinhalt",
     displayContentDescription:
-      "Schriftgrößen für den Unterrichtsinhalt auf der Anzeige. Die Überschrift aktualisiert sich live auf offenen Anzeigen.",
+      "Schriftgrößen für den Unterrichtsinhalt auf der Anzeige. Überschriften und Abschnittsüberschriften aktualisieren sich live auf offenen Anzeigen.",
     displayBodyFontSizeLabel: "Textgröße",
     displayHeadingFontSizeLabel: "Überschriftengröße",
+    displaySectionHeadingFontSizeLabel: "Größe der Abschnittsüberschriften",
     saveClockSettings: "Uhreinstellungen speichern",
     sizeTiny: "Winzig",
     sizeExtraSmall: "Sehr klein",

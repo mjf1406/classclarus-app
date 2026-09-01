@@ -1201,6 +1201,8 @@ const ja = {
     activitySummary_setTimezone: "クラスのタイムゾーンを{{timezone}}に設定",
     activitySummary_setUpcomingAnnouncementEventLimit:
       "お知らせに表示する今後の予定を{{count}}件に設定",
+    activitySummary_setDisplaySectionHeadingFontSize:
+      "教室画面のセクション見出しサイズを{{size}}pxに更新しました",
     activitySummary_createdCalendarEvent: "カレンダー予定「{{name}}」を作成",
     activitySummary_updatedCalendarEvent: "カレンダー予定「{{name}}」を更新",
     activitySummary_deletedCalendarEvent: "カレンダー予定「{{name}}」を削除",
@@ -3672,9 +3674,10 @@ const ja = {
     timerEndBehaviorReturn: "時計に戻る",
     displayContentTitle: "表示内容",
     displayContentDescription:
-      "教室画面の授業テキストの文字サイズです。見出しサイズは開いている画面にすぐ反映されます。",
+      "教室画面の授業テキストの文字サイズです。見出しとセクション見出しのサイズは開いている画面にすぐ反映されます。",
     displayBodyFontSizeLabel: "本文のサイズ",
     displayHeadingFontSizeLabel: "見出しのサイズ",
+    displaySectionHeadingFontSizeLabel: "セクション見出しのサイズ",
     saveClockSettings: "時計の設定を保存",
     sizeTiny: "ごく小さい",
     sizeExtraSmall: "かなり小さい",

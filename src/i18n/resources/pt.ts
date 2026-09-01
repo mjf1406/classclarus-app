@@ -1214,6 +1214,8 @@ const pt = {
     activitySummary_setTimezone: "Fuso horário da turma definido para {{timezone}}",
     activitySummary_setUpcomingAnnouncementEventLimit:
       "Próximos eventos nos anúncios definidos para {{count}}",
+    activitySummary_setDisplaySectionHeadingFontSize:
+      "Tamanho dos títulos de secção atualizado para {{size}} px",
     activitySummary_createdCalendarEvent: 'Evento de calendário "{{name}}" criado',
     activitySummary_updatedCalendarEvent: 'Evento de calendário "{{name}}" atualizado',
     activitySummary_deletedCalendarEvent: 'Evento de calendário "{{name}}" excluído',
@@ -3739,9 +3741,10 @@ const pt = {
     timerEndBehaviorReturn: "Voltar ao relógio",
     displayContentTitle: "Conteúdo do ecrã",
     displayContentDescription:
-      "Tamanhos de letra do conteúdo da aula no ecrã. O título atualiza-se em direto nos ecrãs abertos.",
+      "Tamanhos de letra do conteúdo da aula no ecrã. O título e os títulos de secção atualizam-se em direto nos ecrãs abertos.",
     displayBodyFontSizeLabel: "Tamanho do texto",
     displayHeadingFontSizeLabel: "Tamanho do título",
+    displaySectionHeadingFontSizeLabel: "Tamanho dos títulos de secção",
     saveClockSettings: "Guardar definições do relógio",
     sizeTiny: "Minúsculo",
     sizeExtraSmall: "Muito pequeno",

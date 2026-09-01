@@ -246,6 +246,10 @@ export function ClassroomScreenPage({ classId }: ClassroomScreenPageProps) {
         headingFontSize={
           settings.displayHeadingFontSize ?? DEFAULT_CLOCK_SETTINGS.displayHeadingFontSize
         }
+        sectionHeadingFontSize={
+          settings.displaySectionHeadingFontSize ??
+          DEFAULT_CLOCK_SETTINGS.displaySectionHeadingFontSize
+        }
         quickText={lessonState.globalQuickText}
         quickTextTitle={quickTextTitle}
         onClearQuickText={

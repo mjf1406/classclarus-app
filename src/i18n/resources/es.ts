@@ -1219,6 +1219,8 @@ const es = {
     activitySummary_setTimezone: "Zona horaria de la clase establecida en {{timezone}}",
     activitySummary_setUpcomingAnnouncementEventLimit:
       "Eventos próximos en anuncios establecidos en {{count}}",
+    activitySummary_setDisplaySectionHeadingFontSize:
+      "Se actualizó el tamaño de los títulos de sección a {{size}} px",
     activitySummary_createdCalendarEvent: 'Evento de calendario "{{name}}" creado',
     activitySummary_updatedCalendarEvent: 'Evento de calendario "{{name}}" actualizado',
     activitySummary_deletedCalendarEvent: 'Evento de calendario "{{name}}" eliminado',
@@ -3751,9 +3753,10 @@ const es = {
     timerEndBehaviorReturn: "Volver al reloj",
     displayContentTitle: "Contenido de la pantalla",
     displayContentDescription:
-      "Tamaños de letra del contenido de la clase en la pantalla. El título se actualiza en vivo en las pantallas abiertas.",
+      "Tamaños de letra del contenido de la clase en la pantalla. El título y los títulos de sección se actualizan en vivo en las pantallas abiertas.",
     displayBodyFontSizeLabel: "Tamaño del texto",
     displayHeadingFontSizeLabel: "Tamaño del título",
+    displaySectionHeadingFontSizeLabel: "Tamaño de los títulos de sección",
     saveClockSettings: "Guardar ajustes del reloj",
     sizeTiny: "Diminuto",
     sizeExtraSmall: "Muy pequeño",

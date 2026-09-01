@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { ExternalLink, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -25,6 +26,7 @@ type LessonDisplayPanelProps = {
   now?: Date;
   contentFontSize?: number;
   headingFontSize?: number;
+  sectionHeadingFontSize?: number;
   quickText?: string | null;
   quickTextTitle?: string;
   onClearQuickText?: () => void;
@@ -41,6 +43,7 @@ export function LessonDisplayPanel({
   now = new Date(),
   contentFontSize = DEFAULT_CLOCK_SETTINGS.displayContentFontSize,
   headingFontSize = DEFAULT_CLOCK_SETTINGS.displayHeadingFontSize,
+  sectionHeadingFontSize = DEFAULT_CLOCK_SETTINGS.displaySectionHeadingFontSize,
   quickText,
   quickTextTitle,
   onClearQuickText,
@@ -55,6 +58,7 @@ export function LessonDisplayPanel({
   const tasks = useTasks(classId);
   const locale = toIntlLocale(i18n.language);
   const headingStyle = { fontSize: `${headingFontSize}px` };
+  const sectionHeadingStyle = { fontSize: `${sectionHeadingFontSize}px` };
   const bodyStyle = { fontSize: `${contentFontSize}px` };
   const bodyClassName =
     "[&_.announcement-body]:text-[length:inherit] [&_.announcement-body_h2]:text-[1.25em] [&_.announcement-body_h3]:text-[1.1em]";
@@ -103,11 +107,14 @@ export function LessonDisplayPanel({
             ) : null}
             <LessonSection
               title={tTimetable("materialsSection")}
+              titleStyle={sectionHeadingStyle}
               empty={tTimetable("noMaterials")}
               items={lesson.materials}
             />
             <div className="flex flex-col gap-2">
-              <h3 className="font-medium">{tTimetable("announcementsSection")}</h3>
+              <h3 className="font-medium" style={sectionHeadingStyle}>
+                {tTimetable("announcementsSection")}
+              </h3>
               {lesson.upcomingEvents.length === 0 ? (
                 <p className="text-muted-foreground">{tTimetable("noUpcomingEvents")}</p>
               ) : (
@@ -141,6 +148,7 @@ export function LessonDisplayPanel({
             </div>
             <LessonSection
               title={tTimetable("agendaSection")}
+              titleStyle={sectionHeadingStyle}
               empty={tTimetable("noAgenda")}
               items={lesson.agenda}
               classId={classId}
@@ -210,6 +218,7 @@ export function LessonDisplayPanel({
 
 function LessonSection({
   title,
+  titleStyle,
   empty,
   items,
   classId,
@@ -217,6 +226,7 @@ function LessonSection({
   tasks,
 }: {
   title?: string;
+  titleStyle?: CSSProperties;
   empty?: string;
   items: Array<{
     key: string;
@@ -233,7 +243,11 @@ function LessonSection({
 }) {
   return (
     <div className="flex flex-col gap-2">
-      {title ? <h3 className="font-medium">{title}</h3> : null}
+      {title ? (
+        <h3 className="font-medium" style={titleStyle}>
+          {title}
+        </h3>
+      ) : null}
       {items.length === 0 ? (
         empty ? (
           <p className="text-muted-foreground">{empty}</p>

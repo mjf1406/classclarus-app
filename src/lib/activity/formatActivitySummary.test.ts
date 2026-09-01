@@ -16,6 +16,8 @@ const STRINGS: Record<string, string> = {
   activitySummary_createdCalendarEvent: 'Created calendar event "{{name}}"',
   activitySummary_updatedTimetableLesson: 'Updated timetable lesson for "{{name}}"',
   activitySummary_setTimezone: "Set class time zone to {{timezone}}",
+  activitySummary_setDisplaySectionHeadingFontSize:
+    "Updated classroom section heading size to {{size}}px",
   activitySummary_viewedClass: 'Viewed class "{{name}}"',
   activitySummary_viewedActivityLog: "Viewed activity log",
   activitySummary_exportedGroupsPdf: "Exported groups PDF",
@@ -96,6 +98,9 @@ describe("formatActivitySummary", () => {
     expect(formatActivitySummary({ summary: "Copied team “Alpha” to another group" }, t)).toBe(
       'Copied team "Alpha" to another group',
     );
+    expect(
+      formatActivitySummary({ summary: "Updated classroom section heading size to 32px" }, t),
+    ).toBe("Updated classroom section heading size to 32px");
     expect(formatActivitySummary({ summary: "Moved 4 students into group “Room A”" }, t)).toBe(
       'Moved 4 students into group "Room A"',
     );

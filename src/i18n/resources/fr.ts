@@ -1236,6 +1236,8 @@ const fr = {
     activitySummary_setTimezone: "Fuseau horaire de la classe défini sur {{timezone}}",
     activitySummary_setUpcomingAnnouncementEventLimit:
       "Événements à venir dans les annonces défini sur {{count}}",
+    activitySummary_setDisplaySectionHeadingFontSize:
+      "Taille des titres de section mise à jour à {{size}} px",
     activitySummary_createdCalendarEvent: "Événement de calendrier « {{name}} » créé",
     activitySummary_updatedCalendarEvent: "Événement de calendrier « {{name}} » mis à jour",
     activitySummary_deletedCalendarEvent: "Événement de calendrier « {{name}} » supprimé",
@@ -3781,9 +3783,10 @@ const fr = {
     timerEndBehaviorReturn: "Revenir à l’horloge",
     displayContentTitle: "Contenu affiché",
     displayContentDescription:
-      "Tailles de police du contenu de classe sur l’écran. La taille du titre se met à jour en direct.",
+      "Tailles de police du contenu de classe sur l’écran. Les titres et titres de section se mettent à jour en direct.",
     displayBodyFontSizeLabel: "Taille du texte",
     displayHeadingFontSizeLabel: "Taille du titre",
+    displaySectionHeadingFontSizeLabel: "Taille des titres de section",
     saveClockSettings: "Enregistrer les paramètres de l’horloge",
     sizeTiny: "Minuscule",
     sizeExtraSmall: "Très petit",

@@ -10,7 +10,11 @@ import {
   type ActiveSession,
 } from "./lib/classroomScreen/activeSession.js";
 import { audioCuesValidator } from "./lib/classroomScreen/audioCuesSchema.js";
-import { DEFAULT_CLOCK_SETTINGS } from "./lib/classroomScreen/clockSettingsDefaults.js";
+import {
+  DEFAULT_CLOCK_SETTINGS,
+  DEFAULT_DISPLAY_SECTION_HEADING_FONT_SIZE,
+  isDisplayFontSize,
+} from "./lib/classroomScreen/clockSettingsDefaults.js";
 import { normalizeEndTime, secondsUntilEndTime } from "./lib/classroomScreen/timerUtils.js";
 import { recordClassActivity } from "./lib/activity/classActivity.js";
 import { classMutation, classQuery } from "./lib/customFunctions.js";
@@ -63,6 +67,7 @@ const settingsValidator = v.object({
   audioCues: audioCuesValidator,
   displayContentFontSize: v.optional(v.number()),
   displayHeadingFontSize: v.optional(v.number()),
+  displaySectionHeadingFontSize: v.optional(v.number()),
   quickText: v.optional(v.string()),
   quickTextTitle: v.optional(v.string()),
   updatedAt: v.number(),
@@ -806,15 +811,28 @@ export const upsertSettings = classMutation({
     audioCues: audioCuesValidator,
     displayContentFontSize: v.optional(v.number()),
     displayHeadingFontSize: v.optional(v.number()),
+    displaySectionHeadingFontSize: v.optional(v.number()),
     quickText: v.optional(v.string()),
     quickTextTitle: v.optional(v.string()),
   },
   returns: v.id("classroomClockSettings"),
   handler: async (ctx, args) => {
     await ctx.require("classroomScreen:manage");
+    if (
+      args.displaySectionHeadingFontSize !== undefined &&
+      !isDisplayFontSize(args.displaySectionHeadingFontSize)
+    ) {
+      throw new Error("Invalid section heading font size");
+    }
+
     const classId = ctx.classDoc._id;
     const existing = await getOrCreateSettings(ctx, classId);
     const now = Date.now();
+
+    const previousSectionHeadingFontSize =
+      existing.displaySectionHeadingFontSize ?? DEFAULT_DISPLAY_SECTION_HEADING_FONT_SIZE;
+    const displaySectionHeadingFontSize =
+      args.displaySectionHeadingFontSize ?? existing.displaySectionHeadingFontSize;
 
     const quickText =
       args.quickText === undefined
@@ -838,10 +856,27 @@ export const upsertSettings = classMutation({
       audioCues: args.audioCues ?? existing.audioCues,
       displayContentFontSize: args.displayContentFontSize ?? existing.displayContentFontSize,
       displayHeadingFontSize: args.displayHeadingFontSize ?? existing.displayHeadingFontSize,
+      displaySectionHeadingFontSize,
       quickText,
       quickTextTitle: args.quickTextTitle ?? existing.quickTextTitle,
       updatedAt: now,
     });
+
+    if (
+      args.displaySectionHeadingFontSize !== undefined &&
+      args.displaySectionHeadingFontSize !== previousSectionHeadingFontSize
+    ) {
+      await recordClassActivity(ctx, {
+        classId,
+        actorUserId: ctx.userId,
+        action: "update",
+        resourceType: "classroomClockSettings",
+        resourceId: existing._id,
+        summary: `Updated classroom section heading size to ${args.displaySectionHeadingFontSize}px`,
+        summaryKey: "activitySummary_setDisplaySectionHeadingFontSize",
+        metadata: { size: String(args.displaySectionHeadingFontSize) },
+      });
+    }
 
     return existing._id;
   },

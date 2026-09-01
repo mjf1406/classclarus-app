@@ -1420,6 +1420,7 @@ const schema = defineSchema({
     audioCues: v.optional(v.any()),
     displayContentFontSize: v.optional(v.number()),
     displayHeadingFontSize: v.optional(v.number()),
+    displaySectionHeadingFontSize: v.optional(v.number()),
     quickText: v.optional(v.string()),
     quickTextTitle: v.optional(v.string()),
     updatedAt: v.number(),

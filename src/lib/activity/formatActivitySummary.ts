@@ -144,6 +144,14 @@ export function resolveActivitySummary(event: ActivitySummaryInput): ResolvedSum
     };
   }
 
+  const sectionHeadingSize = summary.match(/^Updated classroom section heading size to (\d+)px$/);
+  if (sectionHeadingSize) {
+    return {
+      key: "activitySummary_setDisplaySectionHeadingFontSize",
+      params: { size: sectionHeadingSize[1] ?? "" },
+    };
+  }
+
   name = matchQuoted(summary, "Created group");
   if (name) return { key: "activitySummary_createdGroup", params: { name } };
 

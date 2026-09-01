@@ -49,6 +49,7 @@ type ClockSettingsForm = {
   audioCues: AudioCues;
   displayContentFontSize: string;
   displayHeadingFontSize: string;
+  displaySectionHeadingFontSize: string;
 };
 
 type ClockSettingsSectionProps = {
@@ -80,6 +81,7 @@ function formFromSettings(settings: {
   audioCues?: AudioCues;
   displayContentFontSize?: number;
   displayHeadingFontSize?: number;
+  displaySectionHeadingFontSize?: number;
 }): ClockSettingsForm {
   return {
     clockSize: String(
@@ -126,6 +128,13 @@ function formFromSettings(settings: {
         DISPLAY_FONT_SIZE_OPTIONS,
       ),
     ),
+    displaySectionHeadingFontSize: String(
+      snapToSizeOption(
+        settings.displaySectionHeadingFontSize ??
+          DEFAULT_CLOCK_SETTINGS.displaySectionHeadingFontSize,
+        DISPLAY_FONT_SIZE_OPTIONS,
+      ),
+    ),
   };
 }
 
@@ -147,6 +156,7 @@ function payloadFromForm(classId: Id<"classes">, form: ClockSettingsForm) {
     audioCues: stripUndefinedAudioCues(form.audioCues),
     displayContentFontSize: Number(form.displayContentFontSize),
     displayHeadingFontSize: Number(form.displayHeadingFontSize),
+    displaySectionHeadingFontSize: Number(form.displaySectionHeadingFontSize),
   };
 }
 
@@ -458,6 +468,29 @@ export function ClockSettingsSection({ classId }: ClockSettingsSectionProps) {
           >
             <SelectTrigger className="w-full">
               <SelectValue>{t("fontSizePx", { size: form.displayHeadingFontSize })}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {DISPLAY_FONT_SIZE_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={String(o.value)}>
+                  {t("fontSizePx", { size: o.value })}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="grid gap-2">
+          <Label>{t("displaySectionHeadingFontSizeLabel")}</Label>
+          <Select
+            value={form.displaySectionHeadingFontSize}
+            onValueChange={(v) => {
+              if (v == null) return;
+              patchForm({ displaySectionHeadingFontSize: v });
+            }}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue>
+                {t("fontSizePx", { size: form.displaySectionHeadingFontSize })}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {DISPLAY_FONT_SIZE_OPTIONS.map((o) => (

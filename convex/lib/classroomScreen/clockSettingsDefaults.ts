@@ -7,7 +7,18 @@ export const DEFAULT_END_TIME_SIZE = 24;
 export const DEFAULT_TIMER_TITLE_SIZE = 20;
 export const DEFAULT_DISPLAY_CONTENT_FONT_SIZE = 16;
 export const DEFAULT_DISPLAY_HEADING_FONT_SIZE = 32;
+export const DEFAULT_DISPLAY_SECTION_HEADING_FONT_SIZE = 24;
 export const DEFAULT_QUICK_TEXT_TITLE = "Quick text";
+
+export const DISPLAY_FONT_SIZE_VALUES = [
+  12, 14, 16, 18, 20, 24, 28, 32, 36, 40, 48, 56, 64,
+] as const;
+
+export type DisplayFontSize = (typeof DISPLAY_FONT_SIZE_VALUES)[number];
+
+export function isDisplayFontSize(value: number): value is DisplayFontSize {
+  return (DISPLAY_FONT_SIZE_VALUES as readonly number[]).includes(value);
+}
 
 export const DEFAULT_CLOCK_SETTINGS = {
   clockSize: DEFAULT_CLOCK_SIZE,
@@ -24,5 +35,6 @@ export const DEFAULT_CLOCK_SETTINGS = {
   bgTransition: "circle",
   displayContentFontSize: DEFAULT_DISPLAY_CONTENT_FONT_SIZE,
   displayHeadingFontSize: DEFAULT_DISPLAY_HEADING_FONT_SIZE,
+  displaySectionHeadingFontSize: DEFAULT_DISPLAY_SECTION_HEADING_FONT_SIZE,
   quickTextTitle: DEFAULT_QUICK_TEXT_TITLE,
 };

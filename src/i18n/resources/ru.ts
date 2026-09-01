@@ -1214,6 +1214,8 @@ const ru = {
     activitySummary_setTimezone: "Часовой пояс класса установлен на {{timezone}}",
     activitySummary_setUpcomingAnnouncementEventLimit:
       "Число ближайших событий в объявлениях установлено на {{count}}",
+    activitySummary_setDisplaySectionHeadingFontSize:
+      "Размер заголовков разделов обновлён до {{size}} пикс.",
     activitySummary_createdCalendarEvent: 'Создано событие календаря "{{name}}"',
     activitySummary_updatedCalendarEvent: 'Обновлено событие календаря "{{name}}"',
     activitySummary_deletedCalendarEvent: 'Удалено событие календаря "{{name}}"',
@@ -3717,9 +3719,10 @@ const ru = {
     timerEndBehaviorReturn: "Вернуться к часам",
     displayContentTitle: "Содержимое экрана",
     displayContentDescription:
-      "Размеры шрифта содержимого урока на экране. Размер заголовка обновляется сразу на открытых экранах.",
+      "Размеры шрифта содержимого урока на экране. Размеры заголовка и заголовков разделов обновляются сразу на открытых экранах.",
     displayBodyFontSizeLabel: "Размер текста",
     displayHeadingFontSizeLabel: "Размер заголовка",
+    displaySectionHeadingFontSizeLabel: "Размер заголовков разделов",
     saveClockSettings: "Сохранить настройки часов",
     sizeTiny: "Крошечный",
     sizeExtraSmall: "Очень маленький",

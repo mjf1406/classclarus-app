@@ -1198,6 +1198,8 @@ const en = {
     activitySummary_setTimezone: "Set class time zone to {{timezone}}",
     activitySummary_setUpcomingAnnouncementEventLimit:
       "Set upcoming announcement events to {{count}}",
+    activitySummary_setDisplaySectionHeadingFontSize:
+      "Updated classroom section heading size to {{size}}px",
     activitySummary_createdCalendarEvent: 'Created calendar event "{{name}}"',
     activitySummary_updatedCalendarEvent: 'Updated calendar event "{{name}}"',
     activitySummary_deletedCalendarEvent: 'Deleted calendar event "{{name}}"',
@@ -3680,9 +3682,10 @@ const en = {
     timerEndBehaviorReturn: "Return to clock",
     displayContentTitle: "Display content",
     displayContentDescription:
-      "Font sizes for class content on the classroom display. Heading size updates live on open displays.",
+      "Font sizes for class content on the classroom display. Heading and section heading sizes update live on open displays.",
     displayBodyFontSizeLabel: "Body text size",
     displayHeadingFontSizeLabel: "Heading text size",
+    displaySectionHeadingFontSizeLabel: "Section heading size",
     saveClockSettings: "Save clock settings",
     sizeTiny: "Tiny",
     sizeExtraSmall: "Extra small",

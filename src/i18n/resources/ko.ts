@@ -1188,6 +1188,8 @@ const ko = {
     activitySummary_setTimezone: "수업 시간대를 {{timezone}}(으)로 설정",
     activitySummary_setUpcomingAnnouncementEventLimit:
       "공지에 표시할 다가오는 일정을 {{count}}개로 설정",
+    activitySummary_setDisplaySectionHeadingFontSize:
+      "교실 화면 섹션 제목 크기를 {{size}}px로 업데이트함",
     activitySummary_createdCalendarEvent: '캘린더 일정 "{{name}}" 생성',
     activitySummary_updatedCalendarEvent: '캘린더 일정 "{{name}}" 업데이트',
     activitySummary_deletedCalendarEvent: '캘린더 일정 "{{name}}" 삭제',
@@ -3637,9 +3639,10 @@ const ko = {
     timerEndBehaviorReturn: "시계로 돌아가기",
     displayContentTitle: "표시 내용",
     displayContentDescription:
-      "교실 화면에 보이는 수업 글자 크기입니다. 제목 크기는 열린 화면에 바로 반영됩니다.",
+      "교실 화면에 보이는 수업 글자 크기입니다. 제목과 섹션 제목 크기는 열린 화면에 바로 반영됩니다.",
     displayBodyFontSizeLabel: "본문 크기",
     displayHeadingFontSizeLabel: "제목 크기",
+    displaySectionHeadingFontSizeLabel: "섹션 제목 크기",
     saveClockSettings: "시계 설정 저장",
     sizeTiny: "아주 작게",
     sizeExtraSmall: "매우 작게",

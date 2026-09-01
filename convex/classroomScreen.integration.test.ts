@@ -482,3 +482,79 @@ describe("classroom end-time timers", () => {
     expect(utcMsToZonedParts((endsAt ?? 0) + 1000, "Australia/Sydney").timeHm).toBe("16:00");
   });
 });
+
+describe("classroom screen section heading size", () => {
+  it("defaults to 24px, lets managers persist a valid size, and logs the change", async () => {
+    const test = createConvexTest();
+    const fixture = await seedFixture(test);
+    const owner = asOwner(test, fixture);
+    const nowMinuteBucket = Math.floor(Date.now() / 60_000);
+
+    const unset = await owner.query(api.classroomScreen.getSettings, {
+      classId: fixture.classId,
+    });
+    expect(unset.displaySectionHeadingFontSize).toBe(24);
+
+    await owner.mutation(api.classroomScreen.upsertSettings, {
+      classId: fixture.classId,
+      displaySectionHeadingFontSize: 32,
+    });
+
+    const settings = await owner.query(api.classroomScreen.getSettings, {
+      classId: fixture.classId,
+    });
+    expect(settings.displaySectionHeadingFontSize).toBe(32);
+
+    const bundle = await owner.query(api.classroomScreen.getDisplayBundle, {
+      classId: fixture.classId,
+      nowMinuteBucket,
+    });
+    expect(bundle.settings.displaySectionHeadingFontSize).toBe(32);
+
+    await owner.mutation(api.classroomScreen.upsertSettings, {
+      classId: fixture.classId,
+      displaySectionHeadingFontSize: 32,
+    });
+
+    const activity = await test.run(async (ctx) => {
+      return await ctx.db
+        .query("classActivityEvents")
+        .withIndex("by_class_resource_createdAt", (q) =>
+          q.eq("classId", fixture.classId).eq("resourceType", "classroomClockSettings"),
+        )
+        .collect();
+    });
+    expect(activity).toHaveLength(1);
+    expect(activity[0]?.summaryKey).toBe("activitySummary_setDisplaySectionHeadingFontSize");
+    expect(activity[0]?.metadata?.size).toBe("32");
+  });
+
+  it("rejects read-only roles and invalid sizes", async () => {
+    const test = createConvexTest();
+    const fixture = await seedFixture(test);
+    const owner = asOwner(test, fixture);
+    const student = asStudent(test, fixture);
+    const guardian = asGuardian(test, fixture);
+
+    for (const client of [student, guardian]) {
+      await expect(
+        client.mutation(api.classroomScreen.upsertSettings, {
+          classId: fixture.classId,
+          displaySectionHeadingFontSize: 32,
+        }),
+      ).rejects.toThrow();
+    }
+
+    await expect(
+      owner.mutation(api.classroomScreen.upsertSettings, {
+        classId: fixture.classId,
+        displaySectionHeadingFontSize: 13,
+      }),
+    ).rejects.toThrow("Invalid section heading font size");
+
+    const settings = await owner.query(api.classroomScreen.getSettings, {
+      classId: fixture.classId,
+    });
+    expect(settings.displaySectionHeadingFontSize).toBe(24);
+  });
+});

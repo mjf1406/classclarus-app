@@ -1211,6 +1211,8 @@ const uk = {
     activitySummary_setTimezone: "Часовий пояс класу встановлено на {{timezone}}",
     activitySummary_setUpcomingAnnouncementEventLimit:
       "Кількість найближчих подій в оголошеннях встановлено на {{count}}",
+    activitySummary_setDisplaySectionHeadingFontSize:
+      "Розмір заголовків розділів оновлено до {{size}} пкс",
     activitySummary_createdCalendarEvent: 'Створено подію календаря "{{name}}"',
     activitySummary_updatedCalendarEvent: 'Оновлено подію календаря "{{name}}"',
     activitySummary_deletedCalendarEvent: 'Видалено подію календаря "{{name}}"',
@@ -3709,9 +3711,10 @@ const uk = {
     timerEndBehaviorReturn: "Повернутися до годинника",
     displayContentTitle: "Вміст екрана",
     displayContentDescription:
-      "Розміри шрифту вмісту уроку на екрані. Розмір заголовка оновлюється одразу на відкритих екранах.",
+      "Розміри шрифту вмісту уроку на екрані. Розміри заголовка та заголовків розділів оновлюються одразу на відкритих екранах.",
     displayBodyFontSizeLabel: "Розмір тексту",
     displayHeadingFontSizeLabel: "Розмір заголовка",
+    displaySectionHeadingFontSizeLabel: "Розмір заголовків розділів",
     saveClockSettings: "Зберегти налаштування годинника",
     sizeTiny: "Крихітний",
     sizeExtraSmall: "Дуже малий",
