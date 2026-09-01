@@ -35,6 +35,8 @@ import {
   useClassroomTimers,
   type ClassroomTimer,
 } from "@/hooks/classroomScreen/useClassroomScreenQueries";
+import { useClass } from "@/hooks/classes/useClass";
+import { resolveClassTimeZone } from "../../../convex/lib/calendar/timeZone";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { createAudioUrlMap, useAudioPlayer } from "@/lib/classroomScreen/audio-engine";
 import { getAllAudioOptions, toAudioUrlList } from "@/lib/classroomScreen/audioOptions";
@@ -73,6 +75,8 @@ export function CreateTimerDialog({ classId, open, onOpenChange, timer }: Create
   const { t } = useTranslation("classroomScreen");
   const { data: audioData } = useClassroomAudioFiles(classId);
   const { data: timersData } = useClassroomTimers(classId);
+  const { data: classDoc } = useClass(classId);
+  const timeZone = resolveClassTimeZone(classDoc?.timezone);
   const createTimer = useCreateClassroomTimer();
   const updateTimer = useUpdateClassroomTimer();
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -141,7 +145,7 @@ export function CreateTimerDialog({ classId, open, onOpenChange, timer }: Create
     if (!name.trim()) return;
 
     const durationSeconds = useEndTime
-      ? secondsUntilEndTime(endTime)
+      ? secondsUntilEndTime(endTime, timeZone)
       : durationToSeconds(duration, durationUnit);
 
     const sharedPayload = {

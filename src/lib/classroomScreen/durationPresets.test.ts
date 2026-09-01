@@ -10,6 +10,8 @@ describe("DURATION_PRESETS", () => {
   });
 
   it("keeps the navbar time-adjust amounts", () => {
-    expect(TIME_ADJUST_PRESETS.map((preset) => preset.seconds)).toEqual([1, 10, 30, 60, 300]);
+    expect(TIME_ADJUST_PRESETS.map((preset) => preset.seconds)).toEqual([
+      1, 5, 10, 30, 60, 300, 600,
+    ]);
   });
 });

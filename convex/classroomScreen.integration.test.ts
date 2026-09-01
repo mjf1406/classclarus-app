@@ -4,7 +4,12 @@ import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { authz } from "./authz";
 import { classScope } from "./lib/authzModel";
-import { buildQuickPresetSession } from "./lib/classroomScreen/activeSession";
+import {
+  buildCustomTimerSession,
+  buildQuickPresetSession,
+} from "./lib/classroomScreen/activeSession";
+import { secondsUntilEndTime } from "./lib/classroomScreen/timerUtils";
+import { utcMsToZonedParts } from "./lib/calendar/timeZone";
 import { createConvexTest } from "./test.setup";
 
 type Fixture = Awaited<ReturnType<typeof seedFixture>>;
@@ -424,5 +429,56 @@ describe("classroom screen current lesson", () => {
     expect(bundle.currentLesson?.announcements).toHaveLength(1);
     expect(bundle.currentLesson?.agenda).toHaveLength(1);
     expect(bundle.currentLesson?.agenda[0]?.preface).toBe("Center #1:");
+  });
+});
+
+describe("classroom end-time timers", () => {
+  it("creates and starts an end-time timer in the class timezone", async () => {
+    const test = createConvexTest();
+    const fixture = await seedFixture(test);
+    const owner = asOwner(test, fixture);
+
+    await test.run(async (ctx) => {
+      await ctx.db.patch(fixture.classId, { timezone: "Australia/Sydney" });
+    });
+
+    await owner.mutation(api.classroomScreen.createTimer, {
+      classId: fixture.classId,
+      name: "Until 16:00",
+      durationSeconds: 60,
+      bgColor: "#15803d",
+      endTime: "16:00:00",
+    });
+
+    const nowMs = Date.now();
+    const expectedSeconds = secondsUntilEndTime("16:00:00", "Australia/Sydney", nowMs);
+    const timers = await owner.query(api.classroomScreen.listTimers, {
+      classId: fixture.classId,
+    });
+    const timer = timers[0];
+    expect(timer?.endTime).toBe("16:00:00");
+    expect(Math.abs((timer?.durationSeconds ?? 0) - expectedSeconds)).toBeLessThan(3);
+
+    const session = buildCustomTimerSession(timer!, "Australia/Sydney");
+    await owner.mutation(api.classroomScreen.startSession, {
+      classId: fixture.classId,
+      session,
+    });
+
+    const bundle = await owner.query(api.classroomScreen.getDisplayBundle, {
+      classId: fixture.classId,
+      nowMinuteBucket: Math.floor(Date.now() / 60_000),
+    });
+    expect(bundle.timeZone).toBe("Australia/Sydney");
+
+    const endsAt = bundle.displaySession.endsAt;
+    expect(endsAt).toBeDefined();
+    const remainingSeconds = Math.round(((endsAt ?? 0) - Date.now()) / 1000);
+    expect(Math.abs(remainingSeconds - (session.segments[0]?.durationSeconds ?? 0))).toBeLessThan(
+      3,
+    );
+    const expectedEndsAt = nowMs + expectedSeconds * 1000;
+    expect(Math.abs((endsAt ?? 0) - expectedEndsAt)).toBeLessThan(3000);
+    expect(utcMsToZonedParts((endsAt ?? 0) + 1000, "Australia/Sydney").timeHm).toBe("16:00");
   });
 });

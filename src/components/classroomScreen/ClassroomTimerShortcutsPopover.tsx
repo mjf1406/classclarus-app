@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { Minus, Pause, Play, Plus, SkipForward, Square, Timer } from "lucide-react";
+import { Pause, Play, SkipForward, Square, Timer } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
@@ -36,7 +36,8 @@ import {
   type ActiveSession,
 } from "@/lib/classroomScreen/activeSession";
 import { DEFAULT_CLOCK_SETTINGS } from "@/lib/classroomScreen/clockSettings";
-import { DURATION_PRESETS, TIME_ADJUST_PRESETS } from "@/lib/classroomScreen/durationPresets";
+import { TimeAdjustControls } from "@/components/classroomScreen/TimeAdjustControls";
+import { DURATION_PRESETS } from "@/lib/classroomScreen/durationPresets";
 import { messageFromError } from "@/lib/errors/convexError";
 import type { Id } from "../../../convex/_generated/dataModel";
 
@@ -175,41 +176,13 @@ export function ClassroomTimerShortcutsPopover({ classId }: ClassroomTimerShortc
         </PopoverHeader>
 
         {session ? (
-          <div className="flex flex-col gap-1">
-            <div className="flex flex-nowrap gap-1">
-              {TIME_ADJUST_PRESETS.map((preset) => (
-                <Button
-                  key={`plus-${preset.unit}-${preset.count}`}
-                  type="button"
-                  variant="secondary"
-                  size="xs"
-                  disabled={busy}
-                  onClick={() => void handleAdjust(preset.seconds)}
-                >
-                  <Plus />
-                  {t(preset.unit === "seconds" ? "presetSeconds" : "presetMinutes", {
-                    count: preset.count,
-                  })}
-                </Button>
-              ))}
-            </div>
-            <div className="flex flex-nowrap gap-1">
-              {TIME_ADJUST_PRESETS.map((preset) => (
-                <Button
-                  key={`minus-${preset.unit}-${preset.count}`}
-                  type="button"
-                  variant="secondary"
-                  size="xs"
-                  disabled={busy || remaining < preset.seconds}
-                  onClick={() => void handleAdjust(-preset.seconds)}
-                >
-                  <Minus />
-                  {t(preset.unit === "seconds" ? "presetSeconds" : "presetMinutes", {
-                    count: preset.count,
-                  })}
-                </Button>
-              ))}
-            </div>
+          <div className="flex flex-col gap-2">
+            <TimeAdjustControls
+              remaining={remaining}
+              onAdjust={(delta) => void handleAdjust(delta)}
+              size="xs"
+              disabled={busy}
+            />
             <div className="flex flex-wrap items-center gap-1">
               <Button
                 type="button"
@@ -279,7 +252,14 @@ export function ClassroomTimerShortcutsPopover({ classId }: ClassroomTimerShortc
                   size="xs"
                   disabled={busy}
                   onClick={() =>
-                    void handleStartSession(buildCustomTimerSession(timer, globalAudioCues, timers))
+                    void handleStartSession(
+                      buildCustomTimerSession(
+                        timer,
+                        displayBundle?.timeZone ?? "UTC",
+                        globalAudioCues,
+                        timers,
+                      ),
+                    )
                   }
                 >
                   {timer.name}

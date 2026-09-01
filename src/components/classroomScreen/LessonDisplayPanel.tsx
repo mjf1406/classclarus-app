@@ -119,10 +119,9 @@ export function LessonDisplayPanel({
                   ))}
                 </ol>
               )}
-              <LessonSection
-                items={lesson.announcements}
-                empty={tTimetable("noExtraAnnouncements")}
-              />
+              {lesson.announcements.length > 0 ? (
+                <LessonSection items={lesson.announcements} />
+              ) : null}
             </div>
             <LessonSection
               title={tTimetable("agendaSection")}
@@ -202,7 +201,7 @@ function LessonSection({
   tasks,
 }: {
   title?: string;
-  empty: string;
+  empty?: string;
   items: Array<{
     key: string;
     text: string;
@@ -220,7 +219,9 @@ function LessonSection({
     <div className="flex flex-col gap-2">
       {title ? <h3 className="font-medium">{title}</h3> : null}
       {items.length === 0 ? (
-        <p className="text-muted-foreground">{empty}</p>
+        empty ? (
+          <p className="text-muted-foreground">{empty}</p>
+        ) : null
       ) : (
         <ol className="flex flex-col gap-1">
           {items.map((item, index) => (

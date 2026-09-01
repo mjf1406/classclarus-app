@@ -222,6 +222,7 @@ export function ClassroomScreenPage({ classId }: ClassroomScreenPageProps) {
         timers={timers}
         rotations={rotations}
         audioFiles={audioFiles}
+        timeZone={shownDisplayBundle.timeZone}
       />
     </div>
   );

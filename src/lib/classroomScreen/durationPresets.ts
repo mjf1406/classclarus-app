@@ -12,10 +12,12 @@ export const DURATION_PRESETS = [
 
 export const TIME_ADJUST_PRESETS = [
   { unit: "seconds" as const, count: 1, seconds: 1 },
+  { unit: "seconds" as const, count: 5, seconds: 5 },
   { unit: "seconds" as const, count: 10, seconds: 10 },
   { unit: "seconds" as const, count: 30, seconds: 30 },
   { unit: "minutes" as const, count: 1, seconds: 60 },
   { unit: "minutes" as const, count: 5, seconds: 300 },
+  { unit: "minutes" as const, count: 10, seconds: 600 },
 ] as const;
 
 export type DurationPreset = (typeof DURATION_PRESETS)[number];

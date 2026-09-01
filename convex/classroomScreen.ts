@@ -15,7 +15,7 @@ import { normalizeEndTime, secondsUntilEndTime } from "./lib/classroomScreen/tim
 import { recordClassActivity } from "./lib/activity/classActivity.js";
 import { classMutation, classQuery } from "./lib/customFunctions.js";
 import { parseRotationInput } from "./lib/classroomScreen/rotationSchema.js";
-import { isValidTimeZone, utcMsToZonedParts } from "./lib/calendar/timeZone.js";
+import { resolveClassTimeZone, utcMsToZonedParts } from "./lib/calendar/timeZone.js";
 import {
   agendaDisplayItemValidator,
   attachAgendaResourceNames,
@@ -161,8 +161,8 @@ const slotDisplayValidator = v.object({
   disabled: v.boolean(),
 });
 
-function resolveClassTimeZone(classDoc: Doc<"classes"> | null): string {
-  return classDoc?.timezone && isValidTimeZone(classDoc.timezone) ? classDoc.timezone : "UTC";
+function classTimeZone(classDoc: Doc<"classes"> | null): string {
+  return resolveClassTimeZone(classDoc?.timezone);
 }
 
 async function loadClassCalendarEvents(
@@ -170,7 +170,7 @@ async function loadClassCalendarEvents(
   classId: Id<"classes">,
 ): Promise<{ timeZone: string; events: Array<LessonEventSource> }> {
   const classDoc = await ctx.db.get("classes", classId);
-  const timeZone = resolveClassTimeZone(classDoc);
+  const timeZone = classTimeZone(classDoc);
   // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded calendar list
   const events = (await ctx.db
     .query("calendarEvents")
@@ -251,6 +251,7 @@ const displayBundleValidator = v.object({
   pushedLesson: v.union(lessonDisplayValidator, v.null()),
   currentLesson: v.union(lessonDisplayValidator, v.null()),
   currentSlot: v.union(slotDisplayValidator, v.null()),
+  timeZone: v.string(),
 });
 
 type DisplayBundleDto = Infer<typeof displayBundleValidator>;
@@ -385,7 +386,7 @@ async function loadCurrentLessonSnapshot(
   currentSlot: DisplayBundleDto["currentSlot"];
 }> {
   const classDoc = await ctx.db.get("classes", classId);
-  const timeZone = resolveClassTimeZone(classDoc);
+  const timeZone = classTimeZone(classDoc);
   const todayKey = utcMsToZonedParts(nowMs, timeZone).dateKey;
   const { year, weekNumber } = getIsoWeekYearAndNumberFromDateKey(todayKey);
 
@@ -659,6 +660,7 @@ export const getDisplayBundle = classQuery({
       pushedLesson,
       currentLesson,
       currentSlot,
+      timeZone: classTimeZone(ctx.classDoc),
     };
   },
 });
@@ -829,7 +831,7 @@ export const createTimer = classMutation({
     const name = normalizeName(args.name);
     const endTime = normalizeOptionalEndTime(args.endTime);
     const durationSeconds = endTime
-      ? secondsUntilEndTime(endTime)
+      ? secondsUntilEndTime(endTime, classTimeZone(ctx.classDoc))
       : normalizeDurationSeconds(args.durationSeconds);
 
     if (args.nextTimerId) {
@@ -889,7 +891,7 @@ export const updateTimer = classMutation({
       args.endTime === undefined ? timer.endTime : normalizeOptionalEndTime(args.endTime);
     const durationSeconds =
       endTime !== undefined
-        ? secondsUntilEndTime(endTime)
+        ? secondsUntilEndTime(endTime, classTimeZone(ctx.classDoc))
         : args.durationSeconds !== undefined
           ? normalizeDurationSeconds(args.durationSeconds)
           : timer.durationSeconds;
@@ -1164,7 +1166,10 @@ export const startSession = classMutation({
     const parsed = parseSessionJson(args.session);
     if (!parsed) throw new Error("Invalid session payload");
 
-    const duration = resolveSegmentDuration(parsed.segments[parsed.index]!);
+    const duration = resolveSegmentDuration(
+      parsed.segments[parsed.index]!,
+      classTimeZone(ctx.classDoc),
+    );
     await patchDisplaySession(ctx, classId, {
       sessionJson: serializeSession(parsed),
       endsAt: Date.now() + duration * 1000,
@@ -1281,7 +1286,10 @@ export const skipSessionSegment = classMutation({
       return null;
     }
 
-    const duration = resolveSegmentDuration(next.segments[next.index]!);
+    const duration = resolveSegmentDuration(
+      next.segments[next.index]!,
+      classTimeZone(ctx.classDoc),
+    );
     await patchDisplaySession(ctx, classId, {
       sessionJson: serializeSession(next),
       endsAt: Date.now() + duration * 1000,

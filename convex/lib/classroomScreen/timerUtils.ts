@@ -1,3 +1,6 @@
+import { addDaysToDateKey } from "../calendar/dateKey.js";
+import { utcMsToZonedParts, zonedLocalToUtcMs } from "../calendar/timeZone.js";
+
 export function formatDuration(seconds: number): string {
   if (seconds < 60) return `${seconds}s`;
 
@@ -21,17 +24,20 @@ export function normalizeEndTime(endTime: string): string {
   return endTime;
 }
 
-export function secondsUntilEndTime(endTime: string, nowMs = Date.now()): number {
-  const [hours, minutes, seconds = 0] = endTime.split(":").map(Number);
-  const now = new Date(nowMs);
-  const target = new Date(now);
-  target.setHours(hours, minutes, seconds, 0);
+export function secondsUntilEndTime(endTime: string, timeZone: string, nowMs = Date.now()): number {
+  const parts = normalizeEndTime(endTime).split(":").map(Number);
+  const hours = parts[0] ?? 0;
+  const minutes = parts[1] ?? 0;
+  const seconds = parts[2] ?? 0;
+  const nowParts = utcMsToZonedParts(nowMs, timeZone);
+  const timeHm = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+  let targetMs = zonedLocalToUtcMs(nowParts.dateKey, timeHm, timeZone, seconds);
 
-  if (target <= now) {
-    target.setDate(target.getDate() + 1);
+  if (targetMs <= nowMs) {
+    targetMs = zonedLocalToUtcMs(addDaysToDateKey(nowParts.dateKey, 1), timeHm, timeZone, seconds);
   }
 
-  return Math.floor((target.getTime() - now.getTime()) / 1000);
+  return Math.floor((targetMs - nowMs) / 1000);
 }
 
 export function durationToSeconds(value: number, unit: "seconds" | "minutes" | "hours"): number {

@@ -15,6 +15,7 @@ function makeBundle(
     pushedLesson: null,
     currentLesson: null,
     currentSlot: null,
+    timeZone: "UTC",
     ...partial,
   };
 }

@@ -76,20 +76,25 @@ function buildSegment(
   };
 }
 
-export function resolveSegmentDuration(segment: Segment, nowMs = Date.now()): number {
+export function resolveSegmentDuration(
+  segment: Segment,
+  timeZone: string,
+  nowMs = Date.now(),
+): number {
   if (segment.endTime) {
-    return secondsUntilEndTime(segment.endTime, nowMs);
+    return secondsUntilEndTime(segment.endTime, timeZone, nowMs);
   }
   return segment.durationSeconds;
 }
 
 export function buildTimerSegmentFromDoc(
   timer: TimerDoc,
+  timeZone: string,
   globalCues?: AudioCues,
   nowMs = Date.now(),
 ): Segment {
   const durationSeconds = timer.endTime
-    ? secondsUntilEndTime(timer.endTime, nowMs)
+    ? secondsUntilEndTime(timer.endTime, timeZone, nowMs)
     : timer.durationSeconds;
 
   return buildSegment(
@@ -106,12 +111,13 @@ export function buildTimerSegmentFromDoc(
 export function appendTimerToSession(
   session: ActiveSession,
   timer: TimerDoc,
+  timeZone: string,
   globalCues?: AudioCues,
   nowMs = Date.now(),
 ): ActiveSession {
   return {
     ...session,
-    segments: [...session.segments, buildTimerSegmentFromDoc(timer, globalCues, nowMs)],
+    segments: [...session.segments, buildTimerSegmentFromDoc(timer, timeZone, globalCues, nowMs)],
   };
 }
 
@@ -146,6 +152,7 @@ export function buildQuickPresetSession(
 export function buildTimerChainSegments(
   startTimer: TimerDoc,
   allTimers: TimerDoc[],
+  timeZone: string,
   globalCues?: AudioCues,
   nowMs = Date.now(),
 ): Segment[] {
@@ -156,7 +163,7 @@ export function buildTimerChainSegments(
 
   while (current && !visited.has(current._id)) {
     visited.add(current._id);
-    segments.push(buildTimerSegmentFromDoc(current, globalCues, nowMs));
+    segments.push(buildTimerSegmentFromDoc(current, timeZone, globalCues, nowMs));
     if (!current.nextTimerId) break;
     const next = byId.get(current.nextTimerId);
     if (!next) break;
@@ -168,14 +175,15 @@ export function buildTimerChainSegments(
 
 export function buildCustomTimerSession(
   timer: TimerDoc,
+  timeZone: string,
   globalCues?: AudioCues,
   allTimers?: TimerDoc[],
   nowMs = Date.now(),
 ): ActiveSession {
   const segments =
     allTimers && allTimers.length > 0
-      ? buildTimerChainSegments(timer, allTimers, globalCues, nowMs)
-      : [buildTimerSegmentFromDoc(timer, globalCues, nowMs)];
+      ? buildTimerChainSegments(timer, allTimers, timeZone, globalCues, nowMs)
+      : [buildTimerSegmentFromDoc(timer, timeZone, globalCues, nowMs)];
   const sessionCues = resolveAudioCues(timer.audioCues, globalCues);
 
   return {

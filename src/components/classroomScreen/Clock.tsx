@@ -5,10 +5,7 @@ import { useTranslation } from "react-i18next";
 import { AnimatedBackground } from "@/components/classroomScreen/AnimatedBackground";
 import { FitText } from "@/components/classroomScreen/FitText";
 import { useReservedFitHeight } from "@/hooks/classroomScreen/useFitFontSize";
-import {
-  PlusMinusThirtyButtons,
-  TimeAdjustControls,
-} from "@/components/classroomScreen/TimeAdjustControls";
+import { TimeAdjustControls } from "@/components/classroomScreen/TimeAdjustControls";
 import { YouTubeOverlay } from "@/components/classroomScreen/YouTubeOverlay";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -87,6 +84,7 @@ interface ClockProps {
   timers?: ClassroomTimer[];
   rotations?: ClassroomRotation[];
   audioFiles?: ClassroomAudioFile[];
+  timeZone?: string;
 }
 
 function formatTime(date: Date, timeFormat: string, locale: string): string {
@@ -199,9 +197,7 @@ function QuickPickList<T extends { _id: string; name: string }>({
 function DisplayTransportControls({
   session,
   paused,
-  remaining,
   hasUpcoming,
-  onAdjust,
   onPauseToggle,
   onSkip,
   onStop,
@@ -210,9 +206,7 @@ function DisplayTransportControls({
 }: {
   session: ActiveSession;
   paused: boolean;
-  remaining: number;
   hasUpcoming: boolean;
-  onAdjust: (deltaSeconds: number) => void;
   onPauseToggle: () => void;
   onSkip: () => void;
   onStop: () => void;
@@ -229,7 +223,6 @@ function DisplayTransportControls({
 
   return (
     <div className="flex flex-wrap items-center justify-center gap-2">
-      <PlusMinusThirtyButtons remaining={remaining} onAdjust={onAdjust} size="sm" />
       <Button type="button" variant="secondary" size="sm" onClick={onPauseToggle}>
         {paused ? <Play /> : <Pause />}
         {paused ? labels.resume : labels.pause}
@@ -343,6 +336,7 @@ export function Clock({
   timers,
   rotations,
   audioFiles = [],
+  timeZone = "UTC",
 }: ClockProps) {
   const { t, i18n } = useTranslation("classroomScreen");
   const locale = toIntlLocale(i18n.language);
@@ -454,7 +448,10 @@ export function Clock({
       unlock();
       if (sessionRunner) {
         resetSegmentAudioState(newSession.index);
-        prevRemainingRef.current = resolveSegmentDuration(newSession.segments[newSession.index]!);
+        prevRemainingRef.current = resolveSegmentDuration(
+          newSession.segments[newSession.index]!,
+          timeZone,
+        );
         playSegmentStart(newSession);
       }
       await startSession.mutateAsync({ classId, session: newSession });
@@ -467,6 +464,7 @@ export function Clock({
       resetSegmentAudioState,
       playSegmentStart,
       startSession,
+      timeZone,
     ],
   );
 
@@ -479,9 +477,11 @@ export function Clock({
 
   const handleTimerSelect = useCallback(
     (timer: ClassroomTimer) => {
-      void handleStartSession(buildCustomTimerSession(timer, globalAudioCues, timers ?? []));
+      void handleStartSession(
+        buildCustomTimerSession(timer, timeZone, globalAudioCues, timers ?? []),
+      );
     },
-    [handleStartSession, globalAudioCues, timers],
+    [handleStartSession, globalAudioCues, timeZone, timers],
   );
 
   const handleRotationSelect = useCallback(
@@ -494,11 +494,11 @@ export function Clock({
   const handleQueueTimer = useCallback(
     async (timer: ClassroomTimer) => {
       if (!canControlSession || !session) return;
-      const updated = appendTimerToSession(session, timer, globalAudioCues);
+      const updated = appendTimerToSession(session, timer, timeZone, globalAudioCues);
       await updateSession.mutateAsync({ classId, session: updated });
       setQueuePopoverOpen(false);
     },
-    [canControlSession, session, globalAudioCues, updateSession, classId],
+    [canControlSession, session, timeZone, globalAudioCues, updateSession, classId],
   );
 
   const handleClearUpcoming = useCallback(async () => {
@@ -554,7 +554,10 @@ export function Clock({
     const nextSession = sessionRef.current;
     if (nextSession && sessionRunner) {
       resetSegmentAudioState(nextSession.index);
-      prevRemainingRef.current = resolveSegmentDuration(nextSession.segments[nextSession.index]!);
+      prevRemainingRef.current = resolveSegmentDuration(
+        nextSession.segments[nextSession.index]!,
+        timeZone,
+      );
       playSegmentStart(nextSession);
     } else if (!nextSession && sessionRunner) {
       stopAllRef.current();
@@ -566,6 +569,7 @@ export function Clock({
     resetSegmentAudioState,
     playSegmentStart,
     skipSegmentMutation,
+    timeZone,
   ]);
 
   const handlePauseToggle = useCallback(async () => {
@@ -690,7 +694,7 @@ export function Clock({
         const next = sessionRef.current;
         if (next) {
           resetSegmentAudioState(next.index);
-          prevRemainingRef.current = resolveSegmentDuration(next.segments[next.index]!);
+          prevRemainingRef.current = resolveSegmentDuration(next.segments[next.index]!, timeZone);
           playSegmentStart(next);
         }
       });
@@ -719,6 +723,7 @@ export function Clock({
     resetSegmentAudioState,
     playSegmentStart,
     skipSegmentMutation,
+    timeZone,
   ]);
 
   useEffect(() => {
@@ -939,17 +944,11 @@ export function Clock({
     showTimeAdjust &&
     compact && (
       <div className="flex w-full min-w-0 flex-col items-center gap-3 px-4">
-        <TimeAdjustControls
-          remaining={remaining}
-          onAdjust={adjustTime}
-          showProminentThirty={false}
-        />
+        <TimeAdjustControls remaining={remaining} onAdjust={adjustTime} />
         <DisplayTransportControls
           session={session}
           paused={paused}
-          remaining={remaining}
           hasUpcoming={hasUpcoming}
-          onAdjust={adjustTime}
           onPauseToggle={() => void handlePauseToggle()}
           onSkip={() => void skipSegment()}
           onStop={() => void stopSession(true)}

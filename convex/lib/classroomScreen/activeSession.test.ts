@@ -11,10 +11,10 @@ import {
   isRotationSession,
   parseSessionJson,
   remainingFromDisplaySession,
+  resolveSegmentDuration,
   truncateUpcomingSegments,
   type TimerDoc,
 } from "./activeSession.js";
-import { secondsUntilEndTime } from "./timerUtils.js";
 import { getIsoWeekYearAndNumber } from "../timetable/timetableSchema.js";
 import { findCurrentSlot, resolveCurrentLesson } from "./currentLesson.js";
 
@@ -41,7 +41,7 @@ describe("activeSession", () => {
       { _id: "a", name: "A", durationSeconds: 10, bgColor: "#111", nextTimerId: "b" },
       { _id: "b", name: "B", durationSeconds: 20, bgColor: "#222", nextTimerId: "a" },
     ];
-    const segments = buildTimerChainSegments(timers[0]!, timers);
+    const segments = buildTimerChainSegments(timers[0]!, timers, "UTC");
     expect(segments).toHaveLength(2);
   });
 
@@ -50,7 +50,7 @@ describe("activeSession", () => {
       { _id: "a", name: "A", durationSeconds: 10, bgColor: "#111", nextTimerId: "b" },
       { _id: "b", name: "B", durationSeconds: 20, bgColor: "#222" },
     ];
-    const session = buildCustomTimerSession(timers[0]!, undefined, timers);
+    const session = buildCustomTimerSession(timers[0]!, "UTC", undefined, timers);
     expect(session.segments).toHaveLength(2);
   });
 
@@ -161,11 +161,40 @@ describe("activeSession", () => {
   });
 });
 
-describe("timerUtils", () => {
-  test("secondsUntilEndTime rolls to next day when needed", () => {
-    const noon = new Date("2026-01-15T12:00:00");
-    const seconds = secondsUntilEndTime("11:00:00", noon.getTime());
-    expect(seconds).toBeGreaterThan(20 * 60 * 60);
+describe("end-time timers", () => {
+  const sydneyNow = Date.parse("2026-09-01T05:00:00.000Z");
+  const timer: TimerDoc = {
+    _id: "end",
+    name: "Until 16:00",
+    durationSeconds: 1,
+    bgColor: "#111",
+    endTime: "16:00:00",
+  };
+
+  test("resolveSegmentDuration uses the class timezone for wall-clock end times", () => {
+    const session = buildCustomTimerSession(
+      timer,
+      "Australia/Sydney",
+      undefined,
+      undefined,
+      sydneyNow,
+    );
+    expect(resolveSegmentDuration(session.segments[0]!, "Australia/Sydney", sydneyNow)).toBe(3600);
+    expect(resolveSegmentDuration(session.segments[0]!, "UTC", sydneyNow)).toBe(11 * 3600);
+  });
+
+  test("buildCustomTimerSession duration matches resolveSegmentDuration in the same zone", () => {
+    const session = buildCustomTimerSession(
+      timer,
+      "Australia/Sydney",
+      undefined,
+      undefined,
+      sydneyNow,
+    );
+    expect(session.segments[0]?.durationSeconds).toBe(3600);
+    expect(resolveSegmentDuration(session.segments[0]!, "Australia/Sydney", sydneyNow)).toBe(
+      session.segments[0]?.durationSeconds,
+    );
   });
 });
 

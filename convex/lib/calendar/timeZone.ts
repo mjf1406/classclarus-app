@@ -40,6 +40,10 @@ export function normalizeTimeZone(timeZone: string): string {
   return trimmed;
 }
 
+export function resolveClassTimeZone(timeZone: string | undefined | null): string {
+  return timeZone && isValidTimeZone(timeZone) ? timeZone : "UTC";
+}
+
 export function timezoneCityLabel(timeZone: string): string {
   return timeZone.replaceAll("_", " ");
 }
@@ -126,14 +130,19 @@ export function getTimeZoneOffsetMs(timeZone: string, utcMs: number): number {
   return asUtc - utcMs;
 }
 
-export function zonedLocalToUtcMs(dateKey: string, timeHm: string, timeZone: string): number {
+export function zonedLocalToUtcMs(
+  dateKey: string,
+  timeHm: string,
+  timeZone: string,
+  seconds = 0,
+): number {
   const parsed = parseDateKey(dateKey);
   if (!parsed) {
     throw new Error("Invalid date");
   }
   const hour = Number(timeHm.slice(0, 2));
   const minute = Number(timeHm.slice(3, 5));
-  const desiredAsUtc = Date.UTC(parsed.year, parsed.month - 1, parsed.day, hour, minute, 0);
+  const desiredAsUtc = Date.UTC(parsed.year, parsed.month - 1, parsed.day, hour, minute, seconds);
   let utcGuess = desiredAsUtc;
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const offset = getTimeZoneOffsetMs(timeZone, utcGuess);

@@ -34,6 +34,14 @@ describe("calendar date keys", () => {
 });
 
 describe("calendar time zones", () => {
+  test("converts class-local times including seconds", () => {
+    const start = zonedLocalToUtcMs("2026-09-01", "16:00", "Australia/Sydney", 30);
+    const parts = utcMsToZonedParts(start, "Australia/Sydney");
+    expect(parts.dateKey).toBe("2026-09-01");
+    expect(parts.timeHm).toBe("16:00");
+    expect(start - zonedLocalToUtcMs("2026-09-01", "16:00", "Australia/Sydney")).toBe(30_000);
+  });
+
   test("converts class-local times through DST", () => {
     const start = zonedLocalToUtcMs("2026-03-08", "01:30", "America/New_York");
     const parts = utcMsToZonedParts(start, "America/New_York");

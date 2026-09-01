@@ -5,7 +5,10 @@ import { useTranslation } from "react-i18next";
 
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
-import type { ActiveSession } from "../../../convex/lib/classroomScreen/activeSession";
+import {
+  resolveSegmentDuration,
+  type ActiveSession,
+} from "../../../convex/lib/classroomScreen/activeSession";
 import type { AudioCues } from "../../../convex/lib/classroomScreen/audioCues";
 import {
   classroomAudioQueryKey,
@@ -377,7 +380,8 @@ function useDisplaySessionMutation<TMutation extends DisplaySessionMutation>(
 export function useStartClassroomSession() {
   return useDisplaySessionMutation(api.classroomScreen.startSession, (bundle, args) => {
     const session = args.session as ActiveSession;
-    const duration = session.segments[session.index]?.durationSeconds ?? 0;
+    const segment = session.segments[session.index];
+    const duration = segment ? resolveSegmentDuration(segment, bundle.timeZone) : 0;
     return {
       ...bundle.displaySession,
       sessionJson: session,
@@ -460,7 +464,8 @@ export function useSkipClassroomSessionSegment() {
           };
         }
         const nextSession = { ...parsed, index: nextIndex };
-        const duration = nextSession.segments[nextIndex]?.durationSeconds ?? 0;
+        const nextSegment = nextSession.segments[nextIndex];
+        const duration = nextSegment ? resolveSegmentDuration(nextSegment, bundle.timeZone) : 0;
         return {
           ...bundle,
           displaySession: {
