@@ -901,6 +901,12 @@ const uk = {
     timezonePlaceholder: "Пошук за містом",
     timezoneNoMatches: "Немає відповідних міст.",
     timezoneSaveFailed: "Не вдалося оновити часовий пояс класу.",
+    upcomingAnnouncementEventsTitle: "Найближчі події",
+    upcomingAnnouncementEventsDescription:
+      "Скільки найближчих подій календаря показувати в оголошеннях уроку на екрані класу.",
+    upcomingAnnouncementEventsLabel: "Подій для показу",
+    upcomingAnnouncementEventsHint: "0 приховує події. Максимум — 20.",
+    upcomingAnnouncementEventsSaveFailed: "Не вдалося оновити кількість показаних подій.",
     rosterNameFormatTitle: "Відображення імен у списку",
     rosterNameFormatDescription:
       "Як показувати ім'я та прізвище в списку, групах і експорті цього класу.",
@@ -1203,6 +1209,8 @@ const uk = {
     activitySummary_clearedDashboardBanner: "Банер панелі для «{{name}}» видалено",
     activitySummary_setStudentLanguage: "Мову учнів встановлено: {{language}}",
     activitySummary_setTimezone: "Часовий пояс класу встановлено на {{timezone}}",
+    activitySummary_setUpcomingAnnouncementEventLimit:
+      "Кількість найближчих подій в оголошеннях встановлено на {{count}}",
     activitySummary_createdCalendarEvent: 'Створено подію календаря "{{name}}"',
     activitySummary_updatedCalendarEvent: 'Оновлено подію календаря "{{name}}"',
     activitySummary_deletedCalendarEvent: 'Видалено подію календаря "{{name}}"',
@@ -3529,6 +3537,10 @@ const uk = {
     statusUpcomingLesson: "Наступний через {{minutes}} хв",
     statusCurrentLesson: "Поточний урок",
     statusQuickText: "Швидкий текст",
+    eventCountdownToday: "сьогодні",
+    eventCountdownTomorrow: "завтра",
+    eventCountdownInDays: "через {{count}} день",
+    eventCountdownInDays_other: "через {{count}} дн.",
     settings: "Налаштування екрана",
     manageTimers: "Керувати таймерами",
     manageRotations: "Керувати ротаціями",

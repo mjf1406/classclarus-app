@@ -105,6 +105,11 @@ const schema = defineSchema({
      */
     timezone: v.optional(v.string()),
     /**
+     * How many upcoming calendar events to list in lesson announcements.
+     * Defaults to 3 when unset.
+     */
+    upcomingAnnouncementEventLimit: v.optional(v.number()),
+    /**
      * How roster first/last names are combined for display.
      * Defaults to firstLast + space when unset (pre-backfill rows).
      */

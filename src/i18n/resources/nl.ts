@@ -905,6 +905,13 @@ const nl = {
     timezonePlaceholder: "Zoeken op stad",
     timezoneNoMatches: "Geen overeenkomende steden.",
     timezoneSaveFailed: "De tijdzone van de klas kon niet worden bijgewerkt.",
+    upcomingAnnouncementEventsTitle: "Aankomende evenementen",
+    upcomingAnnouncementEventsDescription:
+      "Hoeveel aankomende kalenderafspraken in de lesmededelingen op het klassenscherm verschijnen.",
+    upcomingAnnouncementEventsLabel: "Weer te geven evenementen",
+    upcomingAnnouncementEventsHint: "0 verbergt evenementen. Het maximum is 20.",
+    upcomingAnnouncementEventsSaveFailed:
+      "Het aantal weergegeven evenementen kon niet worden bijgewerkt.",
     rosterNameFormatTitle: "Weergave van namen op de lijst",
     rosterNameFormatDescription:
       "Hoe voor- en achternaam verschijnen op de lijst, in groepen en bij export van deze klas.",
@@ -1206,6 +1213,8 @@ const nl = {
     activitySummary_clearedDashboardBanner: 'Dashboardbanner voor "{{name}}" verwijderd',
     activitySummary_setStudentLanguage: "Leerlingentaal ingesteld op {{language}}",
     activitySummary_setTimezone: "Tijdzone van de klas ingesteld op {{timezone}}",
+    activitySummary_setUpcomingAnnouncementEventLimit:
+      "Aankomende mededelingsevenementen ingesteld op {{count}}",
     activitySummary_createdCalendarEvent: 'Agenda-evenement "{{name}}" aangemaakt',
     activitySummary_updatedCalendarEvent: 'Agenda-evenement "{{name}}" bijgewerkt',
     activitySummary_deletedCalendarEvent: 'Agenda-evenement "{{name}}" verwijderd',
@@ -3561,6 +3570,10 @@ const nl = {
     statusUpcomingLesson: "Volgende over {{minutes}} min",
     statusCurrentLesson: "Huidige les",
     statusQuickText: "Snelle tekst",
+    eventCountdownToday: "vandaag",
+    eventCountdownTomorrow: "morgen",
+    eventCountdownInDays: "over {{count}} dag",
+    eventCountdownInDays_other: "over {{count}} dagen",
     settings: "Scherminstellingen",
     manageTimers: "Timers beheren",
     manageRotations: "Rotaties beheren",

@@ -883,6 +883,12 @@ const ko = {
     timezonePlaceholder: "도시로 검색",
     timezoneNoMatches: "일치하는 도시가 없습니다.",
     timezoneSaveFailed: "수업 시간대를 업데이트할 수 없습니다.",
+    upcomingAnnouncementEventsTitle: "다가오는 일정",
+    upcomingAnnouncementEventsDescription:
+      "교실 화면의 수업 공지에 표시할 다가오는 캘린더 일정 개수입니다.",
+    upcomingAnnouncementEventsLabel: "표시할 일정",
+    upcomingAnnouncementEventsHint: "0이면 숨깁니다. 최댓값은 20입니다.",
+    upcomingAnnouncementEventsSaveFailed: "표시할 일정 개수를 업데이트할 수 없습니다.",
     rosterNameFormatTitle: "명단 이름 표시",
     rosterNameFormatDescription:
       "이 반의 명단, 모둠, 내보내기에서 이름과 성을 어떻게 표시할지 설정합니다.",
@@ -1180,6 +1186,8 @@ const ko = {
     activitySummary_clearedDashboardBanner: '수업 "{{name}}" 대시보드 배너 제거',
     activitySummary_setStudentLanguage: "학생 언어를 {{language}}(으)로 설정",
     activitySummary_setTimezone: "수업 시간대를 {{timezone}}(으)로 설정",
+    activitySummary_setUpcomingAnnouncementEventLimit:
+      "공지에 표시할 다가오는 일정을 {{count}}개로 설정",
     activitySummary_createdCalendarEvent: '캘린더 일정 "{{name}}" 생성',
     activitySummary_updatedCalendarEvent: '캘린더 일정 "{{name}}" 업데이트',
     activitySummary_deletedCalendarEvent: '캘린더 일정 "{{name}}" 삭제',
@@ -3458,6 +3466,10 @@ const ko = {
     statusUpcomingLesson: "{{minutes}}분 후 시작",
     statusCurrentLesson: "현재 수업",
     statusQuickText: "빠른 텍스트",
+    eventCountdownToday: "오늘",
+    eventCountdownTomorrow: "내일",
+    eventCountdownInDays: "{{count}}일 후",
+    eventCountdownInDays_other: "{{count}}일 후",
     settings: "화면 설정",
     manageTimers: "타이머 관리",
     manageRotations: "로테이션 관리",

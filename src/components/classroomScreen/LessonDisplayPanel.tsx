@@ -11,7 +11,7 @@ import { useAssignments } from "@/hooks/assignments/useAssignments";
 import type { ClassroomLessonDisplay } from "@/hooks/classroomScreen/useClassroomScreenQueries";
 import { useTasks } from "@/hooks/tasks/useTasks";
 import { DEFAULT_CLOCK_SETTINGS } from "@/lib/classroomScreen/clockSettings";
-import { formatEventTimeLabel } from "@/lib/calendar/calendar";
+import { eventDaysUntil, formatEventTimeLabel } from "@/lib/calendar/calendar";
 import { toIntlLocale } from "@/lib/languages";
 import { findAgendaResourceName } from "@/lib/timetable/agendaItems";
 import { cn } from "@/lib/utils";
@@ -22,6 +22,7 @@ type LessonDisplayPanelProps = {
   classId: Id<"classes">;
   lesson: ClassroomLessonDisplay | null;
   formattedDate: string;
+  now?: Date;
   contentFontSize?: number;
   headingFontSize?: number;
   quickText?: string | null;
@@ -37,6 +38,7 @@ export function LessonDisplayPanel({
   classId,
   lesson,
   formattedDate,
+  now = new Date(),
   contentFontSize = DEFAULT_CLOCK_SETTINGS.displayContentFontSize,
   headingFontSize = DEFAULT_CLOCK_SETTINGS.displayHeadingFontSize,
   quickText,
@@ -110,13 +112,27 @@ export function LessonDisplayPanel({
                 <p className="text-muted-foreground">{tTimetable("noUpcomingEvents")}</p>
               ) : (
                 <ol className="flex flex-col gap-1">
-                  {lesson.upcomingEvents.map((event, index) => (
-                    <li key={event._id}>
-                      {index + 1}. {event.title}
-                      {" — "}
-                      {formatEventTimeLabel(event, lesson.timeZone, locale, { includeDate: true })}
-                    </li>
-                  ))}
+                  {lesson.upcomingEvents.map((event, index) => {
+                    const daysUntil = eventDaysUntil(event, now.getTime(), lesson.timeZone);
+                    const countdown =
+                      daysUntil === null
+                        ? null
+                        : daysUntil === 0
+                          ? t("eventCountdownToday")
+                          : daysUntil === 1
+                            ? t("eventCountdownTomorrow")
+                            : t("eventCountdownInDays", { count: daysUntil });
+                    return (
+                      <li key={event._id}>
+                        {index + 1}. {event.title}
+                        {" — "}
+                        {formatEventTimeLabel(event, lesson.timeZone, locale, {
+                          includeDate: true,
+                        })}
+                        {countdown ? ` (${countdown})` : null}
+                      </li>
+                    );
+                  })}
                 </ol>
               )}
               {lesson.announcements.length > 0 ? (

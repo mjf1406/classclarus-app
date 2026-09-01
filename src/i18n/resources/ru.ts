@@ -904,6 +904,12 @@ const ru = {
     timezonePlaceholder: "Поиск по городу",
     timezoneNoMatches: "Нет подходящих городов.",
     timezoneSaveFailed: "Не удалось обновить часовой пояс класса.",
+    upcomingAnnouncementEventsTitle: "Ближайшие события",
+    upcomingAnnouncementEventsDescription:
+      "Сколько ближайших событий календаря показывать в объявлениях урока на экране класса.",
+    upcomingAnnouncementEventsLabel: "Событий для показа",
+    upcomingAnnouncementEventsHint: "0 скрывает события. Максимум — 20.",
+    upcomingAnnouncementEventsSaveFailed: "Не удалось обновить число показываемых событий.",
     rosterNameFormatTitle: "Отображение имён в списке",
     rosterNameFormatDescription:
       "Как показывать имя и фамилию в списке, группах и экспорте этого класса.",
@@ -1206,6 +1212,8 @@ const ru = {
     activitySummary_clearedDashboardBanner: "Баннер панели для «{{name}}» удалён",
     activitySummary_setStudentLanguage: "Язык учеников установлен: {{language}}",
     activitySummary_setTimezone: "Часовой пояс класса установлен на {{timezone}}",
+    activitySummary_setUpcomingAnnouncementEventLimit:
+      "Число ближайших событий в объявлениях установлено на {{count}}",
     activitySummary_createdCalendarEvent: 'Создано событие календаря "{{name}}"',
     activitySummary_updatedCalendarEvent: 'Обновлено событие календаря "{{name}}"',
     activitySummary_deletedCalendarEvent: 'Удалено событие календаря "{{name}}"',
@@ -3538,6 +3546,10 @@ const ru = {
     statusUpcomingLesson: "Следующий через {{minutes}} мин",
     statusCurrentLesson: "Текущий урок",
     statusQuickText: "Быстрый текст",
+    eventCountdownToday: "сегодня",
+    eventCountdownTomorrow: "завтра",
+    eventCountdownInDays: "через {{count}} день",
+    eventCountdownInDays_other: "через {{count}} дней",
     settings: "Настройки экрана",
     manageTimers: "Управление таймерами",
     manageRotations: "Управление ротациями",

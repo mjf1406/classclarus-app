@@ -239,6 +239,7 @@ export function ClassroomScreenPage({ classId }: ClassroomScreenPageProps) {
         classId={classId}
         lesson={lessonState.showLessonContent ? lessonState.activeLesson : null}
         formattedDate={formattedDate}
+        now={now}
         contentFontSize={
           settings.displayContentFontSize ?? DEFAULT_CLOCK_SETTINGS.displayContentFontSize
         }

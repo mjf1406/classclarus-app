@@ -9,7 +9,20 @@ import { calendarAudienceRolesOrDefault } from "./sectionItems.js";
 import { dateKeyFromIsoWeek, WEEKDAY_NAMES, type WeekdayName } from "./timetableSchema.js";
 
 export const UPCOMING_LESSON_EVENT_LIMIT = 3;
+export const DEFAULT_UPCOMING_ANNOUNCEMENT_EVENT_LIMIT = UPCOMING_LESSON_EVENT_LIMIT;
+export const MIN_UPCOMING_ANNOUNCEMENT_EVENT_LIMIT = 0;
+export const MAX_UPCOMING_ANNOUNCEMENT_EVENT_LIMIT = 20;
 export const UPCOMING_LESSON_EVENT_LOOKAHEAD_DAYS = 90;
+
+export function resolveUpcomingAnnouncementEventLimit(value: number | undefined): number {
+  if (value === undefined || !Number.isInteger(value)) {
+    return DEFAULT_UPCOMING_ANNOUNCEMENT_EVENT_LIMIT;
+  }
+  return Math.min(
+    MAX_UPCOMING_ANNOUNCEMENT_EVENT_LIMIT,
+    Math.max(MIN_UPCOMING_ANNOUNCEMENT_EVENT_LIMIT, value),
+  );
+}
 
 export const upcomingLessonEventValidator = v.object({
   _id: v.id("calendarEvents"),

@@ -20,6 +20,7 @@ import {
 } from "./lib/timetable/sectionItems.js";
 import {
   lessonDateKeyFromSlot,
+  resolveUpcomingAnnouncementEventLimit,
   selectUpcomingLessonEvents,
   upcomingLessonEventValidator,
   type LessonEventSource,
@@ -408,6 +409,7 @@ export const getWeekBundle = classQuery({
                 dateKey,
                 timeZone,
                 subject.calendarAudienceRoles,
+                resolveUpcomingAnnouncementEventLimit(ctx.classDoc.upcomingAnnouncementEventLimit),
               )
             : [];
           eventCache.set(cacheKey, upcomingEvents);

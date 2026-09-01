@@ -903,6 +903,13 @@ const pt = {
     timezonePlaceholder: "Pesquisar por cidade",
     timezoneNoMatches: "Nenhuma cidade correspondente.",
     timezoneSaveFailed: "Não foi possível atualizar o fuso horário da turma.",
+    upcomingAnnouncementEventsTitle: "Próximos eventos",
+    upcomingAnnouncementEventsDescription:
+      "Quantos eventos futuros do calendário aparecem nos anúncios da aula na tela da sala.",
+    upcomingAnnouncementEventsLabel: "Eventos a mostrar",
+    upcomingAnnouncementEventsHint: "0 oculta os eventos. O máximo é 20.",
+    upcomingAnnouncementEventsSaveFailed:
+      "Não foi possível atualizar quantos eventos são mostrados.",
     rosterNameFormatTitle: "Exibi??o do nome na lista",
     rosterNameFormatDescription:
       "Como nome e sobrenome aparecem na lista, grupos e exporta??es desta turma.",
@@ -1205,6 +1212,8 @@ const pt = {
     activitySummary_clearedDashboardBanner: 'Banner do painel de "{{name}}" removido',
     activitySummary_setStudentLanguage: "Idioma do aluno definido para {{language}}",
     activitySummary_setTimezone: "Fuso horário da turma definido para {{timezone}}",
+    activitySummary_setUpcomingAnnouncementEventLimit:
+      "Próximos eventos nos anúncios definidos para {{count}}",
     activitySummary_createdCalendarEvent: 'Evento de calendário "{{name}}" criado',
     activitySummary_updatedCalendarEvent: 'Evento de calendário "{{name}}" atualizado',
     activitySummary_deletedCalendarEvent: 'Evento de calendário "{{name}}" excluído',
@@ -3557,6 +3566,10 @@ const pt = {
     statusUpcomingLesson: "A seguir em {{minutes}} min",
     statusCurrentLesson: "Aula atual",
     statusQuickText: "Texto rápido",
+    eventCountdownToday: "hoje",
+    eventCountdownTomorrow: "amanhã",
+    eventCountdownInDays: "em {{count}} dia",
+    eventCountdownInDays_other: "em {{count}} dias",
     settings: "Definições do ecrã",
     manageTimers: "Gerir temporizadores",
     manageRotations: "Gerir rotações",

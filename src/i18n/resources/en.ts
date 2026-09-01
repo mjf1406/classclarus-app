@@ -890,6 +890,12 @@ const en = {
     timezonePlaceholder: "Search by city",
     timezoneNoMatches: "No matching cities.",
     timezoneSaveFailed: "Could not update the class time zone.",
+    upcomingAnnouncementEventsTitle: "Upcoming events",
+    upcomingAnnouncementEventsDescription:
+      "How many upcoming calendar events appear in lesson announcements on the classroom screen.",
+    upcomingAnnouncementEventsLabel: "Events to show",
+    upcomingAnnouncementEventsHint: "0 hides events. The maximum is 20.",
+    upcomingAnnouncementEventsSaveFailed: "Could not update how many events are shown.",
     rosterNameFormatTitle: "Roster name display",
     rosterNameFormatDescription:
       "How first and last names appear on the roster, groups board, and exports for this class.",
@@ -1190,6 +1196,8 @@ const en = {
     activitySummary_clearedDashboardBanner: 'Cleared dashboard banner for "{{name}}"',
     activitySummary_setStudentLanguage: "Set student language to {{language}}",
     activitySummary_setTimezone: "Set class time zone to {{timezone}}",
+    activitySummary_setUpcomingAnnouncementEventLimit:
+      "Set upcoming announcement events to {{count}}",
     activitySummary_createdCalendarEvent: 'Created calendar event "{{name}}"',
     activitySummary_updatedCalendarEvent: 'Updated calendar event "{{name}}"',
     activitySummary_deletedCalendarEvent: 'Deleted calendar event "{{name}}"',
@@ -3500,6 +3508,10 @@ const en = {
     statusUpcomingLesson: "Up next in {{minutes}} min",
     statusCurrentLesson: "Current lesson",
     statusQuickText: "Quick text",
+    eventCountdownToday: "today",
+    eventCountdownTomorrow: "tomorrow",
+    eventCountdownInDays: "in {{count}} day",
+    eventCountdownInDays_other: "in {{count}} days",
     settings: "Screen settings",
     manageTimers: "Manage timers",
     manageRotations: "Manage rotations",

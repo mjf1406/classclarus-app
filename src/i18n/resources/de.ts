@@ -911,6 +911,13 @@ const de = {
     timezonePlaceholder: "Nach Stadt suchen",
     timezoneNoMatches: "Keine passenden Städte.",
     timezoneSaveFailed: "Die Klassenzeitzone konnte nicht aktualisiert werden.",
+    upcomingAnnouncementEventsTitle: "Bevorstehende Termine",
+    upcomingAnnouncementEventsDescription:
+      "Wie viele bevorstehende Kalendertermine in den Stundenankündigungen auf dem Klassenbildschirm erscheinen.",
+    upcomingAnnouncementEventsLabel: "Anzuzeigende Termine",
+    upcomingAnnouncementEventsHint: "0 blendet Termine aus. Höchstens 20.",
+    upcomingAnnouncementEventsSaveFailed:
+      "Die Anzahl der angezeigten Termine konnte nicht aktualisiert werden.",
     rosterNameFormatTitle: "Anzeigenamen in der Liste",
     rosterNameFormatDescription:
       "Reihenfolge von Vor- und Nachname in Liste, Gruppen und Exporten dieser Klasse.",
@@ -1217,6 +1224,8 @@ const de = {
     activitySummary_clearedDashboardBanner: "Dashboard-Banner f?r ?{{name}}? entfernt",
     activitySummary_setStudentLanguage: "Sch?lersprache auf {{language}} gesetzt",
     activitySummary_setTimezone: "Klassenzeitzone auf {{timezone}} gesetzt",
+    activitySummary_setUpcomingAnnouncementEventLimit:
+      "Bevorstehende Ankündigungstermine auf {{count}} gesetzt",
     activitySummary_createdCalendarEvent: 'Kalenderereignis "{{name}}" erstellt',
     activitySummary_updatedCalendarEvent: 'Kalenderereignis "{{name}}" aktualisiert',
     activitySummary_deletedCalendarEvent: 'Kalenderereignis "{{name}}" gelöscht',
@@ -3588,6 +3597,10 @@ const de = {
     statusUpcomingLesson: "Als Nächstes in {{minutes}} Min.",
     statusCurrentLesson: "Aktueller Unterricht",
     statusQuickText: "Schnelltext",
+    eventCountdownToday: "heute",
+    eventCountdownTomorrow: "morgen",
+    eventCountdownInDays: "in {{count}} Tag",
+    eventCountdownInDays_other: "in {{count}} Tagen",
     settings: "Bildschirmeinstellungen",
     manageTimers: "Timer verwalten",
     manageRotations: "Rotationen verwalten",

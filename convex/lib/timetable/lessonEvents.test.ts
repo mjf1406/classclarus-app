@@ -4,6 +4,7 @@ import { startOfZonedDayUtc } from "../calendar/timeZone";
 import {
   eventMatchesSubjectAudience,
   lessonDateKeyFromSlot,
+  resolveUpcomingAnnouncementEventLimit,
   selectUpcomingLessonEvents,
   type LessonEventSource,
 } from "./lessonEvents";
@@ -120,5 +121,54 @@ describe("selectUpcomingLessonEvents", () => {
       "Next week trip",
       "Timed later",
     ]);
+  });
+
+  test("honors a custom limit", () => {
+    const selected = selectUpcomingLessonEvents(
+      [
+        event({
+          title: "Today assembly",
+          startDateKey: "2026-03-02",
+          endDateKey: "2026-03-03",
+        }),
+        event({
+          title: "Next week trip",
+          startDateKey: "2026-03-09",
+          endDateKey: "2026-03-10",
+        }),
+      ],
+      "2026-03-02",
+      "Asia/Tokyo",
+      ["student"],
+      1,
+    );
+    expect(selected.map((item) => item.title)).toEqual(["Today assembly"]);
+  });
+
+  test("returns no events when the limit is 0", () => {
+    const selected = selectUpcomingLessonEvents(
+      [
+        event({
+          title: "Today assembly",
+          startDateKey: "2026-03-02",
+          endDateKey: "2026-03-03",
+        }),
+      ],
+      "2026-03-02",
+      "Asia/Tokyo",
+      ["student"],
+      0,
+    );
+    expect(selected).toEqual([]);
+  });
+});
+
+describe("resolveUpcomingAnnouncementEventLimit", () => {
+  test("defaults to 3 and clamps out-of-range values", () => {
+    expect(resolveUpcomingAnnouncementEventLimit(undefined)).toBe(3);
+    expect(resolveUpcomingAnnouncementEventLimit(1.5)).toBe(3);
+    expect(resolveUpcomingAnnouncementEventLimit(-1)).toBe(0);
+    expect(resolveUpcomingAnnouncementEventLimit(99)).toBe(20);
+    expect(resolveUpcomingAnnouncementEventLimit(5)).toBe(5);
   });
 });

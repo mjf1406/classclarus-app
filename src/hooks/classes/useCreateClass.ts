@@ -12,6 +12,7 @@ import type { ClassPublic } from "@/lib/classes/classes";
 import { messageFromError } from "@/lib/errors/convexError";
 import type { AppLanguage } from "@/lib/languages";
 import { randomClientId } from "@/lib/optimistic";
+import { DEFAULT_UPCOMING_ANNOUNCEMENT_EVENT_LIMIT } from "../../../convex/lib/timetable/lessonEvents";
 
 type CreateClassArgs = {
   name: string;
@@ -46,6 +47,7 @@ export function useCreateClass() {
         icon: args.icon,
         studentLanguage: args.studentLanguage,
         timezone: args.timezone,
+        upcomingAnnouncementEventLimit: DEFAULT_UPCOMING_ANNOUNCEMENT_EVENT_LIMIT,
         rosterNameOrder: "firstLast",
         rosterNameSpace: true,
         warningWindowAmount: 1,

@@ -42,6 +42,7 @@ import { useSetPointsPublicDisplay } from "@/hooks/classes/useSetPointsPublicDis
 import { useSetRosterNameFormat } from "@/hooks/classes/useSetRosterNameFormat";
 import { useSetStudentLanguage } from "@/hooks/classes/useSetStudentLanguage";
 import { useSetTimezone } from "@/hooks/classes/useSetTimezone";
+import { useSetUpcomingAnnouncementEventLimit } from "@/hooks/classes/useSetUpcomingAnnouncementEventLimit";
 import { useUpdateClass } from "@/hooks/classes/useUpdateClass";
 import { useFileBytes } from "@/hooks/files/useFileBytes";
 import type { ClassFormValues } from "@/lib/classes/classFormSchema";
@@ -64,6 +65,10 @@ import { pointsPublicDisplayUrl } from "@/lib/points/pointsPublicUrls";
 import { formatLocalizedDateTime } from "@/i18n/formatDate";
 import { resolveRosterNameFormat, type RosterNameFormat } from "@/lib/roster/roster";
 import type { Id } from "../../../convex/_generated/dataModel";
+import {
+  MAX_UPCOMING_ANNOUNCEMENT_EVENT_LIMIT,
+  MIN_UPCOMING_ANNOUNCEMENT_EVENT_LIMIT,
+} from "../../../convex/lib/timetable/lessonEvents";
 
 type ClassSettingsPageProps = {
   classId: Id<"classes">;
@@ -73,6 +78,7 @@ const SETTINGS_SECTION_IDS = {
   class: "settings-class",
   studentLanguage: "settings-student-language",
   timezone: "settings-timezone",
+  upcomingEvents: "settings-upcoming-events",
   rosterNames: "settings-roster-names",
   pointsWarnings: "settings-points-warnings",
   pointsRemoving: "settings-points-removing",
@@ -253,6 +259,7 @@ export function ClassSettingsPage({ classId }: ClassSettingsPageProps) {
   const clearBanner = useClearClassBanner();
   const setStudentLanguage = useSetStudentLanguage();
   const setTimezone = useSetTimezone();
+  const setUpcomingAnnouncementEventLimit = useSetUpcomingAnnouncementEventLimit();
   const setRosterNameFormat = useSetRosterNameFormat();
   const setPointsBadgeWindows = useSetPointsBadgeWindows();
   const setPointsPublicDisplay = useSetPointsPublicDisplay();
@@ -318,6 +325,11 @@ export function ClassSettingsPage({ classId }: ClassSettingsPageProps) {
         depth: 2,
       },
       { title: t("timezoneTitle"), url: `#${SETTINGS_SECTION_IDS.timezone}`, depth: 2 },
+      {
+        title: t("upcomingAnnouncementEventsTitle"),
+        url: `#${SETTINGS_SECTION_IDS.upcomingEvents}`,
+        depth: 2,
+      },
       {
         title: t("rosterNameFormatTitle"),
         url: `#${SETTINGS_SECTION_IDS.rosterNames}`,
@@ -475,6 +487,45 @@ export function ClassSettingsPage({ classId }: ClassSettingsPageProps) {
                     setTimezone.mutate({ classId, timezone });
                   }}
                 />
+              </CardContent>
+            </Card>
+
+            <Card id={SETTINGS_SECTION_IDS.upcomingEvents} className={SETTINGS_CARD_CLASS}>
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold">
+                  {t("upcomingAnnouncementEventsTitle")}
+                </CardTitle>
+                <CardDescription>{t("upcomingAnnouncementEventsDescription")}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Field>
+                  <FieldLabel htmlFor="upcoming-announcement-event-limit">
+                    {t("upcomingAnnouncementEventsLabel")}
+                  </FieldLabel>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {t("upcomingAnnouncementEventsHint")}
+                  </p>
+                  <NumberInput
+                    id="upcoming-announcement-event-limit"
+                    className="mt-2 w-28"
+                    value={classDoc.upcomingAnnouncementEventLimit}
+                    min={MIN_UPCOMING_ANNOUNCEMENT_EVENT_LIMIT}
+                    max={MAX_UPCOMING_ANNOUNCEMENT_EVENT_LIMIT}
+                    disabled={!canUpdateClass || setUpcomingAnnouncementEventLimit.isPending}
+                    aria-label={t("upcomingAnnouncementEventsLabel")}
+                    onValueChange={(upcomingAnnouncementEventLimit) => {
+                      if (
+                        upcomingAnnouncementEventLimit === classDoc.upcomingAnnouncementEventLimit
+                      ) {
+                        return;
+                      }
+                      setUpcomingAnnouncementEventLimit.mutate({
+                        classId,
+                        upcomingAnnouncementEventLimit,
+                      });
+                    }}
+                  />
+                </Field>
               </CardContent>
             </Card>
 

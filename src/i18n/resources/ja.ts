@@ -893,6 +893,12 @@ const ja = {
     timezonePlaceholder: "都市名で検索",
     timezoneNoMatches: "一致する都市がありません。",
     timezoneSaveFailed: "クラスのタイムゾーンを更新できませんでした。",
+    upcomingAnnouncementEventsTitle: "今後の予定",
+    upcomingAnnouncementEventsDescription:
+      "教室スクリーンの授業お知らせに表示する、今後のカレンダー予定の件数です。",
+    upcomingAnnouncementEventsLabel: "表示する予定",
+    upcomingAnnouncementEventsHint: "0にすると非表示。最大は20です。",
+    upcomingAnnouncementEventsSaveFailed: "表示する予定の件数を更新できませんでした。",
     rosterNameFormatTitle: "名簿の名前表示",
     rosterNameFormatDescription:
       "このクラスの名簿・グループ・書き出しで姓と名をどう並べるかを設定します。",
@@ -1193,6 +1199,8 @@ const ja = {
     activitySummary_clearedDashboardBanner: "クラス「{{name}}」のダッシュボードバナーを削除",
     activitySummary_setStudentLanguage: "生徒の言語を{{language}}に設定",
     activitySummary_setTimezone: "クラスのタイムゾーンを{{timezone}}に設定",
+    activitySummary_setUpcomingAnnouncementEventLimit:
+      "お知らせに表示する今後の予定を{{count}}件に設定",
     activitySummary_createdCalendarEvent: "カレンダー予定「{{name}}」を作成",
     activitySummary_updatedCalendarEvent: "カレンダー予定「{{name}}」を更新",
     activitySummary_deletedCalendarEvent: "カレンダー予定「{{name}}」を削除",
@@ -3493,6 +3501,10 @@ const ja = {
     statusUpcomingLesson: "{{minutes}}分後に開始",
     statusCurrentLesson: "現在の授業",
     statusQuickText: "クイックテキスト",
+    eventCountdownToday: "今日",
+    eventCountdownTomorrow: "明日",
+    eventCountdownInDays: "{{count}}日後",
+    eventCountdownInDays_other: "{{count}}日後",
     settings: "画面の設定",
     manageTimers: "タイマーを管理",
     manageRotations: "ローテーションを管理",

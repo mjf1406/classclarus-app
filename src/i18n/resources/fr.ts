@@ -918,6 +918,13 @@ const fr = {
     timezonePlaceholder: "Rechercher par ville",
     timezoneNoMatches: "Aucune ville correspondante.",
     timezoneSaveFailed: "Impossible de mettre à jour le fuseau horaire de la classe.",
+    upcomingAnnouncementEventsTitle: "Événements à venir",
+    upcomingAnnouncementEventsDescription:
+      "Combien d’événements du calendrier apparaissent dans les annonces de leçon sur l’écran de classe.",
+    upcomingAnnouncementEventsLabel: "Événements à afficher",
+    upcomingAnnouncementEventsHint: "0 masque les événements. Le maximum est 20.",
+    upcomingAnnouncementEventsSaveFailed:
+      "Impossible de mettre à jour le nombre d’événements affichés.",
     rosterNameFormatTitle: "Affichage des noms de la liste",
     rosterNameFormatDescription:
       "Ordre du prénom et du nom sur la liste, les groupes et les exports de cette classe.",
@@ -1227,6 +1234,8 @@ const fr = {
     activitySummary_clearedDashboardBanner: "Bannière du tableau de bord de « {{name}} » effacée",
     activitySummary_setStudentLanguage: "Langue des élèves définie sur {{language}}",
     activitySummary_setTimezone: "Fuseau horaire de la classe défini sur {{timezone}}",
+    activitySummary_setUpcomingAnnouncementEventLimit:
+      "Événements à venir dans les annonces défini sur {{count}}",
     activitySummary_createdCalendarEvent: "Événement de calendrier « {{name}} » créé",
     activitySummary_updatedCalendarEvent: "Événement de calendrier « {{name}} » mis à jour",
     activitySummary_deletedCalendarEvent: "Événement de calendrier « {{name}} » supprimé",
@@ -3599,6 +3608,10 @@ const fr = {
     statusUpcomingLesson: "Prochain cours dans {{minutes}} min",
     statusCurrentLesson: "Cours en cours",
     statusQuickText: "Texte rapide",
+    eventCountdownToday: "aujourd’hui",
+    eventCountdownTomorrow: "demain",
+    eventCountdownInDays: "dans {{count}} jour",
+    eventCountdownInDays_other: "dans {{count}} jours",
     settings: "Paramètres de l’écran",
     manageTimers: "Gérer les minuteurs",
     manageRotations: "Gérer les rotations",

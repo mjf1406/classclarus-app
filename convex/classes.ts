@@ -33,6 +33,11 @@ import {
 } from "./lib/pointsBadgeWindow.js";
 import { resolveUserImageUrl } from "./lib/userImage.js";
 import { normalizeTimeZone } from "./lib/calendar/timeZone.js";
+import {
+  MAX_UPCOMING_ANNOUNCEMENT_EVENT_LIMIT,
+  MIN_UPCOMING_ANNOUNCEMENT_EVENT_LIMIT,
+  resolveUpcomingAnnouncementEventLimit,
+} from "./lib/timetable/lessonEvents.js";
 
 const MIN_YEAR = 1900;
 const MAX_YEAR = 2100;
@@ -67,6 +72,7 @@ const classValidator = v.object({
   bannerFileId: v.optional(v.id("files")),
   studentLanguage: languageValidator,
   timezone: v.optional(v.string()),
+  upcomingAnnouncementEventLimit: v.number(),
   rosterNameOrder: rosterNameOrderValidator,
   rosterNameSpace: v.boolean(),
   warningWindowAmount: v.number(),
@@ -109,6 +115,7 @@ async function generateUniquePointsPublicSlug(ctx: MutationCtx): Promise<string>
 type ClassPublicDefaults = {
   studentLanguage: LanguageCode;
   timezone?: string;
+  upcomingAnnouncementEventLimit: number;
   rosterNameOrder: "firstLast" | "lastFirst";
   rosterNameSpace: boolean;
   warningWindowAmount: number;
@@ -151,6 +158,9 @@ function withClassDefaults(classDoc: Doc<"classes">): Doc<"classes"> & ClassPubl
     ...classDoc,
     studentLanguage: classDoc.studentLanguage ?? "en",
     timezone: classDoc.timezone,
+    upcomingAnnouncementEventLimit: resolveUpcomingAnnouncementEventLimit(
+      classDoc.upcomingAnnouncementEventLimit,
+    ),
     rosterNameOrder: classDoc.rosterNameOrder === "lastFirst" ? "lastFirst" : "firstLast",
     rosterNameSpace: classDoc.rosterNameSpace !== false,
     ...resolvePointsBadgeWindowFields(classDoc),
@@ -506,6 +516,46 @@ export const setTimezone = classMutation({
       summary: `Set class time zone to ${timezone}`,
       summaryKey: "activitySummary_setTimezone",
       metadata: { timezone },
+    });
+    return withClassDefaults(updated);
+  },
+});
+
+export const setUpcomingAnnouncementEventLimit = classMutation({
+  args: {
+    upcomingAnnouncementEventLimit: v.number(),
+  },
+  returns: classValidator,
+  handler: async (ctx, args) => {
+    await rateLimiter.limit(ctx, "classUpdate", { key: ctx.userId, throws: true });
+    await ctx.require("class:update");
+    if (
+      !Number.isInteger(args.upcomingAnnouncementEventLimit) ||
+      args.upcomingAnnouncementEventLimit < MIN_UPCOMING_ANNOUNCEMENT_EVENT_LIMIT ||
+      args.upcomingAnnouncementEventLimit > MAX_UPCOMING_ANNOUNCEMENT_EVENT_LIMIT
+    ) {
+      throw new Error(
+        `Upcoming events must be between ${MIN_UPCOMING_ANNOUNCEMENT_EVENT_LIMIT} and ${MAX_UPCOMING_ANNOUNCEMENT_EVENT_LIMIT}`,
+      );
+    }
+    const upcomingAnnouncementEventLimit = args.upcomingAnnouncementEventLimit;
+    await ctx.db.patch("classes", ctx.classDoc._id, {
+      upcomingAnnouncementEventLimit,
+      updatedAt: Date.now(),
+    });
+    const updated = await ctx.db.get("classes", ctx.classDoc._id);
+    if (!updated) {
+      throw new Error("Failed to update upcoming event limit");
+    }
+    await recordClassActivity(ctx, {
+      classId: ctx.classDoc._id,
+      actorUserId: ctx.userId,
+      action: "update",
+      resourceType: "class",
+      resourceId: ctx.classDoc._id,
+      summary: `Set upcoming announcement events to ${upcomingAnnouncementEventLimit}`,
+      summaryKey: "activitySummary_setUpcomingAnnouncementEventLimit",
+      metadata: { count: String(upcomingAnnouncementEventLimit) },
     });
     return withClassDefaults(updated);
   },

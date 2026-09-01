@@ -8,6 +8,7 @@ import {
   defaultEventFormValues,
   defaultTimedRange,
   endDateTimeFromStart,
+  eventDaysUntil,
   eventStartDateKey,
   formatDateKeyLocalized,
   formatDateKeyMonthDay,
@@ -134,6 +135,56 @@ describe("eventStartDateKey", () => {
     expect(
       eventStartDateKey({ allDay: false, startAt: Date.parse("2026-08-29T15:00:00.000Z") }, "UTC"),
     ).toBe("2026-08-29");
+  });
+});
+
+describe("eventDaysUntil", () => {
+  const tokyoNow = Date.parse("2026-03-01T16:00:00.000Z"); // 2026-03-02 01:00 in Tokyo
+
+  test("returns 0 for an all-day event on the class-local today", () => {
+    expect(
+      eventDaysUntil({ allDay: true, startDateKey: "2026-03-02" }, tokyoNow, "Asia/Tokyo"),
+    ).toBe(0);
+  });
+
+  test("returns 1 for tomorrow in the class time zone", () => {
+    expect(
+      eventDaysUntil({ allDay: true, startDateKey: "2026-03-03" }, tokyoNow, "Asia/Tokyo"),
+    ).toBe(1);
+  });
+
+  test("returns the calendar-day distance for later events", () => {
+    expect(
+      eventDaysUntil({ allDay: true, startDateKey: "2026-03-09" }, tokyoNow, "Asia/Tokyo"),
+    ).toBe(7);
+  });
+
+  test("clamps an ongoing multi-day event to today", () => {
+    expect(
+      eventDaysUntil({ allDay: true, startDateKey: "2026-03-01" }, tokyoNow, "Asia/Tokyo"),
+    ).toBe(0);
+  });
+
+  test("uses the zoned start date for timed events", () => {
+    const startAt = Date.parse("2026-03-02T15:00:00.000Z"); // 2026-03-03 00:00 in Tokyo
+    expect(eventDaysUntil({ allDay: false, startAt }, tokyoNow, "Asia/Tokyo")).toBe(1);
+    expect(eventDaysUntil({ allDay: false, startAt }, tokyoNow, "UTC")).toBe(1);
+  });
+
+  test("treats a same-day timed event as today even before it starts", () => {
+    const nowMs = Date.parse("2026-03-02T08:00:00.000Z");
+    const startAt = Date.parse("2026-03-02T15:00:00.000Z");
+    expect(eventDaysUntil({ allDay: false, startAt }, nowMs, "UTC")).toBe(0);
+  });
+
+  test("uses class time zone, not UTC, for the today boundary", () => {
+    expect(eventDaysUntil({ allDay: true, startDateKey: "2026-03-02" }, tokyoNow, "UTC")).toBe(1);
+    expect(eventDaysUntil({ allDay: true, startDateKey: "2026-03-01" }, tokyoNow, "UTC")).toBe(0);
+  });
+
+  test("returns null when start date data is missing", () => {
+    expect(eventDaysUntil({ allDay: true }, tokyoNow, "Asia/Tokyo")).toBeNull();
+    expect(eventDaysUntil({ allDay: false }, tokyoNow, "Asia/Tokyo")).toBeNull();
   });
 });
 

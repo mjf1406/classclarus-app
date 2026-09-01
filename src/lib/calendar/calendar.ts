@@ -8,6 +8,7 @@ import {
   isValidTimeHm,
   parseDateKey,
 } from "../../../convex/lib/calendar/dateKey";
+import { classNowDateKey } from "../../../convex/lib/calendar/monthGrid";
 import { utcMsToZonedParts } from "../../../convex/lib/calendar/timeZone";
 import {
   coerceEventDescriptionJson,
@@ -29,6 +30,17 @@ export {
 } from "../../../convex/lib/calendar/calendarEventSchema";
 
 export const DEFAULT_EVENT_DURATION_MINUTES = 30;
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+function daysBetweenDateKeys(fromKey: string, toKey: string): number | null {
+  const from = parseDateKey(fromKey);
+  const to = parseDateKey(toKey);
+  if (!from || !to) return null;
+  const fromUtc = Date.UTC(from.year, from.month - 1, from.day);
+  const toUtc = Date.UTC(to.year, to.month - 1, to.day);
+  return Math.round((toUtc - fromUtc) / MS_PER_DAY);
+}
 
 function pad2(value: number): string {
   return String(value).padStart(2, "0");
@@ -85,6 +97,23 @@ export function eventStartDateKey(event: EventStartSource, timeZone: string): st
   if (event.allDay) return event.startDateKey ?? "";
   if (event.startAt === undefined) return "";
   return utcMsToZonedParts(event.startAt, timeZone).dateKey;
+}
+
+/**
+ * Calendar days from class-local today until the event start.
+ * Events that start today or are already in progress count as 0.
+ * Returns null when the event has no usable start date.
+ */
+export function eventDaysUntil(
+  event: EventStartSource,
+  nowMs: number,
+  timeZone: string,
+): number | null {
+  const startKey = eventStartDateKey(event, timeZone);
+  if (!startKey || !isValidDateKey(startKey)) return null;
+  const days = daysBetweenDateKeys(classNowDateKey(nowMs, timeZone), startKey);
+  if (days === null) return null;
+  return Math.max(0, days);
 }
 
 type EventTimeLabelSource = EventStartSource & {

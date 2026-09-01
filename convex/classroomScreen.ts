@@ -26,6 +26,7 @@ import {
 } from "./lib/timetable/sectionItems.js";
 import {
   lessonDateKeyFromSlot,
+  resolveUpcomingAnnouncementEventLimit,
   selectUpcomingLessonEvents,
   upcomingLessonEventValidator,
   type LessonEventSource,
@@ -168,7 +169,11 @@ function classTimeZone(classDoc: Doc<"classes"> | null): string {
 async function loadClassCalendarEvents(
   ctx: QueryCtx | MutationCtx,
   classId: Id<"classes">,
-): Promise<{ timeZone: string; events: Array<LessonEventSource> }> {
+): Promise<{
+  timeZone: string;
+  events: Array<LessonEventSource>;
+  upcomingEventLimit: number;
+}> {
   const classDoc = await ctx.db.get("classes", classId);
   const timeZone = classTimeZone(classDoc);
   // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded calendar list
@@ -176,7 +181,13 @@ async function loadClassCalendarEvents(
     .query("calendarEvents")
     .withIndex("by_classId", (q) => q.eq("classId", classId))
     .collect()) as Array<LessonEventSource>;
-  return { timeZone, events };
+  return {
+    timeZone,
+    events,
+    upcomingEventLimit: resolveUpcomingAnnouncementEventLimit(
+      classDoc?.upcomingAnnouncementEventLimit,
+    ),
+  };
 }
 
 async function loadAgendaResourceNames(
@@ -218,6 +229,7 @@ async function mapLessonDisplay(
   slot: { day: string; startTime?: string; endTime?: string } | undefined,
   timeZone: string,
   events: Array<LessonEventSource>,
+  upcomingEventLimit: number,
 ) {
   const dateKey = slot ? lessonDateKeyFromSlot(lesson.year, lesson.weekNumber, slot.day) : null;
   return {
@@ -239,6 +251,7 @@ async function mapLessonDisplay(
           dateKey,
           timeZone,
           calendarAudienceRolesOrDefault(subject.calendarAudienceRoles),
+          upcomingEventLimit,
         )
       : [],
     timeZone,
@@ -467,10 +480,18 @@ async function loadCurrentLessonSnapshot(
     return { currentLesson: null, currentSlot };
   }
 
-  const { events } = await loadClassCalendarEvents(ctx, classId);
+  const { events, upcomingEventLimit } = await loadClassCalendarEvents(ctx, classId);
   return {
     currentSlot,
-    currentLesson: await mapLessonDisplay(ctx, lessonRow, subject, currentSlot, timeZone, events),
+    currentLesson: await mapLessonDisplay(
+      ctx,
+      lessonRow,
+      subject,
+      currentSlot,
+      timeZone,
+      events,
+      upcomingEventLimit,
+    ),
   };
 }
 
@@ -488,7 +509,7 @@ const screenBundleValidator = v.object({
 type ScreenBundleDto = Infer<typeof screenBundleValidator>;
 
 async function loadTimetableSnapshot(ctx: QueryCtx | MutationCtx, classId: Id<"classes">) {
-  const { timeZone, events } = await loadClassCalendarEvents(ctx, classId);
+  const { timeZone, events, upcomingEventLimit } = await loadClassCalendarEvents(ctx, classId);
   const todayKey = utcMsToZonedParts(Date.now(), timeZone).dateKey;
   const { year, weekNumber } = getIsoWeekYearAndNumberFromDateKey(todayKey);
 
@@ -564,6 +585,7 @@ async function loadTimetableSnapshot(ctx: QueryCtx | MutationCtx, classId: Id<"c
           slotById.get(lesson.slotId),
           timeZone,
           events,
+          upcomingEventLimit,
         );
       }),
     )
@@ -592,8 +614,19 @@ async function mapPushedLesson(
   const subject = await ctx.db.get("timetableSubjects", lesson.subjectId);
   if (!subject) return null;
   const slot = await ctx.db.get("timetableSlots", lesson.slotId);
-  const { timeZone, events } = await loadClassCalendarEvents(ctx, lesson.classId);
-  return await mapLessonDisplay(ctx, lesson, subject, slot ?? undefined, timeZone, events);
+  const { timeZone, events, upcomingEventLimit } = await loadClassCalendarEvents(
+    ctx,
+    lesson.classId,
+  );
+  return await mapLessonDisplay(
+    ctx,
+    lesson,
+    subject,
+    slot ?? undefined,
+    timeZone,
+    events,
+    upcomingEventLimit,
+  );
 }
 
 export const getSettings = classQuery({
