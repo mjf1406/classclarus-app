@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import { DashboardSectionCard } from "@/components/dashboard/DashboardSectionCard";
@@ -8,9 +9,13 @@ import type { Id } from "../../../convex/_generated/dataModel";
 
 type DashboardAnnouncementsCardProps = {
   classId: Id<"classes">;
+  headerAction?: ReactNode;
 };
 
-export function DashboardAnnouncementsCard({ classId }: DashboardAnnouncementsCardProps) {
+export function DashboardAnnouncementsCard({
+  classId,
+  headerAction,
+}: DashboardAnnouncementsCardProps) {
   const { t } = useTranslation("classes");
   const query = useRecentAnnouncements(classId);
   const announcements = query.data ?? [];
@@ -30,6 +35,7 @@ export function DashboardAnnouncementsCard({ classId }: DashboardAnnouncementsCa
       empty={empty}
       emptyTitle={t("dashboardNoAnnouncementsTitle")}
       emptyDescription={t("dashboardNoAnnouncementsDescription")}
+      headerAction={headerAction}
     >
       {announcements.map((announcement) => (
         <Link

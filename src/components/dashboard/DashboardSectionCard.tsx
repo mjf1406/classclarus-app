@@ -23,6 +23,7 @@ type DashboardSectionCardProps = {
   emptyTitle?: string;
   emptyDescription?: string;
   pendingFallback?: ReactNode;
+  headerAction?: ReactNode;
   children: ReactNode;
   className?: string;
 };
@@ -42,6 +43,7 @@ export function DashboardSectionCard({
   emptyTitle,
   emptyDescription,
   pendingFallback,
+  headerAction,
   children,
   className,
 }: DashboardSectionCardProps) {
@@ -50,16 +52,19 @@ export function DashboardSectionCard({
       <CardHeader className="border-b">
         <CardTitle>{title}</CardTitle>
         <CardAction>
-          <Link
-            to={viewAllTo}
-            params={viewAllParams}
-            target={viewAllOpenInNewTab ? "_blank" : undefined}
-            rel={viewAllOpenInNewTab ? "noopener noreferrer" : undefined}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
-          >
-            {viewAllLabel}
-            {viewAllOpenInNewTab ? <ExternalLink className="size-3.5" aria-hidden /> : null}
-          </Link>
+          <div className="flex items-center gap-2">
+            {headerAction}
+            <Link
+              to={viewAllTo}
+              params={viewAllParams}
+              target={viewAllOpenInNewTab ? "_blank" : undefined}
+              rel={viewAllOpenInNewTab ? "noopener noreferrer" : undefined}
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+            >
+              {viewAllLabel}
+              {viewAllOpenInNewTab ? <ExternalLink className="size-3.5" aria-hidden /> : null}
+            </Link>
+          </div>
         </CardAction>
       </CardHeader>
       <CardContent className="flex flex-col gap-3 py-4">

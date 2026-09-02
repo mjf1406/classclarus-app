@@ -17,6 +17,10 @@ export const DASHBOARD_ASSIGNMENT_LIMIT = 5;
 export const DASHBOARD_ASSIGNMENT_OVERDUE_DAYS = 14;
 export const DASHBOARD_ASSIGNMENT_WEEK_DAYS = 7;
 export const DASHBOARD_EVENT_LOOKAHEAD_DAYS = 90;
+export const DASHBOARD_GRADING_LIMIT = 6;
+export const DASHBOARD_THRESHOLD_LIMIT = 6;
+export const DASHBOARD_RAZ_LIMIT = 6;
+export const DASHBOARD_ACTIVITY_LIMIT = 5;
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -133,4 +137,23 @@ export function dashboardAssignmentCounts(
   }
 
   return { dueThisWeek, notHandedIn };
+}
+
+export function findTermForDateKey<T extends { startDateKey: string; endDateKey: string }>(
+  terms: readonly T[],
+  dateKey: string,
+): T | undefined {
+  return terms.find((term) => dateKey >= term.startDateKey && dateKey <= term.endDateKey);
+}
+
+export type LessonPeriodStatus = "past" | "current" | "upcoming";
+
+export function lessonPeriodStatus(
+  startTime: string,
+  endTime: string,
+  nowTimeHm: string,
+): LessonPeriodStatus {
+  if (nowTimeHm < startTime) return "upcoming";
+  if (nowTimeHm < endTime) return "current";
+  return "past";
 }

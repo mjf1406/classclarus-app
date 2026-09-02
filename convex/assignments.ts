@@ -121,6 +121,14 @@ const assignmentListItemValidator = v.object({
   viewerScoreStates: v.optional(v.array(viewerScoreStateValidator)),
 });
 
+const gradingSummaryItemValidator = v.object({
+  _id: v.id("assignments"),
+  name: v.string(),
+  dueDateKey: v.optional(v.string()),
+  handedInCount: v.number(),
+  ungradedCount: v.number(),
+});
+
 const studentLinkValidator = v.object({
   _id: v.id("assignmentStudentLinks"),
   _creationTime: v.number(),
@@ -854,6 +862,78 @@ export const list = classQuery({
       });
     }
     return result;
+  },
+});
+
+/**
+ * Staff dashboard: assignments with at least one handed-in student who is not
+ * graded or excused.
+ */
+export const gradingSummary = classQuery({
+  args: {},
+  returns: v.array(gradingSummaryItemValidator),
+  handler: async (ctx) => {
+    await ctx.require("assignments:manage");
+    const classId = ctx.classDoc._id;
+    const studentIds = await listStudentUserIds(ctx, classId);
+    const studentSet = new Set(studentIds);
+
+    // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded list
+    const docs = await ctx.db
+      .query("assignments")
+      .withIndex("by_classId_updatedAt", (q) => q.eq("classId", classId))
+      .order("desc")
+      .collect();
+
+    const result: Array<{
+      _id: Id<"assignments">;
+      name: string;
+      dueDateKey?: string;
+      handedInCount: number;
+      ungradedCount: number;
+    }> = [];
+
+    for (const doc of docs) {
+      // eslint-disable-next-line @convex-dev/no-collect-in-query -- assignment-scoped links
+      const links = await ctx.db
+        .query("assignmentStudentLinks")
+        .withIndex("by_assignment", (q) => q.eq("assignmentId", doc._id))
+        .collect();
+      const handedInStudentIds = [
+        ...new Set(
+          links
+            .filter((link) => link.handedIn && studentSet.has(link.studentUserId))
+            .map((link) => link.studentUserId),
+        ),
+      ];
+      if (handedInStudentIds.length === 0) continue;
+
+      // eslint-disable-next-line @convex-dev/no-collect-in-query -- assignment-scoped scores
+      const scores = await ctx.db
+        .query("assignmentScores")
+        .withIndex("by_assignment", (q) => q.eq("assignmentId", doc._id))
+        .collect();
+      const gradedByStudent = new Map(
+        scores.map((score) => [score.studentUserId, isAssignmentScoreGraded(score)] as const),
+      );
+      const ungradedCount = handedInStudentIds.filter(
+        (studentUserId) => gradedByStudent.get(studentUserId) !== true,
+      ).length;
+      if (ungradedCount === 0) continue;
+
+      result.push({
+        _id: doc._id,
+        name: doc.name,
+        ...(doc.dueDateKey !== undefined ? { dueDateKey: doc.dueDateKey } : {}),
+        handedInCount: handedInStudentIds.length,
+        ungradedCount,
+      });
+    }
+
+    return result.sort((a, b) => {
+      if (b.ungradedCount !== a.ungradedCount) return b.ungradedCount - a.ungradedCount;
+      return (a.dueDateKey ?? "").localeCompare(b.dueDateKey ?? "");
+    });
   },
 });
 
