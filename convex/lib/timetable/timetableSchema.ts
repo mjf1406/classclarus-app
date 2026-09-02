@@ -13,7 +13,9 @@ import {
 export const MAX_TERM_NAME_LENGTH = 80;
 export const MAX_SUBJECT_NAME_LENGTH = 80;
 export const MAX_LESSON_LINKS = 10;
+export const MAX_LESSON_RESOURCES = 20;
 export const MAX_LESSON_URL_LENGTH = 2000;
+export const MAX_RESOURCE_LABEL_LENGTH = 120;
 export const MAX_NOTES_JSON_LENGTH = 50_000;
 
 export const termKindValidator = v.union(
@@ -40,6 +42,18 @@ export type LessonLinkInput = {
   url?: string;
   assignmentId?: Id<"assignments">;
   taskId?: Id<"tasks">;
+};
+
+export const lessonResourceValidator = v.object({
+  key: v.string(),
+  url: v.string(),
+  label: v.optional(v.string()),
+});
+
+export type LessonResourceInput = {
+  key: string;
+  url: string;
+  label?: string;
 };
 
 export const WEEKDAY_NAMES = [
@@ -202,6 +216,59 @@ export function weekBundleVisibleLessonUrl(
   canManageTimetable: boolean,
 ): string | undefined {
   return canManageTimetable || isLessonUrlShared(lesson) ? lesson.lessonUrl : undefined;
+}
+
+export function isLessonResourcesShared(lesson: { resourcesShared?: boolean }): boolean {
+  return lesson.resourcesShared === true;
+}
+
+export function normalizeLessonResources(
+  resources: Array<LessonResourceInput> | undefined,
+): Array<LessonResourceInput> {
+  if (!resources || resources.length === 0) return [];
+  const keys = new Set<string>();
+  const normalized: Array<LessonResourceInput> = [];
+  for (const resource of resources) {
+    const url = resource.url.trim();
+    if (!url) continue;
+    if (url.length > MAX_LESSON_URL_LENGTH) {
+      throw new Error(`URL must be at most ${MAX_LESSON_URL_LENGTH} characters`);
+    }
+    if (!isValidHttpUrl(url)) {
+      throw new Error("Enter a valid http(s) URL");
+    }
+    const key = resource.key.trim();
+    if (!key) throw new Error("Resource key is required");
+    if (keys.has(key)) throw new Error("Duplicate resource key");
+    keys.add(key);
+    const label = resource.label?.trim();
+    if (label && label.length > MAX_RESOURCE_LABEL_LENGTH) {
+      throw new Error(`Label must be at most ${MAX_RESOURCE_LABEL_LENGTH} characters`);
+    }
+    normalized.push({
+      key,
+      url,
+      ...(label ? { label } : {}),
+    });
+  }
+  if (normalized.length > MAX_LESSON_RESOURCES) {
+    throw new Error(`At most ${MAX_LESSON_RESOURCES} resource links are allowed`);
+  }
+  return normalized;
+}
+
+export function classroomVisibleResources<T>(lesson: {
+  resources?: Array<T>;
+  resourcesShared?: boolean;
+}): Array<T> {
+  return isLessonResourcesShared(lesson) ? (lesson.resources ?? []) : [];
+}
+
+export function weekBundleVisibleResources<T>(
+  lesson: { resources?: Array<T>; resourcesShared?: boolean },
+  canManageTimetable: boolean,
+): Array<T> {
+  return canManageTimetable || isLessonResourcesShared(lesson) ? (lesson.resources ?? []) : [];
 }
 
 export async function normalizeLessonLinks(

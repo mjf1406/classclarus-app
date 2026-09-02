@@ -37,7 +37,9 @@ import {
 } from "./lib/timetable/lessonEvents.js";
 import {
   classroomVisibleLessonUrl,
+  classroomVisibleResources,
   getIsoWeekYearAndNumberFromDateKey,
+  lessonResourceValidator,
 } from "./lib/timetable/timetableSchema.js";
 import { findCurrentSlot } from "./lib/classroomScreen/currentLesson.js";
 
@@ -156,6 +158,7 @@ const lessonDisplayValidator = v.object({
   agenda: v.array(agendaDisplayItemValidator),
   upcomingEvents: v.array(upcomingLessonEventValidator),
   lessonUrl: v.optional(v.string()),
+  resources: v.array(lessonResourceValidator),
   timeZone: v.string(),
 });
 
@@ -250,6 +253,7 @@ async function mapLessonDisplay(
     announcements: lesson.announcements ?? [],
     agenda: await loadAgendaResourceNames(ctx, lesson.agenda),
     lessonUrl: classroomVisibleLessonUrl(lesson),
+    resources: classroomVisibleResources(lesson),
     upcomingEvents: dateKey
       ? selectUpcomingLessonEvents(
           events,

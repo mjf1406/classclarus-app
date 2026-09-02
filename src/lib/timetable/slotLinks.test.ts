@@ -88,6 +88,8 @@ describe("buildMirrorLessonOps", () => {
         agenda: [],
         lessonUrl: undefined,
         lessonUrlShared: undefined,
+        resources: undefined,
+        resourcesShared: undefined,
       },
     ]);
   });
@@ -117,6 +119,8 @@ describe("buildMirrorLessonOps", () => {
         agenda: [],
         lessonUrl: "https://docs.google.com/presentation/d/abc",
         lessonUrlShared: true,
+        resources: undefined,
+        resourcesShared: undefined,
       },
     ]);
   });

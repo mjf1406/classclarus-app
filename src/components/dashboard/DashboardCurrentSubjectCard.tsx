@@ -42,7 +42,7 @@ type DashboardCurrentSubjectCardProps = {
   studentUserId: Id<"users"> | null;
 };
 
-type SubjectTab = "agenda" | "materials";
+type SubjectTab = "agenda" | "materials" | "resources";
 
 export function DashboardCurrentSubjectCard({
   classId,
@@ -156,12 +156,15 @@ export function DashboardCurrentSubjectCard({
             <Tabs
               value={tab}
               onValueChange={(value) => {
-                if (value === "agenda" || value === "materials") setTab(value);
+                if (value === "agenda" || value === "materials" || value === "resources") {
+                  setTab(value);
+                }
               }}
             >
               <TabsList className="w-full">
                 <TabsTrigger value="agenda">{tTimetable("agendaSection")}</TabsTrigger>
                 <TabsTrigger value="materials">{tTimetable("materialsSection")}</TabsTrigger>
+                <TabsTrigger value="resources">{tTimetable("resourcesSection")}</TabsTrigger>
               </TabsList>
               <TabsContent value="agenda" className="min-h-16">
                 <LessonAgendaList
@@ -175,6 +178,9 @@ export function DashboardCurrentSubjectCard({
               </TabsContent>
               <TabsContent value="materials" className="min-h-16">
                 <LessonItemList items={lesson.materials} empty={tTimetable("noMaterials")} />
+              </TabsContent>
+              <TabsContent value="resources" className="min-h-16">
+                <LessonResourceList items={lesson.resources} empty={tTimetable("noResources")} />
               </TabsContent>
             </Tabs>
           </>
@@ -246,6 +252,37 @@ function LessonAgendaList({
               }
             />
           </div>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function LessonResourceList({
+  items,
+  empty,
+}: {
+  items: Array<{ key: string; url: string; label?: string }>;
+  empty: string;
+}) {
+  const visible = items.filter((item) => isValidHttpUrl(item.url));
+  if (visible.length === 0) {
+    return <p className="text-sm text-muted-foreground">{empty}</p>;
+  }
+
+  return (
+    <ol className="flex flex-col gap-1 text-sm">
+      {visible.map((item, index) => (
+        <li key={item.key}>
+          {index + 1}.{" "}
+          <a
+            href={item.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary underline-offset-4 hover:underline"
+          >
+            {item.label?.trim() || item.url}
+          </a>
         </li>
       ))}
     </ol>

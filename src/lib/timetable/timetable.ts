@@ -26,6 +26,12 @@ export type AgendaItemFormValues = SectionItemFormValues & {
   preface?: string;
 };
 
+export type LessonResourceFormValues = {
+  key: string;
+  url: string;
+  label: string;
+};
+
 export const COMPACT_SLOT_MAX_MINUTES = 20;
 export const SLOT_MIN_HEIGHT_REM = 2.75;
 export const PIXELS_PER_MINUTE = 2;
@@ -37,4 +43,8 @@ export function emptySectionItem(key: string): SectionItemFormValues {
 
 export function emptyAgendaItem(key: string): AgendaItemFormValues {
   return { key, text: "", tags: [] };
+}
+
+export function emptyLessonResource(key: string): LessonResourceFormValues {
+  return { key, url: "", label: "" };
 }

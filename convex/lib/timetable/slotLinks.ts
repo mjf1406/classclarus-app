@@ -1,5 +1,6 @@
 import type { Id } from "../../_generated/dataModel.js";
 import type { AgendaItem, SectionItem } from "./sectionItems.js";
+import type { LessonResourceInput } from "./timetableSchema.js";
 
 export type SlotLinkLike = {
   _id: Id<"timetableSlots">;
@@ -18,6 +19,8 @@ export type LessonLinkLike = {
   agenda: Array<AgendaItem>;
   lessonUrl?: string;
   lessonUrlShared?: boolean;
+  resources?: Array<LessonResourceInput>;
+  resourcesShared?: boolean;
 };
 
 export type LessonSectionFields = {
@@ -27,6 +30,8 @@ export type LessonSectionFields = {
   complete: boolean;
   lessonUrl?: string;
   lessonUrlShared?: boolean;
+  resources?: Array<LessonResourceInput>;
+  resourcesShared?: boolean;
 };
 
 export function createLinkGroupId(): string {
@@ -147,6 +152,8 @@ export function buildMirrorLessonOps(
           complete: change.complete,
           lessonUrl: change.lessonUrl,
           lessonUrlShared: change.lessonUrlShared,
+          resources: change.resources,
+          resourcesShared: change.resourcesShared,
         });
       } else {
         ops.push({
@@ -159,6 +166,8 @@ export function buildMirrorLessonOps(
           complete: change.complete,
           lessonUrl: change.lessonUrl,
           lessonUrlShared: change.lessonUrlShared,
+          resources: change.resources,
+          resourcesShared: change.resourcesShared,
         });
       }
     }
@@ -187,6 +196,8 @@ export function buildMirrorLessonOps(
           complete: sourceLesson.complete,
           lessonUrl: sourceLesson.lessonUrl,
           lessonUrlShared: sourceLesson.lessonUrlShared,
+          resources: sourceLesson.resources,
+          resourcesShared: sourceLesson.resourcesShared,
         });
       }
     }
@@ -278,6 +289,8 @@ export function planLinkSlots({
           complete: sourceLesson.complete,
           lessonUrl: sourceLesson.lessonUrl,
           lessonUrlShared: sourceLesson.lessonUrlShared,
+          resources: sourceLesson.resources,
+          resourcesShared: sourceLesson.resourcesShared,
         });
       } else {
         syncOps.push({
@@ -290,6 +303,8 @@ export function planLinkSlots({
           complete: sourceLesson.complete,
           lessonUrl: sourceLesson.lessonUrl,
           lessonUrlShared: sourceLesson.lessonUrlShared,
+          resources: sourceLesson.resources,
+          resourcesShared: sourceLesson.resourcesShared,
         });
       }
     }

@@ -79,6 +79,8 @@ export function useAddLessonToSlot() {
           upcomingEvents: [] as TimetableWeekBundle["lessons"][number]["upcomingEvents"],
           lessonUrl: undefined,
           lessonUrlShared: false,
+          resources: [],
+          resourcesShared: false,
         };
         const withPrimary = { ...old, lessons: [...old.lessons, optimisticLesson] };
         return mirrorLessonsInBundle(withPrimary, args.slotId, args.year, args.weekNumber, {
@@ -152,6 +154,8 @@ export function useRemoveLesson() {
               agenda: lesson.agenda,
               lessonUrl: lesson.lessonUrl,
               lessonUrlShared: lesson.lessonUrlShared,
+              resources: lesson.resources,
+              resourcesShared: lesson.resourcesShared,
             },
           },
         );
@@ -179,6 +183,8 @@ export type UpsertLessonArgs = {
   agenda: Array<AgendaItemFormValues>;
   lessonUrl?: string;
   lessonUrlShared?: boolean;
+  resources?: Array<{ key: string; url: string; label?: string }>;
+  resourcesShared?: boolean;
   lessonId?: Id<"timetableLessons">;
 };
 
@@ -202,6 +208,8 @@ export function useUpsertLesson() {
         agenda: toAgendaItems(args.agenda),
         lessonUrl: args.lessonUrl,
         lessonUrlShared: args.lessonUrlShared === true,
+        resources: args.resources ?? [],
+        resourcesShared: args.resourcesShared === true,
       }),
     queryKeys: (args: UpsertLessonArgs) => [
       ...weekKeys(args.classId, args.termId, args.year, args.weekNumber),
@@ -233,6 +241,8 @@ export function useUpsertLesson() {
               agenda,
               lessonUrl: args.lessonUrl,
               lessonUrlShared: args.lessonUrlShared === true,
+              resources: args.resources ?? [],
+              resourcesShared: args.resourcesShared === true,
               updatedAt: now,
               subject,
             };
@@ -258,6 +268,8 @@ export function useUpsertLesson() {
             agenda,
             lessonUrl: args.lessonUrl,
             lessonUrlShared: args.lessonUrlShared === true,
+            resources: args.resources ?? [],
+            resourcesShared: args.resourcesShared === true,
             createdAt: now,
             updatedAt: now,
             subject,
@@ -289,6 +301,8 @@ export function useUpsertLesson() {
                   agenda: updatedLesson.agenda,
                   lessonUrl: updatedLesson.lessonUrl,
                   lessonUrlShared: updatedLesson.lessonUrlShared,
+                  resources: updatedLesson.resources,
+                  resourcesShared: updatedLesson.resourcesShared,
                 },
               }
             : {
@@ -301,6 +315,8 @@ export function useUpsertLesson() {
                 agenda,
                 lessonUrl: args.lessonUrl,
                 lessonUrlShared: args.lessonUrlShared === true,
+                resources: args.resources ?? [],
+                resourcesShared: args.resourcesShared === true,
               },
         );
       });

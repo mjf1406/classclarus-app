@@ -29,8 +29,11 @@ import {
   normalizeDateRange,
   normalizeDays,
   normalizeHexColor,
+  lessonResourceValidator,
+  normalizeLessonResources,
   normalizeOptionalLessonUrl,
   weekBundleVisibleLessonUrl,
+  weekBundleVisibleResources,
   normalizeSlotTimes,
   normalizeSubjectName,
   normalizeTermName,
@@ -127,6 +130,8 @@ const lessonValidator = v.object({
   agenda: v.array(agendaItemValidator),
   lessonUrl: v.optional(v.string()),
   lessonUrlShared: v.boolean(),
+  resources: v.array(lessonResourceValidator),
+  resourcesShared: v.boolean(),
   createdAt: v.number(),
   updatedAt: v.number(),
   subject: subjectValidator,
@@ -252,6 +257,8 @@ function toLessonLinkLike(lesson: Doc<"timetableLessons">): LessonLinkLike {
     agenda: lesson.agenda ?? [],
     lessonUrl: lesson.lessonUrl,
     lessonUrlShared: lesson.lessonUrlShared === true,
+    resources: lesson.resources ?? [],
+    resourcesShared: lesson.resourcesShared === true,
   };
 }
 
@@ -288,6 +295,8 @@ async function applyMirrorLessonOps(
         agenda: op.agenda,
         lessonUrl: op.lessonUrl,
         lessonUrlShared: op.lessonUrlShared === true,
+        resources: op.resources ?? [],
+        resourcesShared: op.resourcesShared === true,
         createdAt: now,
         updatedAt: now,
       });
@@ -302,6 +311,8 @@ async function applyMirrorLessonOps(
         agenda: op.agenda,
         lessonUrl: op.lessonUrl,
         lessonUrlShared: op.lessonUrlShared === true,
+        resources: op.resources ?? [],
+        resourcesShared: op.resourcesShared === true,
         notesJson: undefined,
         updatedAt: now,
       });
@@ -429,6 +440,8 @@ export const getWeekBundle = classQuery({
           agenda: lesson.agenda ?? [],
           lessonUrl: weekBundleVisibleLessonUrl(lesson, canManageTimetable),
           lessonUrlShared: lesson.lessonUrlShared === true,
+          resources: weekBundleVisibleResources(lesson, canManageTimetable),
+          resourcesShared: lesson.resourcesShared === true,
           createdAt: lesson.createdAt,
           updatedAt: lesson.updatedAt,
           subject,
@@ -991,6 +1004,8 @@ export const upsertLesson = classMutation({
     agenda: v.array(agendaItemValidator),
     lessonUrl: v.optional(v.string()),
     lessonUrlShared: v.optional(v.boolean()),
+    resources: v.optional(v.array(lessonResourceValidator)),
+    resourcesShared: v.optional(v.boolean()),
   },
   returns: v.id("timetableLessons"),
   handler: async (ctx, args) => {
@@ -1004,6 +1019,8 @@ export const upsertLesson = classMutation({
       complete: args.complete,
       lessonUrl: args.lessonUrl ?? "",
       lessonUrlShared: args.lessonUrlShared === true,
+      resources: args.resources ?? [],
+      resourcesShared: args.resourcesShared === true,
       materials: args.materials,
       announcements: args.announcements,
       agenda: args.agenda,
@@ -1016,13 +1033,23 @@ export const upsertLesson = classMutation({
     const agenda = await normalizeAgendaItems(ctx, ctx.classDoc._id, parsed.data.agenda);
     const lessonUrl = normalizeOptionalLessonUrl(parsed.data.lessonUrl);
     const lessonUrlShared = parsed.data.lessonUrlShared;
+    const resources = normalizeLessonResources(parsed.data.resources);
+    const resourcesShared = parsed.data.resourcesShared;
     await upsertClassTags(ctx, ctx.classDoc._id, [
       ...collectItemTags(materials),
       ...collectItemTags(announcements),
       ...collectItemTags(agenda),
     ]);
     const now = Date.now();
-    const sections = { materials, announcements, agenda, lessonUrl, lessonUrlShared };
+    const sections = {
+      materials,
+      announcements,
+      agenda,
+      lessonUrl,
+      lessonUrlShared,
+      resources,
+      resourcesShared,
+    };
 
     // eslint-disable-next-line @convex-dev/no-collect-in-query -- slot-week lessons are few
     const existingRows = await ctx.db
@@ -1037,7 +1064,9 @@ export const upsertLesson = classMutation({
       const contentChanged =
         !lessonSectionsEqual(lessonSectionsFromDoc(existing), sections) ||
         (existing.lessonUrl ?? undefined) !== (lessonUrl ?? undefined) ||
-        (existing.lessonUrlShared === true) !== lessonUrlShared;
+        (existing.lessonUrlShared === true) !== lessonUrlShared ||
+        JSON.stringify(existing.resources ?? []) !== JSON.stringify(resources) ||
+        (existing.resourcesShared === true) !== resourcesShared;
       await ctx.db.patch("timetableLessons", existing._id, {
         complete: args.complete,
         links: [],

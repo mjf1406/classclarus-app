@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { useForm } from "@tanstack/react-form";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Plus, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
@@ -30,22 +30,28 @@ import { useUpsertLesson } from "@/hooks/timetable/useTimetableMutations";
 import { useTimetableTags } from "@/hooks/timetable/useTimetableQueries";
 import { useAuthedQuery } from "@/hooks/useAuthedQuery";
 import { rowFocusTargetProps } from "@/hooks/usePendingRowFocus";
-import { api } from "../../../convex/_generated/api";
-import { isValidTimeZone } from "../../../convex/lib/calendar/timeZone";
-import { isValidHttpUrl } from "../../../convex/lib/timetable/timetableSchema";
-import { GC_TIME } from "@/lib/queryCache";
 import { formatEventTimeLabel } from "@/lib/calendar/calendar";
 import { toIntlLocale } from "@/lib/languages";
+import { randomClientId } from "@/lib/optimistic";
+import { GC_TIME } from "@/lib/queryCache";
+import { api } from "../../../convex/_generated/api";
+import { isValidTimeZone } from "../../../convex/lib/calendar/timeZone";
+import {
+  isValidHttpUrl,
+  MAX_LESSON_RESOURCES,
+} from "../../../convex/lib/timetable/timetableSchema";
 import { agendaItemKind, findAgendaResourceName } from "@/lib/timetable/agendaItems";
 import {
   createClientTimetableLessonFormSchema,
   type TimetableLessonFormValues,
 } from "@/lib/timetable/timetableFormSchema";
-import type {
-  AgendaItemFormValues,
-  SectionItemFormValues,
-  TimetableLesson,
-  TimetableUpcomingEvent,
+import {
+  emptyLessonResource,
+  type AgendaItemFormValues,
+  type LessonResourceFormValues,
+  type SectionItemFormValues,
+  type TimetableLesson,
+  type TimetableUpcomingEvent,
 } from "@/lib/timetable/timetable";
 import type { Id } from "../../../convex/_generated/dataModel";
 
@@ -76,6 +82,12 @@ function valuesFromLesson(lesson: TimetableLesson): TimetableLessonFormValues {
     complete: lesson.complete,
     lessonUrl: lesson.lessonUrl ?? "",
     lessonUrlShared: lesson.lessonUrlShared === true,
+    resources: (lesson.resources ?? []).map((item) => ({
+      key: item.key,
+      url: item.url,
+      label: item.label ?? "",
+    })),
+    resourcesShared: lesson.resourcesShared === true,
     materials: lesson.materials.map((item) => ({ ...item })),
     announcements: lesson.announcements.map((item) => ({ ...item })),
     agenda: lesson.agenda.map((item) => ({ ...item })),
@@ -115,6 +127,8 @@ export function TimetableLessonSheet({
             complete: false,
             lessonUrl: "",
             lessonUrlShared: false,
+            resources: [],
+            resourcesShared: false,
             materials: [],
             announcements: [],
             agenda: [],
@@ -161,6 +175,14 @@ export function TimetableLessonSheet({
           ),
           lessonUrl: parsed.data.lessonUrl.trim() || undefined,
           lessonUrlShared: parsed.data.lessonUrlShared,
+          resources: parsed.data.resources
+            .filter((item) => item.url.trim().length > 0)
+            .map((item) => ({
+              key: item.key,
+              url: item.url.trim(),
+              ...(item.label.trim() ? { label: item.label.trim() } : {}),
+            })),
+          resourcesShared: parsed.data.resourcesShared,
           lessonId: lesson._id,
         });
       } catch (error) {
@@ -219,16 +241,19 @@ export function TimetableLessonSheet({
                   <Field data-invalid={error ? true : undefined}>
                     <FieldLabel htmlFor="lesson-url">{t("lessonUrl")}</FieldLabel>
                     {canManage ? (
-                      <Input
-                        id="lesson-url"
-                        type="url"
-                        inputMode="url"
-                        value={field.state.value}
-                        onBlur={field.handleBlur}
-                        onChange={(event) => field.handleChange(event.target.value)}
-                        placeholder={t("lessonUrlPlaceholder")}
-                        aria-invalid={error ? true : undefined}
-                      />
+                      <div className="flex items-center gap-2">
+                        <Input
+                          id="lesson-url"
+                          type="url"
+                          inputMode="url"
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(event) => field.handleChange(event.target.value)}
+                          placeholder={t("lessonUrlPlaceholder")}
+                          aria-invalid={error ? true : undefined}
+                        />
+                        <OpenUrlIconButton url={field.state.value} label={t("openLinkInNewTab")} />
+                      </div>
                     ) : safeLessonUrl ? (
                       <a
                         href={safeLessonUrl}
@@ -268,6 +293,51 @@ export function TimetableLessonSheet({
                       </form.Field>
                     ) : null}
                   </Field>
+                );
+              }}
+            </form.Field>
+
+            <form.Field name="resources">
+              {(field) => {
+                const error = fieldErrorMessage(field.state.meta.errors);
+                return (
+                  <section className="flex flex-col gap-2">
+                    <h3 className="font-medium">{t("resourcesSection")}</h3>
+                    {canManage ? (
+                      <>
+                        <ResourceLinksEditor
+                          items={field.state.value}
+                          onChange={field.handleChange}
+                          onBlur={field.handleBlur}
+                          invalid={Boolean(error)}
+                        />
+                        {error ? <FieldError>{error}</FieldError> : null}
+                        <form.Field name="resourcesShared">
+                          {(shareField) => (
+                            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border px-3 py-3">
+                              <div className="flex min-w-0 flex-col gap-0.5">
+                                <Label htmlFor="lesson-resources-shared">
+                                  {t("resourcesShareLabel")}
+                                </Label>
+                                <p className="text-xs text-muted-foreground">
+                                  {t("resourcesShareHint")}
+                                </p>
+                              </div>
+                              <Switch
+                                id="lesson-resources-shared"
+                                checked={shareField.state.value}
+                                onCheckedChange={(checked) =>
+                                  shareField.handleChange(checked === true)
+                                }
+                              />
+                            </div>
+                          )}
+                        </form.Field>
+                      </>
+                    ) : (
+                      <ReadOnlyResources items={field.state.value} empty={t("noResources")} />
+                    )}
+                  </section>
                 );
               }}
             </form.Field>
@@ -411,6 +481,137 @@ export function TimetableLessonSheet({
         </form>
       </CredenzaContent>
     </Credenza>
+  );
+}
+
+function OpenUrlIconButton({ url, label }: { url: string; label: string }) {
+  const safe = isValidHttpUrl(url.trim());
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="icon"
+      className="shrink-0"
+      disabled={!safe}
+      aria-label={label}
+      onClick={() => {
+        if (!safe) return;
+        window.open(url.trim(), "_blank", "noopener,noreferrer");
+      }}
+    >
+      <ExternalLink />
+    </Button>
+  );
+}
+
+function ResourceLinksEditor({
+  items,
+  onChange,
+  onBlur,
+  invalid,
+}: {
+  items: Array<LessonResourceFormValues>;
+  onChange: (items: Array<LessonResourceFormValues>) => void;
+  onBlur: () => void;
+  invalid: boolean;
+}) {
+  const { t } = useTranslation("timetable");
+  const canAdd = items.length < MAX_LESSON_RESOURCES;
+
+  return (
+    <div className="flex flex-col gap-2">
+      {items.length > 0 ? (
+        <ol className="flex flex-col gap-2">
+          {items.map((item, index) => (
+            <li key={item.key} className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <Input
+                  type="url"
+                  inputMode="url"
+                  value={item.url}
+                  onBlur={onBlur}
+                  onChange={(event) =>
+                    onChange(
+                      items.map((row, rowIndex) =>
+                        rowIndex === index ? { ...row, url: event.target.value } : row,
+                      ),
+                    )
+                  }
+                  placeholder={t("resourceUrlPlaceholder")}
+                  aria-label={t("resourceUrlPlaceholder")}
+                  aria-invalid={invalid ? true : undefined}
+                />
+                <OpenUrlIconButton url={item.url} label={t("openLinkInNewTab")} />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  className="shrink-0"
+                  onClick={() => onChange(items.filter((_, rowIndex) => rowIndex !== index))}
+                  aria-label={t("removeResource")}
+                >
+                  <Trash2 />
+                </Button>
+              </div>
+              <Input
+                value={item.label}
+                onBlur={onBlur}
+                onChange={(event) =>
+                  onChange(
+                    items.map((row, rowIndex) =>
+                      rowIndex === index ? { ...row, label: event.target.value } : row,
+                    ),
+                  )
+                }
+                placeholder={t("resourceLabelPlaceholder")}
+                aria-label={t("resourceLabelPlaceholder")}
+              />
+            </li>
+          ))}
+        </ol>
+      ) : null}
+      <Button
+        type="button"
+        variant="secondary"
+        size="sm"
+        className="self-start"
+        disabled={!canAdd}
+        onClick={() => onChange([...items, emptyLessonResource(randomClientId())])}
+      >
+        <Plus data-icon="inline-start" />
+        {t("addResourceLink")}
+      </Button>
+    </div>
+  );
+}
+
+function ReadOnlyResources({
+  items,
+  empty,
+}: {
+  items: Array<LessonResourceFormValues>;
+  empty: string;
+}) {
+  const visible = items.filter((item) => isValidHttpUrl(item.url.trim()));
+  if (visible.length === 0) {
+    return <p className="text-sm text-muted-foreground">{empty}</p>;
+  }
+  return (
+    <ol className="flex flex-col gap-2">
+      {visible.map((item, index) => (
+        <li key={item.key} className="text-sm">
+          <span className="text-muted-foreground">{index + 1}. </span>
+          <a
+            href={item.url.trim()}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary underline-offset-4 hover:underline"
+          >
+            {item.label.trim() || item.url.trim()}
+          </a>
+        </li>
+      ))}
+    </ol>
   );
 }
 

@@ -253,7 +253,8 @@ function LessonChip({
     lesson.announcements.length > 0 ||
     lesson.agenda.length > 0 ||
     lesson.upcomingEvents.length > 0 ||
-    (Boolean(lesson.lessonUrl) && (canManage || lesson.lessonUrlShared === true));
+    (Boolean(lesson.lessonUrl) && (canManage || lesson.lessonUrlShared === true)) ||
+    (lesson.resources.length > 0 && (canManage || lesson.resourcesShared === true));
 
   return (
     <button

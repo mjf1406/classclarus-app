@@ -51,6 +51,8 @@ function lesson(
     agenda: [],
     lessonUrl: undefined,
     lessonUrlShared: false,
+    resources: [],
+    resourcesShared: false,
     createdAt: 1,
     updatedAt: 1,
     subject: subject(),

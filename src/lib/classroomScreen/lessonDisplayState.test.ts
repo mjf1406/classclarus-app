@@ -31,6 +31,7 @@ function makeLesson(
     announcements: [],
     agenda: [],
     upcomingEvents: [],
+    resources: [],
     timeZone: "UTC",
     ...partial,
   };

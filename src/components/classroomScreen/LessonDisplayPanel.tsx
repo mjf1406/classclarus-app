@@ -60,6 +60,7 @@ export function LessonDisplayPanel({
   const headingStyle = { fontSize: `${headingFontSize}px` };
   const sectionHeadingStyle = { fontSize: `${sectionHeadingFontSize}px` };
   const bodyStyle = { fontSize: `${contentFontSize}px` };
+  const visibleResources = lesson?.resources.filter((item) => isValidHttpUrl(item.url)) ?? [];
   const bodyClassName =
     "[&_.announcement-body]:text-[length:inherit] [&_.announcement-body_h2]:text-[1.25em] [&_.announcement-body_h3]:text-[1.1em]";
 
@@ -104,6 +105,28 @@ export function LessonDisplayPanel({
                 <ExternalLink className="h-4 w-4" />
                 {tTimetable("openLessonUrl")}
               </a>
+            ) : null}
+            {visibleResources.length > 0 ? (
+              <div className="flex flex-col gap-2">
+                <h3 className="font-medium" style={sectionHeadingStyle}>
+                  {tTimetable("resourcesSection")}
+                </h3>
+                <ol className="flex flex-col gap-1">
+                  {visibleResources.map((item, index) => (
+                    <li key={item.key}>
+                      {index + 1}.{" "}
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary underline-offset-4 hover:underline"
+                      >
+                        {item.label?.trim() || item.url}
+                      </a>
+                    </li>
+                  ))}
+                </ol>
+              </div>
             ) : null}
             <LessonSection
               title={tTimetable("materialsSection")}

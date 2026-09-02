@@ -33,6 +33,8 @@ function toLessonLinkLike(lesson: TimetableLesson): LessonLinkLike {
     agenda: lesson.agenda,
     lessonUrl: lesson.lessonUrl,
     lessonUrlShared: lesson.lessonUrlShared,
+    resources: lesson.resources,
+    resourcesShared: lesson.resourcesShared,
   };
 }
 
@@ -45,6 +47,8 @@ function applyOpToLesson(
     complete: boolean;
     lessonUrl?: string;
     lessonUrlShared?: boolean;
+    resources?: TimetableLesson["resources"];
+    resourcesShared?: boolean;
   },
   now: number,
 ): TimetableLesson {
@@ -56,6 +60,8 @@ function applyOpToLesson(
     complete: op.complete,
     lessonUrl: op.lessonUrl,
     lessonUrlShared: op.lessonUrlShared === true,
+    resources: op.resources ?? [],
+    resourcesShared: op.resourcesShared === true,
     updatedAt: now,
   };
 }
@@ -97,6 +103,8 @@ export function mirrorLessonsInBundle(
         agenda: op.agenda,
         lessonUrl: op.lessonUrl,
         lessonUrlShared: op.lessonUrlShared === true,
+        resources: op.resources ?? [],
+        resourcesShared: op.resourcesShared === true,
         createdAt: now,
         updatedAt: now,
         subject,
@@ -166,6 +174,8 @@ export function applyOptimisticLinkMembership(
             agenda: op.agenda,
             lessonUrl: op.lessonUrl,
             lessonUrlShared: op.lessonUrlShared === true,
+            resources: op.resources ?? [],
+            resourcesShared: op.resourcesShared === true,
             createdAt: now,
             updatedAt: now,
             subject,

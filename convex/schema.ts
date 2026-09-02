@@ -1374,6 +1374,17 @@ const schema = defineSchema({
     lessonUrl: v.optional(v.string()),
     /** When true, the classroom screen shows the lesson URL to other class roles. */
     lessonUrlShared: v.optional(v.boolean()),
+    resources: v.optional(
+      v.array(
+        v.object({
+          key: v.string(),
+          url: v.string(),
+          label: v.optional(v.string()),
+        }),
+      ),
+    ),
+    /** When true, class members without timetable:manage can see resource links. */
+    resourcesShared: v.optional(v.boolean()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

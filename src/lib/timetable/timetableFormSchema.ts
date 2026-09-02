@@ -74,6 +74,8 @@ export function createClientTimetableLessonFormSchema(t: TFunction<"timetable">)
     tooManyItems: t("validationTooManyItems"),
     lessonUrlInvalid: t("validationLessonUrlInvalid"),
     lessonUrlTooLong: t("validationLessonUrlTooLong"),
+    tooManyResources: t("validationTooManyResources"),
+    resourceLabelTooLong: t("validationResourceLabelTooLong"),
   };
   return createTimetableLessonFormSchema(messages);
 }

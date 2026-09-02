@@ -4,7 +4,9 @@ import { CALENDAR_AUDIENCE_ROLES } from "../calendar/audience.js";
 import { MAX_ITEM_TEXT_LENGTH, MAX_SECTION_ITEMS } from "./sectionItems.js";
 import {
   isValidHttpUrl,
+  MAX_LESSON_RESOURCES,
   MAX_LESSON_URL_LENGTH,
+  MAX_RESOURCE_LABEL_LENGTH,
   MAX_SUBJECT_NAME_LENGTH,
   MAX_TERM_NAME_LENGTH,
   WEEKDAY_NAMES,
@@ -166,6 +168,8 @@ export type TimetableLessonFormMessages = {
   tooManyItems: string;
   lessonUrlInvalid: string;
   lessonUrlTooLong: string;
+  tooManyResources: string;
+  resourceLabelTooLong: string;
 };
 
 export const TIMETABLE_LESSON_FORM_MESSAGES_EN: TimetableLessonFormMessages = {
@@ -173,7 +177,25 @@ export const TIMETABLE_LESSON_FORM_MESSAGES_EN: TimetableLessonFormMessages = {
   tooManyItems: TIMETABLE_SUBJECT_FORM_MESSAGES_EN.tooManyItems,
   lessonUrlInvalid: "Enter a valid http(s) URL",
   lessonUrlTooLong: `URL must be at most ${MAX_LESSON_URL_LENGTH} characters`,
+  tooManyResources: `At most ${MAX_LESSON_RESOURCES} resource links are allowed`,
+  resourceLabelTooLong: `Label must be at most ${MAX_RESOURCE_LABEL_LENGTH} characters`,
 };
+
+const lessonResourceFormSchema = (messages: TimetableLessonFormMessages) =>
+  z.object({
+    key: z.string().min(1),
+    url: z
+      .string()
+      .trim()
+      .max(MAX_LESSON_URL_LENGTH, messages.lessonUrlTooLong)
+      .refine((value) => value.length === 0 || isValidHttpUrl(value), messages.lessonUrlInvalid),
+    label: z
+      .string()
+      .trim()
+      .max(MAX_RESOURCE_LABEL_LENGTH, messages.resourceLabelTooLong)
+      .optional()
+      .default(""),
+  });
 
 export function createTimetableLessonFormSchema(messages: TimetableLessonFormMessages) {
   const subjectMessages: TimetableSubjectFormMessages = {
@@ -189,6 +211,10 @@ export function createTimetableLessonFormSchema(messages: TimetableLessonFormMes
       .trim()
       .max(MAX_LESSON_URL_LENGTH, messages.lessonUrlTooLong)
       .refine((value) => value.length === 0 || isValidHttpUrl(value), messages.lessonUrlInvalid),
+    resourcesShared: z.boolean(),
+    resources: z
+      .array(lessonResourceFormSchema(messages))
+      .max(MAX_LESSON_RESOURCES, messages.tooManyResources),
     materials: z
       .array(sectionItemFormSchema(subjectMessages))
       .max(MAX_SECTION_ITEMS, messages.tooManyItems),

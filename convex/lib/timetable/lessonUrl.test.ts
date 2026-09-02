@@ -15,6 +15,8 @@ const schema = createTimetableLessonFormSchema(TIMETABLE_LESSON_FORM_MESSAGES_EN
 const emptyLesson = {
   complete: false,
   lessonUrlShared: false,
+  resources: [],
+  resourcesShared: false,
   materials: [],
   announcements: [],
   agenda: [],
