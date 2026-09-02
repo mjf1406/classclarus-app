@@ -120,3 +120,115 @@ export async function loadWorksheetImageMeta(
     size: file.size,
   };
 }
+
+export const attachmentMetaValidator = v.object({
+  fileId: v.id("files"),
+  name: v.string(),
+  contentType: v.string(),
+  size: v.number(),
+  preset: v.string(),
+});
+
+export const taskAttachmentPublicFields = {
+  attachmentFileIds: v.array(v.id("files")),
+  attachments: v.array(attachmentMetaValidator),
+};
+
+export type AttachmentMeta = {
+  fileId: Id<"files">;
+  name: string;
+  contentType: string;
+  size: number;
+  preset: string;
+};
+
+/** Prefer `attachmentFileIds`; fall back to a legacy worksheet image. */
+export function resolveTaskAttachmentFileIds(task: {
+  attachmentFileIds?: Array<Id<"files">>;
+  worksheetImageFileId?: Id<"files">;
+}): Array<Id<"files">> {
+  if (task.attachmentFileIds !== undefined && task.attachmentFileIds.length > 0) {
+    return task.attachmentFileIds;
+  }
+  if (task.worksheetImageFileId !== undefined) {
+    return [task.worksheetImageFileId];
+  }
+  return [];
+}
+
+export function normalizeAttachmentFileIds(
+  fileIds: Array<Id<"files">>,
+  max: number,
+): Array<Id<"files">> {
+  const unique = [...new Set(fileIds)];
+  if (unique.length > max) {
+    throw new Error(`At most ${max} attachments allowed`);
+  }
+  return unique;
+}
+
+export async function requireClassAttachmentFiles(
+  ctx: MutationCtx,
+  classId: Id<"classes">,
+  fileIds: Array<Id<"files">>,
+): Promise<void> {
+  for (const fileId of fileIds) {
+    const file = await ctx.db.get("files", fileId);
+    if (!file || file.classId !== classId) {
+      throw new Error("File not found or access denied");
+    }
+    if (file.preset !== "images" && file.preset !== "documents") {
+      throw new Error("Attachments must be images or documents");
+    }
+  }
+}
+
+export async function loadAttachmentMeta(
+  ctx: QueryCtx | MutationCtx,
+  fileIds: Array<Id<"files">>,
+): Promise<Array<AttachmentMeta>> {
+  const attachments: Array<AttachmentMeta> = [];
+  for (const fileId of fileIds) {
+    const file = await ctx.db.get("files", fileId);
+    if (!file) continue;
+    attachments.push({
+      fileId: file._id,
+      name: file.name,
+      contentType: file.contentType,
+      size: file.size,
+      preset: file.preset,
+    });
+  }
+  return attachments;
+}
+
+/**
+ * Remove `fileId` from task attachment lists (and a leftover worksheet image).
+ * Classroom-bounded via `classId`.
+ */
+export async function clearTaskAttachmentsIfReferencesFile(
+  ctx: MutationCtx,
+  fileId: Id<"files">,
+  classId: Id<"classes"> | undefined,
+): Promise<void> {
+  if (classId === undefined) {
+    return;
+  }
+  // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded
+  const tasks = await ctx.db
+    .query("tasks")
+    .withIndex("by_classId", (q) => q.eq("classId", classId))
+    .collect();
+  for (const task of tasks) {
+    const ids = task.attachmentFileIds ?? [];
+    const nextIds = ids.filter((id) => id !== fileId);
+    const clearWorksheet = task.worksheetImageFileId === fileId;
+    if (nextIds.length === ids.length && !clearWorksheet) {
+      continue;
+    }
+    await ctx.db.patch("tasks", task._id, {
+      ...(nextIds.length !== ids.length ? { attachmentFileIds: nextIds } : {}),
+      ...(clearWorksheet ? { worksheetImageFileId: undefined } : {}),
+    });
+  }
+}

@@ -9,7 +9,7 @@ import { StudentGridSortMenu } from "@/components/students/StudentGridSortMenu";
 import { TaskCompletionGroupStats } from "@/components/tasks/TaskCompletionGroupStats";
 import { TaskCompletionStatusBadge } from "@/components/tasks/TaskCompletionStatusBadge";
 import { TaskFormCredenza } from "@/components/tasks/TaskFormCredenza";
-import { WorksheetImagePreview } from "@/components/upload/WorksheetImagePreview";
+import { AttachmentList } from "@/components/upload/AttachmentList";
 import {
   TASK_STUDENT_GRID_CLASS,
   TaskStudentCompletionCard,
@@ -385,7 +385,7 @@ function StaffTaskDetailPage({ classId, taskId }: TaskDetailPageProps) {
                 name: values.name,
                 description: values.description,
                 dueDateKey: values.dueDateKey,
-                worksheetImageFileId: values.worksheetImageFileId,
+                attachmentFileIds: values.attachmentFileIds,
               });
             }}
           />
@@ -433,7 +433,7 @@ function StaffTaskHeader({
 
   return (
     <div className="flex flex-wrap items-start justify-between gap-3">
-      <div className="flex min-w-0 flex-col gap-2">
+      <div className="flex min-w-0 flex-1 flex-col gap-2">
         <TaskDetailBackLink classId={classId} />
         <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{task.name}</h1>
         {archived || allDone ? (
@@ -445,17 +445,7 @@ function StaffTaskHeader({
         {task.description ? (
           <p className="text-muted-foreground whitespace-pre-wrap">{task.description}</p>
         ) : null}
-        {task.worksheetImageFileId ? (
-          <WorksheetImagePreview
-            fileId={task.worksheetImageFileId}
-            alt={t("worksheetImagePreviewAlt")}
-            downloadLabel={t("worksheetImageDownload")}
-            expandLabel={t("worksheetImageExpand")}
-            title={t("worksheetImageLabel")}
-            hint={t("worksheetImageEnlargeHint")}
-            fileName={task.worksheetImage?.name}
-          />
-        ) : null}
+        {task.attachments.length > 0 ? <AttachmentList attachments={task.attachments} /> : null}
         {task.assignmentId && task.assignmentName ? (
           <p className="text-sm">
             <Link
@@ -559,17 +549,7 @@ function PersonalTaskDetailContent({
         {task.description ? (
           <p className="text-muted-foreground whitespace-pre-wrap">{task.description}</p>
         ) : null}
-        {task.worksheetImageFileId ? (
-          <WorksheetImagePreview
-            fileId={task.worksheetImageFileId}
-            alt={t("worksheetImagePreviewAlt")}
-            expandLabel={t("worksheetImageExpand")}
-            title={t("worksheetImageLabel")}
-            hint={t("worksheetImageEnlargeHint")}
-            fileName={task.worksheetImage?.name}
-            canDownload={false}
-          />
-        ) : null}
+        {task.attachments.length > 0 ? <AttachmentList attachments={task.attachments} /> : null}
         {task.assignmentId && task.assignmentName ? (
           <p className="text-sm">
             <Link

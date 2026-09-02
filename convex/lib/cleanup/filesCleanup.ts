@@ -1,8 +1,11 @@
 import type { Id } from "../../_generated/dataModel.js";
 import type { MutationCtx } from "../../_generated/server.js";
-import { clearWorksheetImagesIfReferencesFile } from "../files/classFileRefs.js";
+import {
+  clearTaskAttachmentsIfReferencesFile,
+  clearWorksheetImagesIfReferencesFile,
+} from "../files/classFileRefs.js";
 
-export { clearWorksheetImagesIfReferencesFile };
+export { clearTaskAttachmentsIfReferencesFile, clearWorksheetImagesIfReferencesFile };
 
 /**
  * If `fileId` is the class banner, clear `bannerFileId`.

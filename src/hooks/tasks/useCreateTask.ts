@@ -15,7 +15,7 @@ type CreateTaskArgs = {
   name: string;
   description?: string;
   dueDateKey?: string;
-  worksheetImageFileId?: Id<"files">;
+  attachmentFileIds?: Array<Id<"files">>;
 };
 
 export function useCreateTask() {
@@ -30,6 +30,7 @@ export function useCreateTask() {
       const queryKey = tasksListQueryKey(args.classId);
       const now = Date.now();
       const optimisticId = `optimistic:${randomClientId()}` as Id<"tasks">;
+      const attachmentFileIds = args.attachmentFileIds ?? [];
       queryClient.setQueryData<TaskList>(queryKey, (old) => {
         const studentCount = old?.[0]?.studentCount ?? 0;
         const next: TaskList[number] = {
@@ -39,9 +40,14 @@ export function useCreateTask() {
           name: args.name,
           description: args.description,
           dueDateKey: args.dueDateKey,
-          ...(args.worksheetImageFileId !== undefined
-            ? { worksheetImageFileId: args.worksheetImageFileId }
-            : {}),
+          attachmentFileIds,
+          attachments: attachmentFileIds.map((fileId) => ({
+            fileId,
+            name: "",
+            contentType: "application/octet-stream",
+            size: 0,
+            preset: "documents",
+          })),
           createdBy: `optimistic:${randomClientId()}` as Id<"users">,
           createdAt: now,
           updatedAt: now,

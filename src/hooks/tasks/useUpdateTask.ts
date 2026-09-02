@@ -16,8 +16,32 @@ type UpdateTaskArgs = {
   name: string;
   description?: string;
   dueDateKey?: string;
-  worksheetImageFileId?: Id<"files">;
+  attachmentFileIds?: Array<Id<"files">>;
 };
+
+function optimisticAttachments(
+  fileIds: Array<Id<"files">>,
+  existing: Array<{
+    fileId: Id<"files">;
+    name: string;
+    contentType: string;
+    size: number;
+    preset: string;
+  }>,
+) {
+  return fileIds.map((fileId) => {
+    const found = existing.find((item) => item.fileId === fileId);
+    return (
+      found ?? {
+        fileId,
+        name: "",
+        contentType: "application/octet-stream",
+        size: 0,
+        preset: "documents",
+      }
+    );
+  });
+}
 
 export function useUpdateTask() {
   const { t } = useTranslation("tasks");
@@ -37,28 +61,31 @@ export function useUpdateTask() {
 
       queryClient.setQueryData<TaskList>(listKey, (old) => {
         if (!old) return old;
-        return old.map((item) =>
-          item._id === args.taskId
-            ? {
-                ...item,
-                name: args.name,
-                description: args.description,
-                dueDateKey: args.dueDateKey,
-                worksheetImageFileId: args.worksheetImageFileId,
-                updatedAt: now,
-              }
-            : item,
-        );
+        return old.map((item) => {
+          if (item._id !== args.taskId) return item;
+          const attachmentFileIds = args.attachmentFileIds ?? item.attachmentFileIds;
+          return {
+            ...item,
+            name: args.name,
+            description: args.description,
+            dueDateKey: args.dueDateKey,
+            attachmentFileIds,
+            attachments: optimisticAttachments(attachmentFileIds, item.attachments),
+            updatedAt: now,
+          };
+        });
       });
 
       queryClient.setQueryData<TaskDetail | null>(detailKey, (old) => {
         if (!old) return old;
+        const attachmentFileIds = args.attachmentFileIds ?? old.attachmentFileIds;
         return {
           ...old,
           name: args.name,
           description: args.description,
           dueDateKey: args.dueDateKey,
-          worksheetImageFileId: args.worksheetImageFileId,
+          attachmentFileIds,
+          attachments: optimisticAttachments(attachmentFileIds, old.attachments),
           updatedAt: now,
         };
       });

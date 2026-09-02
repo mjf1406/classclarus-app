@@ -596,8 +596,10 @@ const schema = defineSchema({
     dueDateKey: v.optional(v.string()),
     /** Set when this task was created from an assignment procedure step. */
     assignmentId: v.optional(v.id("assignments")),
-    /** Optional teacher-uploaded worksheet image (class library, images preset). */
+    /** @deprecated Use `attachmentFileIds`. Kept during migration of legacy worksheet images. */
     worksheetImageFileId: v.optional(v.id("files")),
+    /** Class-library images and documents (PDF, DOCX, TXT), up to five. */
+    attachmentFileIds: v.optional(v.array(v.id("files"))),
     createdBy: v.id("users"),
     createdAt: v.number(),
     updatedAt: v.number(),

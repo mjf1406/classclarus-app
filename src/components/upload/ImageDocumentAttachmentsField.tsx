@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 
-import { AnnouncementAttachmentList } from "@/components/announcements/AnnouncementAttachmentList";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
+import { AttachmentList } from "@/components/upload/AttachmentList";
 import { FileDropzone } from "@/components/upload/FileDropzone";
 import type { ImageDocumentAttachmentItem } from "@/components/upload/useImageDocumentAttachments";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -30,7 +30,7 @@ export function ImageDocumentAttachmentsField({
     <Field>
       <FieldLabel>{t("attachmentsLabel")}</FieldLabel>
       <FieldDescription>{t("attachmentsDescription", { max })}</FieldDescription>
-      <AnnouncementAttachmentList
+      <AttachmentList
         attachments={items.filter((item) => fileIds.includes(item.fileId))}
         onRemove={onRemove}
         className="mt-2"

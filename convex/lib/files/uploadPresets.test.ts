@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vite-plus/test";
 
+import { APP_CONFIG } from "../../appConfig";
 import {
   detectContentType,
   isEnabledUploadPreset,
@@ -105,6 +106,8 @@ describe("documents upload preset", () => {
     expect(UPLOAD_PRESET_DEFINITIONS.documents.allowedMimeTypes).not.toContain(
       "application/msword",
     );
+    expect(UPLOAD_PRESET_DEFINITIONS.documents.maxSizeBytes).toBe(10 * 1024 * 1024);
+    expect(APP_CONFIG.uploads.maxSizeBytes.documents).toBe(10 * 1024 * 1024);
   });
 
   test("detects PDF magic", () => {

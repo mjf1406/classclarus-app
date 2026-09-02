@@ -9,6 +9,7 @@ import {
   clearAvatarIfReferencesFile,
   clearBannerIfReferencesFile,
   clearGroupOrTeamImagesIfReferencesFile,
+  clearTaskAttachmentsIfReferencesFile,
   clearWorksheetImagesIfReferencesFile,
 } from "./lib/filesCleanup.js";
 import { requireFileOwner } from "./lib/fileAccess.js";
@@ -300,6 +301,7 @@ export const deleteFile = authedMutation({
     await clearBannerIfReferencesFile(ctx, args.fileId, file.classId);
     await clearGroupOrTeamImagesIfReferencesFile(ctx, args.fileId, file.classId);
     await clearWorksheetImagesIfReferencesFile(ctx, args.fileId);
+    await clearTaskAttachmentsIfReferencesFile(ctx, args.fileId, file.classId);
     await clearAvatarIfReferencesFile(ctx, args.fileId, ctx.userId);
     await ctx.storage.delete(file.storageId);
     await ctx.db.delete("files", args.fileId);

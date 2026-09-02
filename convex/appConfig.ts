@@ -56,7 +56,7 @@ export const APP_CONFIG = {
     quotaBytes: 100 * 1024 * 1024,
     maxSizeBytes: {
       images: 2 * 1024 * 1024,
-      documents: 500 * 1024,
+      documents: 10 * 1024 * 1024,
       audio: 5 * 1024 * 1024,
     },
   },

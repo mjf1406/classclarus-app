@@ -81,8 +81,11 @@ export function isTaskPastDue(dueDateKey: string | undefined, now: Date = new Da
   return isPastDue(dueDateKey, now);
 }
 
-export const MAX_TASK_NAME_LENGTH = 100;
-export const MAX_TASK_DESCRIPTION_LENGTH = 500;
+export {
+  MAX_TASK_ATTACHMENTS,
+  MAX_TASK_DESCRIPTION_LENGTH,
+  MAX_TASK_NAME_LENGTH,
+} from "../../../convex/lib/tasks/taskSchema";
 
 export type TaskSortKey = "name" | "created" | "updated";
 export type TaskSortDirection = "asc" | "desc";

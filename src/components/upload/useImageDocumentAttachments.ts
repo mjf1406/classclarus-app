@@ -1,10 +1,10 @@
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import type { AnnouncementAttachmentItem } from "@/components/announcements/AnnouncementAttachmentList";
+import type { AttachmentItem } from "@/components/upload/AttachmentList";
 import type { Id } from "../../../convex/_generated/dataModel";
 
-export type ImageDocumentAttachmentItem = AnnouncementAttachmentItem;
+export type ImageDocumentAttachmentItem = AttachmentItem;
 
 type AttachmentInitial = {
   attachmentFileIds: Array<Id<"files">>;

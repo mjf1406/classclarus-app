@@ -2,6 +2,7 @@ import { Migrations } from "@convex-dev/migrations";
 
 import { components, internal } from "./_generated/api.js";
 import type { DataModel } from "./_generated/dataModel.js";
+import { migrateTaskWorksheetImageFields } from "./lib/tasks/migrateWorksheetImage.js";
 import {
   migrateLessonSections,
   migrateSubjectSections,
@@ -49,3 +50,12 @@ export const runOrphanedAgendaRefMigrations = migrations.runner([
   internal.migrations.migrateOrphanedLessonAgendaRefs,
   internal.migrations.migrateOrphanedSubjectAgendaRefs,
 ]);
+
+export const migrateTaskWorksheetImagesToAttachments = migrations.define({
+  table: "tasks",
+  migrateOne: (_ctx, doc) => migrateTaskWorksheetImageFields(doc),
+});
+
+export const runTaskAttachmentMigrations = migrations.runner(
+  internal.migrations.migrateTaskWorksheetImagesToAttachments,
+);

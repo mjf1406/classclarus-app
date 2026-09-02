@@ -31,6 +31,8 @@ function stubTask(
     completedCount: 0,
     studentCount: 0,
     completedStudentIds: completedStudentIds ?? [],
+    attachmentFileIds: [],
+    attachments: [],
     ...rest,
   };
 }

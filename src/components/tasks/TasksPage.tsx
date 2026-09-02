@@ -234,7 +234,7 @@ export function TasksPage({ classId }: TasksPageProps) {
                 name: values.name,
                 description: values.description,
                 dueDateKey: values.dueDateKey,
-                worksheetImageFileId: values.worksheetImageFileId,
+                attachmentFileIds: values.attachmentFileIds,
               });
             }}
           />
@@ -254,7 +254,7 @@ export function TasksPage({ classId }: TasksPageProps) {
                 name: values.name,
                 description: values.description,
                 dueDateKey: values.dueDateKey,
-                worksheetImageFileId: values.worksheetImageFileId,
+                attachmentFileIds: values.attachmentFileIds,
               });
               setEditing(null);
             }}
