@@ -3,6 +3,8 @@
 export const GC_TIME = {
   /** Default: hot class data. Subscription drops 10s after unmount (Convex docs guidance). */
   realtime: 10_000,
+  /** Minute-bucketed live queries. Keep the last minute's cache while the next key loads. */
+  displayMinute: 60_000,
   /** Tiny read sets that rarely change; cheap to keep subscribed, instant revisits. */
   stable: 60 * 60 * 1000,
   /** Config-like data (Polar products). */

@@ -16,6 +16,7 @@ import {
   type ClassroomDisplayBundle,
   type ClassroomTimer,
 } from "@/hooks/classroomScreen/useClassroomScreenQueries";
+import { GC_TIME } from "@/lib/queryCache";
 import { applyOptimisticTimerCreate } from "@/hooks/classroomScreen/useClassroomScreenMutations";
 
 const classId = "k5760dnm43rwxxy6gseazphqts8bek0s" as Id<"classes">;
@@ -113,6 +114,12 @@ describe("classroomDisplayBundleQueryOptions", () => {
   it("keeps the previous bundle while the minute bucket query key changes", () => {
     const options = classroomDisplayBundleQueryOptions(classId, classroomMinuteBucket());
     expect(options.placeholderData).toBe(keepPreviousData);
+  });
+
+  it("retains the last minute's cache for 60 seconds", () => {
+    const options = classroomDisplayBundleQueryOptions(classId, classroomMinuteBucket());
+    expect(options.gcTime).toBe(GC_TIME.displayMinute);
+    expect(options.gcTime).toBe(60_000);
   });
 });
 

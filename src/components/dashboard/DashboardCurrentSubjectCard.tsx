@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import { AnnouncementBody } from "@/components/announcements/AnnouncementBody";
@@ -15,6 +15,7 @@ import { useAssignments } from "@/hooks/assignments/useAssignments";
 import {
   classroomMinuteBucket,
   useClassroomDisplayBundle,
+  type ClassroomDisplayBundle,
 } from "@/hooks/classroomScreen/useClassroomScreenQueries";
 import { useTasks } from "@/hooks/tasks/useTasks";
 import {
@@ -56,14 +57,23 @@ export function DashboardCurrentSubjectCard({
   const query = useClassroomDisplayBundle(classId, minuteBucket);
   const assignmentsQuery = useAssignments(classId);
   const tasksQuery = useTasks(classId);
-  const bundle = query.data;
+  const lastBundleRef = useRef<{ classId: Id<"classes">; bundle: ClassroomDisplayBundle } | null>(
+    null,
+  );
+  if (query.data) {
+    lastBundleRef.current = { classId, bundle: query.data };
+  }
+  const bundle =
+    query.data ??
+    (lastBundleRef.current?.classId === classId ? lastBundleRef.current.bundle : undefined);
   const [now, setNow] = useState(() => new Date());
   const [tab, setTab] = useState<SubjectTab>("agenda");
 
   useEffect(() => {
     const interval = window.setInterval(() => {
       setNow(new Date());
-      setMinuteBucket(classroomMinuteBucket());
+      const next = classroomMinuteBucket();
+      setMinuteBucket((current) => (current === next ? current : next));
     }, 5_000);
     return () => window.clearInterval(interval);
   }, []);
@@ -83,7 +93,9 @@ export function DashboardCurrentSubjectCard({
   const quickTextTitle =
     bundle?.settings.quickTextTitle?.trim() || tClassroomScreen("statusQuickText");
   const hasPreviewContent = Boolean(lesson) || Boolean(quickText);
-  const empty = !query.isPending && !query.isError && !hasPreviewContent;
+  const showPending = query.isPending && !bundle;
+  const showError = query.isError && !bundle;
+  const empty = !showPending && !showError && !hasPreviewContent;
 
   return (
     <DashboardSectionCard
@@ -92,8 +104,8 @@ export function DashboardCurrentSubjectCard({
       viewAllTo="/class/$classId/classroom-screen"
       viewAllParams={{ classId }}
       viewAllOpenInNewTab
-      isPending={query.isPending}
-      isError={query.isError}
+      isPending={showPending}
+      isError={showError}
       errorTitle={tClasses("dashboardLoadFailed")}
       errorDescription={tClasses("dashboardLoadFailedDescription")}
       onRetry={() => void query.refetch()}
