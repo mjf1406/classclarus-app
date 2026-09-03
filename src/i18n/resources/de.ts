@@ -578,6 +578,9 @@ const de = {
     joining: "Beitritt...",
     joinFailed: "Mit diesem Code konnte nicht beigetreten werden.",
     joinAlreadyMember: "Du bist bereits Mitglied dieser Klasse.",
+    joinAlreadyLinked: "Du bist bereits mit diesem Sch?ler verkn?pft.",
+    joinGuardianLimitReached:
+      "Dieser Sch?ler hat bereits die maximale Anzahl an Erziehungsberechtigten.",
     joinInvalidCode: "Dieser Einladungscode ist ung?ltig oder abgelaufen.",
     joinClassArchived: "Diese Klasse ist archiviert und kann nicht beigetreten werden.",
     joinPasteCode: "Einladungscode einf?gen",
@@ -610,6 +613,7 @@ const de = {
     inviteTtl1d: "1 Tag",
     inviteTtl2d: "2 Tage",
     inviteTtl3d: "3 Tage",
+    inviteTtl7d: "7 Tage",
     inviteUsesLabel: "Nutzungen",
     inviteUsesCustom: "Benutzerdefiniert",
     inviteUsesCustomPlaceholder: "1?1000",
@@ -638,6 +642,27 @@ const de = {
     inviteArchivedHint:
       "Diese Klasse ist archiviert. Codes k?nnen erst nach der Wiederherstellung eingel?st werden.",
     invitePendingCode: "Wird erzeugt?",
+    inviteForStudent: "F?r: {{name}}",
+    printGuardianInvites: "Erziehungsberechtigten-Einladungen drucken",
+    printGuardianInvite: "Erziehungsberechtigten-Einladung drucken",
+    printGuardianInvitesTitle: "Erziehungsberechtigten-Einladungen drucken",
+    printGuardianInvitesDescription:
+      "QR-Codes zum Mitnehmen f?r Erziehungsberechtigte erstellen. Codes laufen innerhalb von 7 Tagen ab.",
+    printGuardianInviteTitle: "Erziehungsberechtigten-Einladung drucken",
+    printGuardianInviteDescription:
+      "Einen QR-Code zum Mitnehmen f?r die Erziehungsberechtigten dieses Sch?lers erstellen. Codes laufen innerhalb von 7 Tagen ab.",
+    guardianInviteLanguageLabel: "Blattsprache",
+    guardianInvitePrintSubmit: "{{count}} Zettel drucken",
+    guardianInvitePrintPending: "Erziehungsberechtigten-Einladungen werden vorbereitet?",
+    guardianInvitePrintSuccess: "Druckdialog ge?ffnet.",
+    guardianInvitePrintFailed: "Erziehungsberechtigten-Einladungen konnten nicht gedruckt werden.",
+    guardianInviteNoStudents: "Keine Sch?ler zum Drucken von Einladungen.",
+    guardianInviteSlipStudent: "Sch?ler",
+    guardianInviteSlipCode: "Einladungscode",
+    guardianInviteSlipExpires: "L?uft ab {{date}}",
+    guardianInviteSlipStep1: "QR-Code scannen oder die Beitrittsseite ?ffnen.",
+    guardianInviteSlipStep2: "Bei Bedarf anmelden.",
+    guardianInviteSlipStep3: "Tippe auf Beitreten. Der Code wird automatisch ausgef?llt.",
     noAssignableRoles: "Sie haben keine Berechtigung, Rollen zuzuweisen.",
     pageTitle: "Meine Klassen",
     pageDescription: "Verwalte deine Klassen",
@@ -1314,6 +1339,10 @@ const de = {
     activitySummary_disabledMemberPermission:
       "Berechtigung {{permission}} f?r Mitglied deaktiviert",
     activitySummary_createdInviteCode: "Einladungscode f?r Rolle {{role}} erstellt",
+    activitySummary_createdGuardianInvites:
+      "{{count}} Einladungscodes f?r Erziehungsberechtigte erstellt",
+    activitySummary_linkedGuardianViaInvite:
+      "Erziehungsberechtigten ?ber Einladung mit Sch?ler verkn?pft",
     activitySummary_revokedInviteCode: "Einladungscode f?r Rolle {{role}} widerrufen",
     activitySummary_joinedClass: "Der Klasse als {{role}} beigetreten",
     activitySummary_viewedClass: "Klasse ?{{name}}? angesehen",

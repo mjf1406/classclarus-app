@@ -8,6 +8,67 @@ import { isSelfHosted } from "../billing/selfHosted.js";
 
 type ClassScope = ReturnType<typeof classScope>;
 
+export const MAX_GUARDIANS_PER_STUDENT = 5;
+
+export async function countGuardiansForStudent(
+  ctx: QueryCtx | MutationCtx,
+  classId: Id<"classes">,
+  studentUserId: Id<"users">,
+): Promise<number> {
+  // eslint-disable-next-line @convex-dev/no-collect-in-query -- per-student links are classroom-bounded
+  const links = await ctx.db
+    .query("guardianStudentLinks")
+    .withIndex("by_class_student", (q) =>
+      q.eq("classId", classId).eq("studentUserId", studentUserId),
+    )
+    .collect();
+  return links.length;
+}
+
+/**
+ * Link a class guardian to a student. No-op if the link already exists.
+ * Throws GUARDIAN_LIMIT_REACHED when the student already has 5 guardians.
+ */
+export async function linkGuardianToStudent(
+  ctx: MutationCtx,
+  args: {
+    classId: Id<"classes">;
+    guardianUserId: Id<"users">;
+    studentUserId: Id<"users">;
+    createdBy: Id<"users">;
+  },
+): Promise<"created" | "existing"> {
+  const existing = await ctx.db
+    .query("guardianStudentLinks")
+    .withIndex("by_class_guardian_student", (q) =>
+      q
+        .eq("classId", args.classId)
+        .eq("guardianUserId", args.guardianUserId)
+        .eq("studentUserId", args.studentUserId),
+    )
+    .unique();
+  if (existing) {
+    return "existing";
+  }
+
+  const count = await countGuardiansForStudent(ctx, args.classId, args.studentUserId);
+  if (count >= MAX_GUARDIANS_PER_STUDENT) {
+    throw new ConvexError({
+      code: "GUARDIAN_LIMIT_REACHED",
+      message: "This student already has the maximum number of guardians",
+    });
+  }
+
+  await ctx.db.insert("guardianStudentLinks", {
+    classId: args.classId,
+    guardianUserId: args.guardianUserId,
+    studentUserId: args.studentUserId,
+    createdAt: Date.now(),
+    createdBy: args.createdBy,
+  });
+  return "created";
+}
+
 export async function getClassRoleForUser(
   ctx: QueryCtx | MutationCtx,
   userId: Id<"users">,

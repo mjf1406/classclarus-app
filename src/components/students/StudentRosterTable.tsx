@@ -1,4 +1,4 @@
-import { CheckIcon, PencilIcon, UserMinusIcon, XIcon } from "lucide-react";
+import { CheckIcon, PencilIcon, PrinterIcon, UserMinusIcon, XIcon } from "lucide-react";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -41,6 +41,7 @@ type StudentRosterTableProps = {
   onSaveRow: (userId: Id<"users">, draft: RosterSaveRowDraft) => void;
   onRemove: (student: StudentRosterEntry) => void;
   onChangeRole: (student: StudentRosterEntry, role: JoinCodeRole) => void;
+  onPrintInvite?: (students: StudentRosterEntry[]) => void;
   currentUserId?: Id<"users">;
 };
 
@@ -56,6 +57,7 @@ export function StudentRosterTable({
   onSaveRow,
   onRemove,
   onChangeRole,
+  onPrintInvite,
   currentUserId,
 }: StudentRosterTableProps) {
   const { t } = useTranslation("classes");
@@ -110,6 +112,19 @@ export function StudentRosterTable({
               {t("rosterEditRow")}
             </Button>
           ) : null}
+          {onPrintInvite ? (
+            <Can permission="guardians:invite">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => onPrintInvite([student])}
+              >
+                <PrinterIcon data-icon="inline-start" />
+                {t("printGuardianInvite")}
+              </Button>
+            </Can>
+          ) : null}
           {showRoleSelect ? (
             <Select
               value="student"
@@ -145,7 +160,7 @@ export function StudentRosterTable({
         </div>
       );
     },
-    [actorRole, currentUserId, onChangeRole, onRemove, t],
+    [actorRole, currentUserId, onChangeRole, onPrintInvite, onRemove, t],
   );
 
   return (

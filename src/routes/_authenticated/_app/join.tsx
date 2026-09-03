@@ -145,6 +145,10 @@ export const Route = createFileRoute("/_authenticated/_app/join")({
         const errCode = codeFromError(submitError);
         if (errCode === "ALREADY_MEMBER") {
           setError(t("joinAlreadyMember"));
+        } else if (errCode === "ALREADY_LINKED") {
+          setError(t("joinAlreadyLinked"));
+        } else if (errCode === "GUARDIAN_LIMIT_REACHED") {
+          setError(t("joinGuardianLimitReached"));
         } else if (errCode === "INVALID_JOIN_CODE") {
           setError(t("joinInvalidCode"));
         } else if (errCode === "CLASS_ARCHIVED") {

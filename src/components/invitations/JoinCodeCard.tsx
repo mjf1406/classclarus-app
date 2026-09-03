@@ -81,6 +81,11 @@ export function JoinCodeCard({ code, classArchived, onRevoke }: JoinCodeCardProp
             ) : null}
           </div>
           <ClassRoleBadge role={code.role} />
+          {code.studentUserId ? (
+            <p className="text-sm text-muted-foreground">
+              {t("inviteForStudent", { name: code.studentDisplayName ?? t("unnamedMember") })}
+            </p>
+          ) : null}
         </div>
         {!pending ? <ActionMenu items={menuItems} label={t("inviteCodeActions")} /> : null}
       </CardHeader>

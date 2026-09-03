@@ -1,4 +1,4 @@
-import { UserMinusIcon } from "lucide-react";
+import { PrinterIcon, UserMinusIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { ClassRoleSelectLabel } from "@/components/badges/ClassRoleBadges";
@@ -39,6 +39,7 @@ type StudentRosterCardProps = {
   nameFormat?: RosterNameFormat;
   onRemove: (student: StudentRosterEntry) => void;
   onChangeRole: (student: StudentRosterEntry, role: JoinCodeRole) => void;
+  onPrintInvite?: (students: StudentRosterEntry[]) => void;
 };
 
 function Field({ label, value }: { label: string; value: string }) {
@@ -58,6 +59,7 @@ export function StudentRosterCard({
   nameFormat = DEFAULT_ROSTER_NAME_FORMAT,
   onRemove,
   onChangeRole,
+  onPrintInvite,
 }: StudentRosterCardProps) {
   const { t } = useTranslation("classes");
   const { role: actorRole } = useClassPermissionsContext();
@@ -146,6 +148,20 @@ export function StudentRosterCard({
               </SelectGroup>
             </SelectContent>
           </Select>
+        ) : null}
+        {onPrintInvite ? (
+          <Can permission="guardians:invite">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={() => onPrintInvite([student])}
+            >
+              <PrinterIcon data-icon="inline-start" />
+              {t("printGuardianInvite")}
+            </Button>
+          </Can>
         ) : null}
         {showRemove && removePermission ? (
           <Can permission={removePermission}>

@@ -199,10 +199,13 @@ const schema = defineSchema({
     maxUses: v.number(),
     useCount: v.number(),
     expirationJobId: v.optional(v.id("_scheduled_functions")),
+    /** Set on per-student guardian invite codes; omitted for class-wide codes. */
+    studentUserId: v.optional(v.id("users")),
   })
     .index("by_code", ["code"])
     .index("by_class", ["classId"])
-    .index("by_creator", ["createdBy"]),
+    .index("by_creator", ["createdBy"])
+    .index("by_class_student", ["classId", "studentUserId"]),
   /**
    * One card-less trial grant per normalized email.
    * Survives account delete/recreate — never re-grant for the same emailKey.

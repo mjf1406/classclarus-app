@@ -23,6 +23,24 @@ export async function deleteJoinCodeById(
   await ctx.db.delete("joinCodes", joinCodeId);
 }
 
+export async function deleteJoinCodesForStudent(
+  ctx: MutationCtx,
+  classId: Id<"classes">,
+  studentUserId: Id<"users">,
+): Promise<void> {
+  // Per-student codes are short-lived and classroom-bounded.
+  // eslint-disable-next-line @convex-dev/no-collect-in-query -- mutation cleanup, not a public query
+  const codes = await ctx.db
+    .query("joinCodes")
+    .withIndex("by_class_student", (q) =>
+      q.eq("classId", classId).eq("studentUserId", studentUserId),
+    )
+    .collect();
+  for (const code of codes) {
+    await deleteJoinCodeById(ctx, code._id);
+  }
+}
+
 export async function deleteJoinCodesForClass(
   ctx: MutationCtx,
   classId: Id<"classes">,

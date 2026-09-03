@@ -4,7 +4,8 @@ export type PrintDocumentKind =
   | "print-seats"
   | "print-table-compact"
   | "print-table-assigner"
-  | "print-groups";
+  | "print-groups"
+  | "print-guardian-invites";
 
 export function escapePrintHtml(value: string): string {
   return value

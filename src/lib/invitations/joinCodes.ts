@@ -4,6 +4,7 @@ import { randomClientId } from "@/lib/optimistic";
 
 export type JoinCodePublic = Omit<Doc<"joinCodes">, "expirationJobId"> & {
   _pending?: boolean;
+  studentDisplayName?: string;
 };
 
 /** Optional Electron LAN origin override for share / display URLs. */

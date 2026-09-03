@@ -2,6 +2,7 @@ import {
   CheckIcon,
   LayoutGridIcon,
   PencilIcon,
+  PrinterIcon,
   SearchIcon,
   TableIcon,
   UsersIcon,
@@ -13,6 +14,7 @@ import { useTranslation } from "react-i18next";
 import { GroupTeamFilterButtons } from "@/components/groups/GroupTeamFilterButtons";
 import { ChangeMemberRoleConfirmDialog } from "@/components/members/ChangeMemberRoleConfirmDialog";
 import { RemoveMemberCredenza } from "@/components/members/RemoveMemberCredenza";
+import { PrintGuardianInvitesCredenza } from "@/components/students/PrintGuardianInvitesCredenza";
 import { RosterNameFormatControls } from "@/components/students/RosterNameFormatControls";
 import { StudentRosterCard } from "@/components/students/StudentRosterCard";
 import { StudentRosterTable } from "@/components/students/StudentRosterTable";
@@ -93,6 +95,7 @@ export function StudentsPage({ classId }: StudentsPageProps) {
   const { can, isPending: permissionsPending } = useCan();
   const canUpdateRoster = !permissionsPending && can("students:update");
   const canUpdateClass = !permissionsPending && can("class:update");
+  const canInviteGuardians = !permissionsPending && can("guardians:invite");
 
   const { data, isPending, isError, refetch, isAuthLoading } = useStudentRoster(classId);
   // Share `classes.get` cache without the access-log side effect from `useClass`.
@@ -147,6 +150,8 @@ export function StudentsPage({ classId }: StudentsPageProps) {
   const [pendingOrderIds, setPendingOrderIds] = useState<Id<"users">[] | null>(null);
   const [memberToRemove, setMemberToRemove] = useState<StudentRosterEntry | null>(null);
   const [removeOpen, setRemoveOpen] = useState(false);
+  const [printStudents, setPrintStudents] = useState<StudentRosterEntry[] | null>(null);
+  const [printOpen, setPrintOpen] = useState(false);
 
   const viewMode: StudentsViewMode = settings?.studentsViewMode ?? "grid";
   const columnOrder = useMemo(
@@ -294,6 +299,11 @@ export function StudentsPage({ classId }: StudentsPageProps) {
     [classId, updateFieldsMutation],
   );
 
+  const handlePrintInvites = useCallback((studentsToPrint: StudentRosterEntry[]) => {
+    setPrintStudents(studentsToPrint);
+    setPrintOpen(true);
+  }, []);
+
   const handleRemoveRequest = useCallback((student: StudentRosterEntry) => {
     setMemberToRemove(student);
     setRemoveOpen(true);
@@ -345,6 +355,19 @@ export function StudentsPage({ classId }: StudentsPageProps) {
         {showLoaded ? (
           <div className="flex flex-col items-stretch gap-2 sm:items-end">
             <div className="flex flex-wrap items-center justify-end gap-2">
+              {canInviteGuardians && students.length > 0 ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={filtered.length === 0}
+                  onClick={() => handlePrintInvites(filtered)}
+                >
+                  <PrinterIcon data-icon="inline-start" />
+                  {t("printGuardianInvites")}
+                </Button>
+              ) : null}
+
               {viewMode === "table" && canUpdateRoster ? (
                 tableEditMode ? (
                   isOrderDirty ? (
@@ -496,6 +519,7 @@ export function StudentsPage({ classId }: StudentsPageProps) {
               nameFormat={nameFormat}
               onRemove={handleRemoveRequest}
               onChangeRole={handleChangeRole}
+              onPrintInvite={canInviteGuardians ? handlePrintInvites : undefined}
             />
           ))}
         </div>
@@ -514,9 +538,18 @@ export function StudentsPage({ classId }: StudentsPageProps) {
           onSaveRow={handleSaveRow}
           onRemove={handleRemoveRequest}
           onChangeRole={handleChangeRole}
+          onPrintInvite={canInviteGuardians ? handlePrintInvites : undefined}
           currentUserId={currentUser?._id}
         />
       ) : null}
+
+      <PrintGuardianInvitesCredenza
+        open={printOpen}
+        onOpenChange={setPrintOpen}
+        classId={classId}
+        students={printStudents ?? []}
+        nameFormat={nameFormat}
+      />
 
       <RemoveMemberCredenza
         key={memberToRemove ? `remove:${memberToRemove.userId}` : "remove"}

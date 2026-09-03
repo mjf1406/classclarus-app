@@ -21,6 +21,8 @@ const STRINGS: Record<string, string> = {
   activitySummary_viewedClass: 'Viewed class "{{name}}"',
   activitySummary_viewedActivityLog: "Viewed activity log",
   activitySummary_exportedGroupsPdf: "Exported groups PDF",
+  activitySummary_createdGuardianInvites: "Created {{count}} guardian invite codes",
+  activitySummary_linkedGuardianViaInvite: "Linked guardian to student via invite",
   activitySummary_removedMember: "Removed member ({{role}})",
   activitySummary_changedMemberRole: "Changed member role from {{fromRole}} to {{toRole}}",
   activitySummary_movedStudentsIntoGroup: 'Moved {{count}} students into group "{{name}}"',
@@ -92,6 +94,12 @@ describe("formatActivitySummary", () => {
     expect(
       formatActivitySummary({ summary: "Changed member role from teacher to student" }, t),
     ).toBe("Changed member role from Teacher to Student");
+    expect(formatActivitySummary({ summary: "Created 12 guardian invite codes" }, t)).toBe(
+      "Created 12 guardian invite codes",
+    );
+    expect(formatActivitySummary({ summary: "Linked guardian to student via invite" }, t)).toBe(
+      "Linked guardian to student via invite",
+    );
     expect(formatActivitySummary({ summary: "Created team “Alpha” in 3 groups" }, t)).toBe(
       'Created team "Alpha" in 3 groups',
     );

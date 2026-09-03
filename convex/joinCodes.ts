@@ -1,5 +1,5 @@
-import type { Doc } from "./_generated/dataModel.js";
-import type { MutationCtx } from "./_generated/server.js";
+import type { Doc, Id } from "./_generated/dataModel.js";
+import type { MutationCtx, QueryCtx } from "./_generated/server.js";
 import { internalMutation } from "./_generated/server.js";
 import {
   JOIN_CODE_INVITE_PERMISSION_BY_ROLE,
@@ -10,9 +10,16 @@ import {
   type JoinCodeRole,
 } from "./lib/authzModel.js";
 import { recordClassActivity } from "./lib/classActivity.js";
+import {
+  countGuardiansForStudent,
+  getClassRoleForUser,
+  linkGuardianToStudent,
+  MAX_GUARDIANS_PER_STUDENT,
+} from "./lib/guardianLinks.js";
 import { deleteJoinCodeById } from "./lib/joinCodesCleanup.js";
 import { authedMutation, classMutation, classQuery } from "./lib/customFunctions.js";
 import { rateLimiter } from "./lib/rateLimiter.js";
+import { formatRosterNameParts, resolveRosterNameFormat } from "./lib/rosterNameFormat.js";
 import { ensureStudentRosterRow } from "./lib/studentRosters.js";
 import { authz } from "./authz.js";
 import { internal } from "./_generated/api.js";
@@ -20,8 +27,10 @@ import { ConvexError, v } from "convex/values";
 
 const CODE_LENGTH = 6;
 const MAX_TTL_MS = 3 * 24 * 60 * 60 * 1000;
+const GUARDIAN_INVITE_MAX_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const MIN_USES = 1;
 const MAX_USES = 100;
+const MAX_GUARDIAN_INVITE_STUDENTS = 200;
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const CODE_GENERATE_ATTEMPTS = 12;
 
@@ -42,6 +51,17 @@ const joinCodeValidator = v.object({
   expiresAt: v.number(),
   maxUses: v.number(),
   useCount: v.number(),
+  studentUserId: v.optional(v.id("users")),
+  studentDisplayName: v.optional(v.string()),
+});
+
+const createdGuardianInviteValidator = v.object({
+  _id: v.id("joinCodes"),
+  code: v.string(),
+  studentUserId: v.id("users"),
+  studentDisplayName: v.optional(v.string()),
+  expiresAt: v.number(),
+  maxUses: v.number(),
 });
 
 function normalizeJoinCode(code: string): string {
@@ -69,6 +89,34 @@ function normalizeTtlMs(ttlMs: number): number {
   return ttlMs;
 }
 
+function normalizeGuardianTtlMs(ttlMs: number): number {
+  if (!Number.isFinite(ttlMs) || ttlMs <= 0 || ttlMs > GUARDIAN_INVITE_MAX_TTL_MS) {
+    throw new Error("Expiry must be between 1 second and 7 days");
+  }
+  return ttlMs;
+}
+
+async function resolveStudentDisplayName(
+  ctx: QueryCtx | MutationCtx,
+  classDoc: Doc<"classes">,
+  studentUserId: Id<"users">,
+): Promise<string | undefined> {
+  const roster = await ctx.db
+    .query("studentRosters")
+    .withIndex("by_classId_userId", (q) =>
+      q.eq("classId", classDoc._id).eq("userId", studentUserId),
+    )
+    .unique();
+  const format = resolveRosterNameFormat({
+    rosterNameOrder: classDoc.rosterNameOrder,
+    rosterNameSpace: classDoc.rosterNameSpace,
+  });
+  const rosterName = formatRosterNameParts(roster?.firstName, roster?.lastName, format);
+  if (rosterName) return rosterName;
+  const user = await ctx.db.get("users", studentUserId);
+  return user?.name ?? user?.email ?? undefined;
+}
+
 function randomCode(): string {
   const bytes = new Uint8Array(CODE_LENGTH);
   crypto.getRandomValues(bytes);
@@ -93,7 +141,7 @@ async function generateUniqueCode(ctx: MutationCtx): Promise<string> {
   throw new Error("Could not generate a unique invite code");
 }
 
-function toPublicJoinCode(doc: Doc<"joinCodes">) {
+function toPublicJoinCode(doc: Doc<"joinCodes">, studentDisplayName?: string) {
   return {
     _id: doc._id,
     _creationTime: doc._creationTime,
@@ -104,6 +152,8 @@ function toPublicJoinCode(doc: Doc<"joinCodes">) {
     expiresAt: doc.expiresAt,
     maxUses: doc.maxUses,
     useCount: doc.useCount,
+    ...(doc.studentUserId !== undefined ? { studentUserId: doc.studentUserId } : {}),
+    ...(studentDisplayName !== undefined ? { studentDisplayName } : {}),
   };
 }
 
@@ -119,10 +169,17 @@ export const listForClass = classQuery({
       .query("joinCodes")
       .withIndex("by_class", (q) => q.eq("classId", ctx.classDoc._id))
       .collect();
-    return codes
+    const live = codes
       .filter((code) => code.useCount < code.maxUses)
-      .map(toPublicJoinCode)
       .sort((a, b) => b._creationTime - a._creationTime);
+    const result = [];
+    for (const code of live) {
+      const studentDisplayName = code.studentUserId
+        ? await resolveStudentDisplayName(ctx, ctx.classDoc, code.studentUserId)
+        : undefined;
+      result.push(toPublicJoinCode(code, studentDisplayName));
+    }
+    return result;
   },
 });
 
@@ -182,6 +239,87 @@ export const create = classMutation({
       metadata: { role: args.role, maxUses: String(maxUses) },
     });
     return toPublicJoinCode(created);
+  },
+});
+
+export const createGuardianInvites = classMutation({
+  args: {
+    studentUserIds: v.array(v.id("users")),
+    ttlMs: v.number(),
+    maxUses: v.number(),
+  },
+  returns: v.array(createdGuardianInviteValidator),
+  handler: async (ctx, args) => {
+    await rateLimiter.limit(ctx, "guardianInviteCreate", { key: ctx.userId, throws: true });
+    await ctx.require("invitations:create");
+    await ctx.require("guardians:invite");
+
+    if (ctx.classDoc.archivedAt !== undefined) {
+      throw new Error("Cannot create invite codes for an archived class");
+    }
+
+    const uniqueStudentIds = [...new Set(args.studentUserIds)];
+    if (uniqueStudentIds.length === 0) {
+      throw new Error("No active students to create codes for");
+    }
+    if (uniqueStudentIds.length > MAX_GUARDIAN_INVITE_STUDENTS) {
+      throw new Error(`Cannot create codes for more than ${MAX_GUARDIAN_INVITE_STUDENTS} students`);
+    }
+
+    for (const studentUserId of uniqueStudentIds) {
+      const role = await getClassRoleForUser(ctx, studentUserId, ctx.scope);
+      if (role !== "student") {
+        throw new Error("Each invite must be for a current student in this class");
+      }
+    }
+
+    const ttlMs = normalizeGuardianTtlMs(args.ttlMs);
+    const maxUses = normalizeMaxUses(args.maxUses);
+    const now = Date.now();
+    const expiresAt = now + ttlMs;
+    const created = [];
+
+    for (const studentUserId of uniqueStudentIds) {
+      const code = await generateUniqueCode(ctx);
+      const joinCodeId = await ctx.db.insert("joinCodes", {
+        code,
+        classId: ctx.classDoc._id,
+        createdBy: ctx.userId,
+        role: "guardian",
+        expiresAt,
+        maxUses,
+        useCount: 0,
+        studentUserId,
+      });
+      const expirationJobId = await ctx.scheduler.runAt(
+        expiresAt,
+        internal.joinCodes.deleteExpired,
+        { joinCodeId },
+      );
+      await ctx.db.patch("joinCodes", joinCodeId, { expirationJobId });
+      const studentDisplayName = await resolveStudentDisplayName(ctx, ctx.classDoc, studentUserId);
+      created.push({
+        _id: joinCodeId,
+        code,
+        studentUserId,
+        ...(studentDisplayName !== undefined ? { studentDisplayName } : {}),
+        expiresAt,
+        maxUses,
+      });
+    }
+
+    await recordClassActivity(ctx, {
+      classId: ctx.classDoc._id,
+      actorUserId: ctx.userId,
+      action: "write",
+      resourceType: "joinCode",
+      resourceId: created[0]!._id,
+      summary: `Created ${created.length} guardian invite codes`,
+      summaryKey: "activitySummary_createdGuardianInvites",
+      metadata: { count: String(created.length) },
+    });
+
+    return created;
   },
 });
 
@@ -272,18 +410,68 @@ export const redeem = authedMutation({
     const existingRole = pickHighestClassRole(
       existingRoles.map((entry: { role: string }) => entry.role).filter(isClassRole),
     );
-    if (existingRole) {
+
+    const studentUserId = codeDoc.studentUserId;
+    const isGuardianStudentInvite = studentUserId !== undefined && codeDoc.role === "guardian";
+
+    if (existingRole && !(isGuardianStudentInvite && existingRole === "guardian")) {
       throw new ConvexError({
         code: "ALREADY_MEMBER",
         message: "You are already a member of this class",
       });
     }
 
-    const role: JoinCodeRole = codeDoc.role;
-    await authz.assignRole(ctx, ctx.userId, role, scope);
+    if (isGuardianStudentInvite) {
+      const studentRole = await getClassRoleForUser(ctx, studentUserId, scope);
+      if (studentRole !== "student") {
+        return await rejectInvalid();
+      }
+      const existingLink = await ctx.db
+        .query("guardianStudentLinks")
+        .withIndex("by_class_guardian_student", (q) =>
+          q
+            .eq("classId", codeDoc.classId)
+            .eq("guardianUserId", ctx.userId)
+            .eq("studentUserId", studentUserId),
+        )
+        .unique();
+      if (existingLink) {
+        throw new ConvexError({
+          code: "ALREADY_LINKED",
+          message: "You are already linked to this student",
+        });
+      }
+      const guardianCount = await countGuardiansForStudent(ctx, codeDoc.classId, studentUserId);
+      if (guardianCount >= MAX_GUARDIANS_PER_STUDENT) {
+        throw new ConvexError({
+          code: "GUARDIAN_LIMIT_REACHED",
+          message: "This student already has the maximum number of guardians",
+        });
+      }
+    }
 
-    if (role === "student") {
-      await ensureStudentRosterRow(ctx, codeDoc.classId, ctx.userId);
+    const role: JoinCodeRole = codeDoc.role;
+    const joinedAsNewMember = existingRole === null;
+    if (joinedAsNewMember) {
+      await authz.assignRole(ctx, ctx.userId, role, scope);
+      if (role === "student") {
+        await ensureStudentRosterRow(ctx, codeDoc.classId, ctx.userId);
+      }
+    }
+
+    if (isGuardianStudentInvite) {
+      const linkResult = await linkGuardianToStudent(ctx, {
+        classId: codeDoc.classId,
+        guardianUserId: ctx.userId,
+        studentUserId,
+        createdBy: ctx.userId,
+      });
+      if (linkResult === "existing") {
+        throw new ConvexError({
+          code: "ALREADY_LINKED",
+          message: "You are already linked to this student",
+        });
+      }
     }
 
     const nextUseCount = codeDoc.useCount + 1;
@@ -293,16 +481,31 @@ export const redeem = authedMutation({
       await ctx.db.patch("joinCodes", codeDoc._id, { useCount: nextUseCount });
     }
 
-    await recordClassActivity(ctx, {
-      classId: codeDoc.classId,
-      actorUserId: ctx.userId,
-      action: "write",
-      resourceType: "member",
-      resourceId: ctx.userId,
-      summary: `Joined class as ${role}`,
-      summaryKey: "activitySummary_joinedClass",
-      metadata: { role, via: "joinCode" },
-    });
+    if (joinedAsNewMember) {
+      await recordClassActivity(ctx, {
+        classId: codeDoc.classId,
+        actorUserId: ctx.userId,
+        action: "write",
+        resourceType: "member",
+        resourceId: ctx.userId,
+        summary: `Joined class as ${role}`,
+        summaryKey: "activitySummary_joinedClass",
+        metadata: { role, via: "joinCode" },
+      });
+    }
+
+    if (isGuardianStudentInvite) {
+      await recordClassActivity(ctx, {
+        classId: codeDoc.classId,
+        actorUserId: ctx.userId,
+        action: "write",
+        resourceType: "guardianLink",
+        resourceId: ctx.userId,
+        summary: "Linked guardian to student via invite",
+        summaryKey: "activitySummary_linkedGuardianViaInvite",
+        metadata: { studentUserId },
+      });
+    }
 
     return { classId: codeDoc.classId, role };
   },

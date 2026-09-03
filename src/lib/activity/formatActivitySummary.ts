@@ -290,6 +290,18 @@ export function resolveActivitySummary(event: ActivitySummaryInput): ResolvedSum
     };
   }
 
+  const createdGuardianInvites = summary.match(/^Created (\d+) guardian invite codes$/);
+  if (createdGuardianInvites) {
+    return {
+      key: "activitySummary_createdGuardianInvites",
+      params: { count: createdGuardianInvites[1] ?? "" },
+    };
+  }
+
+  if (summary === "Linked guardian to student via invite") {
+    return { key: "activitySummary_linkedGuardianViaInvite", params: {} };
+  }
+
   const createdInvite = summary.match(/^Created invite code for role (.+)$/);
   if (createdInvite) {
     return { key: "activitySummary_createdInviteCode", params: { role: createdInvite[1] ?? "" } };

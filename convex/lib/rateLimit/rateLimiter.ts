@@ -14,6 +14,8 @@ const rateLimits = {
   adminResetPassword: { kind: "token bucket" as const, rate: 20, period: HOUR, capacity: 5 },
   adminSeedTestStudents: { kind: "token bucket" as const, rate: 10, period: HOUR, capacity: 3 },
   joinCodeCreate: { kind: "token bucket" as const, rate: 30, period: HOUR, capacity: 5 },
+  /** One charge per bulk print, not per student — a 40-student class is one call. */
+  guardianInviteCreate: { kind: "token bucket" as const, rate: 20, period: HOUR, capacity: 5 },
   joinCodeRevoke: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 10 },
   joinCodeRedeemShort: {
     kind: "token bucket" as const,

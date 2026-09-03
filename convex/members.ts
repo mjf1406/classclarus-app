@@ -31,6 +31,7 @@ import {
   listLinkedStudentsForGuardian,
 } from "./lib/guardianLinks.js";
 import { clearGroupMembershipForStudent } from "./lib/groupsCleanup.js";
+import { deleteJoinCodesForStudent } from "./lib/joinCodesCleanup.js";
 import {
   deleteStudentRosterRow,
   ensureStudentRosterRow,
@@ -299,6 +300,7 @@ export const remove = classMutation({
     if (role === "student") {
       await clearGroupMembershipForStudent(ctx, ctx.classDoc._id, args.userId);
       await deleteStudentRosterRow(ctx, ctx.classDoc._id, args.userId);
+      await deleteJoinCodesForStudent(ctx, ctx.classDoc._id, args.userId);
     }
 
     await authz.offboardUser(ctx, args.userId, {
@@ -458,6 +460,7 @@ export const setRole = classMutation({
     if (fromRole === "student") {
       await clearGroupMembershipForStudent(ctx, ctx.classDoc._id, args.userId);
       await deleteStudentRosterRow(ctx, ctx.classDoc._id, args.userId);
+      await deleteJoinCodesForStudent(ctx, ctx.classDoc._id, args.userId);
     }
 
     // Drop every scoped class membership role so the member keeps a single role.
