@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vite-plus/test";
 
 import {
+  computeStudentsDoneWithAllTasks,
   computeTaskGroupCompletionStats,
   groupTasksByAssignment,
   isTaskPastDue,
@@ -33,6 +34,10 @@ function stubTask(
     completedStudentIds: completedStudentIds ?? [],
     attachmentFileIds: [],
     attachments: [],
+    procedureSteps: [],
+    resources: [],
+    acceptLinkSubmissions: false,
+    hiddenFromStudents: false,
     ...rest,
   };
 }
@@ -325,6 +330,39 @@ describe("task student grid sort", () => {
     expect(sortTaskStudents([a, b], "done", "desc", new Set(["a"])).map((s) => s.userId)).toEqual([
       "a",
       "b",
+    ]);
+  });
+});
+
+describe("computeStudentsDoneWithAllTasks", () => {
+  test("lists students who finished every unarchived task", () => {
+    const tasks = [
+      stubTask({
+        _id: "t1" as Id<"tasks">,
+        name: "One",
+        completedStudentIds: ["a" as Id<"users">, "b" as Id<"users">],
+      }),
+      stubTask({
+        _id: "t2" as Id<"tasks">,
+        name: "Two",
+        completedStudentIds: ["a" as Id<"users">],
+      }),
+      stubTask({
+        _id: "t3" as Id<"tasks">,
+        name: "Archived",
+        archivedAt: 1,
+        completedStudentIds: [],
+      }),
+    ];
+    const result = computeStudentsDoneWithAllTasks(tasks, [
+      { userId: "a" as Id<"users"> },
+      { userId: "b" as Id<"users"> },
+      { userId: "c" as Id<"users"> },
+    ]);
+    expect(result.done).toEqual([{ userId: "a", completed: 2, total: 2 }]);
+    expect(result.remaining).toEqual([
+      { userId: "b", completed: 1, total: 2 },
+      { userId: "c", completed: 0, total: 2 },
     ]);
   });
 });

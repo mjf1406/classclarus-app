@@ -85,7 +85,34 @@ export {
   MAX_TASK_ATTACHMENTS,
   MAX_TASK_DESCRIPTION_LENGTH,
   MAX_TASK_NAME_LENGTH,
+  MAX_TASK_PROCEDURE_STEP_LENGTH,
+  MAX_TASK_PROCEDURE_STEPS,
+  MAX_TASK_RESOURCES,
 } from "../../../convex/lib/tasks/taskSchema";
+
+export function computeStudentsDoneWithAllTasks<
+  T extends { archivedAt?: number; completedStudentIds?: readonly string[] },
+>(
+  tasks: readonly T[],
+  students: ReadonlyArray<{ userId: string }>,
+): {
+  done: Array<{ userId: string; completed: number; total: number }>;
+  remaining: Array<{ userId: string; completed: number; total: number }>;
+} {
+  const active = tasks.filter((task) => task.archivedAt === undefined);
+  const total = active.length;
+  const done: Array<{ userId: string; completed: number; total: number }> = [];
+  const remaining: Array<{ userId: string; completed: number; total: number }> = [];
+  for (const student of students) {
+    const completed = active.filter((task) =>
+      (task.completedStudentIds ?? []).includes(student.userId),
+    ).length;
+    const row = { userId: student.userId, completed, total };
+    if (total > 0 && completed >= total) done.push(row);
+    else remaining.push(row);
+  }
+  return { done, remaining };
+}
 
 export type TaskSortKey = "name" | "created" | "updated";
 export type TaskSortDirection = "asc" | "desc";

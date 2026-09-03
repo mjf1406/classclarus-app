@@ -181,6 +181,7 @@ import type * as lib_raz_razAutoRti from "../lib/raz/razAutoRti.js";
 import type * as lib_raz_razLevels from "../lib/raz/razLevels.js";
 import type * as lib_razAutoRti from "../lib/razAutoRti.js";
 import type * as lib_razLevels from "../lib/razLevels.js";
+import type * as lib_release_scheduledRelease from "../lib/release/scheduledRelease.js";
 import type * as lib_rewards_purchaseLimit from "../lib/rewards/purchaseLimit.js";
 import type * as lib_rewardsCleanup from "../lib/rewardsCleanup.js";
 import type * as lib_roster_avatarUrl from "../lib/roster/avatarUrl.js";
@@ -446,6 +447,7 @@ declare const fullApi: ApiFromModules<{
   "lib/raz/razLevels": typeof lib_raz_razLevels;
   "lib/razAutoRti": typeof lib_razAutoRti;
   "lib/razLevels": typeof lib_razLevels;
+  "lib/release/scheduledRelease": typeof lib_release_scheduledRelease;
   "lib/rewards/purchaseLimit": typeof lib_rewards_purchaseLimit;
   "lib/rewardsCleanup": typeof lib_rewardsCleanup;
   "lib/roster/avatarUrl": typeof lib_roster_avatarUrl;

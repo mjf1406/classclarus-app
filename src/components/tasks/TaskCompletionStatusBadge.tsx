@@ -22,16 +22,12 @@ export function TaskCompletionStatusBadge({
 }: TaskCompletionStatusBadgeProps) {
   const { t } = useTranslation("tasks");
   const tone = completionTone(completed, pastDue);
-  const completionLabel = label ?? (completed ? t("statusDone") : t("statusNotDone"));
-  const showLate = pastDue && !completed;
+  const overdue = pastDue && !completed;
+  const completionLabel =
+    label ?? (completed ? t("statusDone") : overdue ? t("statusOverdue") : t("statusNotDone"));
 
   return (
     <span className={cn("inline-flex flex-wrap items-center gap-2", className)}>
-      {showLate ? (
-        <Badge variant="outline" className={TASK_COMPLETION_BADGE_CLASS.late}>
-          {t("statusLate")}
-        </Badge>
-      ) : null}
       <Badge variant="outline" className={cn("gap-1", TASK_COMPLETION_BADGE_CLASS[tone])}>
         {completed ? <CheckCircle2 className="size-3.5" aria-hidden /> : null}
         {completionLabel}

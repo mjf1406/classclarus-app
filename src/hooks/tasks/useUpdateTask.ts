@@ -17,6 +17,11 @@ type UpdateTaskArgs = {
   description?: string;
   dueDateKey?: string;
   attachmentFileIds?: Array<Id<"files">>;
+  procedureSteps?: Array<{ key: string; body: string }>;
+  resources?: Array<{ key: string; url: string; label?: string }>;
+  acceptLinkSubmissions?: boolean;
+  hiddenFromStudents?: boolean;
+  scheduledReleaseAt?: number;
 };
 
 function optimisticAttachments(
@@ -71,6 +76,11 @@ export function useUpdateTask() {
             dueDateKey: args.dueDateKey,
             attachmentFileIds,
             attachments: optimisticAttachments(attachmentFileIds, item.attachments),
+            procedureSteps: args.procedureSteps ?? item.procedureSteps,
+            resources: args.resources ?? item.resources,
+            acceptLinkSubmissions: args.acceptLinkSubmissions ?? item.acceptLinkSubmissions,
+            hiddenFromStudents: args.hiddenFromStudents ?? item.hiddenFromStudents,
+            scheduledReleaseAt: args.scheduledReleaseAt,
             updatedAt: now,
           };
         });
@@ -86,6 +96,11 @@ export function useUpdateTask() {
           dueDateKey: args.dueDateKey,
           attachmentFileIds,
           attachments: optimisticAttachments(attachmentFileIds, old.attachments),
+          procedureSteps: args.procedureSteps ?? old.procedureSteps,
+          resources: args.resources ?? old.resources,
+          acceptLinkSubmissions: args.acceptLinkSubmissions ?? old.acceptLinkSubmissions,
+          hiddenFromStudents: args.hiddenFromStudents ?? old.hiddenFromStudents,
+          scheduledReleaseAt: args.scheduledReleaseAt,
           updatedAt: now,
         };
       });

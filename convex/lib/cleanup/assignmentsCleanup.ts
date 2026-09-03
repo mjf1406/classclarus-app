@@ -1,5 +1,6 @@
 import type { Id } from "../../_generated/dataModel.js";
 import type { MutationCtx } from "../../_generated/server.js";
+import { cancelScheduledJob } from "../release/scheduledRelease.js";
 import { deleteAssignmentScoresForClass } from "./assignmentScoresCleanup.js";
 
 /** Cascade-delete assignments, student links, and scores for a class. Linked tasks are left intact. */
@@ -24,6 +25,7 @@ export async function deleteAssignmentsForClass(
     .withIndex("by_classId", (q) => q.eq("classId", classId))
     .collect();
   for (const assignment of assignments) {
+    await cancelScheduledJob(ctx, assignment.scheduledReleaseJobId);
     await ctx.db.delete("assignments", assignment._id);
   }
 }

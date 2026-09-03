@@ -1,8 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "@tanstack/react-form";
+import { Plus, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
+import { ReleaseControl } from "@/components/release/ReleaseControl";
+import {
+  ResourceLinksField,
+  type ResourceLinkFormValue,
+} from "@/components/resources/ResourceLinksField";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Credenza,
   CredenzaBody,
@@ -13,27 +20,41 @@ import {
   CredenzaHeader,
   CredenzaTitle,
 } from "@/components/ui/credenza";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ImageDocumentAttachmentsField } from "@/components/upload/ImageDocumentAttachmentsField";
 import { useImageDocumentAttachments } from "@/components/upload/useImageDocumentAttachments";
+import { isSubmitOnModEnter } from "@/lib/announcements/tiptapExtensions";
 import { coerceDueDateKeyForInput, normalizeDueDateKey } from "@/lib/dueDate/dueDateKey";
+import { randomClientId } from "@/lib/optimistic";
+import {
+  msToDatetimeLocal,
+  releaseModeFromDoc,
+  releasePayloadFromForm,
+  type ReleaseMode,
+} from "@/lib/release/release";
 import {
   MAX_TASK_ATTACHMENTS,
   MAX_TASK_DESCRIPTION_LENGTH,
   MAX_TASK_NAME_LENGTH,
+  MAX_TASK_PROCEDURE_STEP_LENGTH,
   type TaskDetail,
   type TaskListItem,
 } from "@/lib/tasks/tasks";
 import { createTaskFormSchema } from "../../../convex/lib/tasks/taskSchema";
 import type { Id } from "../../../convex/_generated/dataModel";
 
-type TaskFormValues = {
+export type TaskFormValues = {
   name: string;
   description?: string;
   dueDateKey?: string;
   attachmentFileIds: Array<Id<"files">>;
+  procedureSteps: Array<{ key: string; body: string }>;
+  resources: Array<{ key: string; url: string; label?: string }>;
+  acceptLinkSubmissions: boolean;
+  hiddenFromStudents: boolean;
+  scheduledReleaseAt?: number;
 };
 
 type TaskFormCredenzaProps = {
@@ -49,6 +70,11 @@ type FormDefaults = {
   name: string;
   description: string;
   dueDateKey: string;
+  procedureSteps: Array<{ key: string; body: string }>;
+  resources: ResourceLinkFormValue[];
+  acceptLinkSubmissions: boolean;
+  releaseMode: ReleaseMode;
+  scheduledReleaseAt: string;
 };
 
 function fieldErrorMessage(errors: unknown): string | undefined {
@@ -60,6 +86,10 @@ function fieldErrorMessage(errors: unknown): string | undefined {
     return typeof message === "string" ? message : undefined;
   }
   return undefined;
+}
+
+function emptyProcedureStep() {
+  return { key: randomClientId(), body: "" };
 }
 
 export function TaskFormCredenza({
@@ -83,14 +113,32 @@ export function TaskFormCredenza({
   const attachmentFileIdsRef = useRef(attachmentFileIds);
   attachmentFileIdsRef.current = attachmentFileIds;
 
-  const defaults = useMemo(
-    (): FormDefaults => ({
+  const defaults = useMemo((): FormDefaults => {
+    const scheduledReleaseAt =
+      initial && "scheduledReleaseAt" in initial && initial.scheduledReleaseAt !== undefined
+        ? msToDatetimeLocal(initial.scheduledReleaseAt)
+        : "";
+    return {
       name: initial?.name ?? "",
       description: initial?.description ?? "",
       dueDateKey: coerceDueDateKeyForInput(initial?.dueDateKey),
-    }),
-    [initial],
-  );
+      procedureSteps:
+        initial && "procedureSteps" in initial
+          ? initial.procedureSteps.map((step) => ({ key: step.key, body: step.body }))
+          : [],
+      resources:
+        initial && "resources" in initial
+          ? initial.resources.map((resource) => ({
+              key: resource.key,
+              url: resource.url,
+              label: resource.label ?? "",
+            }))
+          : [],
+      acceptLinkSubmissions: initial?.acceptLinkSubmissions === true,
+      releaseMode: initial ? releaseModeFromDoc(initial) : "released",
+      scheduledReleaseAt,
+    };
+  }, [initial]);
   const defaultsRef = useRef(defaults);
   defaultsRef.current = defaults;
 
@@ -101,6 +149,12 @@ export function TaskFormCredenza({
         nameTooLong: t("nameTooLong", { max: MAX_TASK_NAME_LENGTH }),
         descriptionTooLong: t("descriptionTooLong", { max: MAX_TASK_DESCRIPTION_LENGTH }),
         attachmentsTooMany: t("attachmentsTooMany", { max: MAX_TASK_ATTACHMENTS }),
+        procedureStepRequired: t("procedureStepRequired"),
+        procedureStepTooLong: t("procedureStepTooLong", { max: MAX_TASK_PROCEDURE_STEP_LENGTH }),
+        procedureStepsTooMany: t("procedureStepsTooMany"),
+        resourceUrlInvalid: t("resourceUrlInvalid"),
+        resourcesTooMany: t("resourcesTooMany"),
+        resourceLabelTooLong: t("resourceLabelTooLong"),
       }),
     [t],
   );
@@ -114,10 +168,18 @@ export function TaskFormCredenza({
           attachmentFileIds: attachmentFileIdsRef.current,
         });
         if (result.success) return undefined;
-        const fieldErrors: Partial<Record<"name" | "description" | "dueDateKey", string>> = {};
+        const fieldErrors: Partial<
+          Record<"name" | "description" | "dueDateKey" | "procedureSteps" | "resources", string>
+        > = {};
         for (const issue of result.error.issues) {
           const key = issue.path[0];
-          if (key === "name" || key === "description" || key === "dueDateKey") {
+          if (
+            key === "name" ||
+            key === "description" ||
+            key === "dueDateKey" ||
+            key === "procedureSteps" ||
+            key === "resources"
+          ) {
             fieldErrors[key] = issue.message;
           }
         }
@@ -133,6 +195,16 @@ export function TaskFormCredenza({
       const description = parsed.description.trim() || undefined;
       const trimmedDue = parsed.dueDateKey.trim();
       const dueDateKey = trimmedDue ? (normalizeDueDateKey(trimmedDue) ?? undefined) : undefined;
+      let release;
+      try {
+        release = releasePayloadFromForm({
+          releaseMode: value.releaseMode,
+          scheduledReleaseAt: value.scheduledReleaseAt,
+        });
+      } catch (error) {
+        setSubmitError(error instanceof Error ? error.message : t("saveFailed"));
+        return;
+      }
       skipNextResetRef.current = true;
       onOpenChange(false);
       try {
@@ -141,6 +213,18 @@ export function TaskFormCredenza({
           description,
           dueDateKey,
           attachmentFileIds: attachmentFileIdsRef.current,
+          procedureSteps: parsed.procedureSteps
+            .map((step) => ({ key: step.key, body: step.body.trim() }))
+            .filter((step) => step.body.length > 0),
+          resources: parsed.resources
+            .map((resource) => ({
+              key: resource.key,
+              url: resource.url.trim(),
+              ...(resource.label.trim() ? { label: resource.label.trim() } : {}),
+            }))
+            .filter((resource) => resource.url.length > 0),
+          acceptLinkSubmissions: value.acceptLinkSubmissions,
+          ...release,
         });
       } catch (error) {
         onOpenChange(true);
@@ -169,14 +253,14 @@ export function TaskFormCredenza({
 
   return (
     <Credenza open={open} onOpenChange={onOpenChange}>
-      <CredenzaContent className="sm:max-w-2xl">
+      <CredenzaContent className="max-h-[90vh] sm:max-w-2xl">
         <CredenzaHeader>
           <CredenzaTitle>{mode === "create" ? t("createTitle") : t("editTitle")}</CredenzaTitle>
           <CredenzaDescription>
             {mode === "create" ? t("createDescription") : t("editDescription")}
           </CredenzaDescription>
         </CredenzaHeader>
-        <CredenzaBody>
+        <CredenzaBody className="max-h-[min(70vh,36rem)] overflow-y-auto">
           <form
             id="task-form"
             className="flex flex-col gap-4"
@@ -221,6 +305,12 @@ export function TaskFormCredenza({
                         value={field.state.value}
                         onBlur={field.handleBlur}
                         onChange={(event) => field.handleChange(event.target.value)}
+                        onKeyDown={(event) => {
+                          if (isSubmitOnModEnter(event)) {
+                            event.preventDefault();
+                            void form.handleSubmit();
+                          }
+                        }}
                         rows={3}
                         aria-invalid={isInvalid || undefined}
                       />
@@ -255,6 +345,60 @@ export function TaskFormCredenza({
                 }}
               </form.Field>
 
+              <form.Field name="procedureSteps" mode="array">
+                {(field) => (
+                  <Field>
+                    <FieldLabel>{t("procedureLabel")}</FieldLabel>
+                    <FieldDescription>{t("procedureDescription")}</FieldDescription>
+                    <div className="flex flex-col gap-3">
+                      {field.state.value.map((step, index) => (
+                        <div key={step.key} className="flex flex-col gap-2 rounded-xl border p-3">
+                          <div className="flex items-center justify-between gap-2">
+                            <FieldLabel>
+                              {t("procedureStepLabel", { number: index + 1 })}
+                            </FieldLabel>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon-sm"
+                              aria-label={t("procedureRemoveStep")}
+                              onClick={() => field.removeValue(index)}
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          </div>
+                          <form.Field name={`procedureSteps[${index}].body`}>
+                            {(bodyField) => (
+                              <Textarea
+                                value={bodyField.state.value}
+                                placeholder={t("procedureStepPlaceholder")}
+                                onChange={(event) => bodyField.handleChange(event.target.value)}
+                                rows={2}
+                              />
+                            )}
+                          </form.Field>
+                        </div>
+                      ))}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-fit"
+                        onClick={() => field.pushValue(emptyProcedureStep())}
+                      >
+                        <Plus className="size-4" />
+                        {t("procedureAddStep")}
+                      </Button>
+                    </div>
+                  </Field>
+                )}
+              </form.Field>
+
+              <form.Field name="resources">
+                {(field) => (
+                  <ResourceLinksField items={field.state.value} onChange={field.handleChange} />
+                )}
+              </form.Field>
+
               <ImageDocumentAttachmentsField
                 classId={classId}
                 max={MAX_TASK_ATTACHMENTS}
@@ -263,6 +407,39 @@ export function TaskFormCredenza({
                 onUploaded={onUploaded}
                 onRemove={onRemove}
               />
+
+              <form.Field name="acceptLinkSubmissions">
+                {(field) => (
+                  <Field>
+                    <FieldLabel>{t("acceptLinkSubmissionsLabel")}</FieldLabel>
+                    <FieldDescription>{t("acceptLinkSubmissionsDescription")}</FieldDescription>
+                    <label className="flex items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={field.state.value}
+                        onCheckedChange={(checked) => field.handleChange(checked === true)}
+                      />
+                      {t("acceptLinkSubmissionsCheckbox")}
+                    </label>
+                  </Field>
+                )}
+              </form.Field>
+
+              <form.Subscribe
+                selector={(state) => ({
+                  releaseMode: state.values.releaseMode,
+                  scheduledReleaseAt: state.values.scheduledReleaseAt,
+                })}
+              >
+                {({ releaseMode, scheduledReleaseAt }) => (
+                  <ReleaseControl
+                    namespace="tasks"
+                    mode={releaseMode}
+                    scheduledReleaseAt={scheduledReleaseAt}
+                    onModeChange={(next) => form.setFieldValue("releaseMode", next)}
+                    onScheduledChange={(next) => form.setFieldValue("scheduledReleaseAt", next)}
+                  />
+                )}
+              </form.Subscribe>
             </FieldGroup>
             {submitError ? <p className="text-sm text-destructive">{submitError}</p> : null}
           </form>

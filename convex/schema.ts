@@ -603,6 +603,35 @@ const schema = defineSchema({
     worksheetImageFileId: v.optional(v.id("files")),
     /** Class-library images and documents (PDF, DOCX, TXT), up to five. */
     attachmentFileIds: v.optional(v.array(v.id("files"))),
+    procedureSteps: v.optional(
+      v.array(
+        v.object({
+          key: v.string(),
+          body: v.string(),
+        }),
+      ),
+    ),
+    resources: v.optional(
+      v.array(
+        v.object({
+          key: v.string(),
+          url: v.string(),
+          label: v.optional(v.string()),
+        }),
+      ),
+    ),
+    /**
+     * When true, students can submit hand-in URLs for this task.
+     * Omitted/undefined means false (opt-in).
+     */
+    acceptLinkSubmissions: v.optional(v.boolean()),
+    /**
+     * When true, students/guardians cannot see this task.
+     * Omitted/undefined means released (legacy rows stay visible).
+     */
+    hiddenFromStudents: v.optional(v.boolean()),
+    scheduledReleaseAt: v.optional(v.number()),
+    scheduledReleaseJobId: v.optional(v.id("_scheduled_functions")),
     createdBy: v.id("users"),
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -624,6 +653,22 @@ const schema = defineSchema({
   })
     .index("by_task_student", ["taskId", "studentUserId"])
     .index("by_task", ["taskId"])
+    .index("by_classId", ["classId"]),
+  /**
+   * Student-owned links for a task. `handedIn` marks which links are submitted.
+   */
+  taskStudentLinks: defineTable({
+    classId: v.id("classes"),
+    taskId: v.id("tasks"),
+    studentUserId: v.id("users"),
+    url: v.string(),
+    label: v.optional(v.string()),
+    handedIn: v.boolean(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_task", ["taskId"])
+    .index("by_task_student", ["taskId", "studentUserId"])
     .index("by_classId", ["classId"]),
   /**
    * Class assignments — teacher-authored work with optional scoring structure,
@@ -688,6 +733,13 @@ const schema = defineSchema({
     acceptLinkSubmissions: v.optional(v.boolean()),
     /** When true, saved scores are visible to students/guardians. */
     scoresReleased: v.optional(v.boolean()),
+    /**
+     * When true, students/guardians cannot see this assignment.
+     * Omitted/undefined means released (legacy rows stay visible).
+     */
+    hiddenFromStudents: v.optional(v.boolean()),
+    scheduledReleaseAt: v.optional(v.number()),
+    scheduledReleaseJobId: v.optional(v.id("_scheduled_functions")),
     /** Optional teacher-uploaded worksheet image (class library, images preset). */
     worksheetImageFileId: v.optional(v.id("files")),
     createdBy: v.id("users"),

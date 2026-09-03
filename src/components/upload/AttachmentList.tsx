@@ -3,6 +3,8 @@ import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ZoomableImage } from "@/components/upload/ZoomableImage";
 import { useFileBytes } from "@/hooks/files/useFileBytes";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
@@ -22,15 +24,37 @@ type AttachmentListProps = {
   onRemove?: (fileId: Id<"files">) => void;
   canDownload?: boolean;
   className?: string;
+  /** Compact image-only thumbs with click-to-zoom (e.g. task cards). */
+  variant?: "list" | "thumbs";
 };
+
+function isImageAttachment(attachment: Pick<AttachmentItem, "preset" | "contentType">): boolean {
+  return attachment.preset === "images" || attachment.contentType.startsWith("image/");
+}
 
 export function AttachmentList({
   attachments,
   onRemove,
   canDownload = true,
   className,
+  variant = "list",
 }: AttachmentListProps) {
   if (attachments.length === 0) return null;
+
+  if (variant === "thumbs") {
+    const images = attachments.filter(isImageAttachment);
+    if (images.length === 0) return null;
+    return (
+      <ul className={cn("flex flex-wrap gap-2", className)}>
+        {images.map((attachment) => (
+          <li key={attachment.fileId}>
+            <AttachmentThumb attachment={attachment} />
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
   return (
     <ul
       className={cn(
@@ -50,6 +74,28 @@ export function AttachmentList({
   );
 }
 
+function AttachmentThumb({ attachment }: { attachment: AttachmentItem }) {
+  const { t } = useTranslation("upload");
+  const needsAuthUrl = attachment.url === undefined;
+  const authed = useFileBytes(needsAuthUrl ? attachment.fileId : undefined);
+  const href = attachment.url ?? authed.url;
+  const name = attachment.name || t("unnamedAttachment");
+
+  return (
+    <div className="relative size-16 overflow-hidden rounded-md bg-muted">
+      {needsAuthUrl && authed.isPending ? (
+        <Skeleton className="size-full rounded-md" />
+      ) : href ? (
+        <ZoomableImage src={href} alt={name} expandLabel={t("expandAttachment")} />
+      ) : (
+        <span className="flex size-full items-center justify-center text-muted-foreground">
+          <ImageIcon className="size-5" />
+        </span>
+      )}
+    </div>
+  );
+}
+
 function AttachmentCard({
   attachment,
   onRemove,
@@ -60,8 +106,9 @@ function AttachmentCard({
   canDownload: boolean;
 }) {
   const { t } = useTranslation("upload");
-  const isImage = attachment.preset === "images" || attachment.contentType.startsWith("image/");
-  const authed = useFileBytes(attachment.url === undefined ? attachment.fileId : undefined);
+  const isImage = isImageAttachment(attachment);
+  const needsAuthUrl = attachment.url === undefined;
+  const authed = useFileBytes(needsAuthUrl ? attachment.fileId : undefined);
   const href = attachment.url ?? authed.url;
   const previewUrl = isImage ? href : null;
   const name = attachment.name || t("unnamedAttachment");
@@ -74,8 +121,10 @@ function AttachmentCard({
         className="h-full flex-row items-center gap-3 overflow-hidden px-(--card-spacing)"
       >
         <div className="relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted">
-          {previewUrl ? (
-            <img src={previewUrl} alt={name} className="size-full object-cover" />
+          {isImage && needsAuthUrl && authed.isPending ? (
+            <Skeleton className="size-full" />
+          ) : previewUrl ? (
+            <ZoomableImage src={previewUrl} alt={name} expandLabel={t("expandAttachment")} />
           ) : (
             <span className="flex size-10 items-center justify-center rounded-lg bg-background/70 text-muted-foreground ring-1 ring-foreground/10">
               {isImage ? <ImageIcon className="size-5" /> : <FileText className="size-5" />}

@@ -50,6 +50,10 @@ export function useCreateAssignment() {
             ? { worksheetImageFileId: args.worksheetImageFileId }
             : {}),
           scoresReleased: false,
+          hiddenFromStudents: args.hiddenFromStudents === true,
+          ...(args.scheduledReleaseAt !== undefined
+            ? { scheduledReleaseAt: args.scheduledReleaseAt }
+            : {}),
           createdBy: `optimistic:${randomClientId()}` as Id<"users">,
           createdAt: now,
           updatedAt: now,

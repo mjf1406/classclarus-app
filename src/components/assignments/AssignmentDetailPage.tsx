@@ -15,6 +15,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Trans, useTranslation } from "react-i18next";
 
 import { AnnouncementBody } from "@/components/announcements/AnnouncementBody";
+import { ReleaseStatusBadges } from "@/components/release/ReleaseControl";
 import { WorksheetImagePreview } from "@/components/upload/WorksheetImagePreview";
 import { AssignmentGradingStatusBadge } from "@/components/assignments/AssignmentGradingStatusBadge";
 import { DataTableSortableHeader } from "@/components/feedback/DataTableSortableHeader";
@@ -43,6 +44,7 @@ import { useAssignments } from "@/hooks/assignments/useAssignments";
 import { useCheckAssignmentLinkAccessibility } from "@/hooks/assignments/useCheckAssignmentLinkAccessibility";
 import { useReleasedAssignmentScore } from "@/hooks/assignments/useReleasedAssignmentScore";
 import { useRemoveAssignment } from "@/hooks/assignments/useRemoveAssignment";
+import { useSetAssignmentReleased } from "@/hooks/assignments/useSetAssignmentReleased";
 import { useRemoveAssignmentLink } from "@/hooks/assignments/useRemoveAssignmentLink";
 import { useSetAssignmentLinkHandedIn } from "@/hooks/assignments/useSetAssignmentLinkHandedIn";
 import { useExpectationValues } from "@/hooks/expectations/useExpectationValues";
@@ -196,6 +198,13 @@ function AssignmentMeta({
           ? t("scoringTotalSummary", { points: assignment.totalPoints ?? 0 })
           : t("scoringSectionSummary", { count: assignment.sections?.length ?? 0 })}
       </p>
+      {assignment.scope === "class" ? (
+        <ReleaseStatusBadges
+          namespace="assignments"
+          hiddenFromStudents={assignment.hiddenFromStudents}
+          scheduledReleaseAt={assignment.scheduledReleaseAt}
+        />
+      ) : null}
     </div>
   );
 }
@@ -539,6 +548,7 @@ function StaffAssignmentDetailPage({ classId, assignmentId }: AssignmentDetailPa
   const { data: settings } = useClassUserSettings(classId);
   const groupTeamFilterState = useGroupTeamFilterState(classId);
   const removeAssignment = useRemoveAssignment();
+  const setReleased = useSetAssignmentReleased();
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   useEnsureStudentRosters(
@@ -786,6 +796,19 @@ function StaffAssignmentDetailPage({ classId, assignmentId }: AssignmentDetailPa
             >
               <Pencil className="size-4" />
               {t("editAction")}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                void setReleased.mutateAsync({
+                  classId,
+                  assignmentId,
+                  released: assignment.hiddenFromStudents === true,
+                });
+              }}
+            >
+              {assignment.hiddenFromStudents ? t("releaseAction") : t("hideAction")}
             </Button>
             <Button type="button" variant="destructive" onClick={() => setDeleteOpen(true)}>
               <Trash2 className="size-4" />

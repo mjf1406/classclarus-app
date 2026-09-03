@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
 import { AssignmentGradingStatusBadge } from "@/components/assignments/AssignmentGradingStatusBadge";
+import { ReleaseStatusBadges } from "@/components/release/ReleaseControl";
 import { ActionMenu, type ActionMenuItem } from "@/components/ui/action-menu";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -174,6 +175,13 @@ export function AssignmentCard({ classId, assignment, onDelete }: AssignmentCard
           </p>
         ) : null}
         <div className="flex flex-wrap gap-1.5">
+          {!personalView ? (
+            <ReleaseStatusBadges
+              namespace="assignments"
+              hiddenFromStudents={assignment.hiddenFromStudents}
+              scheduledReleaseAt={assignment.scheduledReleaseAt}
+            />
+          ) : null}
           {personalView ? (
             <AssignmentGradingStatusBadge status={assignmentGradingStatusForStudent(assignment)} />
           ) : null}

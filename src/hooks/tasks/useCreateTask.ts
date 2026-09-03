@@ -16,6 +16,11 @@ type CreateTaskArgs = {
   description?: string;
   dueDateKey?: string;
   attachmentFileIds?: Array<Id<"files">>;
+  procedureSteps?: Array<{ key: string; body: string }>;
+  resources?: Array<{ key: string; url: string; label?: string }>;
+  acceptLinkSubmissions?: boolean;
+  hiddenFromStudents?: boolean;
+  scheduledReleaseAt?: number;
 };
 
 export function useCreateTask() {
@@ -51,6 +56,13 @@ export function useCreateTask() {
           createdBy: `optimistic:${randomClientId()}` as Id<"users">,
           createdAt: now,
           updatedAt: now,
+          procedureSteps: args.procedureSteps ?? [],
+          resources: args.resources ?? [],
+          acceptLinkSubmissions: args.acceptLinkSubmissions === true,
+          hiddenFromStudents: args.hiddenFromStudents === true,
+          ...(args.scheduledReleaseAt !== undefined
+            ? { scheduledReleaseAt: args.scheduledReleaseAt }
+            : {}),
           completedCount: 0,
           studentCount,
           completedStudentIds: [],

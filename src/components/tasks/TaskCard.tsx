@@ -10,6 +10,8 @@ import {
   completionTone,
 } from "@/components/tasks/taskCompletionTone";
 import { ActionMenu, type ActionMenuItem } from "@/components/ui/action-menu";
+import { ReleaseStatusBadges } from "@/components/release/ReleaseControl";
+import { AttachmentList } from "@/components/upload/AttachmentList";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -149,10 +151,18 @@ export function TaskCard({
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-2 text-sm text-muted-foreground">
+        <AttachmentList attachments={task.attachments} variant="thumbs" canDownload={false} />
         {archived ? (
           <Badge variant="outline" className="w-fit">
             {t("archivedBadge")}
           </Badge>
+        ) : null}
+        {!personalView ? (
+          <ReleaseStatusBadges
+            namespace="tasks"
+            hiddenFromStudents={task.hiddenFromStudents}
+            scheduledReleaseAt={task.scheduledReleaseAt}
+          />
         ) : null}
         {personalView && task.studentCount > 0 ? (
           <TaskCompletionStatusBadge

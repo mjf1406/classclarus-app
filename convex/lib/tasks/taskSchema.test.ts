@@ -26,4 +26,30 @@ describe("parseTaskInput", () => {
   test("rejects an empty name", () => {
     expect(() => parseTaskInput({ name: "   " })).toThrow(TASK_FORM_MESSAGES_EN.nameRequired);
   });
+
+  test("keeps procedure steps and drops blank resource rows", () => {
+    const parsed = parseTaskInput({
+      name: "Lab",
+      procedureSteps: [{ key: "s1", body: "  Wash hands  " }],
+      resources: [
+        { key: "r1", url: "https://example.com/guide", label: "Guide" },
+        { key: "r2", url: "   " },
+      ],
+    });
+    expect(parsed.procedureSteps).toEqual([{ key: "s1", body: "Wash hands" }]);
+    expect(parsed.resources).toEqual([
+      { key: "r1", url: "https://example.com/guide", label: "Guide" },
+    ]);
+    expect(parsed.acceptLinkSubmissions).toBe(false);
+    expect(parsed.hiddenFromStudents).toBe(false);
+  });
+
+  test("rejects an empty procedure step", () => {
+    expect(() =>
+      parseTaskInput({
+        name: "Lab",
+        procedureSteps: [{ key: "s1", body: "   " }],
+      }),
+    ).toThrow(TASK_FORM_MESSAGES_EN.procedureStepRequired);
+  });
 });

@@ -2,6 +2,12 @@ import type { FunctionReturnType } from "convex/server";
 
 import { EMPTY_ANNOUNCEMENT_BODY_JSON } from "@/lib/announcements/tiptapExtensions";
 import { coerceDueDateKeyForInput, isPastDue, normalizeDueDateKey } from "@/lib/dueDate/dueDateKey";
+import {
+  msToDatetimeLocal,
+  releaseModeFromDoc,
+  releasePayloadFromForm,
+  type ReleaseMode,
+} from "@/lib/release/release";
 
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -130,6 +136,8 @@ export type AssignmentFormValues = {
   expectationIds: Array<Id<"expectations">>;
   acceptLinkSubmissions: boolean;
   worksheetImageFileId?: Id<"files">;
+  releaseMode: ReleaseMode;
+  scheduledReleaseAt: string;
 };
 
 export function createEmptyRubricEntry(): AssignmentFormRubricEntry {
@@ -173,6 +181,8 @@ export function emptyAssignmentFormValues(): AssignmentFormValues {
     expectationIds: [],
     acceptLinkSubmissions: true,
     worksheetImageFileId: undefined,
+    releaseMode: "released",
+    scheduledReleaseAt: "",
   };
 }
 
@@ -212,6 +222,9 @@ export function assignmentFormValuesFromDetail(
     expectationIds: [...detail.expectationIds],
     acceptLinkSubmissions: detail.acceptLinkSubmissions !== false,
     worksheetImageFileId: detail.worksheetImageFileId,
+    releaseMode: releaseModeFromDoc(detail),
+    scheduledReleaseAt:
+      detail.scheduledReleaseAt !== undefined ? msToDatetimeLocal(detail.scheduledReleaseAt) : "",
   };
 }
 
@@ -240,6 +253,8 @@ export type AssignmentMutationPayload = {
   expectationIds: Array<Id<"expectations">>;
   acceptLinkSubmissions: boolean;
   worksheetImageFileId?: Id<"files">;
+  hiddenFromStudents?: boolean;
+  scheduledReleaseAt?: number;
 };
 
 export function assignmentMutationPayloadFromForm(
@@ -268,6 +283,10 @@ export function assignmentMutationPayloadFromForm(
     ...(values.worksheetImageFileId !== undefined
       ? { worksheetImageFileId: values.worksheetImageFileId }
       : {}),
+    ...releasePayloadFromForm({
+      releaseMode: values.releaseMode,
+      scheduledReleaseAt: values.scheduledReleaseAt,
+    }),
   };
 
   if (values.scoringMode === "total") {

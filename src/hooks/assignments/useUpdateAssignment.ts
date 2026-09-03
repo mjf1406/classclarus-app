@@ -57,6 +57,8 @@ export function useUpdateAssignment() {
                 expectationIds: args.expectationIds,
                 acceptLinkSubmissions: args.acceptLinkSubmissions,
                 worksheetImageFileId: args.worksheetImageFileId,
+                hiddenFromStudents: args.hiddenFromStudents ?? item.hiddenFromStudents,
+                scheduledReleaseAt: args.scheduledReleaseAt,
                 hasInstructions,
                 hasProcedure,
                 updatedAt: now,
@@ -81,6 +83,8 @@ export function useUpdateAssignment() {
           expectationIds: args.expectationIds,
           acceptLinkSubmissions: args.acceptLinkSubmissions,
           worksheetImageFileId: args.worksheetImageFileId,
+          hiddenFromStudents: args.hiddenFromStudents ?? old.hiddenFromStudents,
+          scheduledReleaseAt: args.scheduledReleaseAt,
           updatedAt: now,
         };
       });

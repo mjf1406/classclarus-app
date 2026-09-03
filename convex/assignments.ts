@@ -1,15 +1,21 @@
 import { ConvexError, v } from "convex/values";
 
 import { APP_CONFIG } from "./appConfig.js";
-import { components } from "./_generated/api.js";
+import { components, internal } from "./_generated/api.js";
 import type { Doc, Id } from "./_generated/dataModel.js";
 import type { MutationCtx, QueryCtx } from "./_generated/server.js";
+import { internalMutation } from "./_generated/server.js";
 import { classScope, type ClassPermission } from "./lib/authzModel.js";
 import { recordClassActivity } from "./lib/classActivity.js";
 import { classMutation, classQuery } from "./lib/customFunctions.js";
 import { getClassRoleForUser, listLinkedStudentsForGuardian } from "./lib/guardianLinks.js";
 import { normalizeOptionalDueDateKey } from "./lib/dueDateKey.js";
 import { rateLimiter } from "./lib/rateLimiter.js";
+import {
+  applyReleaseSchedule,
+  isHiddenFromStudents,
+  publicReleaseFields,
+} from "./lib/release/scheduledRelease.js";
 import { deleteScoresForAssignment } from "./lib/assignmentScoresCleanup.js";
 import { stripAgendaResourceReferences } from "./lib/cleanup/timetableCleanup.js";
 import {
@@ -79,6 +85,8 @@ const assignmentBaseFields = {
   expectationIds: v.array(v.id("expectations")),
   acceptLinkSubmissions: v.boolean(),
   scoresReleased: v.boolean(),
+  hiddenFromStudents: v.boolean(),
+  scheduledReleaseAt: v.optional(v.number()),
   createdBy: v.id("users"),
   createdAt: v.number(),
   updatedAt: v.number(),
@@ -734,6 +742,7 @@ function toPublicAssignmentBase(assignment: Doc<"assignments">) {
     expectationIds: assignment.expectationIds,
     acceptLinkSubmissions: assignment.acceptLinkSubmissions !== false,
     scoresReleased: assignment.scoresReleased === true,
+    ...publicReleaseFields(assignment),
     createdBy: assignment.createdBy,
     createdAt: assignment.createdAt,
     updatedAt: assignment.updatedAt,
@@ -745,6 +754,21 @@ function toPublicAssignmentBase(assignment: Doc<"assignments">) {
 
 function assignmentAcceptsLinkSubmissions(assignment: Doc<"assignments">): boolean {
   return assignment.acceptLinkSubmissions !== false;
+}
+
+async function applyAssignmentRelease(
+  ctx: MutationCtx,
+  assignmentId: Id<"assignments">,
+  input: { hiddenFromStudents?: boolean; scheduledReleaseAt?: number },
+  existingJobId?: Id<"_scheduled_functions">,
+) {
+  return await applyReleaseSchedule(ctx, {
+    existingJobId,
+    hiddenFromStudents: input.hiddenFromStudents,
+    scheduledReleaseAt: input.scheduledReleaseAt,
+    schedule: internal.assignments.applyScheduledRelease,
+    scheduleArgs: { assignmentId },
+  });
 }
 
 function assertAssignmentAcceptsLinkSubmissions(assignment: Doc<"assignments">): void {
@@ -798,6 +822,9 @@ export const list = classQuery({
 
     const result = [];
     for (const doc of docs) {
+      if (audience.scope === "personal" && isHiddenFromStudents(doc)) {
+        continue;
+      }
       // eslint-disable-next-line @convex-dev/no-collect-in-query -- assignment-scoped links
       const links = await ctx.db
         .query("assignmentStudentLinks")
@@ -954,6 +981,9 @@ export const get = classQuery({
     }
 
     const audience = await resolveAssignmentAudience(ctx, classId);
+    if (audience.scope === "personal" && isHiddenFromStudents(assignment)) {
+      return null;
+    }
 
     // eslint-disable-next-line @convex-dev/no-collect-in-query -- assignment-scoped links
     const links = await ctx.db
@@ -1155,6 +1185,8 @@ export const create = classMutation({
     procedureSteps: v.optional(v.array(procedureStepInputValidator)),
     expectationIds: v.optional(v.array(v.id("expectations"))),
     acceptLinkSubmissions: v.boolean(),
+    hiddenFromStudents: v.optional(v.boolean()),
+    scheduledReleaseAt: v.optional(v.number()),
     worksheetImageFileId: v.optional(v.id("files")),
   },
   returns: v.id("assignments"),
@@ -1199,6 +1231,12 @@ export const create = classMutation({
       updatedAt: now,
     });
 
+    const release = await applyAssignmentRelease(ctx, assignmentId, {
+      hiddenFromStudents: args.hiddenFromStudents,
+      scheduledReleaseAt: args.scheduledReleaseAt,
+    });
+    await ctx.db.patch("assignments", assignmentId, release);
+
     const syncedSteps = await syncProcedureTasks(ctx, {
       classId,
       assignmentId,
@@ -1239,6 +1277,8 @@ export const update = classMutation({
     procedureSteps: v.optional(v.array(procedureStepInputValidator)),
     expectationIds: v.optional(v.array(v.id("expectations"))),
     acceptLinkSubmissions: v.boolean(),
+    hiddenFromStudents: v.optional(v.boolean()),
+    scheduledReleaseAt: v.optional(v.number()),
     worksheetImageFileId: v.optional(v.id("files")),
   },
   returns: v.null(),
@@ -1269,6 +1309,15 @@ export const update = classMutation({
       steps: procedureSteps,
       createdBy: ctx.userId,
     });
+    const release = await applyAssignmentRelease(
+      ctx,
+      args.assignmentId,
+      {
+        hiddenFromStudents: args.hiddenFromStudents,
+        scheduledReleaseAt: args.scheduledReleaseAt,
+      },
+      existing.scheduledReleaseJobId,
+    );
 
     await ctx.db.patch("assignments", args.assignmentId, {
       name,
@@ -1283,6 +1332,7 @@ export const update = classMutation({
       expectationIds,
       acceptLinkSubmissions: args.acceptLinkSubmissions,
       worksheetImageFileId,
+      ...release,
       updatedAt: Date.now(),
     });
 
@@ -1312,6 +1362,12 @@ export const remove = classMutation({
 
     const classId = ctx.classDoc._id;
     const existing = await requireAssignmentInClass(ctx, classId, args.assignmentId);
+    await applyAssignmentRelease(
+      ctx,
+      args.assignmentId,
+      { hiddenFromStudents: false },
+      existing.scheduledReleaseJobId,
+    );
     await deleteLinksForAssignment(ctx, args.assignmentId);
     await deleteScoresForAssignment(ctx, args.assignmentId);
 
@@ -1536,6 +1592,75 @@ export const setLinkHandedIn = classMutation({
         assignmentId: link.assignmentId,
         handedIn: String(args.handedIn),
       },
+    });
+
+    return null;
+  },
+});
+
+export const applyScheduledRelease = internalMutation({
+  args: {
+    assignmentId: v.id("assignments"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const assignment = await ctx.db.get("assignments", args.assignmentId);
+    if (!assignment) return null;
+    await ctx.db.patch("assignments", args.assignmentId, {
+      hiddenFromStudents: undefined,
+      scheduledReleaseAt: undefined,
+      scheduledReleaseJobId: undefined,
+      updatedAt: Date.now(),
+    });
+    return null;
+  },
+});
+
+export const setReleased = classMutation({
+  args: {
+    assignmentId: v.id("assignments"),
+    released: v.boolean(),
+    scheduledReleaseAt: v.optional(v.number()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await rateLimiter.limit(ctx, "assignmentSetReleased", { key: ctx.userId, throws: true });
+    await ctx.require("assignments:manage");
+
+    const classId = ctx.classDoc._id;
+    const existing = await requireAssignmentInClass(ctx, classId, args.assignmentId);
+    const release = await applyAssignmentRelease(
+      ctx,
+      args.assignmentId,
+      {
+        hiddenFromStudents: !args.released,
+        scheduledReleaseAt: args.released ? undefined : args.scheduledReleaseAt,
+      },
+      existing.scheduledReleaseJobId,
+    );
+    await ctx.db.patch("assignments", args.assignmentId, {
+      ...release,
+      updatedAt: Date.now(),
+    });
+
+    const scheduled = release.scheduledReleaseAt !== undefined;
+    await recordClassActivity(ctx, {
+      classId,
+      actorUserId: ctx.userId,
+      action: "update",
+      resourceType: "assignment",
+      resourceId: args.assignmentId,
+      summary: scheduled
+        ? `Scheduled release for assignment "${existing.name}"`
+        : args.released
+          ? `Released assignment "${existing.name}"`
+          : `Hid assignment "${existing.name}"`,
+      summaryKey: scheduled
+        ? "activitySummary_scheduledAssignmentRelease"
+        : args.released
+          ? "activitySummary_releasedAssignment"
+          : "activitySummary_hidAssignment",
+      metadata: { name: existing.name },
     });
 
     return null;

@@ -1,5 +1,15 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, ArchiveIcon, ArchiveRestoreIcon, ListTodo, Pencil, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  ArchiveIcon,
+  ArchiveRestoreIcon,
+  CheckCircle2,
+  Circle,
+  Clock,
+  ListTodo,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -9,7 +19,11 @@ import { StudentGridSortMenu } from "@/components/students/StudentGridSortMenu";
 import { TaskCompletionGroupStats } from "@/components/tasks/TaskCompletionGroupStats";
 import { TaskCompletionStatusBadge } from "@/components/tasks/TaskCompletionStatusBadge";
 import { TaskFormCredenza } from "@/components/tasks/TaskFormCredenza";
-import { AttachmentList } from "@/components/upload/AttachmentList";
+import { TaskProcedureList } from "@/components/tasks/TaskProcedureList";
+import { TaskStudentLinksSection } from "@/components/tasks/TaskStudentLinksSection";
+import { ReleaseStatusBadges } from "@/components/release/ReleaseControl";
+import { ReadOnlyResourceLinks } from "@/components/resources/ResourceLinksField";
+import { AttachmentList, type AttachmentItem } from "@/components/upload/AttachmentList";
 import {
   TASK_STUDENT_GRID_CLASS,
   TaskStudentCompletionCard,
@@ -34,6 +48,7 @@ import { useStudentRosterFilter } from "@/hooks/students/useStudentRosterFilter"
 import { useRemoveTask } from "@/hooks/tasks/useRemoveTask";
 import { useSetTaskArchived } from "@/hooks/tasks/useSetTaskArchived";
 import { useSetTaskCompletion } from "@/hooks/tasks/useSetTaskCompletion";
+import { useSetTaskReleased } from "@/hooks/tasks/useSetTaskReleased";
 import { useTask } from "@/hooks/tasks/useTask";
 import { useUpdateTask } from "@/hooks/tasks/useUpdateTask";
 import { useAuthedQuery } from "@/hooks/useAuthedQuery";
@@ -138,6 +153,7 @@ function StaffTaskDetailPage({ classId, taskId }: TaskDetailPageProps) {
   const updateTask = useUpdateTask();
   const removeTask = useRemoveTask();
   const setArchived = useSetTaskArchived();
+  const setReleased = useSetTaskReleased();
   const setCompletion = useSetTaskCompletion();
 
   useEnsureStudentRosters(
@@ -289,6 +305,13 @@ function StaffTaskDetailPage({ classId, taskId }: TaskDetailPageProps) {
         canManage={canManage}
         onEdit={() => setEditOpen(true)}
         onDelete={() => setDeleteOpen(true)}
+        onReleaseToggle={() => {
+          void setReleased.mutateAsync({
+            classId,
+            taskId,
+            released: classDetail.hiddenFromStudents === true,
+          });
+        }}
         onArchiveToggle={() => {
           void setArchived.mutateAsync({
             classId,
@@ -370,6 +393,50 @@ function StaffTaskDetailPage({ classId, taskId }: TaskDetailPageProps) {
         </ul>
       )}
 
+      {classDetail.acceptLinkSubmissions ? (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-lg font-medium">{t("linksHeading")}</h2>
+          {classDetail.links.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t("linksEmpty")}</p>
+          ) : (
+            <ul className="flex flex-col gap-3">
+              {sorted.map((student) => {
+                const studentLinks = classDetail.links.filter(
+                  (link) => link.studentUserId === student.userId,
+                );
+                if (studentLinks.length === 0) return null;
+                const displayName = getRosterDisplayName(student, unnamed, nameFormat);
+                return (
+                  <li key={student.userId} className="rounded-xl border border-border p-3">
+                    <p className="mb-2 text-sm font-medium">{displayName}</p>
+                    <ul className="flex flex-col gap-2">
+                      {studentLinks.map((link) => (
+                        <li
+                          key={link._id}
+                          className="flex items-center justify-between gap-3 text-sm"
+                        >
+                          <a
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary underline-offset-2 hover:underline"
+                          >
+                            {link.label?.trim() || link.url}
+                          </a>
+                          <span className="text-muted-foreground">
+                            {link.handedIn ? t("linksHandedIn") : t("linksNotHandedIn")}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+      ) : null}
+
       {canManage ? (
         <>
           <TaskFormCredenza
@@ -382,10 +449,7 @@ function StaffTaskDetailPage({ classId, taskId }: TaskDetailPageProps) {
               await updateTask.mutateAsync({
                 classId,
                 taskId,
-                name: values.name,
-                description: values.description,
-                dueDateKey: values.dueDateKey,
-                attachmentFileIds: values.attachmentFileIds,
+                ...values,
               });
             }}
           />
@@ -413,6 +477,7 @@ function StaffTaskHeader({
   onEdit,
   onDelete,
   onArchiveToggle,
+  onReleaseToggle,
 }: {
   classId: Id<"classes">;
   task: TaskDetailClass;
@@ -420,6 +485,7 @@ function StaffTaskHeader({
   onEdit: () => void;
   onDelete: () => void;
   onArchiveToggle: () => void;
+  onReleaseToggle: () => void;
 }) {
   const { t } = useTranslation("tasks");
   const archived = isTaskArchived(task);
@@ -436,16 +502,28 @@ function StaffTaskHeader({
       <div className="flex min-w-0 flex-1 flex-col gap-2">
         <TaskDetailBackLink classId={classId} />
         <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{task.name}</h1>
-        {archived || allDone ? (
+        {archived || allDone || task.hiddenFromStudents ? (
           <div className="flex flex-wrap items-center gap-2">
             {archived ? <Badge variant="outline">{t("archivedBadge")}</Badge> : null}
             {allDone ? <TaskCompletionStatusBadge completed label={t("statusAllDone")} /> : null}
+            <ReleaseStatusBadges
+              namespace="tasks"
+              hiddenFromStudents={task.hiddenFromStudents}
+              scheduledReleaseAt={task.scheduledReleaseAt}
+            />
           </div>
         ) : null}
         {task.description ? (
           <p className="text-muted-foreground whitespace-pre-wrap">{task.description}</p>
         ) : null}
-        {task.attachments.length > 0 ? <AttachmentList attachments={task.attachments} /> : null}
+        <TaskProcedureList steps={task.procedureSteps} />
+        <ReadOnlyResourceLinks items={task.resources} />
+        <TaskAttachmentsSection attachments={task.attachments} canDownload />
+        {task.acceptLinkSubmissions && task.links.length > 0 ? (
+          <div className="text-sm text-muted-foreground">
+            {t("linksStaffCount", { count: task.links.length })}
+          </div>
+        ) : null}
         {task.assignmentId && task.assignmentName ? (
           <p className="text-sm">
             <Link
@@ -466,6 +544,9 @@ function StaffTaskHeader({
           <Button type="button" variant="outline" onClick={onEdit}>
             <Pencil className="size-4" />
             {t("editAction")}
+          </Button>
+          <Button type="button" variant="outline" onClick={onReleaseToggle}>
+            {task.hiddenFromStudents ? t("releaseAction") : t("hideAction")}
           </Button>
           <Button type="button" variant="outline" onClick={onArchiveToggle}>
             {archived ? (
@@ -538,8 +619,10 @@ function PersonalTaskDetailContent({
   const { t } = useTranslation("tasks");
   const completedCount = task.students.filter((student) => student.completed).length;
   const total = task.students.length;
-  const allDone = total > 0 && completedCount >= total;
+  const singleStudent = total === 1 ? task.students[0] : undefined;
   const pastDue = isTaskPastDue(task.dueDateKey);
+  const completed = singleStudent?.completed === true;
+  const overdue = pastDue && !completed;
 
   return (
     <div className="flex w-full flex-col gap-6 px-4 py-8 sm:px-8">
@@ -549,7 +632,14 @@ function PersonalTaskDetailContent({
         {task.description ? (
           <p className="text-muted-foreground whitespace-pre-wrap">{task.description}</p>
         ) : null}
-        {task.attachments.length > 0 ? <AttachmentList attachments={task.attachments} /> : null}
+        <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+          {task.dueDateKey ? (
+            <span>{t("dueDateValue", { date: formatLocalizedDueDate(task.dueDateKey) })}</span>
+          ) : null}
+          {task.updatedAt !== task.createdAt ? (
+            <span>{t("updatedAt", { date: formatLocalizedDateTime(task.updatedAt) })}</span>
+          ) : null}
+        </div>
         {task.assignmentId && task.assignmentName ? (
           <p className="text-sm">
             <Link
@@ -561,26 +651,29 @@ function PersonalTaskDetailContent({
             </Link>
           </p>
         ) : null}
-        <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-          {task.dueDateKey ? (
-            <span>{t("dueDateValue", { date: formatLocalizedDueDate(task.dueDateKey) })}</span>
-          ) : null}
-          {total > 0 ? (
-            <TaskCompletionStatusBadge
-              completed={allDone}
-              pastDue={pastDue}
-              label={
-                total <= 1 ? undefined : t("statsCompleted", { completed: completedCount, total })
-              }
-            />
-          ) : null}
-          {task.updatedAt !== task.createdAt ? (
-            <span>{t("updatedAt", { date: formatLocalizedDateTime(task.updatedAt) })}</span>
-          ) : null}
-        </div>
       </div>
 
-      {task.students.length === 0 ? (
+      {singleStudent ? (
+        <section className="flex items-start gap-3 rounded-xl border border-border p-4">
+          {completed ? (
+            <CheckCircle2 className="mt-0.5 size-6 text-green-600 dark:text-green-400" />
+          ) : overdue ? (
+            <Clock className="mt-0.5 size-6 text-amber-600 dark:text-amber-400" />
+          ) : (
+            <Circle className="mt-0.5 size-6 text-muted-foreground" />
+          )}
+          <div>
+            <p className="text-lg font-semibold">
+              {completed ? t("statusDone") : overdue ? t("statusOverdue") : t("statusNotDone")}
+            </p>
+            {task.dueDateKey ? (
+              <p className="text-sm text-muted-foreground">
+                {t("dueDateValue", { date: formatLocalizedDueDate(task.dueDateKey) })}
+              </p>
+            ) : null}
+          </div>
+        </section>
+      ) : task.students.length === 0 ? (
         <Empty card>
           <EmptyHeader>
             <EmptyMedia variant="icon">
@@ -591,21 +684,75 @@ function PersonalTaskDetailContent({
           </EmptyHeader>
         </Empty>
       ) : (
-        <ul className="divide-y rounded-xl border">
-          {task.students.map((student) => {
-            const displayName = getRosterDisplayName(student, unnamed);
-            return (
-              <li
-                key={student.userId}
-                className="flex items-center justify-between gap-3 px-4 py-3 text-sm"
-              >
-                <span className="min-w-0 truncate font-medium">{displayName}</span>
-                <TaskCompletionStatusBadge completed={student.completed} pastDue={pastDue} />
-              </li>
-            );
-          })}
-        </ul>
+        <div className="flex flex-col gap-2">
+          <p className="text-sm text-muted-foreground">
+            {t("statsCompleted", { completed: completedCount, total })}
+          </p>
+          <ul className="divide-y rounded-xl border">
+            {task.students.map((student) => {
+              const displayName = getRosterDisplayName(student, unnamed);
+              return (
+                <li
+                  key={student.userId}
+                  className="flex items-center justify-between gap-3 px-4 py-3 text-sm"
+                >
+                  <span className="min-w-0 truncate font-medium">{displayName}</span>
+                  <TaskCompletionStatusBadge completed={student.completed} pastDue={pastDue} />
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       )}
+
+      <TaskProcedureList steps={task.procedureSteps} />
+      <ReadOnlyResourceLinks items={task.resources} />
+      <TaskAttachmentsSection attachments={task.attachments} canDownload={false} />
+      {task.acceptLinkSubmissions && singleStudent ? (
+        <TaskStudentLinksSection
+          classId={classId}
+          taskId={task._id}
+          links={singleStudent.links}
+          canEdit={singleStudent.canEditLinks}
+          studentUserId={singleStudent.userId}
+        />
+      ) : null}
+      {task.acceptLinkSubmissions && !singleStudent
+        ? task.students.map((student) => (
+            <TaskStudentLinksSection
+              key={student.userId}
+              classId={classId}
+              taskId={task._id}
+              links={student.links}
+              canEdit={student.canEditLinks}
+              studentUserId={student.userId}
+              headingName={getRosterDisplayName(student, unnamed)}
+            />
+          ))
+        : null}
     </div>
+  );
+}
+
+function TaskAttachmentsSection({
+  attachments,
+  canDownload,
+}: {
+  attachments: Array<AttachmentItem>;
+  canDownload: boolean;
+}) {
+  const { t } = useTranslation("upload");
+  if (attachments.length === 0) return null;
+  const hasImage = attachments.some(
+    (item) => item.preset === "images" || item.contentType.startsWith("image/"),
+  );
+  return (
+    <section className="flex flex-col gap-2">
+      <h2 className="text-lg font-medium">{t("attachmentsLabel")}</h2>
+      {hasImage ? (
+        <p className="text-sm text-muted-foreground">{t("attachmentsEnlargeHint")}</p>
+      ) : null}
+      <AttachmentList attachments={attachments} canDownload={canDownload} />
+    </section>
   );
 }

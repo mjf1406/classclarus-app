@@ -21,12 +21,14 @@ import { ErrorState } from "@/components/ui/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGroupsBoard } from "@/hooks/groups/useGroupsBoard";
 import { useCan } from "@/hooks/permissions/useCan";
+import { useStudentRoster } from "@/hooks/roster/useStudentRoster";
 import { useCreateTask } from "@/hooks/tasks/useCreateTask";
 import { useRemoveTask } from "@/hooks/tasks/useRemoveTask";
 import { useSetTaskArchived } from "@/hooks/tasks/useSetTaskArchived";
 import { useTasks } from "@/hooks/tasks/useTasks";
 import { useUpdateTask } from "@/hooks/tasks/useUpdateTask";
 import {
+  computeStudentsDoneWithAllTasks,
   computeTaskGroupCompletionStats,
   filterTasksByName,
   formatTaskAssignmentFolderMeta,
@@ -40,8 +42,12 @@ import {
   type TaskSortDirection,
   type TaskSortKey,
 } from "@/lib/tasks/tasks";
+import { getRosterDisplayName, resolveRosterNameFormat } from "@/lib/roster/roster";
 import { cn } from "@/lib/utils";
 import type { Id } from "../../../convex/_generated/dataModel";
+import { useAuthedQuery } from "@/hooks/useAuthedQuery";
+import { api } from "../../../convex/_generated/api";
+import { GC_TIME } from "@/lib/queryCache";
 
 type TasksPageProps = {
   classId: Id<"classes">;
@@ -50,12 +56,19 @@ type TasksPageProps = {
 export function TasksPage({ classId }: TasksPageProps) {
   const { t } = useTranslation("tasks");
   const { t: tGroups } = useTranslation("groups");
+  const { t: tClasses } = useTranslation("classes");
   const { can, isPending: permissionsPending } = useCan();
   const canManage = can("tasks:manage");
   const canComplete = can("tasks:complete");
   const personalView = !permissionsPending && !canComplete;
   const { data, isPending, isError, refetch } = useTasks(classId);
   const { data: groupsBoard } = useGroupsBoard(classId);
+  const { data: roster } = useStudentRoster(classId);
+  const { data: classDoc } = useAuthedQuery(
+    api.classes.get,
+    { classId },
+    { gcTime: GC_TIME.stable },
+  );
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
   const removeTask = useRemoveTask();
@@ -107,6 +120,20 @@ export function TasksPage({ classId }: TasksPageProps) {
     );
   }, [data, groupsBoard, personalView, tGroups]);
 
+  const allDoneOverview = useMemo(() => {
+    if (personalView || !roster) return null;
+    return computeStudentsDoneWithAllTasks(data ?? [], roster);
+  }, [data, personalView, roster]);
+
+  const nameFormat = useMemo(
+    () =>
+      resolveRosterNameFormat({
+        rosterNameOrder: classDoc?.rosterNameOrder,
+        rosterNameSpace: classDoc?.rosterNameSpace,
+      }),
+    [classDoc?.rosterNameOrder, classDoc?.rosterNameSpace],
+  );
+
   const handleArchiveToggle = (task: TaskListItem) => {
     void setArchived.mutateAsync({
       classId,
@@ -133,6 +160,48 @@ export function TasksPage({ classId }: TasksPageProps) {
         onToggleArchived={canManage ? () => setShowArchived((value) => !value) : undefined}
         onCreate={() => setCreateOpen(true)}
       />
+
+      {!personalView && allDoneOverview && (data?.length ?? 0) > 0 ? (
+        <div className="rounded-xl border border-border p-4">
+          <h2 className="text-sm font-medium">{t("allDoneOverviewTitle")}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">{t("allDoneOverviewDescription")}</p>
+          {allDoneOverview.done.length === 0 ? (
+            <p className="mt-2 text-sm text-muted-foreground">{t("allDoneEmpty")}</p>
+          ) : (
+            <ul className="mt-2 flex flex-wrap gap-2">
+              {allDoneOverview.done.map((row) => {
+                const student = roster?.find((entry) => entry.userId === row.userId);
+                if (!student) return null;
+                return (
+                  <li
+                    key={row.userId}
+                    className="rounded-full border border-border px-3 py-1 text-sm"
+                  >
+                    {getRosterDisplayName(student, tClasses("unnamedMember"), nameFormat)}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          {allDoneOverview.remaining.length > 0 ? (
+            <ul className="mt-3 space-y-1 text-sm text-muted-foreground">
+              {allDoneOverview.remaining.map((row) => {
+                const student = roster?.find((entry) => entry.userId === row.userId);
+                if (!student) return null;
+                return (
+                  <li key={row.userId}>
+                    {t("allDoneProgress", {
+                      name: getRosterDisplayName(student, tClasses("unnamedMember"), nameFormat),
+                      completed: row.completed,
+                      total: row.total,
+                    })}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : null}
+        </div>
+      ) : null}
 
       {isPending ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -231,10 +300,7 @@ export function TasksPage({ classId }: TasksPageProps) {
             onSubmit={async (values) => {
               await createTask.mutateAsync({
                 classId,
-                name: values.name,
-                description: values.description,
-                dueDateKey: values.dueDateKey,
-                attachmentFileIds: values.attachmentFileIds,
+                ...values,
               });
             }}
           />
@@ -251,10 +317,7 @@ export function TasksPage({ classId }: TasksPageProps) {
               await updateTask.mutateAsync({
                 classId,
                 taskId: editing._id,
-                name: values.name,
-                description: values.description,
-                dueDateKey: values.dueDateKey,
-                attachmentFileIds: values.attachmentFileIds,
+                ...values,
               });
               setEditing(null);
             }}

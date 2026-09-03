@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { z } from "zod";
 
 import { AssignmentInstructionsEditor } from "@/components/assignments/AssignmentInstructionsEditor";
+import { ReleaseControl } from "@/components/release/ReleaseControl";
 import { WorksheetImageField } from "@/components/upload/WorksheetImageField";
 import { reorderByKey } from "@/components/assignments/assignmentFormReorder";
 import {
@@ -155,6 +156,8 @@ export function AssignmentFormPage({ classId, mode, initial }: AssignmentFormPag
           expectationIds: z.array(z.string()),
           acceptLinkSubmissions: z.boolean(),
           worksheetImageFileId: z.string().optional(),
+          releaseMode: z.enum(["released", "hidden", "scheduled"]),
+          scheduledReleaseAt: z.string(),
         })
         .superRefine((value, ctx) => {
           if (value.scoringMode === "sections") {
@@ -1240,6 +1243,25 @@ export function AssignmentFormPage({ classId, mode, initial }: AssignmentFormPag
               </label>
             )}
           </form.Field>
+        </section>
+
+        <section className="flex flex-col gap-3">
+          <form.Subscribe
+            selector={(state) => ({
+              releaseMode: state.values.releaseMode,
+              scheduledReleaseAt: state.values.scheduledReleaseAt,
+            })}
+          >
+            {({ releaseMode, scheduledReleaseAt }) => (
+              <ReleaseControl
+                namespace="assignments"
+                mode={releaseMode}
+                scheduledReleaseAt={scheduledReleaseAt}
+                onModeChange={(next) => form.setFieldValue("releaseMode", next)}
+                onScheduledChange={(next) => form.setFieldValue("scheduledReleaseAt", next)}
+              />
+            )}
+          </form.Subscribe>
         </section>
 
         <section className="flex flex-col gap-3">
