@@ -12,7 +12,7 @@ dist
 dist-ssr
 dist-electron
 build/icon.png
-release
+/release/
 resources/convex-backend
 resources/convex-backend-bundle
 resources/deploy-project
