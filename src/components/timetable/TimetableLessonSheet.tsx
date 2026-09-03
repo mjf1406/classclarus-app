@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { useForm } from "@tanstack/react-form";
-import { ExternalLink, Plus, Trash2 } from "lucide-react";
+import { ExternalLink, Link2, Plus, Trash2, Unlink } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,7 @@ import { TimetableSectionListEditor } from "@/components/timetable/TimetableSect
 import { TimetableTaggedText } from "@/components/timetable/TimetableTaggedText";
 import { useAssignments } from "@/hooks/assignments/useAssignments";
 import { useTasks } from "@/hooks/tasks/useTasks";
-import { useUpsertLesson } from "@/hooks/timetable/useTimetableMutations";
+import { useUnlinkLesson, useUpsertLesson } from "@/hooks/timetable/useTimetableMutations";
 import { useTimetableTags } from "@/hooks/timetable/useTimetableQueries";
 import { useAuthedQuery } from "@/hooks/useAuthedQuery";
 import { rowFocusTargetProps } from "@/hooks/usePendingRowFocus";
@@ -106,6 +106,7 @@ export function TimetableLessonSheet({
 }: TimetableLessonSheetProps) {
   const { t, i18n } = useTranslation("timetable");
   const upsertLesson = useUpsertLesson();
+  const unlinkLesson = useUnlinkLesson();
   const { data: tasks } = useTasks(classId);
   const { data: assignments } = useAssignments(classId);
   const { data: tags } = useTimetableTags(classId);
@@ -223,6 +224,35 @@ export function TimetableLessonSheet({
           <CredenzaDescription>
             {canManage ? t("lessonEditDescription") : t("lessonViewDescription")}
           </CredenzaDescription>
+          {lesson.lessonLinkGroupId ? (
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/5 px-2 py-0.5 text-xs font-medium text-primary">
+                <Link2 className="h-3 w-3" />
+                {t("linkedLessonBadge")}
+              </span>
+              {canManage ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2"
+                  disabled={unlinkLesson.isPending}
+                  onClick={() => {
+                    void unlinkLesson.mutateAsync({
+                      classId,
+                      termId,
+                      year,
+                      weekNumber,
+                      lessonId: lesson._id,
+                    });
+                  }}
+                >
+                  <Unlink className="h-3.5 w-3.5" />
+                  {t("unlinkLessonAction")}
+                </Button>
+              ) : null}
+            </div>
+          ) : null}
         </CredenzaHeader>
         <form
           className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden"

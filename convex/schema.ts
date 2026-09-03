@@ -1390,13 +1390,16 @@ const schema = defineSchema({
     ),
     /** When true, class members without timetable:manage can see resource links. */
     resourcesShared: v.optional(v.boolean()),
+    /** Same-subject lessons in different slots that stay in sync for this week. */
+    lessonLinkGroupId: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_termId_year_week", ["termId", "year", "weekNumber"])
     .index("by_slotId_year_week", ["slotId", "year", "weekNumber"])
     .index("by_subjectId", ["subjectId"])
-    .index("by_classId", ["classId"]),
+    .index("by_classId", ["classId"])
+    .index("by_termId_lessonLinkGroupId", ["termId", "lessonLinkGroupId"]),
   /** Per-week slot disable overrides. */
   timetableSlotDisables: defineTable({
     classId: v.id("classes"),

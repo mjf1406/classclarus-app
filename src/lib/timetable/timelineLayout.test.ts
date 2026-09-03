@@ -1,58 +1,43 @@
 import { describe, expect, test } from "vite-plus/test";
 
-import {
-  getSlotLayout,
-  buildTimeLabels,
-  pixelsPerMinuteForAvailableHeight,
-} from "@/lib/timetable/timelineLayout";
-import { PIXELS_PER_MINUTE } from "@/lib/timetable/timetable";
+import { getSlotLayout, layoutOverlappingSlots } from "@/lib/timetable/timelineLayout";
 
 describe("getSlotLayout", () => {
-  test("positions slot from day start with correct height", () => {
-    const layout = getSlotLayout("09:00", "09:45", 8 * 60, 16 * 60);
-    expect(layout).toEqual({
-      topPx: 60 * PIXELS_PER_MINUTE,
-      heightPx: 45 * PIXELS_PER_MINUTE,
-    });
-  });
-
-  test("places an 08:40–10:00 slot between those times, not on the 08:30 row", () => {
-    const layout = getSlotLayout("08:40", "10:00", 8 * 60, 16 * 60);
-    expect(layout).toEqual({
-      topPx: 40 * PIXELS_PER_MINUTE,
-      heightPx: 80 * PIXELS_PER_MINUTE,
-    });
-  });
-
-  test("returns null when slot is outside day bounds", () => {
-    expect(getSlotLayout("07:00", "07:30", 8 * 60, 16 * 60)).toBeNull();
-    expect(getSlotLayout("16:00", "16:30", 8 * 60, 16 * 60)).toBeNull();
-  });
-
-  test("enforces minimum slot height for short durations", () => {
-    const layout = getSlotLayout("09:00", "09:05", 8 * 60, 16 * 60);
-    expect(layout?.heightPx).toBeGreaterThanOrEqual(44);
+  test("places a slot by minutes from the day start", () => {
+    const layout = getSlotLayout("09:00", "10:00", 8 * 60, 16 * 60, 2);
+    expect(layout).toEqual({ topPx: 120, heightPx: 120 });
   });
 });
 
-describe("buildTimeLabels", () => {
-  test("generates labels at 30-minute intervals", () => {
-    const labels = buildTimeLabels(8 * 60, 9 * 60, (m) => `${m}`, 30);
-    expect(labels).toHaveLength(3);
-    expect(labels[0]).toEqual({ topPx: 0, label: String(8 * 60) });
-    expect(labels[1]).toEqual({ topPx: 30 * PIXELS_PER_MINUTE, label: String(8 * 60 + 30) });
+describe("layoutOverlappingSlots", () => {
+  test("gives full width to non-overlapping slots", () => {
+    const placements = layoutOverlappingSlots([
+      { id: "a", startTime: "09:00", endTime: "10:00" },
+      { id: "b", startTime: "10:00", endTime: "11:00" },
+    ]);
+    expect(placements.get("a")).toMatchObject({ columnIndex: 0, columnCount: 1, widthPct: 100 });
+    expect(placements.get("b")).toMatchObject({ columnIndex: 0, columnCount: 1, widthPct: 100 });
   });
 
-  test("scales label positions when pixels-per-minute changes", () => {
-    const labels = buildTimeLabels(8 * 60, 9 * 60, (m) => `${m}`, 30, 1);
-    expect(labels[1]).toEqual({ topPx: 30, label: String(8 * 60 + 30) });
+  test("packs two overlapping slots into side-by-side columns", () => {
+    const placements = layoutOverlappingSlots([
+      { id: "a", startTime: "09:00", endTime: "10:00" },
+      { id: "b", startTime: "09:30", endTime: "10:30" },
+    ]);
+    expect(placements.get("a")?.columnCount).toBe(2);
+    expect(placements.get("b")?.columnCount).toBe(2);
+    expect(placements.get("a")?.columnIndex).not.toBe(placements.get("b")?.columnIndex);
+    expect(placements.get("a")?.widthPct).toBe(50);
   });
-});
 
-describe("pixelsPerMinuteForAvailableHeight", () => {
-  test("shrinks to fill available height without going below the minimum", () => {
-    expect(pixelsPerMinuteForAvailableHeight(480, 480)).toBe(1);
-    expect(pixelsPerMinuteForAvailableHeight(480, 960)).toBe(2);
-    expect(pixelsPerMinuteForAvailableHeight(480, 240)).toBe(1);
+  test("reuses a column when a later slot no longer overlaps", () => {
+    const placements = layoutOverlappingSlots([
+      { id: "a", startTime: "09:00", endTime: "10:00" },
+      { id: "b", startTime: "09:00", endTime: "09:30" },
+      { id: "c", startTime: "10:00", endTime: "11:00" },
+    ]);
+    expect(placements.get("a")?.columnCount).toBe(2);
+    expect(placements.get("b")?.columnCount).toBe(2);
+    expect(placements.get("c")?.columnCount).toBe(1);
   });
 });

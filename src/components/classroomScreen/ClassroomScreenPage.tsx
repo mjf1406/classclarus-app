@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 
 import { Clock } from "@/components/classroomScreen/Clock";
 import { LessonDisplayPanel } from "@/components/classroomScreen/LessonDisplayPanel";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { useCan } from "@/hooks/permissions/useCan";
 import { ErrorState } from "@/components/ui/error-state";
@@ -53,6 +54,7 @@ type ClassroomScreenPageProps = {
 export function ClassroomScreenPage({ classId }: ClassroomScreenPageProps) {
   const { t, i18n } = useTranslation("classroomScreen");
   const locale = toIntlLocale(i18n.language);
+  const isMobile = useIsMobile();
   const { can } = useCan();
   const canManageScreen = can("classroomScreen:manage");
   const [minuteBucket, setMinuteBucket] = useState(() => classroomMinuteBucket());
@@ -197,7 +199,12 @@ export function ClassroomScreenPage({ classId }: ClassroomScreenPageProps) {
   const quickTextTitle = settings.quickTextTitle?.trim() || t("statusQuickText");
 
   const clockPanel = (
-    <div className="min-h-0 min-w-0 h-full w-full overflow-hidden">
+    <div
+      className={cn(
+        "min-w-0 w-full overflow-hidden",
+        isMobile && layout !== "clockOnly" ? "h-[min(42svh,20rem)] shrink-0" : "min-h-0 h-full",
+      )}
+    >
       <Clock
         classId={classId}
         isRunner
@@ -231,8 +238,10 @@ export function ClassroomScreenPage({ classId }: ClassroomScreenPageProps) {
     <div
       className={cn(
         "min-h-0 min-w-0 h-full w-full flex-1 overflow-hidden",
-        layout === "horizontal" && "border-l",
-        layout === "vertical" && "border-t",
+        !isMobile && layout === "horizontal" && "border-l",
+        (isMobile || layout === "vertical") && layout !== "clockOnly" && layout !== "classOnly"
+          ? "border-t"
+          : null,
       )}
     >
       <LessonDisplayPanel
@@ -286,7 +295,10 @@ export function ClassroomScreenPage({ classId }: ClassroomScreenPageProps) {
   );
 
   return (
-    <div ref={containerRef} className="relative flex h-svh min-h-0 w-full flex-col bg-background">
+    <div
+      ref={containerRef}
+      className="relative flex h-svh min-h-0 w-full flex-col overflow-hidden bg-background"
+    >
       <div className="absolute top-3 left-3 z-20 flex flex-col gap-1">
         <div className="flex items-center gap-1">
           <Select value={layout} onValueChange={(value) => setLayout(value as DisplayLayout)}>
@@ -326,6 +338,11 @@ export function ClassroomScreenPage({ classId }: ClassroomScreenPageProps) {
         <div className="min-h-0 flex-1">{clockPanel}</div>
       ) : layout === "classOnly" ? (
         <div className="min-h-0 flex-1">{lessonPanel}</div>
+      ) : isMobile ? (
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          {clockPanel}
+          {lessonPanel}
+        </div>
       ) : (
         <div
           className={cn("flex min-h-0 flex-1", layout === "horizontal" ? "flex-row" : "flex-col")}

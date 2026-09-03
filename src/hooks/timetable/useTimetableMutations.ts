@@ -17,9 +17,17 @@ import {
 } from "../../../convex/lib/timetable/slotDisableScope";
 import {
   applyOptimisticLinkMembership,
+  applyOptimisticMoveLesson,
   applyOptimisticUnlink,
+  applyOptimisticUnlinkLesson,
   mirrorLessonsInBundle,
 } from "@/lib/timetable/slotLinksClient";
+import {
+  createLinkGroupId,
+  findPeerLessonForAutoLink,
+  type LessonLinkLike,
+  type SlotLinkLike,
+} from "../../../convex/lib/timetable/slotLinks";
 import { toAgendaItems } from "@/lib/timetable/sectionItems";
 import type {
   AgendaItemFormValues,
@@ -57,11 +65,45 @@ export function useAddLessonToSlot() {
         const subject = old.subjects.find((s) => s._id === args.subjectId);
         if (!subject) return old;
         const now = Date.now();
-        const sections = {
-          materials: subject.defaultMaterials,
-          announcements: subject.defaultAnnouncements,
-          agenda: subject.defaultAgenda,
-        };
+        const peer = findPeerLessonForAutoLink(
+          args.slotId,
+          args.subjectId,
+          args.year,
+          args.weekNumber,
+          old.slots as Array<SlotLinkLike>,
+          old.lessons.map(
+            (lesson): LessonLinkLike => ({
+              _id: lesson._id,
+              slotId: lesson.slotId,
+              subjectId: lesson.subjectId,
+              year: lesson.year,
+              weekNumber: lesson.weekNumber,
+              complete: lesson.complete,
+              materials: lesson.materials,
+              announcements: lesson.announcements,
+              agenda: lesson.agenda,
+              lessonUrl: lesson.lessonUrl,
+              lessonUrlShared: lesson.lessonUrlShared,
+              resources: lesson.resources,
+              resourcesShared: lesson.resourcesShared,
+              lessonLinkGroupId: lesson.lessonLinkGroupId,
+            }),
+          ),
+        );
+        const lessonLinkGroupId = peer
+          ? (peer.lessonLinkGroupId ?? createLinkGroupId())
+          : undefined;
+        const sections = peer
+          ? {
+              materials: peer.materials,
+              announcements: peer.announcements,
+              agenda: peer.agenda,
+            }
+          : {
+              materials: subject.defaultMaterials,
+              announcements: subject.defaultAnnouncements,
+              agenda: subject.defaultAgenda,
+            };
         const optimisticLesson = {
           _id: `optimistic:${args.slotId}-${args.subjectId}` as Id<"timetableLessons">,
           _creationTime: now,
@@ -71,18 +113,24 @@ export function useAddLessonToSlot() {
           subjectId: args.subjectId,
           year: args.year,
           weekNumber: args.weekNumber,
-          complete: false,
+          complete: peer?.complete === true,
           ...sections,
           createdAt: now,
           updatedAt: now,
           subject,
           upcomingEvents: [] as TimetableWeekBundle["lessons"][number]["upcomingEvents"],
-          lessonUrl: undefined,
-          lessonUrlShared: false,
-          resources: [],
-          resourcesShared: false,
+          lessonUrl: peer?.lessonUrl,
+          lessonUrlShared: peer?.lessonUrlShared === true,
+          resources: peer?.resources ?? [],
+          resourcesShared: peer?.resourcesShared === true,
+          lessonLinkGroupId,
         };
-        const withPrimary = { ...old, lessons: [...old.lessons, optimisticLesson] };
+        const nextLessons = old.lessons.map((lesson) =>
+          peer && !peer.lessonLinkGroupId && lesson._id === peer._id
+            ? { ...lesson, lessonLinkGroupId }
+            : lesson,
+        );
+        const withPrimary = { ...old, lessons: [...nextLessons, optimisticLesson] };
         return mirrorLessonsInBundle(withPrimary, args.slotId, args.year, args.weekNumber, {
           type: "add",
           sourceSlotId: args.slotId,
@@ -156,9 +204,86 @@ export function useRemoveLesson() {
               lessonUrlShared: lesson.lessonUrlShared,
               resources: lesson.resources,
               resourcesShared: lesson.resourcesShared,
+              lessonLinkGroupId: lesson.lessonLinkGroupId,
             },
           },
         );
+      });
+    },
+    onError: (error) => {
+      toast.add({
+        title: messageFromError(error, t("saveFailed"), tCommon("rateLimited")),
+        type: "error",
+      });
+    },
+  });
+}
+
+export function useMoveLesson() {
+  const { t } = useTranslation("timetable");
+  const { t: tCommon } = useTranslation("common");
+  const mutationFn = useConvexMutation(api.timetable.moveLesson);
+
+  return useOptimisticMutation({
+    mutationFn: (args: {
+      classId: Id<"classes">;
+      termId: Id<"timetableTerms">;
+      year: number;
+      weekNumber: number;
+      lessonId: Id<"timetableLessons">;
+      targetSlotId: Id<"timetableSlots">;
+    }) =>
+      mutationFn({
+        classId: args.classId,
+        lessonId: args.lessonId,
+        targetSlotId: args.targetSlotId,
+      }),
+    queryKeys: (args) => weekKeys(args.classId, args.termId, args.year, args.weekNumber),
+    applyOptimisticUpdate: (queryClient, args) => {
+      const key = timetableWeekBundleQueryKey(
+        args.classId,
+        args.termId,
+        args.year,
+        args.weekNumber,
+      );
+      queryClient.setQueryData<TimetableWeekBundle>(key, (old) => {
+        if (!old) return old;
+        return applyOptimisticMoveLesson(old, args.lessonId, args.targetSlotId);
+      });
+    },
+    onError: (error) => {
+      toast.add({
+        title: messageFromError(error, t("saveFailed"), tCommon("rateLimited")),
+        type: "error",
+      });
+    },
+  });
+}
+
+export function useUnlinkLesson() {
+  const { t } = useTranslation("timetable");
+  const { t: tCommon } = useTranslation("common");
+  const mutationFn = useConvexMutation(api.timetable.unlinkLesson);
+
+  return useOptimisticMutation({
+    mutationFn: (args: {
+      classId: Id<"classes">;
+      termId: Id<"timetableTerms">;
+      year: number;
+      weekNumber: number;
+      lessonId: Id<"timetableLessons">;
+    }) => mutationFn({ classId: args.classId, lessonId: args.lessonId }),
+    queryKeys: (args) => weekKeys(args.classId, args.termId, args.year, args.weekNumber),
+    applyOptimisticUpdate: (queryClient, args) => {
+      const key = timetableWeekBundleQueryKey(
+        args.classId,
+        args.termId,
+        args.year,
+        args.weekNumber,
+      );
+      queryClient.setQueryData<TimetableWeekBundle>(key, (old) => {
+        if (!old) return old;
+        return applyOptimisticUnlinkLesson(old, args.lessonId);
       });
     },
     onError: (error) => {
@@ -274,6 +399,7 @@ export function useUpsertLesson() {
             updatedAt: now,
             subject,
             upcomingEvents: [],
+            lessonLinkGroupId: undefined,
           });
         }
         const updatedLesson = nextLessons.find(
@@ -303,6 +429,7 @@ export function useUpsertLesson() {
                   lessonUrlShared: updatedLesson.lessonUrlShared,
                   resources: updatedLesson.resources,
                   resourcesShared: updatedLesson.resourcesShared,
+                  lessonLinkGroupId: updatedLesson.lessonLinkGroupId,
                 },
               }
             : {

@@ -7,7 +7,6 @@ import { FontAwesomeIconFromId } from "@/components/icons/FontAwesomeIconFromId"
 import { TimetableAgendaItemView } from "@/components/timetable/TimetableAgendaItemView";
 import { TimetableTaggedText } from "@/components/timetable/TimetableTaggedText";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAssignments } from "@/hooks/assignments/useAssignments";
 import type { ClassroomLessonDisplay } from "@/hooks/classroomScreen/useClassroomScreenQueries";
 import { useTasks } from "@/hooks/tasks/useTasks";
@@ -66,9 +65,9 @@ export function LessonDisplayPanel({
 
   if (lesson) {
     return (
-      <div className={cn("flex h-full flex-col", className)}>
+      <div className={cn("flex h-full min-h-0 flex-col", className)}>
         <div
-          className="flex items-center gap-4 border-b p-6"
+          className="sticky top-0 z-10 flex shrink-0 items-center gap-4 border-b p-6"
           style={{
             backgroundColor: lesson.subjectBgColor,
             color: lesson.subjectTextColor,
@@ -93,7 +92,7 @@ export function LessonDisplayPanel({
             <p className="opacity-90">{formattedDate}</p>
           </div>
         </div>
-        <ScrollArea className="grow p-6">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-6">
           <div className="flex flex-col gap-6" style={bodyStyle}>
             {lesson.lessonUrl && isValidHttpUrl(lesson.lessonUrl) ? (
               <a
@@ -179,15 +178,15 @@ export function LessonDisplayPanel({
               tasks={tasks.data}
             />
           </div>
-        </ScrollArea>
+        </div>
       </div>
     );
   }
 
   if (quickText) {
     return (
-      <div className={cn("flex h-full flex-col", className)}>
-        <div className="flex items-center justify-between border-b bg-muted/50 p-6">
+      <div className={cn("flex h-full min-h-0 flex-col", className)}>
+        <div className="sticky top-0 z-10 flex shrink-0 items-center justify-between border-b bg-muted/50 p-6">
           <div>
             <h2 className="font-bold text-foreground" style={headingStyle}>
               {quickTextTitle}
@@ -207,7 +206,7 @@ export function LessonDisplayPanel({
             </Button>
           ) : null}
         </div>
-        <ScrollArea className="grow p-6">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-6">
           {quickText.trim().startsWith("{") ? (
             <div className={bodyClassName} style={bodyStyle}>
               <AnnouncementBody bodyJson={quickText} />
@@ -217,7 +216,7 @@ export function LessonDisplayPanel({
               {quickText}
             </p>
           )}
-        </ScrollArea>
+        </div>
       </div>
     );
   }
@@ -225,7 +224,7 @@ export function LessonDisplayPanel({
   return (
     <div
       className={cn(
-        "flex h-full flex-col items-center justify-center p-8 text-center text-muted-foreground",
+        "flex h-full min-h-0 flex-col items-center justify-center p-8 text-center text-muted-foreground",
         className,
       )}
     >

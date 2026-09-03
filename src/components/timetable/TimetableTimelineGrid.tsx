@@ -19,6 +19,7 @@ import {
 import {
   buildTimeLabels,
   getSlotLayout,
+  layoutOverlappingSlots,
   minutesToHm,
   pixelsPerMinuteForAvailableHeight,
 } from "@/lib/timetable/timelineLayout";
@@ -55,6 +56,8 @@ type TimetableTimelineGridProps = {
   onEnableSlot: (slot: TimetableSlot) => void;
   onDisableDay: (day: string) => void;
   onEnableDay: (day: string) => void;
+  onMoveLesson: (lesson: TimetableLesson) => void;
+  onAddParallelSlot: (slot: TimetableSlot) => void;
   year: number;
   weekNumber: number;
   nowMs: number;
@@ -81,6 +84,8 @@ export function TimetableTimelineGrid({
   onEnableSlot,
   onDisableDay,
   onEnableDay,
+  onMoveLesson,
+  onAddParallelSlot,
   year,
   weekNumber,
   nowMs,
@@ -113,6 +118,24 @@ export function TimetableTimelineGrid({
     }
     return grouped;
   }, [bundle.slots, displayDays]);
+
+  const overlapByDay = useMemo(() => {
+    const map = new Map<string, ReturnType<typeof layoutOverlappingSlots>>();
+    for (const day of displayDays) {
+      const daySlots = slotsByDay[day] ?? [];
+      map.set(
+        day,
+        layoutOverlappingSlots(
+          daySlots.map((slot) => ({
+            id: slot._id,
+            startTime: slot.startTime,
+            endTime: slot.endTime,
+          })),
+        ),
+      );
+    }
+    return map;
+  }, [displayDays, slotsByDay]);
 
   const lessonsBySlot = useMemo(() => {
     const map = new Map<Id<"timetableSlots">, Array<TimetableLesson>>();
@@ -282,12 +305,22 @@ export function TimetableTimelineGrid({
                     pixelsPerMinute,
                   );
                   if (!layout) return null;
+                  const overlap = overlapByDay.get(day)?.get(slot._id);
+                  const columnCount = overlap?.columnCount ?? 1;
+                  const leftPct = overlap?.leftPct ?? 0;
+                  const widthPct = overlap?.widthPct ?? 100;
+                  const insetPx = 4;
 
                   return (
                     <div
                       key={slot._id}
-                      className="absolute right-1 left-1"
-                      style={{ top: layout.topPx + 1, height: Math.max(layout.heightPx - 2, 1) }}
+                      className="absolute"
+                      style={{
+                        top: layout.topPx + 1,
+                        height: Math.max(layout.heightPx - 2, 1),
+                        left: `calc(${leftPct}% + ${insetPx}px)`,
+                        width: `calc(${widthPct}% - ${insetPx * 2}px)`,
+                      }}
                     >
                       <TimetableSlotCell
                         slot={slot}
@@ -296,9 +329,12 @@ export function TimetableTimelineGrid({
                         isDisabledForWeek={disabledSet.has(slot._id)}
                         canManage={canManage}
                         timeFormat={timeFormat}
+                        narrow={columnCount > 1}
                         onAddSubject={(subjectId) => onAddSubject(slot._id, subjectId)}
                         onLessonClick={onLessonClick}
                         onRemoveLesson={onRemoveLesson}
+                        onMoveLesson={canManage ? onMoveLesson : undefined}
+                        onAddParallelSlot={canManage ? () => onAddParallelSlot(slot) : undefined}
                         onEditSlot={canManage ? () => onEditSlot(slot) : undefined}
                         onDeleteSlot={canManage ? () => onDeleteSlot(slot) : undefined}
                         onLinkSlot={canManage ? () => onLinkSlot(slot) : undefined}

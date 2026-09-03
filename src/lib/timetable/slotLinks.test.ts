@@ -9,6 +9,10 @@ import {
   planRepairGroupAfterSlotDelete,
   planSyncSlotLinkMembership,
   planUnlinkSlot,
+  findPeerLessonForAutoLink,
+  planUnlinkLesson,
+  buildLessonGroupMirrorOps,
+  dedupeMirrorOps,
   type LessonLinkLike,
   type SlotLinkLike,
 } from "../../../convex/lib/timetable/slotLinks";
@@ -218,6 +222,82 @@ describe("planRepairGroupAfterSlotDelete", () => {
       { _id: slotId("f"), linkGroupId: "group-1" },
     ];
     expect(planRepairGroupAfterSlotDelete(slotId("a"), trio)).toEqual([]);
+  });
+});
+
+describe("findPeerLessonForAutoLink", () => {
+  test("finds the same subject in an unlinked slot", () => {
+    const peer = findPeerLessonForAutoLink(
+      slotId("c"),
+      subjectId("math"),
+      2026,
+      10,
+      slots,
+      lessons,
+    );
+    expect(peer?._id).toBe(lessonId("l-a-math"));
+  });
+
+  test("skips slot-linked copies", () => {
+    const peer = findPeerLessonForAutoLink(
+      slotId("b"),
+      subjectId("math"),
+      2026,
+      10,
+      slots,
+      lessons,
+    );
+    expect(peer).toBeUndefined();
+  });
+});
+
+describe("buildLessonGroupMirrorOps", () => {
+  test("updates other members of the lesson group", () => {
+    const grouped: Array<LessonLinkLike> = [
+      { ...lessons[0]!, _id: lessonId("g1"), lessonLinkGroupId: "lg" },
+      { ...lessons[1]!, _id: lessonId("g2"), slotId: slotId("c"), lessonLinkGroupId: "lg" },
+    ];
+    const ops = buildLessonGroupMirrorOps(grouped[0]!, grouped);
+    expect(ops).toEqual([
+      expect.objectContaining({ op: "updateLesson", lessonId: lessonId("g2") }),
+    ]);
+  });
+});
+
+describe("planUnlinkLesson", () => {
+  test("clears both rows when a pair is unlinked", () => {
+    const grouped: Array<LessonLinkLike> = [
+      { ...lessons[0]!, _id: lessonId("g1"), lessonLinkGroupId: "lg" },
+      { ...lessons[1]!, _id: lessonId("g2"), slotId: slotId("c"), lessonLinkGroupId: "lg" },
+    ];
+    expect(planUnlinkLesson(lessonId("g1"), grouped).lessonIdsToClear.sort()).toEqual(
+      [lessonId("g1"), lessonId("g2")].sort(),
+    );
+  });
+});
+
+describe("dedupeMirrorOps", () => {
+  test("keeps the first op for a lesson", () => {
+    const ops = dedupeMirrorOps([
+      {
+        op: "updateLesson",
+        lessonId: lessonId("g1"),
+        materials: [],
+        announcements: [],
+        agenda: [],
+        complete: false,
+      },
+      {
+        op: "updateLesson",
+        lessonId: lessonId("g1"),
+        materials: [{ key: "k", text: "later", tags: [] }],
+        announcements: [],
+        agenda: [],
+        complete: true,
+      },
+    ]);
+    expect(ops).toHaveLength(1);
+    expect(ops[0]).toMatchObject({ complete: false });
   });
 });
 

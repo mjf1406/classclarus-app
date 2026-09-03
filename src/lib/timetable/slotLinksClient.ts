@@ -5,11 +5,16 @@ import type {
   TimetableWeekBundle,
 } from "@/lib/timetable/timetable";
 import {
+  buildLessonGroupMirrorOps,
   buildMirrorLessonOps,
+  dedupeMirrorOps,
   getLinkedSlotIds,
+  getLessonLinkGroupMembers,
   planSyncSlotLinkMembership,
+  planUnlinkLesson,
   planUnlinkSlot,
   type LessonLinkLike,
+  type MirrorLessonOp,
   type SlotLinkLike,
 } from "../../../convex/lib/timetable/slotLinks";
 
@@ -35,6 +40,7 @@ function toLessonLinkLike(lesson: TimetableLesson): LessonLinkLike {
     lessonUrlShared: lesson.lessonUrlShared,
     resources: lesson.resources,
     resourcesShared: lesson.resourcesShared,
+    lessonLinkGroupId: lesson.lessonLinkGroupId,
   };
 }
 
@@ -73,13 +79,44 @@ export function mirrorLessonsInBundle(
   weekNumber: number,
   change: Parameters<typeof buildMirrorLessonOps>[0],
 ): TimetableWeekBundle {
-  const ops = buildMirrorLessonOps(
+  const linkLikes = bundle.lessons.map(toLessonLinkLike);
+  const slotOps = buildMirrorLessonOps(
     change,
     bundle.slots as Array<SlotLinkLike>,
-    bundle.lessons.map(toLessonLinkLike),
+    linkLikes,
     year,
     weekNumber,
   );
+  const sourceLesson = change.type === "update" ? change.sourceLesson : undefined;
+  const groupOps = sourceLesson ? buildLessonGroupMirrorOps(sourceLesson, linkLikes) : [];
+  const memberSlotOps: Array<MirrorLessonOp> = [];
+  if (sourceLesson?.lessonLinkGroupId) {
+    for (const member of getLessonLinkGroupMembers(sourceLesson, linkLikes)) {
+      memberSlotOps.push(
+        ...buildMirrorLessonOps(
+          {
+            type: "update",
+            sourceLesson: {
+              ...member,
+              materials: sourceLesson.materials,
+              announcements: sourceLesson.announcements,
+              agenda: sourceLesson.agenda,
+              complete: sourceLesson.complete,
+              lessonUrl: sourceLesson.lessonUrl,
+              lessonUrlShared: sourceLesson.lessonUrlShared,
+              resources: sourceLesson.resources,
+              resourcesShared: sourceLesson.resourcesShared,
+            },
+          },
+          bundle.slots as Array<SlotLinkLike>,
+          linkLikes,
+          year,
+          weekNumber,
+        ),
+      );
+    }
+  }
+  const ops = dedupeMirrorOps([...slotOps, ...groupOps, ...memberSlotOps]);
 
   let nextLessons = [...bundle.lessons];
   const now = Date.now();
@@ -109,6 +146,7 @@ export function mirrorLessonsInBundle(
         updatedAt: now,
         subject,
         upcomingEvents: [],
+        lessonLinkGroupId: undefined,
       });
       continue;
     }
@@ -180,6 +218,7 @@ export function applyOptimisticLinkMembership(
             updatedAt: now,
             subject,
             upcomingEvents: [],
+            lessonLinkGroupId: undefined,
           },
         ];
       } else if (op.op === "updateLesson") {
@@ -206,6 +245,61 @@ export function applyOptimisticUnlink(
     ...bundle,
     slots: bundle.slots.map((slot) =>
       clearSet.has(slot._id) ? { ...slot, linkGroupId: undefined } : slot,
+    ),
+  };
+}
+
+export function applyOptimisticMoveLesson(
+  bundle: TimetableWeekBundle,
+  lessonId: Id<"timetableLessons">,
+  targetSlotId: Id<"timetableSlots">,
+): TimetableWeekBundle {
+  const lesson = bundle.lessons.find((item) => item._id === lessonId);
+  if (!lesson || lesson.slotId === targetSlotId) return bundle;
+
+  const withoutMirrors = mirrorLessonsInBundle(
+    { ...bundle, lessons: bundle.lessons.filter((item) => item._id !== lessonId) },
+    lesson.slotId,
+    lesson.year,
+    lesson.weekNumber,
+    {
+      type: "delete",
+      sourceLesson: toLessonLinkLike(lesson),
+    },
+  );
+
+  const moved = { ...lesson, slotId: targetSlotId, updatedAt: Date.now() };
+  return mirrorLessonsInBundle(
+    { ...withoutMirrors, lessons: [...withoutMirrors.lessons, moved] },
+    targetSlotId,
+    lesson.year,
+    lesson.weekNumber,
+    {
+      type: "add",
+      sourceSlotId: targetSlotId,
+      subjectId: lesson.subjectId,
+      complete: lesson.complete,
+      materials: lesson.materials,
+      announcements: lesson.announcements,
+      agenda: lesson.agenda,
+      lessonUrl: lesson.lessonUrl,
+      lessonUrlShared: lesson.lessonUrlShared,
+      resources: lesson.resources,
+      resourcesShared: lesson.resourcesShared,
+    },
+  );
+}
+
+export function applyOptimisticUnlinkLesson(
+  bundle: TimetableWeekBundle,
+  lessonId: Id<"timetableLessons">,
+): TimetableWeekBundle {
+  const { lessonIdsToClear } = planUnlinkLesson(lessonId, bundle.lessons.map(toLessonLinkLike));
+  const clearSet = new Set(lessonIdsToClear);
+  return {
+    ...bundle,
+    lessons: bundle.lessons.map((lesson) =>
+      clearSet.has(lesson._id) ? { ...lesson, lessonLinkGroupId: undefined } : lesson,
     ),
   };
 }

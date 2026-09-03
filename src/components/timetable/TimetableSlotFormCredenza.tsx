@@ -43,6 +43,7 @@ type TimetableSlotFormCredenzaProps = {
   year: number;
   weekNumber: number;
   slot?: TimetableSlot | null;
+  createDefaults?: Pick<TimetableSlotFormValues, "day" | "startTime" | "endTime"> | null;
 };
 
 function fieldErrorMessage(errors: unknown): string | undefined {
@@ -82,6 +83,7 @@ export function TimetableSlotFormCredenza({
   year,
   weekNumber,
   slot,
+  createDefaults,
 }: TimetableSlotFormCredenzaProps) {
   const { t, i18n } = useTranslation("timetable");
   const locale = toIntlLocale(i18n.language);
@@ -92,8 +94,14 @@ export function TimetableSlotFormCredenza({
   const mode = slot ? "edit" : "create";
 
   const defaults = useMemo(
-    () => (slot ? valuesFromSlot(slot) : defaultCreateValues(term)),
-    [slot, term],
+    () =>
+      slot
+        ? valuesFromSlot(slot)
+        : {
+            ...defaultCreateValues(term),
+            ...(createDefaults ?? {}),
+          },
+    [createDefaults, slot, term],
   );
 
   const schema = useMemo(() => createClientTimetableSlotFormSchema(t), [t]);

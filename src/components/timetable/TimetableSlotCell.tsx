@@ -1,6 +1,8 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import {
+  ArrowRightLeft,
   Check,
+  Copy,
   Link2,
   MoreHorizontal,
   Pencil,
@@ -46,6 +48,9 @@ type TimetableSlotCellProps = {
   onUnlinkSlot?: () => void;
   onDisableSlot?: () => void;
   onEnableSlot?: () => void;
+  onMoveLesson?: (lesson: TimetableLesson) => void;
+  onAddParallelSlot?: () => void;
+  narrow?: boolean;
   isElapsed?: boolean;
 };
 
@@ -65,21 +70,31 @@ export function TimetableSlotCell({
   onUnlinkSlot,
   onDisableSlot,
   onEnableSlot,
+  onMoveLesson,
+  onAddParallelSlot,
+  narrow = false,
   isElapsed = false,
 }: TimetableSlotCellProps) {
   const { t } = useTranslation("timetable");
   const duration = slotDurationMinutes(slot.startTime, slot.endTime);
-  const compact = duration < COMPACT_SLOT_MAX_MINUTES;
+  const compact = narrow || duration < COMPACT_SLOT_MAX_MINUTES;
   const isDisabled = slot.disabled || isDisabledForWeek;
   const isLinked = Boolean(slot.linkGroupId);
   const showActions =
     canManage &&
-    (onEditSlot || onDeleteSlot || onLinkSlot || onUnlinkSlot || onDisableSlot || onEnableSlot);
+    (onEditSlot ||
+      onDeleteSlot ||
+      onLinkSlot ||
+      onUnlinkSlot ||
+      onDisableSlot ||
+      onEnableSlot ||
+      onAddParallelSlot);
 
   return (
     <div
       className={cn(
-        "group/slot relative flex h-full min-h-0 flex-col gap-1 overflow-hidden rounded-md border px-1.5 py-1 shadow-sm transition-colors",
+        "group/slot relative flex h-full min-h-0 flex-col gap-1 overflow-hidden rounded-md border shadow-sm transition-colors",
+        narrow ? "px-1 py-0.5" : "px-1.5 py-1",
         isDisabled
           ? "border-destructive/40 bg-card text-card-foreground opacity-50"
           : isLinked
@@ -107,6 +122,7 @@ export function TimetableSlotCell({
             canManage={canManage}
             onClick={() => onLessonClick(lesson)}
             onRemove={() => onRemoveLesson(lesson._id)}
+            onMove={onMoveLesson ? () => onMoveLesson(lesson) : undefined}
           />
         ))}
 
@@ -180,6 +196,12 @@ export function TimetableSlotCell({
                 {t("editSlot")}
               </DropdownMenuItem>
             ) : null}
+            {onAddParallelSlot ? (
+              <DropdownMenuItem onClick={onAddParallelSlot}>
+                <Copy className="h-4 w-4" />
+                {t("addParallelSlot")}
+              </DropdownMenuItem>
+            ) : null}
             {onLinkSlot ? (
               <DropdownMenuItem onClick={onLinkSlot}>
                 <Link2 className="h-4 w-4" />
@@ -239,12 +261,14 @@ function LessonChip({
   canManage,
   onClick,
   onRemove,
+  onMove,
 }: {
   lesson: TimetableLesson;
   compact: boolean;
   canManage: boolean;
   onClick: () => void;
   onRemove: () => void;
+  onMove?: () => void;
 }) {
   const { t } = useTranslation("timetable");
   const subject = lesson.subject;
@@ -280,24 +304,46 @@ function LessonChip({
         <Link2 className={cn("shrink-0 opacity-80", compact ? "h-3 w-3" : "h-3.5 w-3.5")} />
       ) : null}
       {canManage ? (
-        <span
-          role="button"
-          tabIndex={0}
-          className="shrink-0 p-0.5 opacity-0 hover:opacity-100 group-hover/slot:opacity-100"
-          aria-label={t("deleteAction")}
-          onClick={(e) => {
-            e.stopPropagation();
-            onRemove();
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
+        <>
+          {onMove ? (
+            <span
+              role="button"
+              tabIndex={0}
+              className="shrink-0 p-0.5 opacity-0 hover:opacity-100 group-hover/slot:opacity-100"
+              aria-label={t("moveLessonAction")}
+              onClick={(e) => {
+                e.stopPropagation();
+                onMove();
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.stopPropagation();
+                  onMove();
+                }
+              }}
+            >
+              <ArrowRightLeft className="h-3 w-3" />
+            </span>
+          ) : null}
+          <span
+            role="button"
+            tabIndex={0}
+            className="shrink-0 p-0.5 opacity-0 hover:opacity-100 group-hover/slot:opacity-100"
+            aria-label={t("deleteAction")}
+            onClick={(e) => {
               e.stopPropagation();
               onRemove();
-            }
-          }}
-        >
-          <Trash2 className="h-3 w-3" />
-        </span>
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.stopPropagation();
+                onRemove();
+              }
+            }}
+          >
+            <Trash2 className="h-3 w-3" />
+          </span>
+        </>
       ) : null}
     </button>
   );

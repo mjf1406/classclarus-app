@@ -11,6 +11,7 @@ import {
 import { TimetableImportCredenza } from "@/components/timetable/TimetableImportCredenza";
 import { TimetableLessonSheet } from "@/components/timetable/TimetableLessonSheet";
 import { TimetableLinkSlotsCredenza } from "@/components/timetable/TimetableLinkSlotsCredenza";
+import { TimetableMoveLessonCredenza } from "@/components/timetable/TimetableMoveLessonCredenza";
 import { TimetableSlotFormCredenza } from "@/components/timetable/TimetableSlotFormCredenza";
 import { TimetableSubjectFormCredenza } from "@/components/timetable/TimetableSubjectFormCredenza";
 import {
@@ -106,7 +107,13 @@ export function TimetablePage({ classId }: TimetablePageProps) {
   const [deletingSubject, setDeletingSubject] = useState<TimetableSubject | null>(null);
   const [slotFormOpen, setSlotFormOpen] = useState(false);
   const [editingSlot, setEditingSlot] = useState<TimetableSlot | null>(null);
+  const [slotCreateDefaults, setSlotCreateDefaults] = useState<{
+    day: string;
+    startTime: string;
+    endTime: string;
+  } | null>(null);
   const [linkingSlot, setLinkingSlot] = useState<TimetableSlot | null>(null);
+  const [movingLesson, setMovingLesson] = useState<TimetableLesson | null>(null);
   const [deletingSlot, setDeletingSlot] = useState<TimetableSlot | null>(null);
   const [activeLesson, setActiveLesson] = useState<TimetableLesson | null>(null);
   const [lessonSheetOpen, setLessonSheetOpen] = useState(false);
@@ -244,6 +251,7 @@ export function TimetablePage({ classId }: TimetablePageProps) {
         group: "create",
         onSelect: () => {
           setEditingSlot(null);
+          setSlotCreateDefaults(null);
           setSlotFormOpen(true);
         },
       },
@@ -442,8 +450,19 @@ export function TimetablePage({ classId }: TimetablePageProps) {
                   lessonId,
                 })
               }
+              onMoveLesson={setMovingLesson}
+              onAddParallelSlot={(slot) => {
+                setEditingSlot(null);
+                setSlotCreateDefaults({
+                  day: slot.day,
+                  startTime: slot.startTime,
+                  endTime: slot.endTime,
+                });
+                setSlotFormOpen(true);
+              }}
               onEditSlot={(slot) => {
                 setEditingSlot(slot);
+                setSlotCreateDefaults(null);
                 setSlotFormOpen(true);
               }}
               onDeleteSlot={setDeletingSlot}
@@ -536,13 +555,32 @@ export function TimetablePage({ classId }: TimetablePageProps) {
           />
           <TimetableSlotFormCredenza
             open={slotFormOpen}
-            onOpenChange={setSlotFormOpen}
+            onOpenChange={(open) => {
+              setSlotFormOpen(open);
+              if (!open) setSlotCreateDefaults(null);
+            }}
             classId={classId}
             term={selectedTerm}
             year={year}
             weekNumber={weekNumber}
             slot={editingSlot}
+            createDefaults={slotCreateDefaults}
           />
+          {movingLesson ? (
+            <TimetableMoveLessonCredenza
+              open={movingLesson !== null}
+              onOpenChange={(open) => {
+                if (!open) setMovingLesson(null);
+              }}
+              classId={classId}
+              term={selectedTerm}
+              lesson={movingLesson}
+              allSlots={bundle?.slots ?? []}
+              allLessons={bundle?.lessons ?? []}
+              year={year}
+              weekNumber={weekNumber}
+            />
+          ) : null}
           {linkingSlot ? (
             <TimetableLinkSlotsCredenza
               open={linkingSlot !== null}
@@ -599,7 +637,11 @@ export function TimetablePage({ classId }: TimetablePageProps) {
             termId={selectedTerm._id}
             year={year}
             weekNumber={weekNumber}
-            lesson={activeLesson}
+            lesson={
+              activeLesson
+                ? (bundle?.lessons.find((item) => item._id === activeLesson._id) ?? activeLesson)
+                : null
+            }
             canManage={canManage}
           />
           <TimetableImportCredenza

@@ -53,6 +53,7 @@ function lesson(
     lessonUrlShared: false,
     resources: [],
     resourcesShared: false,
+    lessonLinkGroupId: undefined,
     createdAt: 1,
     updatedAt: 1,
     subject: subject(),

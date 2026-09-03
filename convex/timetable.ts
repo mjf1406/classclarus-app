@@ -56,9 +56,15 @@ import {
   type SlotDisableScope,
 } from "./lib/timetable/slotDisableScope.js";
 import {
+  buildLessonGroupMirrorOps,
   buildMirrorLessonOps,
+  createLinkGroupId,
+  dedupeMirrorOps,
+  findPeerLessonForAutoLink,
+  getLessonLinkGroupMembers,
   planRepairGroupAfterSlotDelete,
   planSyncSlotLinkMembership,
+  planUnlinkLesson,
   planUnlinkSlot,
   type LessonLinkLike,
   type MirrorLessonOp,
@@ -132,6 +138,7 @@ const lessonValidator = v.object({
   lessonUrlShared: v.boolean(),
   resources: v.array(lessonResourceValidator),
   resourcesShared: v.boolean(),
+  lessonLinkGroupId: v.optional(v.string()),
   createdAt: v.number(),
   updatedAt: v.number(),
   subject: subjectValidator,
@@ -259,6 +266,7 @@ function toLessonLinkLike(lesson: Doc<"timetableLessons">): LessonLinkLike {
     lessonUrlShared: lesson.lessonUrlShared === true,
     resources: lesson.resources ?? [],
     resourcesShared: lesson.resourcesShared === true,
+    lessonLinkGroupId: lesson.lessonLinkGroupId,
   };
 }
 
@@ -329,17 +337,60 @@ async function mirrorLessonChange(
   year: number,
   weekNumber: number,
   change: Parameters<typeof buildMirrorLessonOps>[0],
+  options?: { includeLessonGroup?: boolean; sourceLesson?: LessonLinkLike },
 ): Promise<void> {
   const slots = await listTermSlots(ctx, termId);
   const lessons = await listWeekLessonsForTerm(ctx, termId, year, weekNumber);
-  const ops = buildMirrorLessonOps(
+  const linkLikes = lessons.map(toLessonLinkLike);
+  const slotOps = buildMirrorLessonOps(
     change,
     slots as Array<SlotLinkLike>,
-    lessons.map(toLessonLinkLike),
+    linkLikes,
     year,
     weekNumber,
   );
-  await applyMirrorLessonOps(ctx, classId, termId, year, weekNumber, ops);
+  const groupOps =
+    options?.includeLessonGroup && options.sourceLesson
+      ? buildLessonGroupMirrorOps(options.sourceLesson, linkLikes)
+      : [];
+  const memberSlotOps: Array<MirrorLessonOp> = [];
+  if (options?.includeLessonGroup && options.sourceLesson) {
+    for (const member of getLessonLinkGroupMembers(options.sourceLesson, linkLikes)) {
+      memberSlotOps.push(
+        ...buildMirrorLessonOps(
+          {
+            type: "update",
+            sourceLesson: { ...member, ...sectionFieldsFromSource(options.sourceLesson) },
+          },
+          slots as Array<SlotLinkLike>,
+          linkLikes,
+          year,
+          weekNumber,
+        ),
+      );
+    }
+  }
+  await applyMirrorLessonOps(
+    ctx,
+    classId,
+    termId,
+    year,
+    weekNumber,
+    dedupeMirrorOps([...slotOps, ...groupOps, ...memberSlotOps]),
+  );
+}
+
+function sectionFieldsFromSource(lesson: LessonLinkLike) {
+  return {
+    materials: lesson.materials,
+    announcements: lesson.announcements,
+    agenda: lesson.agenda,
+    complete: lesson.complete,
+    lessonUrl: lesson.lessonUrl,
+    lessonUrlShared: lesson.lessonUrlShared,
+    resources: lesson.resources,
+    resourcesShared: lesson.resourcesShared,
+  };
 }
 
 export const listTerms = classQuery({
@@ -442,6 +493,7 @@ export const getWeekBundle = classQuery({
           lessonUrlShared: lesson.lessonUrlShared === true,
           resources: weekBundleVisibleResources(lesson, canManageTimetable),
           resourcesShared: lesson.resourcesShared === true,
+          lessonLinkGroupId: lesson.lessonLinkGroupId,
           createdAt: lesson.createdAt,
           updatedAt: lesson.updatedAt,
           subject,
@@ -1074,14 +1126,23 @@ export const upsertLesson = classMutation({
         ...sections,
         updatedAt: now,
       });
-      await mirrorLessonChange(ctx, ctx.classDoc._id, args.termId, args.year, args.weekNumber, {
-        type: "update",
-        sourceLesson: {
-          ...toLessonLinkLike(existing),
-          ...sections,
-          complete: args.complete,
+      const sourceLesson = {
+        ...toLessonLinkLike(existing),
+        ...sections,
+        complete: args.complete,
+      };
+      await mirrorLessonChange(
+        ctx,
+        ctx.classDoc._id,
+        args.termId,
+        args.year,
+        args.weekNumber,
+        {
+          type: "update",
+          sourceLesson,
         },
-      });
+        { includeLessonGroup: true, sourceLesson },
+      );
       if (contentChanged) {
         await recordClassActivity(ctx, {
           classId: ctx.classDoc._id,
@@ -1157,8 +1218,43 @@ export const addLessonToSlot = classMutation({
     const existing = existingRows.find((row) => row.subjectId === args.subjectId);
     if (existing) return existing._id;
 
-    const sections = copySubjectDefaults(subject);
+    const weekLessons = await listWeekLessonsForTerm(ctx, args.termId, args.year, args.weekNumber);
+    const termSlots = await listTermSlots(ctx, args.termId);
+    const peer = findPeerLessonForAutoLink(
+      args.slotId,
+      args.subjectId,
+      args.year,
+      args.weekNumber,
+      termSlots as Array<SlotLinkLike>,
+      weekLessons.map(toLessonLinkLike),
+    );
     const now = Date.now();
+    let sections = {
+      ...copySubjectDefaults(subject),
+      lessonUrl: undefined as string | undefined,
+      lessonUrlShared: false,
+      resources: [] as NonNullable<Doc<"timetableLessons">["resources"]>,
+      resourcesShared: false,
+    };
+    let lessonLinkGroupId: string | undefined;
+    if (peer) {
+      sections = {
+        materials: peer.materials,
+        announcements: peer.announcements,
+        agenda: peer.agenda,
+        lessonUrl: peer.lessonUrl,
+        lessonUrlShared: peer.lessonUrlShared === true,
+        resources: peer.resources ?? [],
+        resourcesShared: peer.resourcesShared === true,
+      };
+      lessonLinkGroupId = peer.lessonLinkGroupId ?? createLinkGroupId();
+      if (!peer.lessonLinkGroupId) {
+        await ctx.db.patch("timetableLessons", peer._id, {
+          lessonLinkGroupId,
+          updatedAt: now,
+        });
+      }
+    }
     const lessonId = await ctx.db.insert("timetableLessons", {
       classId: ctx.classDoc._id,
       termId: args.termId,
@@ -1166,9 +1262,10 @@ export const addLessonToSlot = classMutation({
       subjectId: args.subjectId,
       year: args.year,
       weekNumber: args.weekNumber,
-      complete: false,
+      complete: peer?.complete === true,
       links: [],
       ...sections,
+      ...(lessonLinkGroupId ? { lessonLinkGroupId } : {}),
       createdAt: now,
       updatedAt: now,
     });
@@ -1176,7 +1273,7 @@ export const addLessonToSlot = classMutation({
       type: "add",
       sourceSlotId: args.slotId,
       subjectId: args.subjectId,
-      complete: false,
+      complete: peer?.complete === true,
       ...sections,
     });
     await recordClassActivity(ctx, {
@@ -1206,7 +1303,21 @@ export const removeLesson = classMutation({
       type: "delete",
       sourceLesson: toLessonLinkLike(lesson),
     });
+    const weekLessons = await listWeekLessonsForTerm(
+      ctx,
+      lesson.termId,
+      lesson.year,
+      lesson.weekNumber,
+    );
+    const { lessonIdsToClear } = planUnlinkLesson(args.lessonId, weekLessons.map(toLessonLinkLike));
     await ctx.db.delete("timetableLessons", args.lessonId);
+    const leftoverIds = lessonIdsToClear.filter((id) => id !== args.lessonId);
+    for (const leftoverId of leftoverIds) {
+      await ctx.db.patch("timetableLessons", leftoverId, {
+        lessonLinkGroupId: undefined,
+        updatedAt: Date.now(),
+      });
+    }
     const subject = await ctx.db.get("timetableSubjects", lesson.subjectId);
     await recordClassActivity(ctx, {
       classId: ctx.classDoc._id,
@@ -1216,6 +1327,123 @@ export const removeLesson = classMutation({
       resourceId: args.lessonId,
       summary: `Removed timetable lesson for "${subject?.name ?? "subject"}"`,
       summaryKey: "activitySummary_deletedTimetableLesson",
+      metadata: { name: subject?.name ?? "subject" },
+    });
+    return null;
+  },
+});
+
+export const moveLesson = classMutation({
+  args: {
+    lessonId: v.id("timetableLessons"),
+    targetSlotId: v.id("timetableSlots"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await ctx.require("timetable:manage");
+    const lesson = await ctx.db.get("timetableLessons", args.lessonId);
+    if (!lesson || lesson.classId !== ctx.classDoc._id) {
+      throw new ConvexError({ message: "Lesson not found" });
+    }
+    if (lesson.slotId === args.targetSlotId) {
+      return null;
+    }
+    const sourceSlot = await assertSlotBelongsToClass(ctx, ctx.classDoc._id, lesson.slotId);
+    const targetSlot = await assertSlotBelongsToClass(ctx, ctx.classDoc._id, args.targetSlotId);
+    if (targetSlot.termId !== lesson.termId || sourceSlot.termId !== lesson.termId) {
+      throw new Error("Slot does not belong to this term");
+    }
+
+    // eslint-disable-next-line @convex-dev/no-collect-in-query -- slot-week lessons are few
+    const targetRows = await ctx.db
+      .query("timetableLessons")
+      .withIndex("by_slotId_year_week", (q) =>
+        q
+          .eq("slotId", args.targetSlotId)
+          .eq("year", lesson.year)
+          .eq("weekNumber", lesson.weekNumber),
+      )
+      .collect();
+    if (targetRows.some((row) => row.subjectId === lesson.subjectId)) {
+      throw new Error("That slot already has this subject");
+    }
+
+    const sections = {
+      materials: lesson.materials ?? [],
+      announcements: lesson.announcements ?? [],
+      agenda: lesson.agenda ?? [],
+      complete: lesson.complete,
+      lessonUrl: lesson.lessonUrl,
+      lessonUrlShared: lesson.lessonUrlShared === true,
+      resources: lesson.resources ?? [],
+      resourcesShared: lesson.resourcesShared === true,
+    };
+
+    await mirrorLessonChange(ctx, ctx.classDoc._id, lesson.termId, lesson.year, lesson.weekNumber, {
+      type: "delete",
+      sourceLesson: toLessonLinkLike(lesson),
+    });
+    await ctx.db.patch("timetableLessons", args.lessonId, {
+      slotId: args.targetSlotId,
+      updatedAt: Date.now(),
+    });
+    await mirrorLessonChange(ctx, ctx.classDoc._id, lesson.termId, lesson.year, lesson.weekNumber, {
+      type: "add",
+      sourceSlotId: args.targetSlotId,
+      subjectId: lesson.subjectId,
+      ...sections,
+    });
+
+    const subject = await ctx.db.get("timetableSubjects", lesson.subjectId);
+    await recordClassActivity(ctx, {
+      classId: ctx.classDoc._id,
+      actorUserId: ctx.userId,
+      action: "update",
+      resourceType: "timetableLesson",
+      resourceId: args.lessonId,
+      summary: `Moved timetable lesson for "${subject?.name ?? "subject"}"`,
+      summaryKey: "activitySummary_movedTimetableLesson",
+      metadata: { name: subject?.name ?? "subject" },
+    });
+    return null;
+  },
+});
+
+export const unlinkLesson = classMutation({
+  args: { lessonId: v.id("timetableLessons") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await ctx.require("timetable:manage");
+    const lesson = await ctx.db.get("timetableLessons", args.lessonId);
+    if (!lesson || lesson.classId !== ctx.classDoc._id) {
+      throw new ConvexError({ message: "Lesson not found" });
+    }
+    if (!lesson.lessonLinkGroupId) {
+      return null;
+    }
+    const weekLessons = await listWeekLessonsForTerm(
+      ctx,
+      lesson.termId,
+      lesson.year,
+      lesson.weekNumber,
+    );
+    const { lessonIdsToClear } = planUnlinkLesson(args.lessonId, weekLessons.map(toLessonLinkLike));
+    const now = Date.now();
+    for (const lessonId of lessonIdsToClear) {
+      await ctx.db.patch("timetableLessons", lessonId, {
+        lessonLinkGroupId: undefined,
+        updatedAt: now,
+      });
+    }
+    const subject = await ctx.db.get("timetableSubjects", lesson.subjectId);
+    await recordClassActivity(ctx, {
+      classId: ctx.classDoc._id,
+      actorUserId: ctx.userId,
+      action: "update",
+      resourceType: "timetableLesson",
+      resourceId: args.lessonId,
+      summary: `Unlinked timetable lesson for "${subject?.name ?? "subject"}"`,
+      summaryKey: "activitySummary_unlinkedTimetableLesson",
       metadata: { name: subject?.name ?? "subject" },
     });
     return null;

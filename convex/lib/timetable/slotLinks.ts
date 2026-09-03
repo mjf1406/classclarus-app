@@ -21,6 +21,7 @@ export type LessonLinkLike = {
   lessonUrlShared?: boolean;
   resources?: Array<LessonResourceInput>;
   resourcesShared?: boolean;
+  lessonLinkGroupId?: string;
 };
 
 export type LessonSectionFields = {
@@ -414,6 +415,90 @@ export function planSyncSlotLinkMembership({
   });
 
   return { slotIdsToClear, linkPlan };
+}
+
+export function findPeerLessonForAutoLink(
+  slotId: Id<"timetableSlots">,
+  subjectId: Id<"timetableSubjects">,
+  year: number,
+  weekNumber: number,
+  slots: Array<SlotLinkLike>,
+  lessons: Array<LessonLinkLike>,
+): LessonLinkLike | undefined {
+  const linkedSlotIds = new Set(getLinkedSlotIds(slotId, slots));
+  return lessons.find(
+    (lesson) =>
+      lesson.subjectId === subjectId &&
+      lesson.year === year &&
+      lesson.weekNumber === weekNumber &&
+      lesson.slotId !== slotId &&
+      !linkedSlotIds.has(lesson.slotId),
+  );
+}
+
+export function getLessonLinkGroupMembers(
+  lesson: Pick<LessonLinkLike, "_id" | "lessonLinkGroupId">,
+  lessons: Array<LessonLinkLike>,
+): Array<LessonLinkLike> {
+  if (!lesson.lessonLinkGroupId) return [];
+  return lessons.filter(
+    (row) => row.lessonLinkGroupId === lesson.lessonLinkGroupId && row._id !== lesson._id,
+  );
+}
+
+function sectionFieldsFromLesson(lesson: LessonLinkLike): LessonSectionFields {
+  return {
+    materials: lesson.materials,
+    announcements: lesson.announcements,
+    agenda: lesson.agenda,
+    complete: lesson.complete,
+    lessonUrl: lesson.lessonUrl,
+    lessonUrlShared: lesson.lessonUrlShared,
+    resources: lesson.resources,
+    resourcesShared: lesson.resourcesShared,
+  };
+}
+
+export function buildLessonGroupMirrorOps(
+  source: LessonLinkLike,
+  lessons: Array<LessonLinkLike>,
+): Array<MirrorLessonOp> {
+  const members = getLessonLinkGroupMembers(source, lessons);
+  const fields = sectionFieldsFromLesson(source);
+  return members.map((existing) => ({
+    op: "updateLesson" as const,
+    lessonId: existing._id,
+    ...fields,
+  }));
+}
+
+export function planUnlinkLesson(
+  lessonId: Id<"timetableLessons">,
+  lessons: Array<LessonLinkLike>,
+): { lessonIdsToClear: Array<Id<"timetableLessons">> } {
+  const lesson = lessons.find((row) => row._id === lessonId);
+  if (!lesson?.lessonLinkGroupId) {
+    return { lessonIdsToClear: [] };
+  }
+  const group = lessons.filter((row) => row.lessonLinkGroupId === lesson.lessonLinkGroupId);
+  const remaining = group.filter((row) => row._id !== lessonId);
+  if (remaining.length === 1) {
+    return { lessonIdsToClear: [lessonId, remaining[0]!._id] };
+  }
+  return { lessonIdsToClear: [lessonId] };
+}
+
+export function dedupeMirrorOps(ops: Array<MirrorLessonOp>): Array<MirrorLessonOp> {
+  const seen = new Set<string>();
+  const result: Array<MirrorLessonOp> = [];
+  for (const op of ops) {
+    const key =
+      op.op === "createLesson" ? `create:${op.slotId}:${op.subjectId}` : `${op.op}:${op.lessonId}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(op);
+  }
+  return result;
 }
 
 export function planRepairGroupAfterSlotDelete(
