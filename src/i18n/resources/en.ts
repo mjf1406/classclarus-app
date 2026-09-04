@@ -3599,6 +3599,7 @@ const en = {
     agendaAddSkippedLimit: "Could not add {{count}} items. The agenda can have at most 20 items.",
     agendaAddNoneFit: "The agenda already has 20 items.",
     removeItem: "Remove item",
+    itemDrag: "Drag to reorder item",
     materialsPlaceholder: "Worksheet, book page, or link…",
     announcementsPlaceholder: "Class announcement…",
     agendaPlaceholder: "What students will do…",

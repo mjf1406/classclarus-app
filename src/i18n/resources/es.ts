@@ -3671,6 +3671,7 @@ const es = {
       "No se pudieron añadir {{count}} elementos. La agenda admite 20 como máximo.",
     agendaAddNoneFit: "La agenda ya tiene 20 elementos.",
     removeItem: "Quitar elemento",
+    itemDrag: "Arrastra para reordenar",
     materialsPlaceholder: "Ficha, página o enlace…",
     announcementsPlaceholder: "Anuncio de clase…",
     agendaPlaceholder: "Lo que hará el alumnado…",

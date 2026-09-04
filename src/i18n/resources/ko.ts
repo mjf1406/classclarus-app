@@ -3551,6 +3551,7 @@ const ko = {
     agendaAddSkippedLimit: "{{count}}개를 추가하지 못했습니다. 일정은 최대 20개입니다.",
     agendaAddNoneFit: "일정 항목이 이미 20개입니다.",
     removeItem: "항목 삭제",
+    itemDrag: "항목 순서 변경",
     materialsPlaceholder: "학습지, 교재 쪽수 또는 링크…",
     announcementsPlaceholder: "학급 공지…",
     agendaPlaceholder: "학생들이 할 일…",

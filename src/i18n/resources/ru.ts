@@ -3637,6 +3637,7 @@ const ru = {
       "Не удалось добавить пунктов: {{count}}. В повестке может быть не больше 20.",
     agendaAddNoneFit: "В повестке уже 20 пунктов.",
     removeItem: "Удалить пункт",
+    itemDrag: "Перетащите, чтобы изменить порядок",
     materialsPlaceholder: "Лист, страница учебника или ссылка…",
     announcementsPlaceholder: "Объявление для класса…",
     agendaPlaceholder: "Что будут делать ученики…",

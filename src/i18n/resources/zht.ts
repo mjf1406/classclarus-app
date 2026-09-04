@@ -3479,6 +3479,7 @@ const zht = {
     agendaAddSkippedLimit: "無法新增 {{count}} 項。議程最多 20 項。",
     agendaAddNoneFit: "議程已有 20 項。",
     removeItem: "移除項目",
+    itemDrag: "拖曳以重新排序",
     materialsPlaceholder: "講義、課本頁碼或連結…",
     announcementsPlaceholder: "班級公告…",
     agendaPlaceholder: "學生將要做的事…",

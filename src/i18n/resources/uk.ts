@@ -3626,6 +3626,7 @@ const uk = {
       "Не вдалося додати пунктів: {{count}}. У порядку може бути не більше 20.",
     agendaAddNoneFit: "У порядку вже 20 пунктів.",
     removeItem: "Видалити пункт",
+    itemDrag: "Перетягніть, щоб змінити порядок",
     materialsPlaceholder: "Аркуш, сторінка підручника або посилання…",
     announcementsPlaceholder: "Оголошення для класу…",
     agendaPlaceholder: "Що робитимуть учні…",

@@ -3660,6 +3660,7 @@ const nl = {
       "{{count}} items konden niet worden toegevoegd. De agenda mag maximaal 20 items hebben.",
     agendaAddNoneFit: "De agenda heeft al 20 items.",
     removeItem: "Item verwijderen",
+    itemDrag: "Sleep om te herschikken",
     materialsPlaceholder: "Werkblad, boekpagina of link…",
     announcementsPlaceholder: "Klassikale mededeling…",
     agendaPlaceholder: "Wat leerlingen gaan doen…",

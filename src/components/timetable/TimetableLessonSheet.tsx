@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import type { DragEndEvent } from "@dnd-kit/core";
 import { useForm } from "@tanstack/react-form";
 import { ExternalLink, Link2, Plus, Trash2, Unlink } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
+import { SortableFormItem, SortableVerticalList } from "@/components/form/SortableFormList";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -32,6 +34,7 @@ import { useAuthedQuery } from "@/hooks/useAuthedQuery";
 import { rowFocusTargetProps } from "@/hooks/usePendingRowFocus";
 import { formatEventTimeLabel } from "@/lib/calendar/calendar";
 import { toIntlLocale } from "@/lib/languages";
+import { reorderByKey } from "@/lib/form/reorderByKey";
 import { randomClientId } from "@/lib/optimistic";
 import { GC_TIME } from "@/lib/queryCache";
 import { api } from "../../../convex/_generated/api";
@@ -382,6 +385,7 @@ export function TimetableLessonSheet({
                       onChange={field.handleChange}
                       tags={tags ?? []}
                       placeholder={t("materialsPlaceholder")}
+                      sortable
                     />
                   ) : (
                     <ReadOnlyList items={field.state.value} empty={t("noMaterials")} />
@@ -423,6 +427,7 @@ export function TimetableLessonSheet({
                       onChange={field.handleChange}
                       tags={tags ?? []}
                       placeholder={t("agendaPlaceholder")}
+                      sortable
                       renderAdd={() => (
                         <TimetableAgendaAddMenu
                           items={field.state.value}
@@ -547,14 +552,23 @@ function ResourceLinksEditor({
 }) {
   const { t } = useTranslation("timetable");
   const canAdd = items.length < MAX_LESSON_RESOURCES;
+  const canReorder = items.length > 1;
 
-  return (
-    <div className="flex flex-col gap-2">
-      {items.length > 0 ? (
-        <ol className="flex flex-col gap-2">
-          {items.map((item, index) => (
-            <li key={item.key} className="flex flex-col gap-2">
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const next = reorderByKey(items, active.id, over.id);
+    if (next) onChange(next);
+  };
+
+  const list =
+    items.length > 0 ? (
+      <ol className="flex flex-col gap-2">
+        {items.map((item, index) => {
+          const row = (dragHandle: ReactNode) => (
+            <>
               <div className="flex items-center gap-2">
+                {dragHandle}
                 <Input
                   type="url"
                   inputMode="url"
@@ -562,8 +576,8 @@ function ResourceLinksEditor({
                   onBlur={onBlur}
                   onChange={(event) =>
                     onChange(
-                      items.map((row, rowIndex) =>
-                        rowIndex === index ? { ...row, url: event.target.value } : row,
+                      items.map((rowItem, rowIndex) =>
+                        rowIndex === index ? { ...rowItem, url: event.target.value } : rowItem,
                       ),
                     )
                   }
@@ -588,18 +602,49 @@ function ResourceLinksEditor({
                 onBlur={onBlur}
                 onChange={(event) =>
                   onChange(
-                    items.map((row, rowIndex) =>
-                      rowIndex === index ? { ...row, label: event.target.value } : row,
+                    items.map((rowItem, rowIndex) =>
+                      rowIndex === index ? { ...rowItem, label: event.target.value } : rowItem,
                     ),
                   )
                 }
                 placeholder={t("resourceLabelPlaceholder")}
                 aria-label={t("resourceLabelPlaceholder")}
               />
+            </>
+          );
+
+          if (!canReorder) {
+            return (
+              <li key={item.key} className="flex flex-col gap-2">
+                {row(null)}
+              </li>
+            );
+          }
+
+          return (
+            <li key={item.key} className="flex flex-col gap-2">
+              <SortableFormItem
+                id={item.key}
+                dragLabel={t("itemDrag")}
+                className="flex flex-col gap-2"
+              >
+                {row}
+              </SortableFormItem>
             </li>
-          ))}
-        </ol>
-      ) : null}
+          );
+        })}
+      </ol>
+    ) : null;
+
+  return (
+    <div className="flex flex-col gap-2">
+      {canReorder ? (
+        <SortableVerticalList itemIds={items.map((item) => item.key)} onReorder={handleDragEnd}>
+          {list}
+        </SortableVerticalList>
+      ) : (
+        list
+      )}
       <Button
         type="button"
         variant="secondary"

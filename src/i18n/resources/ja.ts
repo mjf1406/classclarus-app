@@ -3590,6 +3590,7 @@ const ja = {
     agendaAddSkippedLimit: "{{count}} 件を追加できませんでした。議題は最大 20 件です。",
     agendaAddNoneFit: "議題はすでに 20 件あります。",
     removeItem: "項目を削除",
+    itemDrag: "項目を並べ替え",
     materialsPlaceholder: "プリント、教科書のページ、リンク…",
     announcementsPlaceholder: "クラスのお知らせ…",
     agendaPlaceholder: "生徒がすること…",

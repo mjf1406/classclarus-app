@@ -1,7 +1,9 @@
+import type { DragEndEvent } from "@dnd-kit/core";
 import { Plus, Trash2 } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
+import { SortableFormItem, SortableVerticalList } from "@/components/form/SortableFormList";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -9,6 +11,7 @@ import {
   rowFocusTargetProps,
   usePendingRowFocus,
 } from "@/hooks/usePendingRowFocus";
+import { reorderByKey } from "@/lib/form/reorderByKey";
 import { randomClientId } from "@/lib/optimistic";
 import { extractHashtags, normalizeTag } from "@/lib/timetable/sectionItems";
 import {
@@ -23,6 +26,7 @@ type TimetableSectionListEditorProps<T extends SectionItemFormValues = SectionIt
   tags: ReadonlyArray<TimetableTag>;
   placeholder?: string;
   disabled?: boolean;
+  sortable?: boolean;
   renderControl?: (item: T, index: number) => ReactNode | null;
   renderRowActions?: (item: T, index: number) => ReactNode;
   renderAdd?: (helpers: { addItem: () => void }) => ReactNode;
@@ -42,6 +46,7 @@ export function TimetableSectionListEditor<
   tags,
   placeholder,
   disabled = false,
+  sortable = false,
   renderControl,
   renderRowActions,
   renderAdd,
@@ -50,6 +55,7 @@ export function TimetableSectionListEditor<
   const { queueRowFocus } = usePendingRowFocus();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [query, setQuery] = useState("");
+  const canReorder = sortable && !disabled && items.length > 1;
 
   const addItem = () => {
     const key = randomClientId();
@@ -88,78 +94,115 @@ export function TimetableSectionListEditor<
     setQuery("");
   };
 
-  return (
-    <div className="flex flex-col gap-2">
-      <ol className="flex flex-col gap-2">
-        {items.map((item, index) => (
-          <li key={item.key} className="flex flex-col gap-2" {...rowFocusKeyProps(item.key)}>
-            <div className="flex items-start gap-2">
-              <span className="mt-2 w-6 shrink-0 text-right text-sm text-muted-foreground">
-                {index + 1}.
-              </span>
-              <div className="relative min-w-0 flex-1">
-                {renderControl?.(item, index) ?? (
-                  <>
-                    <Input
-                      {...rowFocusTargetProps()}
-                      value={item.text}
-                      disabled={disabled}
-                      placeholder={placeholder}
-                      onChange={(event) =>
-                        updateItem(
-                          index,
-                          event.target.value,
-                          event.target.selectionStart ?? undefined,
-                        )
-                      }
-                      onKeyDown={(event) => {
-                        if (event.key !== "Enter") return;
-                        if (event.ctrlKey || event.metaKey) return;
-                        event.preventDefault();
-                        if (openIndex === index && suggestions[0]) {
-                          applySuggestion(index, suggestions[0].display);
-                        }
-                      }}
-                    />
-                    {openIndex === index && suggestions.length > 0 ? (
-                      <div className="absolute z-20 mt-1 flex w-full flex-col rounded-md border bg-popover p-1 shadow-md">
-                        {suggestions.map((tag) => (
-                          <Button
-                            key={tag.tag}
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="justify-start"
-                            onMouseDown={(event) => event.preventDefault()}
-                            onClick={() => applySuggestion(index, tag.display)}
-                          >
-                            #{tag.display}
-                          </Button>
-                        ))}
-                      </div>
-                    ) : null}
-                  </>
-                )}
-              </div>
-              {disabled ? null : (
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const next = reorderByKey(items, active.id, over.id);
+    if (!next) return;
+    onChange(next);
+    setOpenIndex(null);
+    setQuery("");
+  };
+
+  const list = (
+    <ol className="flex flex-col gap-2">
+      {items.map((item, index) => {
+        const row = (dragHandle: ReactNode) => (
+          <div className="flex items-start gap-2">
+            {dragHandle ? <span className="mt-2 inline-flex shrink-0">{dragHandle}</span> : null}
+            <span className="mt-2 w-6 shrink-0 text-right text-sm text-muted-foreground">
+              {index + 1}.
+            </span>
+            <div className="relative min-w-0 flex-1">
+              {renderControl?.(item, index) ?? (
                 <>
-                  {renderRowActions?.(item, index)}
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="icon"
-                    className="shrink-0"
-                    onClick={() => onChange(items.filter((_, itemIndex) => itemIndex !== index))}
-                    aria-label={t("removeItem")}
-                  >
-                    <Trash2 />
-                  </Button>
+                  <Input
+                    {...rowFocusTargetProps()}
+                    value={item.text}
+                    disabled={disabled}
+                    placeholder={placeholder}
+                    onChange={(event) =>
+                      updateItem(
+                        index,
+                        event.target.value,
+                        event.target.selectionStart ?? undefined,
+                      )
+                    }
+                    onKeyDown={(event) => {
+                      if (event.key !== "Enter") return;
+                      if (event.ctrlKey || event.metaKey) return;
+                      event.preventDefault();
+                      if (openIndex === index && suggestions[0]) {
+                        applySuggestion(index, suggestions[0].display);
+                      }
+                    }}
+                  />
+                  {openIndex === index && suggestions.length > 0 ? (
+                    <div className="absolute z-20 mt-1 flex w-full flex-col rounded-md border bg-popover p-1 shadow-md">
+                      {suggestions.map((tag) => (
+                        <Button
+                          key={tag.tag}
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="justify-start"
+                          onMouseDown={(event) => event.preventDefault()}
+                          onClick={() => applySuggestion(index, tag.display)}
+                        >
+                          #{tag.display}
+                        </Button>
+                      ))}
+                    </div>
+                  ) : null}
                 </>
               )}
             </div>
+            {disabled ? null : (
+              <>
+                {renderRowActions?.(item, index)}
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  className="shrink-0"
+                  onClick={() => onChange(items.filter((_, itemIndex) => itemIndex !== index))}
+                  aria-label={t("removeItem")}
+                >
+                  <Trash2 />
+                </Button>
+              </>
+            )}
+          </div>
+        );
+
+        if (!canReorder) {
+          return (
+            <li key={item.key} className="flex flex-col gap-2" {...rowFocusKeyProps(item.key)}>
+              {row(null)}
+            </li>
+          );
+        }
+
+        return (
+          <li key={item.key} className="flex flex-col gap-2">
+            <SortableFormItem id={item.key} rowFocusKey={item.key} dragLabel={t("itemDrag")}>
+              {row}
+            </SortableFormItem>
           </li>
-        ))}
-      </ol>
+        );
+      })}
+    </ol>
+  );
+
+  return (
+    <div className="flex flex-col gap-2">
+      {canReorder ? (
+        <SortableVerticalList itemIds={items.map((item) => item.key)} onReorder={handleDragEnd}>
+          {list}
+        </SortableVerticalList>
+      ) : (
+        list
+      )}
       {disabled ? null : renderAdd ? (
         renderAdd({ addItem })
       ) : (

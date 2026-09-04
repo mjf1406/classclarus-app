@@ -3693,6 +3693,7 @@ const de = {
       "{{count}} Einträge konnten nicht hinzugefügt werden. Die Agenda darf höchstens 20 Einträge haben.",
     agendaAddNoneFit: "Die Agenda hat bereits 20 Einträge.",
     removeItem: "Eintrag entfernen",
+    itemDrag: "Ziehen zum Neuordnen",
     materialsPlaceholder: "Arbeitsblatt, Buchseite oder Link…",
     announcementsPlaceholder: "Klassenankündigung…",
     agendaPlaceholder: "Was die Klasse tun wird…",

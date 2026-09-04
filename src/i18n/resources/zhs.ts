@@ -3478,6 +3478,7 @@ const zhs = {
     agendaAddSkippedLimit: "未能添加 {{count}} 项。议程最多 20 项。",
     agendaAddNoneFit: "议程已有 20 项。",
     removeItem: "删除项目",
+    itemDrag: "拖动以重新排序",
     materialsPlaceholder: "讲义、课本页码或链接…",
     announcementsPlaceholder: "班级公告…",
     agendaPlaceholder: "学生将要做的事…",

@@ -3700,6 +3700,7 @@ const fr = {
     agendaAddSkippedLimit: "Impossible d’ajouter {{count}} éléments. L’agenda est limité à 20.",
     agendaAddNoneFit: "L’agenda contient déjà 20 éléments.",
     removeItem: "Retirer l’élément",
+    itemDrag: "Faire glisser pour réordonner",
     materialsPlaceholder: "Fiche, page de livre ou lien…",
     announcementsPlaceholder: "Annonce de classe…",
     agendaPlaceholder: "Ce que les élèves feront…",

@@ -3483,6 +3483,7 @@ const th = {
     agendaAddSkippedLimit: "เพิ่มไม่ได้ {{count}} รายการ วาระมีได้สูงสุด 20 รายการ",
     agendaAddNoneFit: "วาระมี 20 รายการแล้ว",
     removeItem: "ลบรายการ",
+    itemDrag: "ลากเพื่อจัดลำดับใหม่",
     materialsPlaceholder: "ใบงาน หน้าหนังสือ หรือลิงก์…",
     announcementsPlaceholder: "ประกาศของชั้นเรียน…",
     agendaPlaceholder: "สิ่งที่นักเรียนจะทำ…",

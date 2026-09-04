@@ -19,7 +19,7 @@ import type { ReactNode } from "react";
 
 import { rowFocusKeyProps } from "@/hooks/usePendingRowFocus";
 
-function useAssignmentFormSortableSensors() {
+function useFormSortableSensors() {
   return useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -35,7 +35,7 @@ export function SortableVerticalList({
   onReorder: (event: DragEndEvent) => void;
   children: ReactNode;
 }) {
-  const sensors = useAssignmentFormSortableSensors();
+  const sensors = useFormSortableSensors();
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onReorder}>

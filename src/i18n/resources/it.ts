@@ -3677,6 +3677,7 @@ const it = {
       "Impossibile aggiungere {{count}} voci. L’agenda può averne al massimo 20.",
     agendaAddNoneFit: "L’agenda ha già 20 voci.",
     removeItem: "Rimuovi elemento",
+    itemDrag: "Trascina per riordinare",
     materialsPlaceholder: "Scheda, pagina o link…",
     announcementsPlaceholder: "Annuncio di classe…",
     agendaPlaceholder: "Cosa faranno gli studenti…",

@@ -7,13 +7,9 @@ import { useTranslation } from "react-i18next";
 import { z } from "zod";
 
 import { AssignmentInstructionsEditor } from "@/components/assignments/AssignmentInstructionsEditor";
+import { SortableFormItem, SortableVerticalList } from "@/components/form/SortableFormList";
 import { ReleaseControl } from "@/components/release/ReleaseControl";
 import { WorksheetImageField } from "@/components/upload/WorksheetImageField";
-import { reorderByKey } from "@/components/assignments/assignmentFormReorder";
-import {
-  SortableFormItem,
-  SortableVerticalList,
-} from "@/components/assignments/AssignmentFormSortable";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -30,6 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { reorderByKey } from "@/lib/form/reorderByKey";
 import { cn } from "@/lib/utils";
 import {
   rowFocusKeyProps,
