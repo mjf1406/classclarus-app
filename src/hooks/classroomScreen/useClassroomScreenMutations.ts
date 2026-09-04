@@ -501,6 +501,8 @@ export function useUpdateClassroomSession() {
 }
 
 export function usePushLessonToDisplay() {
+  const { t } = useTranslation("classroomScreen");
+  const { t: tCommon } = useTranslation("common");
   const mutationFn = useConvexMutation(api.classroomScreen.pushLessonToDisplay);
   return useOptimisticMutation({
     mutationFn,
@@ -516,10 +518,15 @@ export function usePushLessonToDisplay() {
         },
       }));
     },
+    onError: (error) => {
+      showMutationError(messageFromError(error, t("pushLessonFailed"), tCommon("rateLimited")));
+    },
   });
 }
 
 export function useClearPushedLesson() {
+  const { t } = useTranslation("classroomScreen");
+  const { t: tCommon } = useTranslation("common");
   const mutationFn = useConvexMutation(api.classroomScreen.clearPushedLesson);
   return useOptimisticMutation({
     mutationFn,
@@ -535,6 +542,11 @@ export function useClearPushedLesson() {
         },
         pushedLesson: null,
       }));
+    },
+    onError: (error) => {
+      showMutationError(
+        messageFromError(error, t("clearPushedLessonFailed"), tCommon("rateLimited")),
+      );
     },
   });
 }

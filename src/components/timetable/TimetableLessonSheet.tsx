@@ -24,6 +24,7 @@ import { Switch } from "@/components/ui/switch";
 import { TimetableAgendaAddMenu } from "@/components/timetable/TimetableAgendaAddMenu";
 import { TimetableAgendaItemView } from "@/components/timetable/TimetableAgendaItemView";
 import { TimetableAgendaPrefaceButton } from "@/components/timetable/TimetableAgendaPrefaceButton";
+import { TimetableLessonPushToScreen } from "@/components/timetable/TimetableLessonPushToScreen";
 import { TimetableSectionListEditor } from "@/components/timetable/TimetableSectionListEditor";
 import { TimetableTaggedText } from "@/components/timetable/TimetableTaggedText";
 import { useAssignments } from "@/hooks/assignments/useAssignments";
@@ -254,8 +255,28 @@ export function TimetableLessonSheet({
                   {t("unlinkLessonAction")}
                 </Button>
               ) : null}
+              <TimetableLessonPushToScreen
+                classId={classId}
+                termId={termId}
+                year={year}
+                weekNumber={weekNumber}
+                lessonId={lesson._id}
+                slotId={lesson.slotId}
+                timeZone={timeZone}
+              />
             </div>
-          ) : null}
+          ) : (
+            <TimetableLessonPushToScreen
+              classId={classId}
+              termId={termId}
+              year={year}
+              weekNumber={weekNumber}
+              lessonId={lesson._id}
+              slotId={lesson.slotId}
+              timeZone={timeZone}
+              className="mt-2"
+            />
+          )}
         </CredenzaHeader>
         <form
           className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden"

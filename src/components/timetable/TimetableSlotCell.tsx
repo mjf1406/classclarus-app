@@ -113,7 +113,9 @@ export function TimetableSlotCell({
         />
       ) : null}
 
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
+      <div
+        className={cn("flex min-w-0 flex-1 flex-col gap-1", compact && showActions ? "pt-6" : null)}
+      >
         {lessons.map((lesson) => (
           <LessonChip
             key={lesson._id}
