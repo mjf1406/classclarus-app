@@ -52,6 +52,20 @@ export const DISPLAY_FONT_SIZE_OPTIONS = [
 ] as const;
 
 export type SizeLabelKey = (typeof CLOCK_SIZE_OPTIONS)[number]["labelKey"];
+export type SizeStepDirection = "up" | "down";
+
+export type ClockFontSizes = {
+  clockSize: number;
+  dateSize: number;
+  currentTimeSize: number;
+  endTimeSize: number;
+  timerTitleSize: number;
+};
+
+export type LessonFontSizes = {
+  displayContentFontSize: number;
+  displayHeadingFontSize: number;
+};
 
 export function snapToSizeOption(value: number, options: readonly { value: number }[]): number {
   return options.reduce(
@@ -59,4 +73,79 @@ export function snapToSizeOption(value: number, options: readonly { value: numbe
       Math.abs(option.value - value) < Math.abs(closest.value - value) ? option : closest,
     options[0]!,
   ).value;
+}
+
+export function stepSizeOption(
+  value: number,
+  options: readonly { value: number }[],
+  direction: SizeStepDirection,
+): number {
+  const snapped = snapToSizeOption(value, options);
+  const index = options.findIndex((option) => option.value === snapped);
+  const nextIndex = direction === "up" ? index + 1 : index - 1;
+  if (nextIndex < 0) return options[0]!.value;
+  if (nextIndex >= options.length) return options[options.length - 1]!.value;
+  return options[nextIndex]!.value;
+}
+
+export function canStepSizeOption(
+  value: number,
+  options: readonly { value: number }[],
+  direction: SizeStepDirection,
+): boolean {
+  return stepSizeOption(value, options, direction) !== snapToSizeOption(value, options);
+}
+
+export function stepClockFontSizes(
+  sizes: ClockFontSizes,
+  direction: SizeStepDirection,
+): ClockFontSizes {
+  return {
+    clockSize: stepSizeOption(sizes.clockSize, CLOCK_SIZE_OPTIONS, direction),
+    dateSize: stepSizeOption(sizes.dateSize, DATE_SIZE_OPTIONS, direction),
+    currentTimeSize: stepSizeOption(sizes.currentTimeSize, DATE_SIZE_OPTIONS, direction),
+    endTimeSize: stepSizeOption(sizes.endTimeSize, DATE_SIZE_OPTIONS, direction),
+    timerTitleSize: stepSizeOption(sizes.timerTitleSize, DATE_SIZE_OPTIONS, direction),
+  };
+}
+
+export function canStepClockFontSizes(
+  sizes: ClockFontSizes,
+  direction: SizeStepDirection,
+): boolean {
+  return (
+    canStepSizeOption(sizes.clockSize, CLOCK_SIZE_OPTIONS, direction) ||
+    canStepSizeOption(sizes.dateSize, DATE_SIZE_OPTIONS, direction) ||
+    canStepSizeOption(sizes.currentTimeSize, DATE_SIZE_OPTIONS, direction) ||
+    canStepSizeOption(sizes.endTimeSize, DATE_SIZE_OPTIONS, direction) ||
+    canStepSizeOption(sizes.timerTitleSize, DATE_SIZE_OPTIONS, direction)
+  );
+}
+
+export function stepLessonFontSizes(
+  sizes: LessonFontSizes,
+  direction: SizeStepDirection,
+): LessonFontSizes {
+  return {
+    displayContentFontSize: stepSizeOption(
+      sizes.displayContentFontSize,
+      DISPLAY_FONT_SIZE_OPTIONS,
+      direction,
+    ),
+    displayHeadingFontSize: stepSizeOption(
+      sizes.displayHeadingFontSize,
+      DISPLAY_FONT_SIZE_OPTIONS,
+      direction,
+    ),
+  };
+}
+
+export function canStepLessonFontSizes(
+  sizes: LessonFontSizes,
+  direction: SizeStepDirection,
+): boolean {
+  return (
+    canStepSizeOption(sizes.displayContentFontSize, DISPLAY_FONT_SIZE_OPTIONS, direction) ||
+    canStepSizeOption(sizes.displayHeadingFontSize, DISPLAY_FONT_SIZE_OPTIONS, direction)
+  );
 }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Maximize, Minimize } from "lucide-react";
+import { Maximize, Minimize, Minus, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { Clock } from "@/components/classroomScreen/Clock";
@@ -19,6 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   useClearPushedLesson,
   useClearQuickText,
+  useUpsertClassroomSettings,
 } from "@/hooks/classroomScreen/useClassroomScreenMutations";
 import {
   classroomMinuteBucket,
@@ -40,7 +41,14 @@ import {
 } from "@/lib/classroomScreen/bgTransitions";
 import type { TimerEndBehavior } from "@/lib/classroomScreen/activeSession";
 import { isPushOverrideActive } from "@/lib/classroomScreen/activeSession";
-import { DEFAULT_CLOCK_SETTINGS } from "@/lib/classroomScreen/clockSettings";
+import {
+  canStepClockFontSizes,
+  canStepLessonFontSizes,
+  DEFAULT_CLOCK_SETTINGS,
+  stepClockFontSizes,
+  stepLessonFontSizes,
+  type SizeStepDirection,
+} from "@/lib/classroomScreen/clockSettings";
 import { toIntlLocale } from "@/lib/languages";
 import { cn } from "@/lib/utils";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -73,6 +81,7 @@ export function ClassroomScreenPage({ classId }: ClassroomScreenPageProps) {
   const { data: audioFiles } = useClassroomAudioFiles(classId);
   const clearPushedLesson = useClearPushedLesson();
   const clearQuickTextMutation = useClearQuickText();
+  const upsertSettings = useUpsertClassroomSettings();
 
   const containerRef = useRef<HTMLDivElement>(null);
   const clearedPushRef = useRef(false);
@@ -185,6 +194,33 @@ export function ClassroomScreenPage({ classId }: ClassroomScreenPageProps) {
   }
 
   const settings = shownDisplayBundle.settings;
+  const clockSizes = {
+    clockSize: settings.clockSize,
+    dateSize: settings.dateSize,
+    currentTimeSize: settings.currentTimeSize ?? DEFAULT_CLOCK_SETTINGS.currentTimeSize,
+    endTimeSize: settings.endTimeSize ?? DEFAULT_CLOCK_SETTINGS.endTimeSize,
+    timerTitleSize: settings.timerTitleSize ?? DEFAULT_CLOCK_SETTINGS.timerTitleSize,
+  };
+  const lessonSizes = {
+    displayContentFontSize:
+      settings.displayContentFontSize ?? DEFAULT_CLOCK_SETTINGS.displayContentFontSize,
+    displayHeadingFontSize:
+      settings.displayHeadingFontSize ?? DEFAULT_CLOCK_SETTINGS.displayHeadingFontSize,
+  };
+
+  const stepClockSizes = (direction: SizeStepDirection) => {
+    void upsertSettings.mutateAsync({
+      classId,
+      ...stepClockFontSizes(clockSizes, direction),
+    });
+  };
+  const stepLessonSizes = (direction: SizeStepDirection) => {
+    void upsertSettings.mutateAsync({
+      classId,
+      ...stepLessonFontSizes(lessonSizes, direction),
+    });
+  };
+
   const bgTransition: BgTransition =
     settings.bgTransition && isBgTransition(settings.bgTransition)
       ? settings.bgTransition
@@ -331,6 +367,28 @@ export function ClassroomScreenPage({ classId }: ClassroomScreenPageProps) {
             {isFullscreen ? <Minimize /> : <Maximize />}
           </Button>
         </div>
+        {canManageScreen ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <FontSizeStepGroup
+              label={t("clockFontSizeGroup")}
+              decreaseLabel={t("decreaseClockFontSizes")}
+              increaseLabel={t("increaseClockFontSizes")}
+              canDecrease={canStepClockFontSizes(clockSizes, "down")}
+              canIncrease={canStepClockFontSizes(clockSizes, "up")}
+              onDecrease={() => stepClockSizes("down")}
+              onIncrease={() => stepClockSizes("up")}
+            />
+            <FontSizeStepGroup
+              label={t("lessonFontSizeGroup")}
+              decreaseLabel={t("decreaseLessonFontSizes")}
+              increaseLabel={t("increaseLessonFontSizes")}
+              canDecrease={canStepLessonFontSizes(lessonSizes, "down")}
+              canIncrease={canStepLessonFontSizes(lessonSizes, "up")}
+              onDecrease={() => stepLessonSizes("down")}
+              onIncrease={() => stepLessonSizes("up")}
+            />
+          </div>
+        ) : null}
         {statusLabel ? <span className="text-xs text-muted-foreground">{statusLabel}</span> : null}
       </div>
 
@@ -359,6 +417,52 @@ export function ClassroomScreenPage({ classId }: ClassroomScreenPageProps) {
           {lessonPanel}
         </div>
       )}
+    </div>
+  );
+}
+
+function FontSizeStepGroup({
+  label,
+  decreaseLabel,
+  increaseLabel,
+  canDecrease,
+  canIncrease,
+  onDecrease,
+  onIncrease,
+}: {
+  label: string;
+  decreaseLabel: string;
+  increaseLabel: string;
+  canDecrease: boolean;
+  canIncrease: boolean;
+  onDecrease: () => void;
+  onIncrease: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-1 rounded-md bg-background/90 p-0.5">
+      <span className="px-1 text-xs text-muted-foreground">{label}</span>
+      <Button
+        type="button"
+        variant="outline"
+        size="icon-xs"
+        disabled={!canDecrease}
+        onClick={onDecrease}
+        title={decreaseLabel}
+        aria-label={decreaseLabel}
+      >
+        <Minus />
+      </Button>
+      <Button
+        type="button"
+        variant="outline"
+        size="icon-xs"
+        disabled={!canIncrease}
+        onClick={onIncrease}
+        title={increaseLabel}
+        aria-label={increaseLabel}
+      >
+        <Plus />
+      </Button>
     </div>
   );
 }
