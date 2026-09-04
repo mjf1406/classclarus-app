@@ -221,7 +221,7 @@ export function CreateRotationDialog({
             </DialogDescription>
           </DialogHeader>
 
-          <FieldGroup className="min-h-0 flex-1 gap-4 overflow-y-auto py-2">
+          <FieldGroup className="min-h-0 flex-1 gap-4 overflow-x-hidden overflow-y-auto py-2">
             <form.Field name="name">
               {(field) => {
                 const error = fieldErrorMessage(field.state.meta.errors);

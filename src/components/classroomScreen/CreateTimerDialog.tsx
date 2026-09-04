@@ -194,7 +194,7 @@ export function CreateTimerDialog({ classId, open, onOpenChange, timer }: Create
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid min-h-0 flex-1 gap-4 overflow-y-auto py-2">
+          <div className="grid min-h-0 flex-1 gap-4 overflow-x-hidden overflow-y-auto py-2">
             <div className="grid gap-2">
               <Label htmlFor="timer-name">{t("timerName")}</Label>
               <Input

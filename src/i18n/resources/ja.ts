@@ -3791,6 +3791,10 @@ const ja = {
     audioPixabayLink: "Pixabayの効果音",
     audioInheritDefault: "初期設定を使う",
     audioNoneSilent: "なし（無音）",
+    audioAddCue: "サウンドまたは動画を追加",
+    audioNoCues: "サウンドはまだ追加されていません。デフォルトが適用されます。",
+    audioRemoveCue: "{{label}}を削除",
+    audioTimeRemainingWarning: "残り時間の警告",
     audioRepeatCount: "繰り返し回数",
     videoDuringSegment: "動画（区間中に再生）",
     videoNone: "動画なし",
@@ -3818,7 +3822,11 @@ const ja = {
     audioPlayDuring: "区間中に再生",
     audioPlayDuringHint: "区間のあいだループします。切り替えの音楽やBGMに使えます。",
     audioSegmentEnd: "区間の終了",
+    audioSegmentEndHint:
+      "このタイマーまたはローテーション期間がゼロになったときに再生します。単一タイマーの終了音に使います。",
     audioSessionComplete: "セッション完了",
+    audioSessionCompleteHint:
+      "最後の期間が終わり、セッション全体が完了したときに再生します。ローテーションでは最後に一度だけ再生します。",
     audioOvertimeStart: "超過開始",
     audioWarningsTicks: "警告とティック",
     audioTimeRemainingWarnings: "残り時間の警告",

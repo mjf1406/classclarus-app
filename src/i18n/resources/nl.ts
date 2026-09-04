@@ -3863,6 +3863,10 @@ const nl = {
     audioPixabayLink: "Pixabay-geluidseffecten",
     audioInheritDefault: "Standaard gebruiken",
     audioNoneSilent: "Geen (stil)",
+    audioAddCue: "Geluid of video toevoegen",
+    audioNoCues: "Nog geen geluiden toegevoegd. Standaardwaarden gelden.",
+    audioRemoveCue: "{{label}} verwijderen",
+    audioTimeRemainingWarning: "Waarschuwing resterende tijd",
     audioRepeatCount: "Aantal herhalingen",
     videoDuringSegment: "Video (tijdens het segment)",
     videoNone: "Geen video",
@@ -3890,7 +3894,11 @@ const nl = {
     audioPlayDuring: "Afspelen tijdens het segment",
     audioPlayDuringHint: "Herhaalt het hele segment. Handig voor overgangsmuziek of achtergrond.",
     audioSegmentEnd: "Einde van het segment",
+    audioSegmentEndHint:
+      "Speelt wanneer deze timer of rotatieperiode op nul komt. Gebruik dit als eindgeluid van één timer.",
     audioSessionComplete: "Sessie voltooid",
+    audioSessionCompleteHint:
+      "Speelt wanneer de laatste periode stopt en de hele sessie klaar is. Rotaties spelen dit één keer helemaal aan het eind.",
     audioOvertimeStart: "Start van extra tijd",
     audioWarningsTicks: "Waarschuwingen en tikken",
     audioTimeRemainingWarnings: "Waarschuwingen voor resterende tijd",

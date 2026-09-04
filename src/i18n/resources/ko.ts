@@ -3753,6 +3753,10 @@ const ko = {
     audioPixabayLink: "Pixabay 효과음",
     audioInheritDefault: "기본값 사용",
     audioNoneSilent: "없음 (무음)",
+    audioAddCue: "소리 또는 동영상 추가",
+    audioNoCues: "추가된 소리가 없습니다. 기본값이 적용됩니다.",
+    audioRemoveCue: "{{label}} 제거",
+    audioTimeRemainingWarning: "남은 시간 경고",
     audioRepeatCount: "반복 횟수",
     videoDuringSegment: "동영상 (구간 중 재생)",
     videoNone: "동영상 없음",
@@ -3780,7 +3784,11 @@ const ko = {
     audioPlayDuring: "구간 중 재생",
     audioPlayDuringHint: "구간 내내 반복됩니다. 전환 음악이나 배경음에 유용합니다.",
     audioSegmentEnd: "구간 종료",
+    audioSegmentEndHint:
+      "이 타이머 또는 로테이션 구간이 0이 되면 재생됩니다. 단일 타이머의 종료음으로 사용하세요.",
     audioSessionComplete: "세션 완료",
+    audioSessionCompleteHint:
+      "마지막 구간이 끝나고 세션 전체가 끝나면 재생됩니다. 로테이션에서는 맨 마지막에 한 번만 재생됩니다.",
     audioOvertimeStart: "초과 시작",
     audioWarningsTicks: "경고와 틱",
     audioTimeRemainingWarnings: "남은 시간 경고",

@@ -3839,6 +3839,10 @@ const ru = {
     audioPixabayLink: "Звуковые эффекты Pixabay",
     audioInheritDefault: "Использовать по умолчанию",
     audioNoneSilent: "Нет (тишина)",
+    audioAddCue: "Добавить звук или видео",
+    audioNoCues: "Звуки ещё не добавлены. Применяются значения по умолчанию.",
+    audioRemoveCue: "Удалить {{label}}",
+    audioTimeRemainingWarning: "Предупреждение об оставшемся времени",
     audioRepeatCount: "Число повторов",
     videoDuringSegment: "Видео (во время сегмента)",
     videoNone: "Без видео",
@@ -3866,7 +3870,11 @@ const ru = {
     audioPlayDuring: "Воспроизводить во время сегмента",
     audioPlayDuringHint: "Повторяется весь сегмент. Полезно для переходной музыки или фона.",
     audioSegmentEnd: "Конец сегмента",
+    audioSegmentEndHint:
+      "Звучит, когда этот таймер или период ротации доходит до нуля. Используйте для сигнала конца одного таймера.",
     audioSessionComplete: "Сеанс завершён",
+    audioSessionCompleteHint:
+      "Звучит, когда заканчивается последний период и весь сеанс завершён. В ротациях звучит один раз в самом конце.",
     audioOvertimeStart: "Начало сверхурочного времени",
     audioWarningsTicks: "Предупреждения и тики",
     audioTimeRemainingWarnings: "Предупреждения об оставшемся времени",

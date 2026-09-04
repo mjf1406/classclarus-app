@@ -21,6 +21,8 @@ export type { AudioFileOption, CueSelectValue };
 
 interface AudioCueSelectProps {
   label: string;
+  /** Render the label only for screen readers (when the surrounding row already shows a title). */
+  hideLabel?: boolean;
   value: CueSelectValue;
   files: AudioFileOption[];
   allowInherit?: boolean;
@@ -44,6 +46,7 @@ function cueSelectDisplayLabel(
 
 export function AudioCueSelect({
   label,
+  hideLabel = false,
   value,
   files,
   allowInherit = false,
@@ -61,7 +64,7 @@ export function AudioCueSelect({
 
   return (
     <div className="grid gap-2">
-      <Label>{label}</Label>
+      <Label className={hideLabel ? "sr-only" : undefined}>{label}</Label>
       <div className="flex items-center gap-2">
         <Select
           value={value}

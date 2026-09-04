@@ -3899,6 +3899,10 @@ const de = {
     audioPixabayLink: "Pixabay Soundeffekte",
     audioInheritDefault: "Vorgabe verwenden",
     audioNoneSilent: "Keine (stumm)",
+    audioAddCue: "Ton oder Video hinzufügen",
+    audioNoCues: "Noch keine Töne hinzugefügt. Standardwerte gelten.",
+    audioRemoveCue: "{{label}} entfernen",
+    audioTimeRemainingWarning: "Restzeit-Warnung",
     audioRepeatCount: "Wiederholungen",
     videoDuringSegment: "Video (während des Abschnitts)",
     videoNone: "Kein Video",
@@ -3927,7 +3931,11 @@ const de = {
     audioPlayDuringHint:
       "Läuft den ganzen Abschnitt in einer Schleife. Gut für Übergangsmusik oder Hintergrund.",
     audioSegmentEnd: "Abschnittsende",
+    audioSegmentEndHint:
+      "Spielt, wenn dieser Timer oder diese Rotationsphase null erreicht. Das ist der Endton für einen einzelnen Timer.",
     audioSessionComplete: "Sitzung abgeschlossen",
+    audioSessionCompleteHint:
+      "Spielt, wenn die letzte Phase endet und die ganze Sitzung fertig ist. Rotationen spielen das einmal ganz am Ende.",
     audioOvertimeStart: "Überzeit-Start",
     audioWarningsTicks: "Warnungen und Ticks",
     audioTimeRemainingWarnings: "Warnungen für Restzeit",

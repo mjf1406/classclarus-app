@@ -3829,6 +3829,10 @@ const uk = {
     audioPixabayLink: "Звукові ефекти Pixabay",
     audioInheritDefault: "Використовувати типове",
     audioNoneSilent: "Немає (тиша)",
+    audioAddCue: "Додати звук або відео",
+    audioNoCues: "Звуки ще не додано. Застосовуються типові значення.",
+    audioRemoveCue: "Видалити {{label}}",
+    audioTimeRemainingWarning: "Попередження про залишок часу",
     audioRepeatCount: "Кількість повторів",
     videoDuringSegment: "Відео (під час сегмента)",
     videoNone: "Без відео",
@@ -3857,7 +3861,11 @@ const uk = {
     audioPlayDuringHint:
       "Повторюється протягом усього сегмента. Корисно для музики переходів або фону.",
     audioSegmentEnd: "Кінець сегмента",
+    audioSegmentEndHint:
+      "Грає, коли цей таймер або період ротації доходить до нуля. Це звук кінця одного таймера.",
     audioSessionComplete: "Сеанс завершено",
+    audioSessionCompleteHint:
+      "Грає, коли закінчується останній період і весь сеанс завершено. У ротаціях грає один раз наприкінці.",
     audioOvertimeStart: "Початок понаднормового часу",
     audioWarningsTicks: "Попередження та тіки",
     audioTimeRemainingWarnings: "Попередження про час, що лишився",

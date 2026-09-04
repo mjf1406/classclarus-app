@@ -3906,6 +3906,10 @@ const fr = {
     audioPixabayLink: "Effets sonores Pixabay",
     audioInheritDefault: "Utiliser le défaut",
     audioNoneSilent: "Aucun (silence)",
+    audioAddCue: "Ajouter un son ou une vidéo",
+    audioNoCues: "Aucun son ajouté pour l'instant. Les valeurs par défaut s'appliquent.",
+    audioRemoveCue: "Supprimer {{label}}",
+    audioTimeRemainingWarning: "Alerte de temps restant",
     audioRepeatCount: "Nombre de répétitions",
     videoDuringSegment: "Vidéo (pendant le segment)",
     videoNone: "Pas de vidéo",
@@ -3934,7 +3938,11 @@ const fr = {
     audioPlayDuringHint:
       "Boucle pendant tout le segment. Utile pour une musique de transition ou une ambiance.",
     audioSegmentEnd: "Fin du segment",
+    audioSegmentEndHint:
+      "Joue quand ce minuteur ou cette période de rotation arrive à zéro. Utilisez-le pour la fin d’un seul minuteur.",
     audioSessionComplete: "Session terminée",
+    audioSessionCompleteHint:
+      "Joue quand la dernière période se termine et que toute la session est finie. Les rotations le jouent une fois tout à la fin.",
     audioOvertimeStart: "Début du temps supplémentaire",
     audioWarningsTicks: "Alertes et tics",
     audioTimeRemainingWarnings: "Alertes de temps restant",

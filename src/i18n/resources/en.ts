@@ -3801,6 +3801,10 @@ const en = {
     audioPixabayLink: "Pixabay Sound Effects",
     audioInheritDefault: "Use default",
     audioNoneSilent: "None (silent)",
+    audioAddCue: "Add sound or video",
+    audioNoCues: "No sounds added yet. Defaults apply.",
+    audioRemoveCue: "Remove {{label}}",
+    audioTimeRemainingWarning: "Time remaining warning",
     audioRepeatCount: "Repeat count",
     videoDuringSegment: "Video (play during segment)",
     videoNone: "No video",
@@ -3829,7 +3833,11 @@ const en = {
     audioPlayDuringHint:
       "Loops for the entire segment. Useful for transition music or background ambience.",
     audioSegmentEnd: "Segment end",
+    audioSegmentEndHint:
+      "Plays when this timer or rotation period hits zero. Use this for a single timer's end sound.",
     audioSessionComplete: "Session complete",
+    audioSessionCompleteHint:
+      "Plays when the last period ends and the whole session is done. Rotations play this once at the very end.",
     audioOvertimeStart: "Overtime start",
     audioWarningsTicks: "Warnings & ticks",
     audioTimeRemainingWarnings: "Time remaining warnings",

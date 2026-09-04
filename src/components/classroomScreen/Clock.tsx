@@ -386,6 +386,7 @@ export function Clock({
   const segmentStartMsRef = useRef<number | null>(null);
   const lastIntervalChimeRef = useRef(0);
   const lastSessionIndexRef = useRef<number | null>(null);
+  const firedSessionCompleteRef = useRef(false);
 
   const urlMap = createAudioUrlMap(toAudioUrlList(audioFiles));
   const { playById, unlock, startPlayDuring, stopPlayDuring, stopAll, pauseAll, resumeAll } =
@@ -418,6 +419,7 @@ export function Clock({
     );
     firedOvertimeRef.current = false;
     firedSegmentEndRef.current = null;
+    firedSessionCompleteRef.current = false;
     lastTickSecondRef.current = null;
     segmentStartMsRef.current = Date.now();
     lastIntervalChimeRef.current = 0;
@@ -531,6 +533,7 @@ export function Clock({
       firedWarningsRef.current.clear();
       firedOvertimeRef.current = false;
       firedSegmentEndRef.current = null;
+      firedSessionCompleteRef.current = false;
       lastTickSecondRef.current = null;
       segmentStartMsRef.current = null;
       lastIntervalChimeRef.current = 0;
@@ -701,7 +704,8 @@ export function Clock({
       return;
     }
 
-    if (timerEndBehavior !== "countUp") {
+    if (!firedSessionCompleteRef.current) {
+      firedSessionCompleteRef.current = true;
       playByIdRef.current(
         segment.audioCues.sessionComplete.audioId,
         segment.audioCues.sessionComplete.repeat,
@@ -734,10 +738,13 @@ export function Clock({
     if (remaining > -overtimeAutoDismissSeconds) return;
 
     const segment = getCurrentSegment(session);
-    playByIdRef.current(
-      segment.audioCues.sessionComplete.audioId,
-      segment.audioCues.sessionComplete.repeat,
-    );
+    if (!firedSessionCompleteRef.current) {
+      firedSessionCompleteRef.current = true;
+      playByIdRef.current(
+        segment.audioCues.sessionComplete.audioId,
+        segment.audioCues.sessionComplete.repeat,
+      );
+    }
     void stopSession();
   }, [
     remaining,
@@ -1044,6 +1051,7 @@ export function Clock({
       className={cn(
         "relative flex h-full min-h-0 min-w-0 w-full flex-col items-center justify-center overflow-hidden p-2",
       )}
+      onPointerDown={unlock}
     >
       <AnimatedBackground color={currentBgColor} transition={activeBgTransition} />
       {activeVideo?.youtubeId && session && (

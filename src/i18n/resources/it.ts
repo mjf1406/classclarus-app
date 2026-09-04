@@ -3881,6 +3881,10 @@ const it = {
     audioPixabayLink: "Effetti sonori Pixabay",
     audioInheritDefault: "Usa predefinito",
     audioNoneSilent: "Nessuno (silenzio)",
+    audioAddCue: "Aggiungi suono o video",
+    audioNoCues: "Nessun suono aggiunto. Si applicano le impostazioni predefinite.",
+    audioRemoveCue: "Rimuovi {{label}}",
+    audioTimeRemainingWarning: "Avviso tempo rimanente",
     audioRepeatCount: "Numero di ripetizioni",
     videoDuringSegment: "Video (durante il segmento)",
     videoNone: "Nessun video",
@@ -3909,7 +3913,11 @@ const it = {
     audioPlayDuringHint:
       "Si ripete per tutto il segmento. Utile per musica di transizione o sottofondo.",
     audioSegmentEnd: "Fine segmento",
+    audioSegmentEndHint:
+      "Parte quando questo timer o periodo di rotazione arriva a zero. Usalo come suono di fine di un singolo timer.",
     audioSessionComplete: "Sessione completata",
+    audioSessionCompleteHint:
+      "Parte quando finisce l’ultimo periodo e tutta la sessione è conclusa. Nelle rotazioni suona una volta alla fine.",
     audioOvertimeStart: "Inizio tempo extra",
     audioWarningsTicks: "Avvisi e tic",
     audioTimeRemainingWarnings: "Avvisi sul tempo restante",
