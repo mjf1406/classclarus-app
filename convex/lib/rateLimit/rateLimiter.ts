@@ -108,6 +108,7 @@ const rateLimits = {
   taskRemove: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 20 },
   taskSetCompletion: { kind: "token bucket" as const, rate: 240, period: HOUR, capacity: 60 },
   taskSetReleased: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 30 },
+  taskReorder: { kind: "token bucket" as const, rate: 60, period: HOUR, capacity: 20 },
   taskLinkAdd: { kind: "token bucket" as const, rate: 120, period: HOUR, capacity: 40 },
   taskLinkUpdate: { kind: "token bucket" as const, rate: 120, period: HOUR, capacity: 40 },
   taskLinkRemove: { kind: "token bucket" as const, rate: 120, period: HOUR, capacity: 40 },

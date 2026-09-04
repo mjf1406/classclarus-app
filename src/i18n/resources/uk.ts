@@ -1486,6 +1486,7 @@ const uk = {
       "Значення очікувань учня оновлено ({{valueCount}} задано, {{clearedCount}} очищено)",
     activitySummary_updatedStudentRosterFields: "Поля списку учнів оновлено",
     activitySummary_reorderedStudentRoster: "Список учнів переупорядковано",
+    activitySummary_reorderedTasks: "Завдання переупорядковано",
     breadcrumb: "Навігаційний шлях",
   },
   attendance: {
@@ -1743,9 +1744,12 @@ const uk = {
     linkDeleteConfirmDescription: "Це посилання буде видалено із завдання.",
     linksStaffCount: "{{count}} посилань здачі",
     allDoneOverviewTitle: "Учні, які виконали всі завдання",
-    allDoneOverviewDescription: "Учні, які виконали кожне неархівне завдання, і прогрес інших.",
+    allDoneSummary: "{{done}} з {{total}} учнів завершили",
     allDoneEmpty: "Поки ніхто не виконав усі завдання.",
     allDoneProgress: "{{completed}} з {{total}} завдань виконано",
+    allDoneStudentAria: "{{name}}, виконано {{completed}} з {{total}}",
+    reorderHandleAria: "Змінити порядок: {{name}}",
+    reorderFailed: "Не вдалося змінити порядок завдань.",
     archivedBadge: "В архіві",
   },
   assignments: {

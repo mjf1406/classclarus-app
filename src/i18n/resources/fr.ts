@@ -1518,6 +1518,7 @@ const fr = {
       "Valeurs d’attente de l’élève mises à jour ({{valueCount}} définies, {{clearedCount}} effacées)",
     activitySummary_updatedStudentRosterFields: "Champs de la liste des élèves mis à jour",
     activitySummary_reorderedStudentRoster: "Liste des élèves réordonnée",
+    activitySummary_reorderedTasks: "Tâches réordonnées",
     breadcrumb: "Fil d'Ariane",
   },
   attendance: {
@@ -1777,10 +1778,12 @@ const fr = {
     linkDeleteConfirmDescription: "Ce lien sera retiré de la tâche.",
     linksStaffCount: "{{count}} liens de remise",
     allDoneOverviewTitle: "Élèves ayant tout terminé",
-    allDoneOverviewDescription:
-      "Élèves qui ont terminé chaque tâche non archivée, plus la progression des autres.",
+    allDoneSummary: "{{done}} élèves sur {{total}} ont tout terminé",
     allDoneEmpty: "Aucun élève n’a encore terminé toutes les tâches.",
     allDoneProgress: "{{completed}} tâches sur {{total}} terminées",
+    allDoneStudentAria: "{{name}}, {{completed}} sur {{total}} terminées",
+    reorderHandleAria: "Réordonner {{name}}",
+    reorderFailed: "Impossible de réordonner les tâches.",
     archivedBadge: "Archivée",
   },
   assignments: {

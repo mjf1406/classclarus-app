@@ -1471,6 +1471,7 @@ const ja = {
       "生徒の期待値を更新しました（{{valueCount}} 件設定、{{clearedCount}} 件クリア）",
     activitySummary_updatedStudentRosterFields: "生徒名簿の項目を更新しました",
     activitySummary_reorderedStudentRoster: "生徒名簿の順序を変更しました",
+    activitySummary_reorderedTasks: "タスクの順序を変更しました",
     breadcrumb: "パンくずリスト",
   },
   attendance: {
@@ -1724,10 +1725,12 @@ const ja = {
     linkDeleteConfirmDescription: "このリンクはタスクから削除されます。",
     linksStaffCount: "提出リンク {{count}} 件",
     allDoneOverviewTitle: "すべてのタスクを終えた生徒",
-    allDoneOverviewDescription:
-      "アーカイブしていないすべてのタスクを終えた生徒と、ほかの生徒の進み具合です。",
+    allDoneSummary: "{{total}} 人中 {{done}} 人が完了",
     allDoneEmpty: "まだすべてのタスクを終えた生徒はいません。",
     allDoneProgress: "{{total}} 件中 {{completed}} 件完了",
+    allDoneStudentAria: "{{name}}、{{total}} 件中 {{completed}} 件完了",
+    reorderHandleAria: "{{name}}の順序を変更",
+    reorderFailed: "タスクの順序を変更できませんでした。",
     archivedBadge: "アーカイブ済み",
   },
   assignments: {

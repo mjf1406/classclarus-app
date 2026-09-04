@@ -1467,6 +1467,7 @@ const en = {
       "Updated expectation values for a student ({{valueCount}} set, {{clearedCount}} cleared)",
     activitySummary_updatedStudentRosterFields: "Updated student roster fields",
     activitySummary_reorderedStudentRoster: "Reordered student roster",
+    activitySummary_reorderedTasks: "Reordered tasks",
     breadcrumb: "Breadcrumb",
   },
   attendance: {
@@ -1690,10 +1691,12 @@ const en = {
     linkDeleteConfirmDescription: "This link will be removed from the task.",
     linksStaffCount: "{{count}} submission links",
     allDoneOverviewTitle: "Students done with all tasks",
-    allDoneOverviewDescription:
-      "Students who finished every unarchived task, plus progress for everyone else.",
+    allDoneSummary: "{{done}} of {{total}} students done",
     allDoneEmpty: "No students have finished every task yet.",
     allDoneProgress: "{{completed}} of {{total}} tasks done",
+    allDoneStudentAria: "{{name}}, {{completed}} of {{total}} done",
+    reorderHandleAria: "Reorder {{name}}",
+    reorderFailed: "Could not reorder tasks.",
     linkedAssignment: "Assignment: {{name}}",
     assignmentGroupCount: "{{count}} tasks",
     ungroupedTasks: "Other tasks",

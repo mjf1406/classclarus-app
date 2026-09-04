@@ -24,6 +24,7 @@ import {
   resolveWorksheetImageFileId,
   worksheetImagePublicFields,
 } from "./lib/files/classFileRefs.js";
+import { inheritedAssignmentSortOrder, nextTaskSortOrder } from "./lib/tasks/taskSortOrder.js";
 import { deleteTaskWithCompletions } from "./lib/tasksCleanup.js";
 
 const MAX_NAME_LENGTH = 100;
@@ -579,6 +580,13 @@ async function syncProcedureTasks(
 ): Promise<Array<ProcedureStep>> {
   const now = Date.now();
   const result: Array<ProcedureStep> = [];
+  // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded list
+  const classTasks = await ctx.db
+    .query("tasks")
+    .withIndex("by_classId", (q) => q.eq("classId", args.classId))
+    .collect();
+  const folderSortOrder =
+    inheritedAssignmentSortOrder(classTasks, args.assignmentId) ?? nextTaskSortOrder(classTasks);
 
   for (const step of args.steps) {
     if (!step.addAsTask) {
@@ -624,6 +632,7 @@ async function syncProcedureTasks(
       createdBy: args.createdBy,
       createdAt: now,
       updatedAt: now,
+      sortOrder: folderSortOrder,
     });
     result.push({
       key: step.key,

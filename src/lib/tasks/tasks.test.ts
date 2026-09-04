@@ -1,10 +1,13 @@
 import { describe, expect, test } from "vite-plus/test";
 
 import {
+  applyTaskTopLevelOrder,
+  buildTaskTopLevelItems,
   computeStudentsDoneWithAllTasks,
   computeTaskGroupCompletionStats,
   groupTasksByAssignment,
   isTaskPastDue,
+  listStudentTaskProgress,
   nextTaskStudentSortState,
   partitionActiveTasksByStudentCompletion,
   partitionAssignmentGroupsByCompletion,
@@ -181,6 +184,83 @@ describe("groupTasksByAssignment", () => {
     ]);
     expect(groups).toHaveLength(1);
     expect(groups[0]?.tasks.map((task) => task.name)).toEqual(["Step one", "Step two"]);
+  });
+});
+
+describe("buildTaskTopLevelItems", () => {
+  test("interleaves folders and ungrouped tasks by sortOrder", () => {
+    const assignmentId = "a1" as Id<"assignments">;
+    const items = buildTaskTopLevelItems([
+      stubTask({
+        _id: "solo-late" as Id<"tasks">,
+        name: "Later solo",
+        sortOrder: 2,
+      }),
+      stubTask({
+        _id: "step-2" as Id<"tasks">,
+        name: "Step two",
+        assignmentId,
+        assignmentName: "Lab",
+        procedureStepNumber: 2,
+        sortOrder: 1,
+      }),
+      stubTask({
+        _id: "solo-first" as Id<"tasks">,
+        name: "First solo",
+        sortOrder: 0,
+      }),
+      stubTask({
+        _id: "step-1" as Id<"tasks">,
+        name: "Step one",
+        assignmentId,
+        assignmentName: "Lab",
+        procedureStepNumber: 1,
+        sortOrder: 1,
+      }),
+    ]);
+    expect(items.map((item) => item.type)).toEqual(["task", "assignment", "task"]);
+    expect(items[0]?.type === "task" ? items[0].task.name : null).toBe("First solo");
+    expect(
+      items[1]?.type === "assignment" ? items[1].group.tasks.map((task) => task.name) : null,
+    ).toEqual(["Step one", "Step two"]);
+    expect(items[2]?.type === "task" ? items[2].task.name : null).toBe("Later solo");
+  });
+
+  test("falls back to updatedAt when sortOrder is missing", () => {
+    const items = buildTaskTopLevelItems([
+      stubTask({ _id: "old" as Id<"tasks">, name: "Old", updatedAt: 10 }),
+      stubTask({ _id: "new" as Id<"tasks">, name: "New", updatedAt: 20 }),
+    ]);
+    expect(items.map((item) => (item.type === "task" ? item.task.name : ""))).toEqual([
+      "New",
+      "Old",
+    ]);
+  });
+});
+
+describe("applyTaskTopLevelOrder", () => {
+  test("writes folder and task positions", () => {
+    const assignmentId = "a1" as Id<"assignments">;
+    const tasks = [
+      stubTask({
+        _id: "t1" as Id<"tasks">,
+        name: "Solo",
+        sortOrder: 0,
+      }),
+      stubTask({
+        _id: "t2" as Id<"tasks">,
+        name: "Step",
+        assignmentId,
+        assignmentName: "Lab",
+        sortOrder: 1,
+      }),
+    ];
+    const next = applyTaskTopLevelOrder(tasks, [
+      { type: "assignment", assignmentId },
+      { type: "task", taskId: "t1" as Id<"tasks"> },
+    ]);
+    expect(next.find((task) => task._id === "t2")?.sortOrder).toBe(0);
+    expect(next.find((task) => task._id === "t1")?.sortOrder).toBe(1);
   });
 });
 
@@ -363,6 +443,32 @@ describe("computeStudentsDoneWithAllTasks", () => {
     expect(result.remaining).toEqual([
       { userId: "b", completed: 1, total: 2 },
       { userId: "c", completed: 0, total: 2 },
+    ]);
+  });
+
+  test("listStudentTaskProgress keeps roster order for every student", () => {
+    const tasks = [
+      stubTask({
+        _id: "t1" as Id<"tasks">,
+        name: "One",
+        completedStudentIds: ["a" as Id<"users">, "b" as Id<"users">],
+      }),
+      stubTask({
+        _id: "t2" as Id<"tasks">,
+        name: "Two",
+        completedStudentIds: ["a" as Id<"users">],
+      }),
+    ];
+    expect(
+      listStudentTaskProgress(tasks, [
+        { userId: "c" as Id<"users"> },
+        { userId: "a" as Id<"users"> },
+        { userId: "b" as Id<"users"> },
+      ]),
+    ).toEqual([
+      { userId: "c", completed: 0, total: 2 },
+      { userId: "a", completed: 2, total: 2 },
+      { userId: "b", completed: 1, total: 2 },
     ]);
   });
 });

@@ -1514,6 +1514,7 @@ const de = {
       "Erwartungswerte eines Sch?lers aktualisiert ({{valueCount}} gesetzt, {{clearedCount}} gel?scht)",
     activitySummary_updatedStudentRosterFields: "Sch?lerlistenfelder aktualisiert",
     activitySummary_reorderedStudentRoster: "Sch?lerliste neu sortiert",
+    activitySummary_reorderedTasks: "Aufgaben neu sortiert",
     breadcrumb: "Brotkrumen",
   },
   attendance: {
@@ -1774,10 +1775,12 @@ const de = {
     linkDeleteConfirmDescription: "Dieser Link wird aus der Aufgabe entfernt.",
     linksStaffCount: "{{count}} Abgabelinks",
     allDoneOverviewTitle: "Schüler mit allen Aufgaben erledigt",
-    allDoneOverviewDescription:
-      "Schüler, die jede nicht archivierte Aufgabe erledigt haben, plus Fortschritt der anderen.",
+    allDoneSummary: "{{done}} von {{total}} Schülern fertig",
     allDoneEmpty: "Noch kein Schüler hat alle Aufgaben erledigt.",
     allDoneProgress: "{{completed}} von {{total}} Aufgaben erledigt",
+    allDoneStudentAria: "{{name}}, {{completed}} von {{total}} erledigt",
+    reorderHandleAria: "{{name}} neu anordnen",
+    reorderFailed: "Aufgaben konnten nicht neu angeordnet werden.",
     archivedBadge: "Archiviert",
   },
   assignments: {

@@ -1496,6 +1496,7 @@ const pt = {
       "Valores de expectativa do aluno atualizados ({{valueCount}} definidos, {{clearedCount}} limpos)",
     activitySummary_updatedStudentRosterFields: "Campos da lista de alunos atualizados",
     activitySummary_reorderedStudentRoster: "Lista de alunos reordenada",
+    activitySummary_reorderedTasks: "Tarefas reordenadas",
     breadcrumb: "Navega??o estrutural",
   },
   attendance: {
@@ -1753,10 +1754,12 @@ const pt = {
     linkDeleteConfirmDescription: "Esta ligação será removida da tarefa.",
     linksStaffCount: "{{count}} ligações de entrega",
     allDoneOverviewTitle: "Alunos que concluíram todas as tarefas",
-    allDoneOverviewDescription:
-      "Alunos que concluíram cada tarefa não arquivada, mais o progresso dos restantes.",
+    allDoneSummary: "{{done}} de {{total}} alunos concluíram",
     allDoneEmpty: "Ainda nenhum aluno concluiu todas as tarefas.",
     allDoneProgress: "{{completed}} de {{total}} tarefas feitas",
+    allDoneStudentAria: "{{name}}, {{completed}} de {{total}} feitas",
+    reorderHandleAria: "Reordenar {{name}}",
+    reorderFailed: "Não foi possível reordenar as tarefas.",
     archivedBadge: "Arquivada",
   },
   assignments: {

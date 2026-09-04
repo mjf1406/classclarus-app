@@ -42,7 +42,7 @@ import {
   type TaskDetail,
   type TaskListItem,
 } from "@/lib/tasks/tasks";
-import { createTaskFormSchema } from "../../../convex/lib/tasks/taskSchema";
+import { createTaskClientFormSchema } from "../../../convex/lib/tasks/taskSchema";
 import type { Id } from "../../../convex/_generated/dataModel";
 
 export type TaskFormValues = {
@@ -110,6 +110,8 @@ export function TaskFormCredenza({
   } = useImageDocumentAttachments(MAX_TASK_ATTACHMENTS);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const skipNextResetRef = useRef(false);
+  /** Key of a just-added procedure step whose textarea should grab focus on mount. */
+  const pendingStepFocusKeyRef = useRef<string | null>(null);
   const attachmentFileIdsRef = useRef(attachmentFileIds);
   attachmentFileIdsRef.current = attachmentFileIds;
 
@@ -144,7 +146,7 @@ export function TaskFormCredenza({
 
   const schema = useMemo(
     () =>
-      createTaskFormSchema({
+      createTaskClientFormSchema({
         nameRequired: t("nameRequired"),
         nameTooLong: t("nameTooLong", { max: MAX_TASK_NAME_LENGTH }),
         descriptionTooLong: t("descriptionTooLong", { max: MAX_TASK_DESCRIPTION_LENGTH }),
@@ -169,7 +171,16 @@ export function TaskFormCredenza({
         });
         if (result.success) return undefined;
         const fieldErrors: Partial<
-          Record<"name" | "description" | "dueDateKey" | "procedureSteps" | "resources", string>
+          Record<
+            | "name"
+            | "description"
+            | "dueDateKey"
+            | "procedureSteps"
+            | "resources"
+            | "releaseMode"
+            | "scheduledReleaseAt",
+            string
+          >
         > = {};
         for (const issue of result.error.issues) {
           const key = issue.path[0];
@@ -178,7 +189,9 @@ export function TaskFormCredenza({
             key === "description" ||
             key === "dueDateKey" ||
             key === "procedureSteps" ||
-            key === "resources"
+            key === "resources" ||
+            key === "releaseMode" ||
+            key === "scheduledReleaseAt"
           ) {
             fieldErrors[key] = issue.message;
           }
@@ -370,6 +383,12 @@ export function TaskFormCredenza({
                           <form.Field name={`procedureSteps[${index}].body`}>
                             {(bodyField) => (
                               <Textarea
+                                ref={(element) => {
+                                  if (element && pendingStepFocusKeyRef.current === step.key) {
+                                    pendingStepFocusKeyRef.current = null;
+                                    element.focus();
+                                  }
+                                }}
                                 value={bodyField.state.value}
                                 placeholder={t("procedureStepPlaceholder")}
                                 onChange={(event) => bodyField.handleChange(event.target.value)}
@@ -383,7 +402,11 @@ export function TaskFormCredenza({
                         type="button"
                         variant="outline"
                         className="w-fit"
-                        onClick={() => field.pushValue(emptyProcedureStep())}
+                        onClick={() => {
+                          const step = emptyProcedureStep();
+                          pendingStepFocusKeyRef.current = step.key;
+                          field.pushValue(step);
+                        }}
                       >
                         <Plus className="size-4" />
                         {t("procedureAddStep")}

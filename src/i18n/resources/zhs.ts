@@ -1421,6 +1421,7 @@ const zhs = {
       "已更新学生的期望值（设置 {{valueCount}} 项，清除 {{clearedCount}} 项）",
     activitySummary_updatedStudentRosterFields: "已更新学生名册字段",
     activitySummary_reorderedStudentRoster: "已重新排列学生名册顺序",
+    activitySummary_reorderedTasks: "已重新排列任务顺序",
     breadcrumb: "面包屑导航",
   },
   attendance: {
@@ -1669,9 +1670,12 @@ const zhs = {
     linkDeleteConfirmDescription: "此链接将从任务中移除。",
     linksStaffCount: "{{count}} 个提交链接",
     allDoneOverviewTitle: "已完成全部任务的学生",
-    allDoneOverviewDescription: "完成每项未归档任务的学生，以及其他学生的进度。",
+    allDoneSummary: "{{done}} / {{total}} 名学生已完成",
     allDoneEmpty: "还没有学生完成全部任务。",
     allDoneProgress: "已完成 {{completed}} / {{total}} 项任务",
+    allDoneStudentAria: "{{name}}，已完成 {{completed}} / {{total}}",
+    reorderHandleAria: "调整{{name}}的顺序",
+    reorderFailed: "无法调整任务顺序。",
     archivedBadge: "已归档",
   },
   assignments: {

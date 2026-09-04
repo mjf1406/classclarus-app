@@ -1508,6 +1508,7 @@ const it = {
       "Valori delle aspettative dello studente aggiornati ({{valueCount}} impostati, {{clearedCount}} cancellati)",
     activitySummary_updatedStudentRosterFields: "Campi dell’elenco studenti aggiornati",
     activitySummary_reorderedStudentRoster: "Elenco studenti riordinato",
+    activitySummary_reorderedTasks: "Attività riordinate",
     breadcrumb: "Percorso di navigazione",
   },
   attendance: {
@@ -1766,10 +1767,12 @@ const it = {
     linkDeleteConfirmDescription: "Questo link verrà rimosso dall'attività.",
     linksStaffCount: "{{count}} link di consegna",
     allDoneOverviewTitle: "Studenti che hanno finito tutte le attività",
-    allDoneOverviewDescription:
-      "Studenti che hanno completato ogni attività non archiviata, più i progressi degli altri.",
+    allDoneSummary: "{{done}} studenti su {{total}} hanno finito",
     allDoneEmpty: "Nessuno studente ha ancora finito tutte le attività.",
     allDoneProgress: "{{completed}} di {{total}} attività fatte",
+    allDoneStudentAria: "{{name}}, {{completed}} di {{total}} fatte",
+    reorderHandleAria: "Riordina {{name}}",
+    reorderFailed: "Impossibile riordinare le attività.",
     archivedBadge: "Archiviato",
   },
   assignments: {

@@ -13,7 +13,7 @@ export function taskDetailQueryOptions(classId: Id<"classes">, taskId: Id<"tasks
   return convexQuery(api.tasks.get, { classId, taskId });
 }
 
-/** gcTime: 5 minutes — reactive via Convex; moderate cache after unmount. */
+/** gcTime: 10 seconds — live Convex class data. */
 export function useTask(classId: Id<"classes">, taskId: Id<"tasks">) {
   return useAuthedQuery(api.tasks.get, { classId, taskId }, { gcTime: GC_TIME.realtime });
 }

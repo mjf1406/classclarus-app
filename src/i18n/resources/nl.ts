@@ -1499,6 +1499,7 @@ const nl = {
       "Verwachtingswaarden van een leerling bijgewerkt ({{valueCount}} gezet, {{clearedCount}} gewist)",
     activitySummary_updatedStudentRosterFields: "Velden van leerlingenlijst bijgewerkt",
     activitySummary_reorderedStudentRoster: "Leerlingenlijst opnieuw gesorteerd",
+    activitySummary_reorderedTasks: "Taken opnieuw gesorteerd",
     breadcrumb: "Broodkruimelnavigatie",
   },
   attendance: {
@@ -1756,10 +1757,12 @@ const nl = {
     linkDeleteConfirmDescription: "Deze link wordt uit de taak verwijderd.",
     linksStaffCount: "{{count}} inleverlinks",
     allDoneOverviewTitle: "Leerlingen die alle taken af hebben",
-    allDoneOverviewDescription:
-      "Leerlingen die elke niet-gearchiveerde taak af hebben, plus de voortgang van de rest.",
+    allDoneSummary: "{{done}} van {{total}} leerlingen klaar",
     allDoneEmpty: "Nog geen leerling heeft alle taken af.",
     allDoneProgress: "{{completed}} van {{total}} taken af",
+    allDoneStudentAria: "{{name}}, {{completed}} van {{total}} af",
+    reorderHandleAria: "{{name}} herschikken",
+    reorderFailed: "Taken herschikken is mislukt.",
     archivedBadge: "Gearchiveerd",
   },
   assignments: {

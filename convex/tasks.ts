@@ -25,6 +25,13 @@ import {
   taskAttachmentPublicFields,
 } from "./lib/files/classFileRefs.js";
 import { MAX_TASK_ATTACHMENTS, parseTaskInput } from "./lib/tasks/taskSchema.js";
+import {
+  compareTaskSortOrder,
+  expectedActiveTopLevelItems,
+  nextTaskSortOrder,
+  validateTopLevelReorder,
+  type TaskTopLevelRef,
+} from "./lib/tasks/taskSortOrder.js";
 import { deleteTaskWithCompletions } from "./lib/tasksCleanup.js";
 
 const MAX_LINK_URL_LENGTH = 2000;
@@ -71,6 +78,7 @@ const taskBaseFields = {
   createdAt: v.number(),
   updatedAt: v.number(),
   archivedAt: v.optional(v.number()),
+  sortOrder: v.optional(v.number()),
   procedureSteps: v.array(taskProcedureStepValidator),
   resources: v.array(taskResourceValidator),
   acceptLinkSubmissions: v.boolean(),
@@ -362,6 +370,7 @@ function toPublicTask(
   createdAt: number;
   updatedAt: number;
   archivedAt?: number;
+  sortOrder?: number;
   procedureSteps: Array<{ key: string; body: string }>;
   resources: Array<{ key: string; url: string; label?: string }>;
   acceptLinkSubmissions: boolean;
@@ -398,6 +407,7 @@ function toPublicTask(
     createdAt: task.createdAt,
     updatedAt: task.updatedAt,
     ...(task.archivedAt !== undefined ? { archivedAt: task.archivedAt } : {}),
+    ...(task.sortOrder !== undefined ? { sortOrder: task.sortOrder } : {}),
     completedCount: completedStudentIds.length,
     studentCount,
     completedStudentIds,
@@ -423,9 +433,9 @@ export const list = classQuery({
     // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded list
     const docs = await ctx.db
       .query("tasks")
-      .withIndex("by_classId_updatedAt", (q) => q.eq("classId", classId))
-      .order("desc")
+      .withIndex("by_classId", (q) => q.eq("classId", classId))
       .collect();
+    docs.sort(compareTaskSortOrder);
 
     const assignmentIndex = await buildTaskAssignmentIndex(ctx, classId);
 
@@ -515,6 +525,7 @@ export const get = classQuery({
       createdAt: task.createdAt,
       updatedAt: task.updatedAt,
       ...(task.archivedAt !== undefined ? { archivedAt: task.archivedAt } : {}),
+      ...(task.sortOrder !== undefined ? { sortOrder: task.sortOrder } : {}),
       ...taskContentFields(task),
       attachmentFileIds,
       attachments,
@@ -593,6 +604,12 @@ export const create = classMutation({
     );
     await requireClassAttachmentFiles(ctx, classId, attachmentFileIds);
     const now = Date.now();
+    // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded list
+    const existingTasks = await ctx.db
+      .query("tasks")
+      .withIndex("by_classId", (q) => q.eq("classId", classId))
+      .collect();
+    const sortOrder = nextTaskSortOrder(existingTasks);
 
     const taskId = await ctx.db.insert("tasks", {
       classId,
@@ -606,6 +623,7 @@ export const create = classMutation({
       createdBy: ctx.userId,
       createdAt: now,
       updatedAt: now,
+      sortOrder,
     });
 
     const release = await applyTaskRelease(ctx, taskId, {
@@ -626,6 +644,76 @@ export const create = classMutation({
     });
 
     return taskId;
+  },
+});
+
+const taskTopLevelItemValidator = v.union(
+  v.object({
+    type: v.literal("task"),
+    taskId: v.id("tasks"),
+  }),
+  v.object({
+    type: v.literal("assignment"),
+    assignmentId: v.id("assignments"),
+  }),
+);
+
+export const reorder = classMutation({
+  args: {
+    items: v.array(taskTopLevelItemValidator),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await rateLimiter.limit(ctx, "taskReorder", { key: ctx.userId, throws: true });
+    await ctx.require("tasks:manage");
+
+    const classId = ctx.classDoc._id;
+    // eslint-disable-next-line @convex-dev/no-collect-in-query -- classroom-bounded list
+    const docs = await ctx.db
+      .query("tasks")
+      .withIndex("by_classId", (q) => q.eq("classId", classId))
+      .collect();
+    const expected = expectedActiveTopLevelItems(docs);
+    const error = validateTopLevelReorder(args.items, expected);
+    if (error) {
+      throw new Error(error);
+    }
+
+    const tasksByItem = (item: TaskTopLevelRef<Id<"tasks">, Id<"assignments">>) =>
+      docs.filter((task) => {
+        if (task.archivedAt !== undefined) return false;
+        if (item.type === "task") return task._id === item.taskId;
+        return task.assignmentId === item.assignmentId;
+      });
+
+    for (let index = 0; index < args.items.length; index++) {
+      const item = args.items[index];
+      if (!item) continue;
+      for (const task of tasksByItem(item)) {
+        await ctx.db.patch("tasks", task._id, { sortOrder: -(index + 1) });
+      }
+    }
+    for (let index = 0; index < args.items.length; index++) {
+      const item = args.items[index];
+      if (!item) continue;
+      for (const task of tasksByItem(item)) {
+        await ctx.db.patch("tasks", task._id, { sortOrder: index });
+      }
+    }
+
+    await recordClassActivity(ctx, {
+      classId,
+      actorUserId: ctx.userId,
+      action: "update",
+      resourceType: "task",
+      resourceId: classId,
+      summary: "Reordered tasks",
+      summaryKey: "activitySummary_reorderedTasks",
+      metadata: {
+        itemCount: String(args.items.length),
+      },
+    });
+    return null;
   },
 });
 

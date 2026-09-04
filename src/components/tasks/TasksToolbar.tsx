@@ -10,62 +10,40 @@ import {
   InputGroupText,
 } from "@/components/ui/input-group";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import type { TaskSortDirection, TaskSortKey } from "@/lib/tasks/tasks";
 
 type ArchiveVisibility = "hide" | "show";
 
 type TasksToolbarProps = {
-  sortKey: TaskSortKey;
-  sortDirection: TaskSortDirection;
   searchQuery: string;
   resultCount: number;
   canCreate: boolean;
   showArchived?: boolean;
+  personalView: boolean;
   onSearchChange: (value: string) => void;
-  onSortChange: (key: TaskSortKey) => void;
   onToggleArchived?: () => void;
   onCreate: () => void;
 };
 
-function sortLabel(
-  key: TaskSortKey,
-  activeKey: TaskSortKey,
-  direction: TaskSortDirection,
-  labels: Record<TaskSortKey, string>,
-): string {
-  const base = labels[key];
-  if (key !== activeKey) return base;
-  if (key === "name") {
-    return `${base} ${direction === "asc" ? "↓" : "↑"}`;
-  }
-  return `${base} ${direction === "asc" ? "↑" : "↓"}`;
-}
-
 export function TasksToolbar({
-  sortKey,
-  sortDirection,
   searchQuery,
   resultCount,
   canCreate,
   showArchived = false,
+  personalView,
   onSearchChange,
-  onSortChange,
   onToggleArchived,
   onCreate,
 }: TasksToolbarProps) {
   const { t } = useTranslation("tasks");
-  const labels: Record<TaskSortKey, string> = {
-    name: t("sortName"),
-    created: t("sortCreated"),
-    updated: t("sortUpdated"),
-  };
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t("title")}</h1>
-          <p className="hidden text-muted-foreground sm:block">{t("description")}</p>
+          <p className="hidden text-muted-foreground sm:block">
+            {personalView ? t("descriptionPersonal") : t("description")}
+          </p>
         </div>
         {canCreate ? (
           <div className="hidden sm:block">
@@ -103,43 +81,26 @@ export function TasksToolbar({
         </InputGroupAddon>
       </InputGroup>
 
-      <div className="flex flex-wrap items-center gap-2">
+      {onToggleArchived ? (
         <ToggleGroup
           variant="outline"
           spacing={0}
-          value={[sortKey]}
+          value={[showArchived ? "show" : "hide"]}
           onValueChange={(values) => {
-            const next = values[0] as TaskSortKey | undefined;
-            onSortChange(next ?? sortKey);
+            const next = values[0] as ArchiveVisibility | undefined;
+            if (!next) return;
+            if ((next === "show") !== showArchived) onToggleArchived();
           }}
-          className="flex-wrap"
+          className="w-fit"
         >
-          {(["name", "created", "updated"] as const).map((key) => (
-            <ToggleGroupItem key={key} value={key} className="px-3">
-              {sortLabel(key, sortKey, sortDirection, labels)}
-            </ToggleGroupItem>
-          ))}
+          <ToggleGroupItem value="hide" aria-label={t("hideArchived")}>
+            <ArchiveXIcon />
+          </ToggleGroupItem>
+          <ToggleGroupItem value="show" aria-label={t("showArchived")}>
+            <ArchiveIcon />
+          </ToggleGroupItem>
         </ToggleGroup>
-        {onToggleArchived ? (
-          <ToggleGroup
-            variant="outline"
-            spacing={0}
-            value={[showArchived ? "show" : "hide"]}
-            onValueChange={(values) => {
-              const next = values[0] as ArchiveVisibility | undefined;
-              if (!next) return;
-              if ((next === "show") !== showArchived) onToggleArchived();
-            }}
-          >
-            <ToggleGroupItem value="hide" aria-label={t("hideArchived")}>
-              <ArchiveXIcon />
-            </ToggleGroupItem>
-            <ToggleGroupItem value="show" aria-label={t("showArchived")}>
-              <ArchiveIcon />
-            </ToggleGroupItem>
-          </ToggleGroup>
-        ) : null}
-      </div>
+      ) : null}
 
       {canCreate ? (
         <div className="sm:hidden">

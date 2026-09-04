@@ -33,6 +33,9 @@ export const ACTIVITY_RESOURCE_TYPES = [
   "timetableLesson",
   "classroomRotation",
   "classroomClockSettings",
+  "task",
+  "taskCompletion",
+  "taskLink",
 ] as const;
 export type ActivityResourceType = (typeof ACTIVITY_RESOURCE_TYPES)[number];
 

@@ -55,7 +55,7 @@ export const TASK_FORM_MESSAGES_EN: TaskFormMessages = {
   resourceLabelTooLong: `Label must be at most ${MAX_TASK_RESOURCE_LABEL_LENGTH} characters`,
 };
 
-export function createTaskFormSchema(messages: TaskFormMessages) {
+export function createTaskContentSchema(messages: TaskFormMessages) {
   return z.object({
     name: z
       .string()
@@ -83,6 +83,20 @@ export function createTaskFormSchema(messages: TaskFormMessages) {
       )
       .max(MAX_TASK_RESOURCES, messages.resourcesTooMany),
     acceptLinkSubmissions: z.boolean(),
+  });
+}
+
+/** Client form shape: release UI uses `releaseMode`, mapped after parse. */
+export function createTaskClientFormSchema(messages: TaskFormMessages) {
+  return createTaskContentSchema(messages).extend({
+    releaseMode: z.enum(["released", "hidden", "scheduled"]),
+    scheduledReleaseAt: z.string(),
+  });
+}
+
+/** Server / `parseTaskInput` shape: persisted release fields. */
+export function createTaskFormSchema(messages: TaskFormMessages) {
+  return createTaskContentSchema(messages).extend({
     hiddenFromStudents: z.boolean(),
     scheduledReleaseAt: z.string(),
   });

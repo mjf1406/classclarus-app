@@ -1,4 +1,5 @@
 import { Plus, Trash2 } from "lucide-react";
+import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,8 @@ export function ResourceLinksField({
 }) {
   const { t } = useTranslation("tasks");
   const canAdd = items.length < MAX_TASK_RESOURCES;
+  /** Key of a just-added link whose URL input should grab focus on mount. */
+  const pendingFocusKeyRef = useRef<string | null>(null);
 
   return (
     <Field>
@@ -38,6 +41,12 @@ export function ResourceLinksField({
               <li key={item.key} className="flex flex-col gap-2">
                 <div className="flex items-center gap-2">
                   <Input
+                    ref={(element) => {
+                      if (element && pendingFocusKeyRef.current === item.key) {
+                        pendingFocusKeyRef.current = null;
+                        element.focus();
+                      }
+                    }}
                     type="url"
                     inputMode="url"
                     value={item.url}
@@ -84,7 +93,11 @@ export function ResourceLinksField({
           size="sm"
           className="self-start"
           disabled={!canAdd}
-          onClick={() => onChange([...items, emptyResourceLink()])}
+          onClick={() => {
+            const link = emptyResourceLink();
+            pendingFocusKeyRef.current = link.key;
+            onChange([...items, link]);
+          }}
         >
           <Plus data-icon="inline-start" />
           {t("addResourceLink")}

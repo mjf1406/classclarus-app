@@ -1452,6 +1452,7 @@ const ko = {
       "학생 기대치 값을 업데이트했습니다({{valueCount}}개 설정, {{clearedCount}}개 지움)",
     activitySummary_updatedStudentRosterFields: "학생 명부 항목을 업데이트했습니다",
     activitySummary_reorderedStudentRoster: "학생 명부 순서를 변경했습니다",
+    activitySummary_reorderedTasks: "과제 순서를 변경했습니다",
     breadcrumb: "탐색 경로",
   },
   attendance: {
@@ -1702,9 +1703,12 @@ const ko = {
     linkDeleteConfirmDescription: "이 링크는 과제에서 제거됩니다.",
     linksStaffCount: "제출 링크 {{count}}개",
     allDoneOverviewTitle: "모든 과제를 끝낸 학생",
-    allDoneOverviewDescription: "보관되지 않은 모든 과제를 끝낸 학생과 나머지 진행 상황입니다.",
+    allDoneSummary: "{{total}}명 중 {{done}}명 완료",
     allDoneEmpty: "아직 모든 과제를 끝낸 학생이 없습니다.",
     allDoneProgress: "{{total}}개 중 {{completed}}개 완료",
+    allDoneStudentAria: "{{name}}, {{total}}개 중 {{completed}}개 완료",
+    reorderHandleAria: "{{name}} 순서 변경",
+    reorderFailed: "과제 순서를 변경하지 못했습니다.",
     archivedBadge: "보관됨",
   },
   assignments: {

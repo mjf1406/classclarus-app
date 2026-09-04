@@ -636,9 +636,12 @@ const schema = defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
     archivedAt: v.optional(v.number()),
+    /** Teacher-defined top-level order. Assignment-linked tasks share one folder position. */
+    sortOrder: v.optional(v.number()),
   })
     .index("by_classId", ["classId"])
     .index("by_classId_updatedAt", ["classId", "updatedAt"])
+    .index("by_classId_sortOrder", ["classId", "sortOrder"])
     .index("by_assignmentId", ["assignmentId"])
     .index("by_worksheetImageFileId", ["worksheetImageFileId"]),
   /**

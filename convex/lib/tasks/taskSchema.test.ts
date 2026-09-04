@@ -1,6 +1,11 @@
 import { describe, expect, test } from "vite-plus/test";
 
-import { MAX_TASK_ATTACHMENTS, parseTaskInput, TASK_FORM_MESSAGES_EN } from "./taskSchema";
+import {
+  createTaskClientFormSchema,
+  MAX_TASK_ATTACHMENTS,
+  parseTaskInput,
+  TASK_FORM_MESSAGES_EN,
+} from "./taskSchema";
 
 describe("parseTaskInput", () => {
   test("trims name and accepts attachments under the cap", () => {
@@ -51,5 +56,51 @@ describe("parseTaskInput", () => {
         procedureSteps: [{ key: "s1", body: "   " }],
       }),
     ).toThrow(TASK_FORM_MESSAGES_EN.procedureStepRequired);
+  });
+});
+
+describe("createTaskClientFormSchema", () => {
+  const schema = createTaskClientFormSchema(TASK_FORM_MESSAGES_EN);
+
+  function clientValues(overrides: Record<string, unknown> = {}) {
+    return {
+      name: "Read pages",
+      description: "",
+      dueDateKey: "",
+      attachmentFileIds: [],
+      procedureSteps: [],
+      resources: [],
+      acceptLinkSubmissions: false,
+      releaseMode: "released",
+      scheduledReleaseAt: "",
+      ...overrides,
+    };
+  }
+
+  test("accepts the create/edit form shape with releaseMode", () => {
+    const parsed = schema.safeParse(clientValues({ releaseMode: "hidden" }));
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.releaseMode).toBe("hidden");
+      expect("hiddenFromStudents" in parsed.data).toBe(false);
+    }
+  });
+
+  test("rejects a missing name on the client form", () => {
+    const parsed = schema.safeParse(clientValues({ name: "   " }));
+    expect(parsed.success).toBe(false);
+  });
+
+  test("accepts a scheduled release datetime string", () => {
+    const parsed = schema.safeParse(
+      clientValues({
+        releaseMode: "scheduled",
+        scheduledReleaseAt: "2026-09-03T14:05",
+      }),
+    );
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.scheduledReleaseAt).toBe("2026-09-03T14:05");
+    }
   });
 });

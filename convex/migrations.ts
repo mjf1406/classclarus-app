@@ -3,6 +3,7 @@ import { Migrations } from "@convex-dev/migrations";
 import { components, internal } from "./_generated/api.js";
 import type { DataModel } from "./_generated/dataModel.js";
 import { migrateTaskWorksheetImageFields } from "./lib/tasks/migrateWorksheetImage.js";
+import { computeBackfillSortOrders } from "./lib/tasks/taskSortOrder.js";
 import {
   migrateLessonSections,
   migrateSubjectSections,
@@ -58,4 +59,42 @@ export const migrateTaskWorksheetImagesToAttachments = migrations.define({
 
 export const runTaskAttachmentMigrations = migrations.runner(
   internal.migrations.migrateTaskWorksheetImagesToAttachments,
+);
+
+export const migrateTaskSortOrders = migrations.define({
+  table: "tasks",
+  migrateOne: async (ctx, doc) => {
+    if (doc.sortOrder !== undefined) return;
+    // eslint-disable-next-line @convex-dev/no-collect-in-query -- one-time class-scoped backfill
+    const siblings = await ctx.db
+      .query("tasks")
+      .withIndex("by_classId", (q) => q.eq("classId", doc.classId))
+      .collect();
+    const assignmentNames = new Map<string, string>();
+    for (const sibling of siblings) {
+      if (!sibling.assignmentId || assignmentNames.has(sibling.assignmentId)) continue;
+      const assignment = await ctx.db.get("assignments", sibling.assignmentId);
+      if (assignment) assignmentNames.set(sibling.assignmentId, assignment.name);
+    }
+    const orders = computeBackfillSortOrders(
+      siblings.map((sibling) => ({
+        _id: sibling._id,
+        name: sibling.name,
+        updatedAt: sibling.updatedAt,
+        ...(sibling.assignmentId
+          ? {
+              assignmentId: sibling.assignmentId,
+              assignmentName: assignmentNames.get(sibling.assignmentId),
+            }
+          : {}),
+      })),
+    );
+    const sortOrder = orders.get(doc._id);
+    if (sortOrder === undefined) return;
+    return { sortOrder };
+  },
+});
+
+export const runTaskSortOrderMigrations = migrations.runner(
+  internal.migrations.migrateTaskSortOrders,
 );

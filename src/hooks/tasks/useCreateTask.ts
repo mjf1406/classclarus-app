@@ -66,9 +66,10 @@ export function useCreateTask() {
           completedCount: 0,
           studentCount,
           completedStudentIds: [],
+          sortOrder: old ? Math.max(-1, ...old.map((task) => task.sortOrder ?? -1)) + 1 : 0,
         };
         if (!old) return [next];
-        return [next, ...old];
+        return [...old, next];
       });
     },
     onError: (error) => {

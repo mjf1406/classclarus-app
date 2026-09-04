@@ -1489,6 +1489,7 @@ const ru = {
       "Значения ожиданий ученика обновлены ({{valueCount}} задано, {{clearedCount}} очищено)",
     activitySummary_updatedStudentRosterFields: "Поля списка учеников обновлены",
     activitySummary_reorderedStudentRoster: "Список учеников переупорядочен",
+    activitySummary_reorderedTasks: "Задания переупорядочены",
     breadcrumb: "Навигационная цепочка",
   },
   attendance: {
@@ -1747,10 +1748,12 @@ const ru = {
     linkDeleteConfirmDescription: "Эта ссылка будет удалена из задания.",
     linksStaffCount: "{{count}} ссылок сдачи",
     allDoneOverviewTitle: "Ученики, выполнившие все задания",
-    allDoneOverviewDescription:
-      "Ученики, выполнившие каждое неархивное задание, и прогресс остальных.",
+    allDoneSummary: "{{done}} из {{total}} учеников закончили",
     allDoneEmpty: "Пока никто не выполнил все задания.",
     allDoneProgress: "{{completed}} из {{total}} заданий выполнено",
+    allDoneStudentAria: "{{name}}, выполнено {{completed}} из {{total}}",
+    reorderHandleAria: "Изменить порядок: {{name}}",
+    reorderFailed: "Не удалось изменить порядок заданий.",
     archivedBadge: "В архиве",
   },
   assignments: {

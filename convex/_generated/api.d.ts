@@ -224,6 +224,7 @@ import type * as lib_selfHosted from "../lib/selfHosted.js";
 import type * as lib_studentRosters from "../lib/studentRosters.js";
 import type * as lib_tasks_migrateWorksheetImage from "../lib/tasks/migrateWorksheetImage.js";
 import type * as lib_tasks_taskSchema from "../lib/tasks/taskSchema.js";
+import type * as lib_tasks_taskSortOrder from "../lib/tasks/taskSortOrder.js";
 import type * as lib_tasksCleanup from "../lib/tasksCleanup.js";
 import type * as lib_timetable_importFromClass from "../lib/timetable/importFromClass.js";
 import type * as lib_timetable_lessonEvents from "../lib/timetable/lessonEvents.js";
@@ -490,6 +491,7 @@ declare const fullApi: ApiFromModules<{
   "lib/studentRosters": typeof lib_studentRosters;
   "lib/tasks/migrateWorksheetImage": typeof lib_tasks_migrateWorksheetImage;
   "lib/tasks/taskSchema": typeof lib_tasks_taskSchema;
+  "lib/tasks/taskSortOrder": typeof lib_tasks_taskSortOrder;
   "lib/tasksCleanup": typeof lib_tasksCleanup;
   "lib/timetable/importFromClass": typeof lib_timetable_importFromClass;
   "lib/timetable/lessonEvents": typeof lib_timetable_lessonEvents;

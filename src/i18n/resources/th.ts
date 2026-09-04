@@ -1425,6 +1425,7 @@ const th = {
       "อัปเดตค่าความคาดหวังของนักเรียนแล้ว (ตั้งค่า {{valueCount}} รายการ ล้าง {{clearedCount}} รายการ)",
     activitySummary_updatedStudentRosterFields: "อัปเดตฟิลด์รายชื่อนักเรียนแล้ว",
     activitySummary_reorderedStudentRoster: "จัดเรียงรายชื่อนักเรียนใหม่แล้ว",
+    activitySummary_reorderedTasks: "จัดเรียงงานใหม่แล้ว",
     breadcrumb: "เส้นทางนำทาง",
   },
   attendance: {
@@ -1673,9 +1674,12 @@ const th = {
     linkDeleteConfirmDescription: "ลิงก์นี้จะถูกลบออกจากงาน",
     linksStaffCount: "ลิงก์ส่งงาน {{count}} รายการ",
     allDoneOverviewTitle: "นักเรียนที่ทำงานครบทุกชิ้น",
-    allDoneOverviewDescription: "นักเรียนที่ทำงานที่ยังไม่เก็บถาวรครบทุกชิ้น และความคืบหน้าของคนอื่น",
+    allDoneSummary: "เสร็จแล้ว {{done}} จาก {{total}} คน",
     allDoneEmpty: "ยังไม่มีนักเรียนทำงานครบทุกชิ้น",
     allDoneProgress: "ทำแล้ว {{completed}} จาก {{total}} งาน",
+    allDoneStudentAria: "{{name}} ทำแล้ว {{completed}} จาก {{total}}",
+    reorderHandleAria: "จัดเรียง {{name}}",
+    reorderFailed: "จัดเรียงงานไม่สำเร็จ",
     archivedBadge: "เก็บถาวรแล้ว",
   },
   assignments: {

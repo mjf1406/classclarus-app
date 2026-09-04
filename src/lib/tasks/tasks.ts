@@ -6,6 +6,10 @@ import type { StudentRosterEntry } from "@/lib/roster/roster";
 
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
+import {
+  compareTaskSortOrder,
+  type TaskTopLevelRef,
+} from "../../../convex/lib/tasks/taskSortOrder";
 
 export type TaskListItem = FunctionReturnType<typeof api.tasks.list>[number];
 export type TaskList = FunctionReturnType<typeof api.tasks.list>;
@@ -114,53 +118,25 @@ export function computeStudentsDoneWithAllTasks<
   return { done, remaining };
 }
 
-export type TaskSortKey = "name" | "created" | "updated";
+export type StudentTaskProgressRow = {
+  userId: string;
+  completed: number;
+  total: number;
+};
+
+/** Roster-ordered progress for every student on unarchived tasks. */
+export function listStudentTaskProgress<
+  T extends { archivedAt?: number; completedStudentIds?: readonly string[] },
+>(tasks: readonly T[], students: ReadonlyArray<{ userId: string }>): StudentTaskProgressRow[] {
+  const { done, remaining } = computeStudentsDoneWithAllTasks(tasks, students);
+  const byUser = new Map([...done, ...remaining].map((row) => [row.userId, row] as const));
+  return students.flatMap((student) => {
+    const row = byUser.get(student.userId);
+    return row ? [row] : [];
+  });
+}
+
 export type TaskSortDirection = "asc" | "desc";
-
-export function compareTasks(
-  a: TaskListItem,
-  b: TaskListItem,
-  sortKey: TaskSortKey,
-  direction: TaskSortDirection,
-): number {
-  const dir = direction === "asc" ? 1 : -1;
-  switch (sortKey) {
-    case "name": {
-      const byName = a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
-      if (byName !== 0) return byName * dir;
-      return (a.updatedAt - b.updatedAt) * dir;
-    }
-    case "created":
-      return (a._creationTime - b._creationTime) * dir;
-    case "updated":
-      return (a.updatedAt - b.updatedAt) * dir;
-  }
-}
-
-export function sortTasks(
-  tasks: readonly TaskListItem[],
-  sortKey: TaskSortKey,
-  direction: TaskSortDirection,
-): TaskListItem[] {
-  return [...tasks].sort((a, b) => compareTasks(a, b, sortKey, direction));
-}
-
-export function nextTaskSortState(
-  currentKey: TaskSortKey,
-  currentDirection: TaskSortDirection,
-  nextKey: TaskSortKey,
-): { sortKey: TaskSortKey; sortDirection: TaskSortDirection } {
-  if (currentKey === nextKey) {
-    return {
-      sortKey: currentKey,
-      sortDirection: currentDirection === "asc" ? "desc" : "asc",
-    };
-  }
-  return {
-    sortKey: nextKey,
-    sortDirection: nextKey === "name" ? "asc" : "desc",
-  };
-}
 
 export function filterTasksByName(tasks: readonly TaskListItem[], query: string): TaskListItem[] {
   const needle = query.trim().toLocaleLowerCase();
@@ -208,43 +184,96 @@ export function sortTasksByProcedureStep(tasks: readonly TaskListItem[]): TaskLi
   });
 }
 
-/** Partition sorted tasks into assignment folders + ungrouped tasks (order preserved). */
-export function groupTasksByAssignment(tasks: readonly TaskListItem[]): {
-  groups: TaskAssignmentGroup[];
-  ungrouped: TaskListItem[];
-} {
-  const groupMap = new Map<string, TaskAssignmentGroup>();
-  const ungrouped: TaskListItem[] = [];
+export type TaskTopLevelItem =
+  | { type: "assignment"; id: string; group: TaskAssignmentGroup }
+  | { type: "task"; id: string; task: TaskListItem };
 
-  for (const task of tasks) {
+export type TaskReorderItem = TaskTopLevelRef<Id<"tasks">, Id<"assignments">>;
+
+/** Mixed top-level sequence: assignment folders and ungrouped tasks in teacher order. */
+export function buildTaskTopLevelItems(tasks: readonly TaskListItem[]): TaskTopLevelItem[] {
+  const sorted = [...tasks].sort(compareTaskSortOrder);
+  const items: TaskTopLevelItem[] = [];
+  const folderTasks = new Map<string, TaskListItem[]>();
+
+  for (const task of sorted) {
     if (task.assignmentId && task.assignmentName) {
-      const key = task.assignmentId;
-      const existing = groupMap.get(key);
+      const existing = folderTasks.get(task.assignmentId);
       if (existing) {
-        existing.tasks.push(task);
-      } else {
-        groupMap.set(key, {
+        existing.push(task);
+        continue;
+      }
+      folderTasks.set(task.assignmentId, [task]);
+      items.push({
+        type: "assignment",
+        id: `assignment:${task.assignmentId}`,
+        group: {
           assignmentId: task.assignmentId,
           assignmentName: task.assignmentName,
           ...(task.assignmentSubject ? { assignmentSubject: task.assignmentSubject } : {}),
           ...(task.assignmentUnit ? { assignmentUnit: task.assignmentUnit } : {}),
-          tasks: [task],
-        });
-      }
+          tasks: [],
+        },
+      });
       continue;
     }
-    ungrouped.push(task);
+    items.push({
+      type: "task",
+      id: `task:${task._id}`,
+      task,
+    });
   }
 
-  const groups = [...groupMap.values()]
-    .map((group) => ({
-      ...group,
-      tasks: sortTasksByProcedureStep(group.tasks),
-    }))
-    .sort((a, b) =>
-      a.assignmentName.localeCompare(b.assignmentName, undefined, { sensitivity: "base" }),
-    );
+  for (const item of items) {
+    if (item.type !== "assignment") continue;
+    item.group.tasks = sortTasksByProcedureStep(folderTasks.get(item.group.assignmentId) ?? []);
+  }
 
+  return items;
+}
+
+export function toTaskReorderItems(items: readonly TaskTopLevelItem[]): TaskReorderItem[] {
+  return items.map((item) =>
+    item.type === "task"
+      ? { type: "task", taskId: item.task._id }
+      : { type: "assignment", assignmentId: item.group.assignmentId },
+  );
+}
+
+export function applyTaskTopLevelOrder(
+  tasks: TaskList,
+  items: readonly TaskReorderItem[],
+): TaskList {
+  const orderByTaskId = new Map<string, number>();
+  items.forEach((item, index) => {
+    if (item.type === "task") {
+      orderByTaskId.set(item.taskId, index);
+      return;
+    }
+    for (const task of tasks) {
+      if (task.assignmentId === item.assignmentId && task.archivedAt === undefined) {
+        orderByTaskId.set(task._id, index);
+      }
+    }
+  });
+  return tasks.map((task) => {
+    const sortOrder = orderByTaskId.get(task._id);
+    return sortOrder === undefined ? task : { ...task, sortOrder };
+  });
+}
+
+/** Partition tasks into assignment folders + ungrouped tasks (teacher order). */
+export function groupTasksByAssignment(tasks: readonly TaskListItem[]): {
+  groups: TaskAssignmentGroup[];
+  ungrouped: TaskListItem[];
+} {
+  const items = buildTaskTopLevelItems(tasks);
+  const groups: TaskAssignmentGroup[] = [];
+  const ungrouped: TaskListItem[] = [];
+  for (const item of items) {
+    if (item.type === "assignment") groups.push(item.group);
+    else ungrouped.push(item.task);
+  }
   return { groups, ungrouped };
 }
 

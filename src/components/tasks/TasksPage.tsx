@@ -1,11 +1,16 @@
+import { type DragEndEvent } from "@dnd-kit/core";
+import { arrayMove } from "@dnd-kit/sortable";
 import { Link } from "@tanstack/react-router";
 import { ChevronRight, ClipboardList, ListTodo, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { DeleteNamedCredenza } from "@/components/groups/DeleteNamedCredenza";
+import { SortableFormItem, SortableVerticalList } from "@/components/form/SortableFormList";
+import { TaskAllDoneOverview } from "@/components/tasks/TaskAllDoneOverview";
 import { TaskCard } from "@/components/tasks/TaskCard";
 import { TaskFormCredenza } from "@/components/tasks/TaskFormCredenza";
+import { TaskListRow } from "@/components/tasks/TaskListRow";
 import { TasksToolbar } from "@/components/tasks/TasksToolbar";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -24,30 +29,28 @@ import { useCan } from "@/hooks/permissions/useCan";
 import { useStudentRoster } from "@/hooks/roster/useStudentRoster";
 import { useCreateTask } from "@/hooks/tasks/useCreateTask";
 import { useRemoveTask } from "@/hooks/tasks/useRemoveTask";
+import { useReorderTasks } from "@/hooks/tasks/useReorderTasks";
 import { useSetTaskArchived } from "@/hooks/tasks/useSetTaskArchived";
 import { useTasks } from "@/hooks/tasks/useTasks";
 import { useUpdateTask } from "@/hooks/tasks/useUpdateTask";
+import { useAuthedQuery } from "@/hooks/useAuthedQuery";
+import { GC_TIME } from "@/lib/queryCache";
+import { resolveRosterNameFormat } from "@/lib/roster/roster";
 import {
-  computeStudentsDoneWithAllTasks,
+  buildTaskTopLevelItems,
   computeTaskGroupCompletionStats,
   filterTasksByName,
   formatTaskAssignmentFolderMeta,
-  groupTasksByAssignment,
-  nextTaskSortState,
   partitionTasksByArchive,
-  sortTasks,
+  toTaskReorderItems,
   type TaskAssignmentGroup,
   type TaskGroupCompletionStat,
   type TaskListItem,
-  type TaskSortDirection,
-  type TaskSortKey,
+  type TaskTopLevelItem,
 } from "@/lib/tasks/tasks";
-import { getRosterDisplayName, resolveRosterNameFormat } from "@/lib/roster/roster";
 import { cn } from "@/lib/utils";
-import type { Id } from "../../../convex/_generated/dataModel";
-import { useAuthedQuery } from "@/hooks/useAuthedQuery";
 import { api } from "../../../convex/_generated/api";
-import { GC_TIME } from "@/lib/queryCache";
+import type { Id } from "../../../convex/_generated/dataModel";
 
 type TasksPageProps = {
   classId: Id<"classes">;
@@ -56,7 +59,6 @@ type TasksPageProps = {
 export function TasksPage({ classId }: TasksPageProps) {
   const { t } = useTranslation("tasks");
   const { t: tGroups } = useTranslation("groups");
-  const { t: tClasses } = useTranslation("classes");
   const { can, isPending: permissionsPending } = useCan();
   const canManage = can("tasks:manage");
   const canComplete = can("tasks:complete");
@@ -73,10 +75,9 @@ export function TasksPage({ classId }: TasksPageProps) {
   const updateTask = useUpdateTask();
   const removeTask = useRemoveTask();
   const setArchived = useSetTaskArchived();
+  const reorderTasks = useReorderTasks();
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortKey, setSortKey] = useState<TaskSortKey>("updated");
-  const [sortDirection, setSortDirection] = useState<TaskSortDirection>("desc");
   const [showArchived, setShowArchived] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<TaskListItem | null>(null);
@@ -87,20 +88,17 @@ export function TasksPage({ classId }: TasksPageProps) {
 
   const { active, archived } = useMemo(() => {
     const filtered = filterTasksByName(data ?? [], searchQuery);
-    const partitioned = partitionTasksByArchive(filtered);
-    return {
-      active: sortTasks(partitioned.active, sortKey, sortDirection),
-      archived: sortTasks(partitioned.archived, sortKey, sortDirection),
-    };
-  }, [data, searchQuery, sortDirection, sortKey]);
+    return partitionTasksByArchive(filtered);
+  }, [data, searchQuery]);
 
-  const activeGrouped = useMemo(() => groupTasksByAssignment(active), [active]);
-  const archivedGrouped = useMemo(() => groupTasksByAssignment(archived), [archived]);
+  const activeItems = useMemo(() => buildTaskTopLevelItems(active), [active]);
+  const archivedItems = useMemo(() => buildTaskTopLevelItems(archived), [archived]);
 
   const resultCount = showArchived ? active.length + archived.length : active.length;
   const hasCatalog = (data?.length ?? 0) > 0;
   const hasActiveSearch = searchQuery.trim().length > 0;
   const hasVisibleTasks = active.length > 0 || (showArchived && archived.length > 0);
+  const canReorder = canManage && !hasActiveSearch && !showArchived;
 
   const groupStatsByTaskId = useMemo(() => {
     const empty = new Map<Id<"tasks">, TaskGroupCompletionStat[]>();
@@ -120,11 +118,6 @@ export function TasksPage({ classId }: TasksPageProps) {
     );
   }, [data, groupsBoard, personalView, tGroups]);
 
-  const allDoneOverview = useMemo(() => {
-    if (personalView || !roster) return null;
-    return computeStudentsDoneWithAllTasks(data ?? [], roster);
-  }, [data, personalView, roster]);
-
   const nameFormat = useMemo(
     () =>
       resolveRosterNameFormat({
@@ -142,72 +135,41 @@ export function TasksPage({ classId }: TasksPageProps) {
     });
   };
 
+  const handleReorder = (event: DragEndEvent) => {
+    const { active: dragged, over } = event;
+    if (!over || dragged.id === over.id) return;
+    const oldIndex = activeItems.findIndex((item) => item.id === dragged.id);
+    const newIndex = activeItems.findIndex((item) => item.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+    const nextItems = arrayMove(activeItems, oldIndex, newIndex);
+    void reorderTasks.mutateAsync({
+      classId,
+      items: toTaskReorderItems(nextItems),
+    });
+  };
+
   return (
     <div className="flex w-full flex-col gap-4 px-4 py-8 sm:px-8">
       <TasksToolbar
-        sortKey={sortKey}
-        sortDirection={sortDirection}
         searchQuery={searchQuery}
         resultCount={resultCount}
         canCreate={canManage}
         showArchived={showArchived}
+        personalView={personalView}
         onSearchChange={setSearchQuery}
-        onSortChange={(key) => {
-          const next = nextTaskSortState(sortKey, sortDirection, key);
-          setSortKey(next.sortKey);
-          setSortDirection(next.sortDirection);
-        }}
         onToggleArchived={canManage ? () => setShowArchived((value) => !value) : undefined}
         onCreate={() => setCreateOpen(true)}
       />
 
-      {!personalView && allDoneOverview && (data?.length ?? 0) > 0 ? (
-        <div className="rounded-xl border border-border p-4">
-          <h2 className="text-sm font-medium">{t("allDoneOverviewTitle")}</h2>
-          <p className="mt-1 text-sm text-muted-foreground">{t("allDoneOverviewDescription")}</p>
-          {allDoneOverview.done.length === 0 ? (
-            <p className="mt-2 text-sm text-muted-foreground">{t("allDoneEmpty")}</p>
-          ) : (
-            <ul className="mt-2 flex flex-wrap gap-2">
-              {allDoneOverview.done.map((row) => {
-                const student = roster?.find((entry) => entry.userId === row.userId);
-                if (!student) return null;
-                return (
-                  <li
-                    key={row.userId}
-                    className="rounded-full border border-border px-3 py-1 text-sm"
-                  >
-                    {getRosterDisplayName(student, tClasses("unnamedMember"), nameFormat)}
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-          {allDoneOverview.remaining.length > 0 ? (
-            <ul className="mt-3 space-y-1 text-sm text-muted-foreground">
-              {allDoneOverview.remaining.map((row) => {
-                const student = roster?.find((entry) => entry.userId === row.userId);
-                if (!student) return null;
-                return (
-                  <li key={row.userId}>
-                    {t("allDoneProgress", {
-                      name: getRosterDisplayName(student, tClasses("unnamedMember"), nameFormat),
-                      completed: row.completed,
-                      total: row.total,
-                    })}
-                  </li>
-                );
-              })}
-            </ul>
-          ) : null}
-        </div>
+      {!personalView && roster && (data?.length ?? 0) > 0 ? (
+        <TaskAllDoneOverview tasks={data ?? []} roster={roster} nameFormat={nameFormat} />
       ) : null}
 
       {isPending ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <Skeleton className="h-40 w-full rounded-2xl" />
-          <Skeleton className="h-40 w-full rounded-2xl" />
-          <Skeleton className="h-40 w-full rounded-2xl" />
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-16 w-full rounded-xl" />
+          <Skeleton className="h-16 w-full rounded-xl" />
+          <Skeleton className="h-16 w-full rounded-xl" />
         </div>
       ) : null}
 
@@ -259,11 +221,11 @@ export function TasksPage({ classId }: TasksPageProps) {
           {archived.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t("archivedEmpty")}</p>
           ) : (
-            <TaskGroupedList
+            <TaskTopLevelList
               classId={classId}
-              groups={archivedGrouped.groups}
-              ungrouped={archivedGrouped.ungrouped}
+              items={archivedItems}
               personalView={personalView}
+              canReorder={false}
               groupStatsByTaskId={groupStatsByTaskId}
               collapsedAssignmentIds={collapsedAssignmentIds}
               onCollapsedChange={setCollapsedAssignmentIds}
@@ -276,17 +238,18 @@ export function TasksPage({ classId }: TasksPageProps) {
       ) : null}
 
       {!isPending && !isError && active.length > 0 ? (
-        <TaskGroupedList
+        <TaskTopLevelList
           classId={classId}
-          groups={activeGrouped.groups}
-          ungrouped={activeGrouped.ungrouped}
+          items={activeItems}
           personalView={personalView}
+          canReorder={canReorder}
           groupStatsByTaskId={groupStatsByTaskId}
           collapsedAssignmentIds={collapsedAssignmentIds}
           onCollapsedChange={setCollapsedAssignmentIds}
           onEdit={setEditing}
           onDelete={setDeleting}
           onArchiveToggle={handleArchiveToggle}
+          onReorder={canReorder ? handleReorder : undefined}
         />
       ) : null}
 
@@ -345,10 +308,103 @@ export function TasksPage({ classId }: TasksPageProps) {
   );
 }
 
-type TaskGroupedListProps = {
+type TaskTopLevelListProps = {
   classId: Id<"classes">;
-  groups: TaskAssignmentGroup[];
-  ungrouped: TaskListItem[];
+  items: TaskTopLevelItem[];
+  personalView: boolean;
+  canReorder: boolean;
+  groupStatsByTaskId: Map<Id<"tasks">, TaskGroupCompletionStat[]>;
+  collapsedAssignmentIds: Set<Id<"assignments">>;
+  onCollapsedChange: (next: Set<Id<"assignments">>) => void;
+  onEdit: (task: TaskListItem) => void;
+  onDelete: (task: TaskListItem) => void;
+  onArchiveToggle: (task: TaskListItem) => void;
+  onReorder?: (event: DragEndEvent) => void;
+};
+
+function TaskTopLevelList({
+  classId,
+  items,
+  personalView,
+  canReorder,
+  groupStatsByTaskId,
+  collapsedAssignmentIds,
+  onCollapsedChange,
+  onEdit,
+  onDelete,
+  onArchiveToggle,
+  onReorder,
+}: TaskTopLevelListProps) {
+  const { t } = useTranslation("tasks");
+  const itemIds = items.map((item) => item.id);
+  const list = (
+    <div className="flex flex-col gap-3">
+      {items.map((item) => {
+        const dragLabel =
+          item.type === "assignment"
+            ? t("reorderHandleAria", { name: item.group.assignmentName })
+            : t("reorderHandleAria", { name: item.task.name });
+        const body =
+          item.type === "assignment" ? (
+            <AssignmentFolder
+              classId={classId}
+              group={item.group}
+              personalView={personalView}
+              groupStatsByTaskId={groupStatsByTaskId}
+              collapsedAssignmentIds={collapsedAssignmentIds}
+              onCollapsedChange={onCollapsedChange}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onArchiveToggle={onArchiveToggle}
+            />
+          ) : personalView ? (
+            <div className="overflow-hidden rounded-xl border border-border">
+              <TaskListRow classId={classId} task={item.task} />
+            </div>
+          ) : (
+            <TaskCard
+              classId={classId}
+              task={item.task}
+              personalView={personalView}
+              groupStats={groupStatsByTaskId.get(item.task._id)}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onArchiveToggle={onArchiveToggle}
+            />
+          );
+
+        if (!canReorder || !onReorder) {
+          return <div key={item.id}>{body}</div>;
+        }
+
+        return (
+          <SortableFormItem key={item.id} id={item.id} dragLabel={dragLabel}>
+            {(dragHandle) => (
+              <div className="flex items-start gap-2">
+                <div className="pt-3">{dragHandle}</div>
+                <div className="min-w-0 flex-1">{body}</div>
+              </div>
+            )}
+          </SortableFormItem>
+        );
+      })}
+    </div>
+  );
+
+  if (!canReorder || !onReorder) {
+    return list;
+  }
+
+  return (
+    <SortableVerticalList itemIds={itemIds} onReorder={onReorder}>
+      {list}
+    </SortableVerticalList>
+  );
+}
+
+type AssignmentFolderProps = {
+  classId: Id<"classes">;
+  group: TaskAssignmentGroup;
   personalView: boolean;
   groupStatsByTaskId: Map<Id<"tasks">, TaskGroupCompletionStat[]>;
   collapsedAssignmentIds: Set<Id<"assignments">>;
@@ -358,10 +414,9 @@ type TaskGroupedListProps = {
   onArchiveToggle: (task: TaskListItem) => void;
 };
 
-function TaskGroupedList({
+function AssignmentFolder({
   classId,
-  groups,
-  ungrouped,
+  group,
   personalView,
   groupStatsByTaskId,
   collapsedAssignmentIds,
@@ -369,106 +424,84 @@ function TaskGroupedList({
   onEdit,
   onDelete,
   onArchiveToggle,
-}: TaskGroupedListProps) {
+}: AssignmentFolderProps) {
   const { t } = useTranslation("tasks");
+  const assignmentId = group.assignmentId;
+  const open = !collapsedAssignmentIds.has(assignmentId);
+  const folderMeta = formatTaskAssignmentFolderMeta(group);
 
   return (
-    <div className="flex flex-col gap-4">
-      {groups.map((group) => {
-        const assignmentId = group.assignmentId;
-        const open = !collapsedAssignmentIds.has(assignmentId);
-        const folderMeta = formatTaskAssignmentFolderMeta(group);
-        return (
-          <Collapsible
-            key={assignmentId}
-            open={open}
-            onOpenChange={(nextOpen) => {
-              onCollapsedChange(
-                (() => {
-                  const next = new Set(collapsedAssignmentIds);
-                  if (nextOpen) next.delete(assignmentId);
-                  else next.add(assignmentId);
-                  return next;
-                })(),
-              );
-            }}
-            className="rounded-2xl border border-border"
-          >
-            <div className="flex items-center gap-1 px-2 py-1.5">
-              <CollapsibleTrigger className="flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-2 text-left hover:bg-muted/60">
-                <ChevronRight
-                  className={cn(
-                    "size-4 shrink-0 text-muted-foreground transition-transform",
-                    open && "rotate-90",
-                  )}
-                  aria-hidden
-                />
-                <ClipboardList className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium">
-                    {t("linkedAssignment", { name: group.assignmentName })}
-                  </span>
-                  {folderMeta ? (
-                    <span className="block truncate text-xs text-muted-foreground">
-                      {folderMeta}
-                    </span>
-                  ) : null}
-                </span>
-                <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                  {t("assignmentGroupCount", { count: group.tasks.length })}
-                </span>
-              </CollapsibleTrigger>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                className="shrink-0"
-                aria-label={t("linkedAssignment", { name: group.assignmentName })}
-                render={
-                  <Link
-                    to="/class/$classId/assignments/$assignmentId"
-                    params={{ classId, assignmentId }}
-                  />
-                }
-              >
-                <ClipboardList className="size-4" />
-              </Button>
-            </div>
-            <CollapsibleContent className="border-t border-border px-3 py-3">
-              <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {group.tasks.map((task) => (
-                  <li key={task._id}>
-                    <TaskCard
-                      classId={classId}
-                      task={task}
-                      personalView={personalView}
-                      hideAssignmentLink
-                      showProcedureStepNumber
-                      groupStats={groupStatsByTaskId.get(task._id)}
-                      onEdit={onEdit}
-                      onDelete={onDelete}
-                      onArchiveToggle={onArchiveToggle}
-                    />
-                  </li>
-                ))}
-              </ul>
-            </CollapsibleContent>
-          </Collapsible>
+    <Collapsible
+      open={open}
+      onOpenChange={(nextOpen) => {
+        onCollapsedChange(
+          (() => {
+            const next = new Set(collapsedAssignmentIds);
+            if (nextOpen) next.delete(assignmentId);
+            else next.add(assignmentId);
+            return next;
+          })(),
         );
-      })}
-
-      {ungrouped.length > 0 ? (
-        <div className="flex flex-col gap-3">
-          {groups.length > 0 ? (
-            <h2 className="text-sm font-medium text-muted-foreground">{t("ungroupedTasks")}</h2>
-          ) : null}
+      }}
+      className="rounded-2xl border border-border"
+    >
+      <div className="flex items-center gap-1 px-2 py-1.5">
+        <CollapsibleTrigger className="flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-2 text-left hover:bg-muted/60">
+          <ChevronRight
+            className={cn(
+              "size-4 shrink-0 text-muted-foreground transition-transform",
+              open && "rotate-90",
+            )}
+            aria-hidden
+          />
+          <ClipboardList className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-medium">
+              {t("linkedAssignment", { name: group.assignmentName })}
+            </span>
+            {folderMeta ? (
+              <span className="block truncate text-xs text-muted-foreground">{folderMeta}</span>
+            ) : null}
+          </span>
+          <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+            {t("assignmentGroupCount", { count: group.tasks.length })}
+          </span>
+        </CollapsibleTrigger>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          className="shrink-0"
+          aria-label={t("linkedAssignment", { name: group.assignmentName })}
+          render={
+            <Link
+              to="/class/$classId/assignments/$assignmentId"
+              params={{ classId, assignmentId }}
+            />
+          }
+        >
+          <ClipboardList className="size-4" />
+        </Button>
+      </div>
+      <CollapsibleContent className="border-t border-border px-3 py-3">
+        {personalView ? (
+          <ul className="divide-y overflow-hidden rounded-xl border">
+            {group.tasks.map((task) => (
+              <li key={task._id}>
+                <TaskListRow classId={classId} task={task} showProcedureStepNumber />
+              </li>
+            ))}
+          </ul>
+        ) : (
           <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {ungrouped.map((task) => (
+            {group.tasks.map((task) => (
               <li key={task._id}>
                 <TaskCard
                   classId={classId}
                   task={task}
                   personalView={personalView}
+                  hideAssignmentLink
+                  showProcedureStepNumber
                   groupStats={groupStatsByTaskId.get(task._id)}
                   onEdit={onEdit}
                   onDelete={onDelete}
@@ -477,8 +510,8 @@ function TaskGroupedList({
               </li>
             ))}
           </ul>
-        </div>
-      ) : null}
-    </div>
+        )}
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
